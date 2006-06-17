@@ -1,0 +1,19 @@
+mondrian ICON "mondrian.ico"
+
+//do stuff that is not so new
+newdoc BITMAP "bitmaps/newdoc.bmp"
+open BITMAP "bitmaps/open.bmp"
+save BITMAP "bitmaps/save.bmp"
+copy BITMAP "bitmaps/copy.bmp"
+cut BITMAP "bitmaps/cut.bmp"
+paste BITMAP "bitmaps/paste.bmp"
+print BITMAP "bitmaps/print.bmp"
+help BITMAP "bitmaps/help.bmp"
+
+view BITMAP "bitmaps/view.bmp"
+node BITMAP "bitmaps/node.bmp"
+edge BITMAP "bitmaps/edge.bmp"
+addnode BITMAP "bitmaps/addnode.bmp"
+delnode BITMAP "bitmaps/delnode.bmp"
+addedge BITMAP "bitmaps/addedge.bmp"
+deledge BITMAP "bitmaps/deledge.bmp"
