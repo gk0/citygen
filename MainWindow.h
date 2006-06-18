@@ -2,7 +2,7 @@
 #define WXTEST_H
 
 #include "stdafx.h"
-#include "OgreView.h"
+#include "WorldView.h"
 #include "LogWindow.h"
 
 // MainWindow class declaration //
