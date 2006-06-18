@@ -1,80 +1,50 @@
-#ifndef OgreView_H
-#define OgreView_H
+#ifndef _OGREVIEW_H_
+#define _OGREVIEW_H_
 
-// Includes //
 #include "stdafx.h"
 
-using namespace Ogre;
 
-enum OgreViewMode {
-	normal,
-	node,
-	edge
-};
-
-// The OGRE test application class. //
-class OgreView : public wxWindow
+class OgreView : public wxControl
 {
-	DECLARE_EVENT_TABLE()
-
+	DECLARE_CLASS(OgreView)
 private:
-	RenderSystem *mRSys;
-	RenderWindow *mOgreRenderWindow;
-	SceneManager *mScene;
+	/* WX members */
+	wxTimer	mTimer;
+
+	/* Ogre members */
+	Ogre::Camera* mCamera;
+	Ogre::RenderWindow* mRenderWindow;
+	Ogre::SceneManager* mSceneMgr;
+	Ogre::Viewport* mViewport;
 
 	long mMouseX, mMouseY;
+	
+	void onEraseBackground(wxEraseEvent &e);
+	void onLeftDragged(wxMouseEvent &e);
+	void onLeftPressed(wxMouseEvent &e);
+	void onFocusLost(wxFocusEvent& e);	
+	void onFocusSet(wxFocusEvent& e);
+	void onMouse(wxMouseEvent &e);
+	void onPaint(wxPaintEvent &WXUNUSED(e));
+	void onSize(wxSizeEvent &e);
+	void onTimer(wxTimerEvent &e);
 
-	Camera *mCamera;
-	Viewport *mViewport;
-
-	bool mReady;
-
-	RaySceneQuery *mRaySceneQuery;     // The ray scene query pointer
-	SceneNode *mCurrentObject;         // The newly created object
-	int mCount;                        // The number of robots on the screen
-
-	OgreViewMode mViewMode;
-
-protected: 
+protected:
+	DECLARE_EVENT_TABLE()
+	 
     void chooseSceneManager(void);
     void createCamera(void);
-    void createFrameListener(void);
     void createScene(void);
-    void destroyScene(void);
     void createViewports(void);
+    void destroyScene(void);
 
 public:
-	OgreView(wxWindow* parent, const wxPoint &pos, const wxSize &size);
+	OgreView(wxFrame* parent);
 	~OgreView();
 
-	void Resize(long w, long h);
-	void Update();
-	void Init(HWND handle);
-
-	void Tick(Real t);
-
-	void RotateView(Real yaw, Real pitch);
-	void MoveView(Real x, Real y, Real z);
-
-	void OnLeftPressed(wxMouseEvent &e);
-	void OnLeftDragged(wxMouseEvent &e);
-
-	void OnSize(wxSizeEvent &e);
-	void OnPaint(wxPaintEvent &WXUNUSED(e));
-	void OnMouse(wxMouseEvent &e);
-
-	void OnSetFocus(wxFocusEvent& e);
-	void OnLostFocus(wxFocusEvent& e);
-	void OnTimer(wxTimerEvent &e);
-
-	void OnEraseBackground(wxEraseEvent &e);
-
-	void OgreView::AddNode(float x, float y);
-	void DeleteSelectedNode();
-
-	void SetMode(OgreViewMode mode);
-	OgreViewMode GetMode() { return mViewMode; }
-
+	void cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
+	void cameraRotate(Ogre::Real yaw, Ogre::Real pitch);
+	void update();
 };
 
 #endif

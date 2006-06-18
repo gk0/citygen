@@ -1,43 +1,63 @@
-// Includes //
+// Includes
 #include "stdafx.h"
 #include "OgreView.h"
 
 
-// Namespace //
+// Namespace 
 using namespace Ogre;
 
-enum
-{
-	TIMER_ID = 500,
-};
+// Required for the timer
+const long ID_RENDERTIMER = wxNewId();
 
-// Event Table //
-BEGIN_EVENT_TABLE(OgreView, wxWindow)
-//	EVT_PAINT(OgreView::OnPaint)
-	EVT_SIZE(OgreView::OnSize)
-	EVT_MOUSE_EVENTS(OgreView::OnMouse)
-	EVT_TIMER(TIMER_ID, OgreView::OnTimer)
-	EVT_SET_FOCUS(OgreView::OnSetFocus)
-	EVT_KILL_FOCUS(OgreView::OnLostFocus)
-	EVT_ERASE_BACKGROUND(OgreView::OnEraseBackground) 
+// Required for WX
+IMPLEMENT_CLASS(OgreView, wxControl)
+
+// Event Table
+BEGIN_EVENT_TABLE(OgreView, wxControl)
+	EVT_ERASE_BACKGROUND(OgreView::onEraseBackground) 
+	EVT_KILL_FOCUS(OgreView::onFocusLost)
+	EVT_SET_FOCUS(OgreView::onFocusSet)
+	EVT_MOUSE_EVENTS(OgreView::onMouse)
+//	EVT_PAINT(OgreView::onPaint)
+	EVT_SIZE(OgreView::onSize)
+	EVT_TIMER(ID_RENDERTIMER, OgreView::onTimer)
 END_EVENT_TABLE()
 
-// Constructor //
-OgreView::OgreView(wxWindow* parent, const wxPoint &pos, const wxSize &size) 
-	 : wxWindow(parent, -1, pos, size, wxFULL_REPAINT_ON_RESIZE)
+
+OgreView::OgreView(wxFrame* parent) 
+	: wxControl(parent, -1),
+	  mTimer(this, ID_RENDERTIMER)
 {
-	Ogre::NameValuePairList params;
-	params["externalWindowHandle"] = Ogre::StringConverter::toString((size_t)GetHandle());
-
-	mOgreRenderWindow = Ogre::Root::getSingleton().createRenderWindow("MageRenderWindow", size.GetWidth(), size.GetHeight(), false, &params);
-
 	mCamera = 0;
+	mRenderWindow = 0;
+	mSceneMgr = 0;
 	mViewport = 0;
-	mCurrentObject = 0;
+	
+	// Create a new parameters list according to compiled OS
+	Ogre::NameValuePairList params;
+	String handle;
+#ifdef __WXMSW__
+	handle = Ogre::StringConverter::toString((size_t)((HWND)GetHandle()));
+#elif defined(__WXGTK__)
+	// TODO: Someone test this. you might to use "parentWindowHandle" if this
+	// does not work.  Ogre 1.2 + Linux + GLX platform wants a string of the
+	// format display:screen:window, which has variable types ulong:uint:ulong.
+	GdkWindow * window = GetHandle()->window
+	handle = Ogre::StringConverter::toString((ulong)GDK_WINDOW_XDISPLAY(window));
+	handle += ":0:";
+	handle += Ogre::StringConverter::toString((uint)GDK_WINDOW_XID(window));
+#else
+	#error Not supported on this platform.
+#endif
+	params["externalWindowHandle"] = handle;
 
-	mViewMode = normal;
+	// Get wx control window size
+	int width, height;
+	GetSize(&width, &height);
+	// Create the render window
+	mRenderWindow = Ogre::Root::getSingleton().createRenderWindow("OgreRenderWindow", width, height, false, &params);
 
-	//Init Scene Stuff
+	// Scene Stuff
 	chooseSceneManager();
     createCamera();
     createViewports();
@@ -46,67 +66,33 @@ OgreView::OgreView(wxWindow* parent, const wxPoint &pos, const wxSize &size)
 	TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
 	createScene();
-
-	// Create our ray query
-	mRaySceneQuery = mScene->createRayQuery(Ray());
 }
 
 
 // Destructor //
 OgreView::~OgreView()
 {
-}
-
-// Resize //
-void OgreView::OnSize(wxSizeEvent &e)
-{
-	if (mCamera)
+	// destroy Viewport and RenderWindow
+	if (mViewport)
 	{
-		wxSize s = this->GetClientSize();
-
-		mCamera->setAspectRatio(float(s.GetWidth()) / float(s.GetHeight()));
-		mOgreRenderWindow->windowMovedOrResized();
+		mRenderWindow->removeViewport(mViewport->getZOrder());
+		mViewport = 0;
 	}
-}
 
-void OgreView::OnPaint(wxPaintEvent &WXUNUSED(e))
-{
-	wxPaintDC dc(this);
-	Ogre::Root::getSingleton().renderOneFrame();
-}
-
-
-// Update
-void OgreView::Update()
-{
-	Ogre::Root::getSingleton().renderOneFrame();
-}
-
-
-
-// Rotates the view //
-void OgreView::RotateView(Real yaw, Real pitch)
-{
-	mCamera->yaw(yaw * (mCamera->getFOVy() / mCamera->getAspectRatio() / 320.0f));
-	mCamera->pitch(pitch * (mCamera->getFOVy() / 240.0f));
-}
-
-// Moves the view //
-void OgreView::MoveView(Real x, Real y, Real z)
-{
-	mCamera->moveRelative(Vector3(x, y, z));
+	Ogre::Root::getSingleton().detachRenderTarget(mRenderWindow);
+	mRenderWindow = 0;
 }
 
 void OgreView::chooseSceneManager(void)
 {
     // Create the SceneManager, in this case a generic one
-    mScene = Ogre::Root::getSingleton().createSceneManager("TerrainSceneManager");
+    mSceneMgr = Ogre::Root::getSingleton().createSceneManager("TerrainSceneManager");
 }
 
 void OgreView::createCamera(void)
 {    
 	// Create the camera
-    mCamera = mScene->createCamera("PlayerCam");
+    mCamera = mSceneMgr->createCamera("PlayerCam");
 
     // Position it at 500 in Z direction
     mCamera->setPosition(825,175,825);
@@ -124,10 +110,10 @@ void OgreView::createScene(void)
     Plane waterPlane;
 
     // Set ambient light
-    mScene->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
+    mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
 
     // Create a light
-    Light* l = mScene->createLight("MainLight");
+    Light* l = mSceneMgr->createLight("MainLight");
     // Accept default settings: point light, white diffuse, just set position
     // NB I could attach the light to a SceneNode if I wanted it to move automatically with
     //  other objects, but I don't
@@ -137,14 +123,14 @@ void OgreView::createScene(void)
     // NB it's VERY important to set this before calling setWorldGeometry 
     // because the vertex program picked will be different
 	ColourValue fadeColour(0.93, 0.86, 0.76);
-	mScene->setFog( FOG_LINEAR, fadeColour, .001, 500, 1000);
-	mOgreRenderWindow->getViewport(0)->setBackgroundColour(fadeColour);
+	mSceneMgr->setFog( FOG_LINEAR, fadeColour, .001, 500, 1000);
+	mRenderWindow->getViewport(0)->setBackgroundColour(fadeColour);
 
     std::string terrain_cfg("terrain.cfg");
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
         terrain_cfg = mResourcePath + terrain_cfg;
 #endif
-        mScene -> setWorldGeometry( terrain_cfg );
+        mSceneMgr -> setWorldGeometry( terrain_cfg );
         // Infinite far plane?
     if (Ogre::Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
     {
@@ -159,14 +145,10 @@ void OgreView::createScene(void)
     plane.normal = -Vector3::UNIT_Y;
 }
 
-void OgreView::destroyScene(void)
-{
-}
-
 void OgreView::createViewports(void)
 {
     // Create one viewport, entire window
-    mViewport = mOgreRenderWindow->addViewport(mCamera);
+    mViewport = mRenderWindow->addViewport(mCamera);
     mViewport->setBackgroundColour(ColourValue(0,0,0));
 
     // Alter the camera aspect ratio to match the viewport
@@ -174,50 +156,45 @@ void OgreView::createViewports(void)
         Real(mViewport->getActualWidth()) / Real(mViewport->getActualHeight()));
 }
 
-void OgreView::OnLeftPressed(wxMouseEvent &e)
+void OgreView::destroyScene(void)
 {
-	// Turn off bounding box.
-    if ( mCurrentObject )
-    	mCurrentObject->showBoundingBox( false );
-    	
-    // Setup the ray scene query
-    Ray mouseRay = mCamera->getCameraToViewportRay(float(e.GetX()) / float(mViewport->getActualWidth()), 
-			float(e.GetY()) / float(mViewport->getActualHeight()) );
-	mRaySceneQuery->setRay( mouseRay );
-    mRaySceneQuery->setSortByDistance( true );
-    
-    // Execute query
-    RaySceneQueryResult &result = mRaySceneQuery->execute();
-    RaySceneQueryResult::iterator itr = result.begin( );
-
-	// Get results, create a node/entity on the position
-	for( itr = result.begin( ); itr != result.end(); itr++ )
-	{
-		if ( itr->movable && itr->movable->getName().substr(0, 5) != "tile[" )
-        {
-        	mCurrentObject = itr->movable->getParentSceneNode( );
-            break;
-        }
-        else if ( itr->worldFragment )
-        {
-            Entity *ent;
-            char name[16];
-            sprintf( name, "Robot%d", mCount++ );
-            ent = mScene->createEntity( name, "Node.mesh" );
-			ent->setMaterialName("Examples/Hilite/Yellow");
-            mCurrentObject = mScene->getRootSceneNode( )->createChildSceneNode( String(name) + "Node", itr->worldFragment->singleIntersection );
-            mCurrentObject->attachObject( ent );
-            mCurrentObject->setScale( 0.1f, 0.1f, 0.1f );
-            break;
-        }
-	}
-	
-	// Turn on bounding box.
-    if ( mCurrentObject )
-    	mCurrentObject->showBoundingBox( true );
 }
 
-void OgreView::OnMouse(wxMouseEvent &e)
+// Moves the view
+void OgreView::cameraMove(Real x, Real y, Real z)
+{
+	mCamera->moveRelative(Vector3(x, y, z));
+}
+
+// Rotates the view
+void OgreView::cameraRotate(Real yaw, Real pitch)
+{
+	mCamera->yaw(yaw * (mCamera->getFOVy() / mCamera->getAspectRatio() / 320.0f));
+	mCamera->pitch(pitch * (mCamera->getFOVy() / 240.0f));
+}
+
+void OgreView::onEraseBackground(wxEraseEvent &e)
+{
+	update();
+}
+
+void OgreView::onFocusSet(wxFocusEvent& e)
+{
+}
+
+void OgreView::onFocusLost(wxFocusEvent& e)
+{
+}
+
+void OgreView::onLeftDragged(wxMouseEvent &e)
+{
+}
+
+void OgreView::onLeftPressed(wxMouseEvent &e)
+{
+}
+
+void OgreView::onMouse(wxMouseEvent &e)
 {
 	// Camera controls
 	if(e.Dragging())
@@ -228,18 +205,11 @@ void OgreView::OnMouse(wxMouseEvent &e)
 
 		// Dolly, orient or pan?
 		if(e.m_leftDown && e.m_rightDown)
-			MoveView(0.0f, 0.0f, delta_y);
+			cameraMove(0.0f, 0.0f, delta_y);
 		else if(e.m_leftDown) {
-			if(mViewMode == node) OnLeftDragged(e);
-			else RotateView(delta_x*2, delta_y);
+			cameraRotate(delta_x*2, delta_y);
 		}else if(e.m_rightDown)
-			MoveView((Real)(-delta_x), (Real)delta_y, 0.0f);
-	} 
-	else 
-	{
-		if(e.m_leftDown) {
-			if(mViewMode == node) OnLeftPressed(e);
-		}
+			cameraMove((Real)(-delta_x), (Real)delta_y, 0.0f);
 	}
 
 	// Save mouse position (for computing deltas for dragging)
@@ -247,87 +217,37 @@ void OgreView::OnMouse(wxMouseEvent &e)
 	mMouseY = e.m_y;
 
 	// Tell OGRE to redraw.
-	Update();
+	update();
 }
 
-void OgreView::OnSetFocus(wxFocusEvent& e)
+void OgreView::onPaint(wxPaintEvent &WXUNUSED(e))
 {
-	
+	wxPaintDC dc(this);
+	update();
 }
 
-void OgreView::OnLostFocus(wxFocusEvent& e)
+void OgreView::onSize(wxSizeEvent &e)
 {
-	
+	// Setting new size;
+	int width;
+	int height;
+	GetSize(&width, &height);
+	mRenderWindow->resize( width, height );
+	// Letting Ogre know the window has been resized;
+	mRenderWindow->windowMovedOrResized();
+	// Set the aspect ratio for the new size;
+	if (mCamera)
+		mCamera->setAspectRatio(Ogre::Real(width) / Ogre::Real(height));
+
+	update();
 }
 
-// Timer tick
-void OgreView::OnTimer(wxTimerEvent &e)
+void OgreView::onTimer(wxTimerEvent &e)
 {
-	Update();
+	update();
 }
 
-void OgreView::OnLeftDragged(wxMouseEvent &e)
+void OgreView::update()
 {
-	switch(mViewMode) {
-		case normal:
-
-		case node:
-			AddNode(float(e.GetX()) / float(mViewport->getActualWidth()), 
-			float(e.GetY()) / float(mViewport->getActualHeight()));
-			break;
-		default:
-			break;
-	}
+	Ogre::Root::getSingleton().renderOneFrame();
 }
-
-void OgreView::AddNode(float x, float y)
-{
-	Ray mouseRay = mCamera->getCameraToViewportRay(x,y);
-    mRaySceneQuery->setRay( mouseRay );
-    mRaySceneQuery->setSortByDistance( false );
-
-    RaySceneQueryResult &result = mRaySceneQuery->execute();
-    RaySceneQueryResult::iterator itr;
-
-    for ( itr = result.begin( ); itr != result.end(); itr++ )
-    {
-        if ( itr->worldFragment )
-        {
-            mCurrentObject->setPosition( itr->worldFragment->singleIntersection );
-            break;
-        }
-    }
-}
-
-
-void OgreView::OnEraseBackground(wxEraseEvent &e)
-{
-	Update();
-}
-
-
-void OgreView::DeleteSelectedNode()
-{
-	if(mCurrentObject) {
-		mScene->destroySceneNode(mCurrentObject->getName());
-		mCurrentObject = 0;
-	}
-}
-
-void OgreView::SetMode(OgreViewMode mode)
-{
-	mViewMode = mode;
-}
-/*
-void OgreView::AddEdge() {
- Line3D *myLine = new Line3D();
-   myLine->addPoint(Vector3(0.0, 9.6, 0.0));
-   myLine->addPoint(Vector3(160.0, 9.6, 0.0));
-   myLine->addPoint(Vector3(160.0, 9.6, 160.0));
-   myLine->addPoint(Vector3(0.0, 9.6, 160.0));
-   myLine->addPoint(Vector3(0.0, 9.6, 0.0));
-   myLine->drawLines();
-
-   SceneNode *myNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-   myNode->attachObject(myLine);
-}*/

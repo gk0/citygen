@@ -5,7 +5,7 @@
 class Application : public wxApp
 {
 private:
-	Root *mRoot;
+	Ogre::Root *mRoot;
 	MainWindow *mWindow;
 
 public:

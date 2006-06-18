@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Application.h"
 
+using namespace Ogre;
+
 // Platform specific crap that creates the application, etc. //
 IMPLEMENT_APP(Application);
 
@@ -13,7 +15,7 @@ bool Application::OnInit()
 
 	InitializeOgre();
 
-		setupResources();
+	setupResources();
 
 	// now we need to create MainWindow singleton because
 	// it creates RenderWindow, which is needed for resource loading (for example, textures and VBO)
@@ -55,12 +57,13 @@ bool Application::InitializeOgre()
 		{
 			mRoot->showConfigDialog();
 		}
-		mRoot->initialise(false);    //no new window for you pup
+		// initialise with false doesn't create a window
+		mRoot->initialise(false);
    }
    catch(Ogre::Exception &e)
    {
-      String s = "OgreView::Init() - Exception:\n" + e.getFullDescription() + "\n";
-      LogManager::getSingleton().logMessage(s, LML_CRITICAL);
+	  String s = "OgreView::Init() - Exception:\n" + e.getFullDescription() + "\n";
+	  LogManager::getSingleton().logMessage(s, LML_CRITICAL);
       wxMessageBox( e.getFullDescription().c_str(), _T("Exception!"), wxICON_EXCLAMATION);
       return false;
    }

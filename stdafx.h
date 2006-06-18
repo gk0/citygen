@@ -52,6 +52,12 @@
 #include <wx/timer.h>
 #include <wx/toolbar.h>
 
+// wxGTK (Linux & Others)
+#ifdef __WXGTK__
+#include <gdk/gdk.h>
+#include <gtk/gtk.h> // just this should suffice as it should include gdk.h itself
+#endif
+
 // wxAUI header
 #include <manager.h>
 
