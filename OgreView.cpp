@@ -14,16 +14,18 @@ IMPLEMENT_CLASS(OgreView, wxControl)
 
 // Event Table
 BEGIN_EVENT_TABLE(OgreView, wxControl)
-	EVT_ERASE_BACKGROUND(OgreView::onEraseBackground) 
-	EVT_KILL_FOCUS(OgreView::onFocusLost)
-	EVT_SET_FOCUS(OgreView::onFocusSet)
-	EVT_MOUSE_EVENTS(OgreView::onMouse)
-//	EVT_PAINT(OgreView::onPaint)
-	EVT_SIZE(OgreView::onSize)
-	EVT_TIMER(ID_RENDERTIMER, OgreView::onTimer)
+	EVT_ERASE_BACKGROUND(OgreView::OnEraseBackground) 
+	EVT_KILL_FOCUS(OgreView::OnFocusLost)
+	EVT_SET_FOCUS(OgreView::OnFocusSet)
+	EVT_MOUSE_EVENTS(OgreView::OnMouse)
+//	EVT_PAINT(OgreView::OnPaint)
+	EVT_SIZE(OgreView::OnSize)
+	EVT_TIMER(ID_RENDERTIMER, OgreView::OnTimer)
 END_EVENT_TABLE()
 
-
+/** Brief description which ends at this dot. Details follow
+ *  here.
+ */
 OgreView::OgreView(wxFrame* parent) 
 	: wxControl(parent, -1),
 	  mTimer(this, ID_RENDERTIMER)
@@ -161,40 +163,40 @@ void OgreView::destroyScene(void)
 }
 
 // Moves the view
-void OgreView::cameraMove(Real x, Real y, Real z)
+void OgreView::cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z)
 {
 	mCamera->moveRelative(Vector3(x, y, z));
 }
 
 // Rotates the view
-void OgreView::cameraRotate(Real yaw, Real pitch)
+void OgreView::cameraRotate(Ogre::Real yaw, Ogre::Real pitch)
 {
 	mCamera->yaw(yaw * (mCamera->getFOVy() / mCamera->getAspectRatio() / 320.0f));
 	mCamera->pitch(pitch * (mCamera->getFOVy() / 240.0f));
 }
 
-void OgreView::onEraseBackground(wxEraseEvent &e)
+void OgreView::OnEraseBackground(wxEraseEvent &e)
 {
 	update();
 }
 
-void OgreView::onFocusSet(wxFocusEvent& e)
+void OgreView::OnFocusSet(wxFocusEvent& e)
 {
 }
 
-void OgreView::onFocusLost(wxFocusEvent& e)
+void OgreView::OnFocusLost(wxFocusEvent& e)
 {
 }
 
-void OgreView::onLeftDragged(wxMouseEvent &e)
+void OgreView::OnLeftDragged(wxMouseEvent &e)
 {
 }
 
-void OgreView::onLeftPressed(wxMouseEvent &e)
+void OgreView::OnLeftPressed(wxMouseEvent &e)
 {
 }
 
-void OgreView::onMouse(wxMouseEvent &e)
+void OgreView::OnMouse(wxMouseEvent &e)
 {
 	// Camera controls
 	if(e.Dragging())
@@ -220,13 +222,13 @@ void OgreView::onMouse(wxMouseEvent &e)
 	update();
 }
 
-void OgreView::onPaint(wxPaintEvent &WXUNUSED(e))
+void OgreView::OnPaint(wxPaintEvent &WXUNUSED(e))
 {
 	wxPaintDC dc(this);
 	update();
 }
 
-void OgreView::onSize(wxSizeEvent &e)
+void OgreView::OnSize(wxSizeEvent &e)
 {
 	// Setting new size;
 	int width;
@@ -242,7 +244,7 @@ void OgreView::onSize(wxSizeEvent &e)
 	update();
 }
 
-void OgreView::onTimer(wxTimerEvent &e)
+void OgreView::OnTimer(wxTimerEvent &e)
 {
 	update();
 }

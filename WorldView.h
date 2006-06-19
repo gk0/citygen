@@ -20,13 +20,14 @@ protected:
 
 	WorldViewMode mViewMode;
 	
-	void onLeftDragged(wxMouseEvent &e);
-	void onLeftPressed(wxMouseEvent &e);
-	void onLostFocus(wxFocusEvent& e);	
-	void onMouse(wxMouseEvent &e);
-	void onSetFocus(wxFocusEvent& e);
+	void OnLeftDragged(wxMouseEvent &e);
+	void OnLeftPressed(wxMouseEvent &e);
+	void OnLostFocus(wxFocusEvent& e);	
+	void OnMouse(wxMouseEvent &e);
+	void OnSetFocus(wxFocusEvent& e);
 
-protected:	 
+protected:	
+	DECLARE_EVENT_TABLE() 
     //void chooseSceneManager(void);
     //void createCamera(void);
     //void createScene(void);
@@ -35,13 +36,13 @@ protected:
 
 public:
 	WorldView(wxFrame* parent);
-	~WorldView();
+	virtual ~WorldView();
 	
 	void addNode(float x, float y);
 	void deleteSelectedNode();
 	WorldViewMode getMode() { return mViewMode; }
 	//void update();
-	void setMode(WorldViewMode mode) { mViewMode = mode; }
+	void setMode(WorldViewMode mode);
 
 };
 

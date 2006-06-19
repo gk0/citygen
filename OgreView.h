@@ -7,7 +7,7 @@
 class OgreView : public wxControl
 {
 	DECLARE_CLASS(OgreView)
-private:
+protected:
 	/* WX members */
 	wxTimer	mTimer;
 
@@ -19,15 +19,15 @@ private:
 
 	long mMouseX, mMouseY;
 	
-	void onEraseBackground(wxEraseEvent &e);
-	void onLeftDragged(wxMouseEvent &e);
-	void onLeftPressed(wxMouseEvent &e);
-	void onFocusLost(wxFocusEvent& e);	
-	void onFocusSet(wxFocusEvent& e);
-	void onMouse(wxMouseEvent &e);
-	void onPaint(wxPaintEvent &WXUNUSED(e));
-	void onSize(wxSizeEvent &e);
-	void onTimer(wxTimerEvent &e);
+	void OnEraseBackground(wxEraseEvent &e);
+	void OnLeftDragged(wxMouseEvent &e);
+	void OnLeftPressed(wxMouseEvent &e);
+	void OnFocusLost(wxFocusEvent& e);	
+	void OnFocusSet(wxFocusEvent& e);
+	void OnMouse(wxMouseEvent &e);
+	void OnPaint(wxPaintEvent &WXUNUSED(e));
+	void OnSize(wxSizeEvent &e);
+	void OnTimer(wxTimerEvent &e);
 
 protected:
 	DECLARE_EVENT_TABLE()
@@ -40,7 +40,7 @@ protected:
 
 public:
 	OgreView(wxFrame* parent);
-	~OgreView();
+	virtual ~OgreView();
 
 	void cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
 	void cameraRotate(Ogre::Real yaw, Ogre::Real pitch);

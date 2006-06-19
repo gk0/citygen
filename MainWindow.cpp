@@ -184,13 +184,13 @@ MainWindow::~MainWindow()
 }
 
 // On Quit
-void MainWindow::OnQuit(wxCommandEvent &WXUNUSED(e))
+void MainWindow::OnQuit(wxCommandEvent &e)
 {
 	Close(TRUE);
 }
 
 // On About
-void MainWindow::OnAbout(wxCommandEvent &WXUNUSED(e))
+void MainWindow::OnAbout(wxCommandEvent &e)
 {
     wxString msg;
     msg.Printf( _T("This is the About dialog of the CityGen 5 the sequel.\n"));
