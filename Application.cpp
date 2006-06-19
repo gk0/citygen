@@ -22,13 +22,14 @@ bool Application::OnInit()
 	// we create it, but don't show to user to avoid flickness
 	mWindow = new MainWindow();
 	SetTopWindow(mWindow); // set our MainWindow the main application window
+	mWindow->Show(true);
 
 	// Resources and resource initialization
 	
 	loadResources();
 
 	//
-	mWindow->Show(true);
+	
 
 	// All clear!
 	return true;
