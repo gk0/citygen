@@ -4,10 +4,16 @@
 #include "stdafx.h"
 #include "OgreView.h"
 
-enum WorldViewMode {
+enum WorldMode {
 	normal,
 	node,
 	edge
+};
+
+enum WorldSelectMode {
+	sel,
+	add,
+	del
 };
 
 class WorldView : public OgreView
@@ -18,7 +24,8 @@ protected:
 	Ogre::SceneNode *mCurrentObject;         // The newly created object
 	int mCount;                        // The number of robots on the screen
 
-	WorldViewMode mViewMode;
+	WorldMode mMode;
+	WorldSelectMode mSelectMode;
 	
 	void OnLeftDragged(wxMouseEvent &e);
 	void OnLeftPressed(wxMouseEvent &e);
@@ -40,9 +47,10 @@ public:
 	
 	void addNode(float x, float y);
 	void deleteSelectedNode();
-	WorldViewMode getMode() { return mViewMode; }
+	WorldMode getMode() { return mMode; }
 	//void update();
-	void setMode(WorldViewMode mode);
+	void setMode(WorldMode mode);
+	void setSelectMode(WorldSelectMode mode);
 
 };
 

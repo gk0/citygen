@@ -19,15 +19,15 @@ protected:
 
 	long mMouseX, mMouseY;
 	
-	void OnEraseBackground(wxEraseEvent &e);
-	void OnLeftDragged(wxMouseEvent &e);
-	void OnLeftPressed(wxMouseEvent &e);
-	void OnFocusLost(wxFocusEvent& e);	
-	void OnFocusSet(wxFocusEvent& e);
-	void OnMouse(wxMouseEvent &e);
-	void OnPaint(wxPaintEvent &WXUNUSED(e));
-	void OnSize(wxSizeEvent &e);
-	void OnTimer(wxTimerEvent &e);
+	virtual void OnEraseBackground(wxEraseEvent &e);
+	virtual void OnLeftDragged(wxMouseEvent &e);
+	virtual void OnLeftPressed(wxMouseEvent &e);
+	virtual void OnFocusLost(wxFocusEvent& e);	
+	virtual void OnFocusSet(wxFocusEvent& e);
+	virtual void OnMouse(wxMouseEvent &e);
+	virtual void OnPaint(wxPaintEvent &WXUNUSED(e));
+	virtual void OnSize(wxSizeEvent &e);
+	virtual void OnTimer(wxTimerEvent &e);
 
 protected:
 	DECLARE_EVENT_TABLE()

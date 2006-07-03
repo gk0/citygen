@@ -76,30 +76,28 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 END_EVENT_TABLE()
 
 void MainWindow::OnNodeDelete(wxCommandEvent &e) {
-	//mOgreWindow->deleteSelectedNode();
-	mOgreWindow->update();
+	mWorldView->deleteSelectedNode();
+	mWorldView->update();
 }
 
 void MainWindow::OnViewModeSelect(wxCommandEvent &e) {
-	//mOgreWindow->setMode(normal);
-	mGraphToolBar->EnableTool(IDM_GRAPH_ADDNODE, false);
-	mGraphToolBar->EnableTool(IDM_GRAPH_DELNODE, false);
-	mGraphToolBar->EnableTool(IDM_GRAPH_ADDEDGE, false);
-	mGraphToolBar->EnableTool(IDM_GRAPH_DELEDGE, false);
+	OnModeSelect(normal);
 }
 void MainWindow::OnNodeModeSelect(wxCommandEvent &e) {
-	//mOgreWindow->setMode(node);
-	mGraphToolBar->EnableTool(IDM_GRAPH_ADDNODE, true);
-	mGraphToolBar->EnableTool(IDM_GRAPH_DELNODE, true);
-	mGraphToolBar->EnableTool(IDM_GRAPH_ADDEDGE, false);
-	mGraphToolBar->EnableTool(IDM_GRAPH_DELEDGE, false);
+	OnModeSelect(node);
 }
 void MainWindow::OnEdgeModeSelect(wxCommandEvent &e) {
-	//mOgreWindow->setMode(edge);
-	mGraphToolBar->EnableTool(IDM_GRAPH_ADDEDGE, true);
-	mGraphToolBar->EnableTool(IDM_GRAPH_DELEDGE, true);
-	mGraphToolBar->EnableTool(IDM_GRAPH_ADDNODE, false);
-	mGraphToolBar->EnableTool(IDM_GRAPH_DELNODE, false);
+	OnModeSelect(edge);
+}
+
+void MainWindow::OnModeSelect(WorldMode mode) {
+	mWorldView->setMode(mode);
+	bool bNode = (mode == node);
+	bool bEdge = (mode == edge);
+	mGraphToolBar->EnableTool(IDM_GRAPH_ADDNODE, bNode);
+	mGraphToolBar->EnableTool(IDM_GRAPH_DELNODE, bNode);
+	mGraphToolBar->EnableTool(IDM_GRAPH_ADDEDGE, bEdge);
+	mGraphToolBar->EnableTool(IDM_GRAPH_DELEDGE, bEdge);
 }
 
 
@@ -118,8 +116,8 @@ MainWindow::MainWindow() : wxFrame( NULL, wxID_ANY, "CityGen", wxDefaultPosition
 	mFrameManager.SetFrame(this);
 
 	// No Ogre app until it's given to us.
-	mOgreWindow = new OgreView(this);
-	mFrameManager.AddPane(mOgreWindow, wxCENTER, wxT("Render Window"));
+	mWorldView = new WorldView(this);
+	mFrameManager.AddPane(mWorldView, wxCENTER, wxT("Render Window"));
 
 	// Log Window
 	mLogWindow = new LogWindow(this);

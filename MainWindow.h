@@ -15,7 +15,7 @@ private:
 	wxToolBar* mGraphToolBar;
 	wxFrameManager mFrameManager;
 	
-	OgreView *mOgreWindow;
+	WorldView *mWorldView;
 	LogWindow *mLogWindow;
 
 	long mMouseX, mMouseY;
@@ -34,6 +34,7 @@ public:
 	void OnViewModeSelect(wxCommandEvent &e);
 	void OnNodeModeSelect(wxCommandEvent &e);
 	void OnEdgeModeSelect(wxCommandEvent &e);
+	void OnModeSelect(WorldMode mode);
 
 	void CreateToolbar();
 	void CreateGraphToolbar();

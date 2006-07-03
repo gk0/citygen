@@ -9,6 +9,8 @@ using namespace Ogre;
 // Required for the timer
 const long ID_RENDERTIMER = wxNewId();
 
+// Required for WX
+//IMPLEMENT_CLASS(WorldView, OgreView)
 
 // Event Table 
 BEGIN_EVENT_TABLE(WorldView, wxControl)
@@ -27,7 +29,8 @@ WorldView::WorldView(wxFrame* parent)
 	: OgreView(parent)
 {
 	mCurrentObject = 0;
-	mViewMode = normal;
+	mMode = normal;
+	mSelectMode = sel;
 
 	// Create our ray query
 	mRaySceneQuery = mSceneMgr->createRayQuery(Ray());
@@ -117,6 +120,16 @@ void WorldView::OnLostFocus(wxFocusEvent& e)
 
 void WorldView::OnMouse(wxMouseEvent &e)
 {
+	//Check for mouse wheel scroll
+	if (e.GetWheelRotation() != 0)
+	{
+		Vector3 mTranslateVector(0,0,0);
+		mTranslateVector.z = e.GetWheelRotation() / 10;
+		mCamera->moveRelative(mTranslateVector);
+		//mCamera-> e.GetWheelRotation()
+	}
+
+
 	// Camera controls
 	if(e.Dragging())
 	{
@@ -128,7 +141,7 @@ void WorldView::OnMouse(wxMouseEvent &e)
 		if(e.m_leftDown && e.m_rightDown)
 			cameraMove(0.0f, 0.0f, delta_y);
 		else if(e.m_leftDown) {
-			if(mViewMode == node) OnLeftDragged(e);
+			if(mMode == node) OnLeftDragged(e);
 			else cameraRotate(delta_x*2, delta_y);
 		}else if(e.m_rightDown)
 			cameraMove((Real)(-delta_x), (Real)delta_y, 0.0f);
@@ -136,7 +149,7 @@ void WorldView::OnMouse(wxMouseEvent &e)
 	else 
 	{
 		if(e.m_leftDown) {
-			if(mViewMode == node) OnLeftPressed(e);
+			if(mMode == node) OnLeftPressed(e);
 		}
 	}
 
@@ -147,7 +160,10 @@ void WorldView::OnMouse(wxMouseEvent &e)
 	// Tell OGRE to redraw.
 	update();
 }
-
+/*
+void WorldView::OnMouseWheel(wxMouseEvent &e) {
+}
+*/
 void WorldView::OnSetFocus(wxFocusEvent& e)
 {
 	
@@ -155,7 +171,7 @@ void WorldView::OnSetFocus(wxFocusEvent& e)
 
 void WorldView::OnLeftDragged(wxMouseEvent &e)
 {
-	switch(mViewMode) {
+	switch(mMode) {
 		case normal:
 
 		case node:
@@ -167,7 +183,13 @@ void WorldView::OnLeftDragged(wxMouseEvent &e)
 	}
 }
 
-void WorldView::setMode(WorldViewMode mode)
+void WorldView::setMode(WorldMode mode)
 {
-	mViewMode = mode;
+	mMode = mode;
 }
+
+void WorldView::setSelectMode(WorldSelectMode mode)
+{
+	mSelectMode = mode;
+}
+
