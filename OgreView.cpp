@@ -14,13 +14,13 @@ IMPLEMENT_CLASS(OgreView, wxControl)
 
 // Event Table
 BEGIN_EVENT_TABLE(OgreView, wxControl)
-	EVT_ERASE_BACKGROUND(OgreView::OnEraseBackground) 
-	EVT_KILL_FOCUS(OgreView::OnFocusLost)
-	EVT_SET_FOCUS(OgreView::OnFocusSet)
-	EVT_MOUSE_EVENTS(OgreView::OnMouse)
-//	EVT_PAINT(OgreView::OnPaint)
-	EVT_SIZE(OgreView::OnSize)
-	EVT_TIMER(ID_RENDERTIMER, OgreView::OnTimer)
+	EVT_ERASE_BACKGROUND(OgreView::onEraseBackground) 
+	EVT_KILL_FOCUS(OgreView::onFocusLost)
+	EVT_SET_FOCUS(OgreView::onFocusSet)
+	EVT_MOUSE_EVENTS(OgreView::onMouse)
+//	EVT_PAINT(OgreView::onPaint)
+	EVT_SIZE(OgreView::onSize)
+	EVT_TIMER(ID_RENDERTIMER, OgreView::onTimer)
 END_EVENT_TABLE()
 
 /** Brief description which ends at this dot. Details follow
@@ -175,28 +175,28 @@ void OgreView::cameraRotate(Ogre::Real yaw, Ogre::Real pitch)
 	mCamera->pitch(pitch * (mCamera->getFOVy() / 240.0f));
 }
 
-void OgreView::OnEraseBackground(wxEraseEvent &e)
+void OgreView::onEraseBackground(wxEraseEvent &e)
 {
 	update();
 }
 
-void OgreView::OnFocusSet(wxFocusEvent& e)
+void OgreView::onFocusSet(wxFocusEvent& e)
 {
 }
 
-void OgreView::OnFocusLost(wxFocusEvent& e)
+void OgreView::onFocusLost(wxFocusEvent& e)
 {
 }
 
-void OgreView::OnLeftDragged(wxMouseEvent &e)
+void OgreView::onLeftDragged(wxMouseEvent &e)
 {
 }
 
-void OgreView::OnLeftPressed(wxMouseEvent &e)
+void OgreView::onLeftPressed(wxMouseEvent &e)
 {
 }
 
-void OgreView::OnMouse(wxMouseEvent &e)
+void OgreView::onMouse(wxMouseEvent &e)
 {
 	// Camera controls
 	if(e.Dragging())
@@ -222,13 +222,13 @@ void OgreView::OnMouse(wxMouseEvent &e)
 	update();
 }
 
-void OgreView::OnPaint(wxPaintEvent &WXUNUSED(e))
+void OgreView::onPaint(wxPaintEvent &WXUNUSED(e))
 {
 	wxPaintDC dc(this);
 	update();
 }
 
-void OgreView::OnSize(wxSizeEvent &e)
+void OgreView::onSize(wxSizeEvent &e)
 {
 	// Setting new size;
 	int width;
@@ -244,7 +244,7 @@ void OgreView::OnSize(wxSizeEvent &e)
 	update();
 }
 
-void OgreView::OnTimer(wxTimerEvent &e)
+void OgreView::onTimer(wxTimerEvent &e)
 {
 	update();
 }

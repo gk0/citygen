@@ -14,13 +14,13 @@ const long ID_RENDERTIMER = wxNewId();
 
 // Event Table 
 BEGIN_EVENT_TABLE(WorldView, wxControl)
-	EVT_ERASE_BACKGROUND(WorldView::OnEraseBackground) 
-	EVT_KILL_FOCUS(WorldView::OnLostFocus)
-	EVT_MOUSE_EVENTS(WorldView::OnMouse)
-//	EVT_PAINT(WorldView::OnPaint)
-	EVT_SET_FOCUS(WorldView::OnSetFocus)
-	EVT_SIZE(WorldView::OnSize)
-	EVT_TIMER(ID_RENDERTIMER, WorldView::OnTimer)
+	EVT_ERASE_BACKGROUND(WorldView::onEraseBackground) 
+	EVT_KILL_FOCUS(WorldView::onLostFocus)
+	EVT_MOUSE_EVENTS(WorldView::onMouse)
+//	EVT_PAINT(WorldView::onPaint)
+	EVT_SET_FOCUS(WorldView::onSetFocus)
+	EVT_SIZE(WorldView::onSize)
+	EVT_TIMER(ID_RENDERTIMER, WorldView::onTimer)
 END_EVENT_TABLE()
 
 
@@ -29,7 +29,7 @@ WorldView::WorldView(wxFrame* parent)
 	: OgreView(parent)
 {
 	mCurrentObject = 0;
-	mMode = normal;
+	mEditMode = view;
 	mSelectMode = sel;
 
 	// Create our ray query
@@ -42,8 +42,10 @@ WorldView::~WorldView()
 {
 }
 
-void WorldView::addNode(float x, float y)
+void WorldView::moveNode(float x, float y)
 {
+	if(!mCurrentObject) return;
+
 	Ray mouseRay = mCamera->getCameraToViewportRay(x,y);
     mRaySceneQuery->setRay( mouseRay );
     mRaySceneQuery->setSortByDistance( false );
@@ -61,16 +63,7 @@ void WorldView::addNode(float x, float y)
     }
 }
 
-
-void WorldView::deleteSelectedNode()
-{
-	if(mCurrentObject) {
-		mSceneMgr->destroySceneNode(mCurrentObject->getName());
-		mCurrentObject = 0;
-	}
-}
-
-void WorldView::OnLeftPressed(wxMouseEvent &e)
+void WorldView::onSelectNode(wxMouseEvent &e)
 {
 	// Turn off bounding box.
     if ( mCurrentObject )
@@ -84,28 +77,41 @@ void WorldView::OnLeftPressed(wxMouseEvent &e)
     
     // Execute query
     RaySceneQueryResult &result = mRaySceneQuery->execute();
-    RaySceneQueryResult::iterator itr = result.begin( );
+    RaySceneQueryResult::iterator itr = result.begin();
 
 	// Get results, create a node/entity on the position
 	for( itr = result.begin( ); itr != result.end(); itr++ )
 	{
-		if ( itr->movable && itr->movable->getName().substr(0, 5) != "tile[" )
-        {
-        	mCurrentObject = itr->movable->getParentSceneNode( );
-            break;
-        }
-        else if ( itr->worldFragment )
-        {
-            Entity *ent;
-            char name[16];
-            sprintf( name, "Robot%d", mCount++ );
-            ent = mSceneMgr->createEntity( name, "Node.mesh" );
-			ent->setMaterialName("Examples/Hilite/Yellow");
-            mCurrentObject = mSceneMgr->getRootSceneNode( )->createChildSceneNode( String(name) + "Node", itr->worldFragment->singleIntersection );
-            mCurrentObject->attachObject( ent );
-            mCurrentObject->setScale( 0.1f, 0.1f, 0.1f );
-            break;
-        }
+		if(mSelectMode == sel || mSelectMode==del) {
+			if ( itr->movable && itr->movable->getName().substr(0, 5) != "tile[" )
+			{
+        		mCurrentObject = itr->movable->getParentSceneNode( );
+				break;
+			}else{
+				mCurrentObject = 0;
+			}
+		}else if(mSelectMode == add) {
+			if ( itr->worldFragment )
+			{
+				Entity *ent;
+				char name[16];
+				sprintf( name, "Robot%d", mCount++ );
+				ent = mSceneMgr->createEntity( name, "Node.mesh" );
+				ent->setMaterialName("Examples/Hilite/Yellow");
+				mCurrentObject = mSceneMgr->getRootSceneNode( )->createChildSceneNode( String(name) + "Node", itr->worldFragment->singleIntersection );
+				mCurrentObject->attachObject( ent );
+				mCurrentObject->setScale( 0.1f, 0.1f, 0.1f );
+				break;
+			}
+		}
+	}
+
+	if(mSelectMode==del) {
+		//Delete if we can
+		if(mCurrentObject) {
+			mSceneMgr->destroySceneNode(mCurrentObject->getName());
+			mCurrentObject = 0;
+		}
 	}
 	
 	// Turn on bounding box.
@@ -113,12 +119,12 @@ void WorldView::OnLeftPressed(wxMouseEvent &e)
     	mCurrentObject->showBoundingBox( true );
 }
 
-void WorldView::OnLostFocus(wxFocusEvent& e)
+void WorldView::onLostFocus(wxFocusEvent& e)
 {
 	//Should tidy up my dragging logic here
 }
 
-void WorldView::OnMouse(wxMouseEvent &e)
+void WorldView::onMouse(wxMouseEvent &e)
 {
 	//Check for mouse wheel scroll
 	if (e.GetWheelRotation() != 0)
@@ -141,7 +147,7 @@ void WorldView::OnMouse(wxMouseEvent &e)
 		if(e.m_leftDown && e.m_rightDown)
 			cameraMove(0.0f, 0.0f, delta_y);
 		else if(e.m_leftDown) {
-			if(mMode == node) OnLeftDragged(e);
+			if(mEditMode == node) onLeftDragged(e);
 			else cameraRotate(delta_x*2, delta_y);
 		}else if(e.m_rightDown)
 			cameraMove((Real)(-delta_x), (Real)delta_y, 0.0f);
@@ -149,7 +155,7 @@ void WorldView::OnMouse(wxMouseEvent &e)
 	else 
 	{
 		if(e.m_leftDown) {
-			if(mMode == node) OnLeftPressed(e);
+			if(mEditMode == node) onSelectNode(e);
 		}
 	}
 
@@ -161,35 +167,34 @@ void WorldView::OnMouse(wxMouseEvent &e)
 	update();
 }
 /*
-void WorldView::OnMouseWheel(wxMouseEvent &e) {
+void WorldView::onMouseWheel(wxMouseEvent &e) {
 }
 */
-void WorldView::OnSetFocus(wxFocusEvent& e)
+void WorldView::onSetFocus(wxFocusEvent& e)
 {
 	
 }
 
-void WorldView::OnLeftDragged(wxMouseEvent &e)
+void WorldView::onLeftDragged(wxMouseEvent &e)
 {
-	switch(mMode) {
-		case normal:
+	switch(mEditMode) {
+		case view:
 
 		case node:
-			addNode(float(e.GetX()) / float(mViewport->getActualWidth()), 
-			float(e.GetY()) / float(mViewport->getActualHeight()));
+			if(mSelectMode ==sel){
+				moveNode(float(e.GetX()) / float(mViewport->getActualWidth()), 
+					float(e.GetY()) / float(mViewport->getActualHeight()));
+			}
 			break;
 		default:
 			break;
 	}
 }
 
-void WorldView::setMode(WorldMode mode)
-{
-	mMode = mode;
+void WorldView::setEditMode(EditModeListener::EditMode mode) {
+	mEditMode = mode;
 }
 
-void WorldView::setSelectMode(WorldSelectMode mode)
-{
+void WorldView::setSelectMode(SelectModeListener::SelectMode mode) {
 	mSelectMode = mode;
 }
-

@@ -4,40 +4,47 @@
 #include "stdafx.h"
 #include "WorldView.h"
 #include "LogWindow.h"
+#include "FileToolBar.h"
+#include "EditModeToolBar.h"
+#include "SelectModeToolBar.h"
 
 // MainWindow class declaration //
-class MainWindow : public wxFrame
+class MainWindow : public wxFrame, EditModeListener
 {
 private:
 	DECLARE_EVENT_TABLE()
 
 	wxToolBar* mToolBar;
-	wxToolBar* mGraphToolBar;
+	//wxToolBar* mGraphToolBar;
 	wxFrameManager mFrameManager;
+	FileToolBar mFileToolBar;
+	EditModeToolBar mEditModeToolBar;
+	SelectModeToolBar mSelectModeToolBar;
 	
 	WorldView *mWorldView;
 	LogWindow *mLogWindow;
 
 	long mMouseX, mMouseY;
-	bool m_smallToolbar, m_horzText;
+	bool m_horzText;
 
 public:
 	MainWindow();
 	~MainWindow();
 
-	void OnQuit(wxCommandEvent &e);
-	void OnAbout(wxCommandEvent &e);
-	void OnNodeAdd(wxCommandEvent &e);
-	void OnNodeDelete(wxCommandEvent &e);
+	void onQuit(wxCommandEvent &e);
+	void onAbout(wxCommandEvent &e);
+	void onNodeAdd(wxCommandEvent &e);
+	void onNodeDelete(wxCommandEvent &e);
 
 
-	void OnViewModeSelect(wxCommandEvent &e);
-	void OnNodeModeSelect(wxCommandEvent &e);
-	void OnEdgeModeSelect(wxCommandEvent &e);
-	void OnModeSelect(WorldMode mode);
+	void onViewModeSelect(wxCommandEvent &e);
+	void onNodeModeSelect(wxCommandEvent &e);
+	void onEdgeModeSelect(wxCommandEvent &e);
 
 	void CreateToolbar();
 	void CreateGraphToolbar();
+
+	void setEditMode(EditModeListener::EditMode mode);
 };
 
 #endif

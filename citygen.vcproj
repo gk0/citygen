@@ -187,6 +187,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\EditModeToolBar.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FileToolBar.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Line3D.cpp"
 				>
 			</File>
@@ -200,6 +208,10 @@
 			</File>
 			<File
 				RelativePath=".\OgreView.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SelectModeToolBar.cpp"
 				>
 			</File>
 			<File
@@ -237,6 +249,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\EditModeListener.h"
+				>
+			</File>
+			<File
+				RelativePath=".\EditModeToolBar.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FileToolBar.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Line3D.h"
 				>
 			</File>
@@ -250,6 +274,14 @@
 			</File>
 			<File
 				RelativePath=".\OgreView.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SelectModeListener.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SelectModeToolBar.h"
 				>
 			</File>
 			<File

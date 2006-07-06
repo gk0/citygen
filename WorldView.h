@@ -3,20 +3,11 @@
 
 #include "stdafx.h"
 #include "OgreView.h"
+#include "EditModeListener.h"
+#include "SelectModeListener.h"
 
-enum WorldMode {
-	normal,
-	node,
-	edge
-};
 
-enum WorldSelectMode {
-	sel,
-	add,
-	del
-};
-
-class WorldView : public OgreView
+class WorldView : public OgreView, EditModeListener, SelectModeListener
 {
 
 protected:
@@ -24,14 +15,14 @@ protected:
 	Ogre::SceneNode *mCurrentObject;         // The newly created object
 	int mCount;                        // The number of robots on the screen
 
-	WorldMode mMode;
-	WorldSelectMode mSelectMode;
+	EditModeListener::EditMode mEditMode;
+	SelectModeListener::SelectMode mSelectMode;
 	
-	void OnLeftDragged(wxMouseEvent &e);
-	void OnLeftPressed(wxMouseEvent &e);
-	void OnLostFocus(wxFocusEvent& e);	
-	void OnMouse(wxMouseEvent &e);
-	void OnSetFocus(wxFocusEvent& e);
+	void onLeftDragged(wxMouseEvent &e);
+	void onSelectNode(wxMouseEvent &e);
+	void onLostFocus(wxFocusEvent& e);	
+	void onMouse(wxMouseEvent &e);
+	void onSetFocus(wxFocusEvent& e);
 
 protected:	
 	DECLARE_EVENT_TABLE() 
@@ -45,12 +36,11 @@ public:
 	WorldView(wxFrame* parent);
 	virtual ~WorldView();
 	
-	void addNode(float x, float y);
-	void deleteSelectedNode();
-	WorldMode getMode() { return mMode; }
+	void moveNode(float x, float y);
 	//void update();
-	void setMode(WorldMode mode);
-	void setSelectMode(WorldSelectMode mode);
+
+	void setEditMode(EditModeListener::EditMode mode);
+	void setSelectMode(SelectModeListener::SelectMode mode);
 
 };
 
