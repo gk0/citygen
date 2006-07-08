@@ -28,9 +28,11 @@ END_EVENT_TABLE()
 WorldView::WorldView(wxFrame* parent) 
 	: OgreView(parent)
 {
-	mCurrentObject = 0;
+	mCurrentNode = 0;
+	mRoadNode = 0;
 	mEditMode = view;
 	mSelectMode = sel;
+	mNodeCount = mRoadCount = 0;
 
 	// Create our ray query
 	mRaySceneQuery = mSceneMgr->createRayQuery(Ray());
@@ -44,7 +46,7 @@ WorldView::~WorldView()
 
 void WorldView::moveNode(float x, float y)
 {
-	if(!mCurrentObject) return;
+	if(!mCurrentNode) return;
 
 	Ray mouseRay = mCamera->getCameraToViewportRay(x,y);
     mRaySceneQuery->setRay( mouseRay );
@@ -57,7 +59,7 @@ void WorldView::moveNode(float x, float y)
     {
         if ( itr->worldFragment )
         {
-            mCurrentObject->setPosition( itr->worldFragment->singleIntersection );
+            mCurrentNode->setPosition( itr->worldFragment->singleIntersection );
             break;
         }
     }
@@ -66,8 +68,8 @@ void WorldView::moveNode(float x, float y)
 void WorldView::onSelectNode(wxMouseEvent &e)
 {
 	// Turn off bounding box.
-    if ( mCurrentObject )
-    	mCurrentObject->showBoundingBox( false );
+    if(mCurrentNode)
+    	mCurrentNode->showBoundingBox( false );
     	
     // Setup the ray scene query
     Ray mouseRay = mCamera->getCameraToViewportRay(float(e.GetX()) / float(mViewport->getActualWidth()), 
@@ -83,24 +85,25 @@ void WorldView::onSelectNode(wxMouseEvent &e)
 	for( itr = result.begin( ); itr != result.end(); itr++ )
 	{
 		if(mSelectMode == sel || mSelectMode==del) {
-			if ( itr->movable && itr->movable->getName().substr(0, 5) != "tile[" )
+			if ( itr->movable && itr->movable->getName().substr(0, 4) == "Node" )
 			{
-        		mCurrentObject = itr->movable->getParentSceneNode( );
+        		mCurrentNode = itr->movable->getParentSceneNode( );
 				break;
 			}else{
-				mCurrentObject = 0;
+				mCurrentNode = 0;
 			}
 		}else if(mSelectMode == add) {
 			if ( itr->worldFragment )
 			{
 				Entity *ent;
-				char name[16];
-				sprintf( name, "Robot%d", mCount++ );
-				ent = mSceneMgr->createEntity( name, "Node.mesh" );
+				std::stringstream oss;
+				oss << "Node" << mNodeCount++;
+				String name(oss.str());
+				ent = mSceneMgr->createEntity(name, "Node.mesh" );
 				ent->setMaterialName("Examples/Hilite/Yellow");
-				mCurrentObject = mSceneMgr->getRootSceneNode( )->createChildSceneNode( String(name) + "Node", itr->worldFragment->singleIntersection );
-				mCurrentObject->attachObject( ent );
-				mCurrentObject->setScale( 0.1f, 0.1f, 0.1f );
+				mCurrentNode = mSceneMgr->getRootSceneNode( )->createChildSceneNode( name+"ScNode", itr->worldFragment->singleIntersection );
+				mCurrentNode->attachObject( ent );
+				mCurrentNode->setScale( 0.1f, 0.1f, 0.1f );
 				break;
 			}
 		}
@@ -108,16 +111,101 @@ void WorldView::onSelectNode(wxMouseEvent &e)
 
 	if(mSelectMode==del) {
 		//Delete if we can
-		if(mCurrentObject) {
-			mSceneMgr->destroySceneNode(mCurrentObject->getName());
-			mCurrentObject = 0;
+		if(mCurrentNode) {
+			mSceneMgr->destroySceneNode(mCurrentNode->getName());
+			mCurrentNode = 0;
 		}
 	}
 	
 	// Turn on bounding box.
-    if ( mCurrentObject )
-    	mCurrentObject->showBoundingBox( true );
+    if(mCurrentNode)
+    	mCurrentNode->showBoundingBox( true );
 }
+
+
+void WorldView::onSelectRoad(wxMouseEvent &e)
+{
+	// Turn off bounding box.
+    if ( mRoadNode )
+    	mRoadNode->showBoundingBox( false );
+    	
+    // Setup the ray scene query
+    Ray mouseRay = mCamera->getCameraToViewportRay(float(e.GetX()) / float(mViewport->getActualWidth()), 
+			float(e.GetY()) / float(mViewport->getActualHeight()) );
+	mRaySceneQuery->setRay( mouseRay );
+    mRaySceneQuery->setSortByDistance( true );
+    
+    // Execute query
+    RaySceneQueryResult &result = mRaySceneQuery->execute();
+    RaySceneQueryResult::iterator itr = result.begin();
+
+	bool deselectNode = false;
+
+	// Get results, create a node/entity on the position
+	for( itr = result.begin( ); itr != result.end(); itr++ )
+	{
+		if((mSelectMode == sel) || (mSelectMode == del)) {
+			/*if ( itr->movable && itr->movable->getName().substr(0, 5) != "tile[" )
+			{
+        		mRoadNode = itr->movable->getParentSceneNode( );
+				break;
+			}else{
+				mRoadNode = 0;
+			}*/
+		}else if(mSelectMode == add) {
+			if ( itr->movable && itr->movable->getName().substr(0, 4) == "Node" )
+			{
+				if(mRoadNode) {
+
+					
+					std::stringstream oss;
+					oss << "manual" << mRoadCount++;
+					String name(oss.str());
+
+					//omg i should like draw a line from my old node to my new node
+					ManualObject* myManualObject = new ManualObject(name); 
+					SceneNode* myManualObjectNode = mSceneMgr->getRootSceneNode()->createChildSceneNode(name+"_node"); 
+
+					MaterialPtr myManualObjectMaterial = MaterialManager::getSingleton().create(name+"Material","debugger"); 
+					myManualObjectMaterial->setReceiveShadows(false); 
+					myManualObjectMaterial->getTechnique(0)->setLightingEnabled(true); 
+					myManualObjectMaterial->getTechnique(0)->getPass(0)->setDiffuse(0,0,1,0); 
+					myManualObjectMaterial->getTechnique(0)->getPass(0)->setAmbient(0,0,1); 
+					myManualObjectMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(0,0,1); 
+
+					myManualObject->begin(name+"Material", Ogre::RenderOperation::OT_LINE_LIST); 
+					myManualObject->position(mRoadNode->getPosition()); 
+					myManualObject->position(itr->movable->getParentSceneNode()->getPosition()); 
+					// etc 
+					myManualObject->end(); 
+
+					myManualObjectNode->attachObject(myManualObject);
+
+					/////////////////////
+				}
+        		mRoadNode = itr->movable->getParentSceneNode();
+				deselectNode = false;
+				break;
+			}else{
+				deselectNode = true;
+			}
+		}
+	}
+	if(deselectNode) mRoadNode = 0;
+
+	if(mSelectMode==del) {
+		//Delete if we can
+		if(mRoadNode) {
+			mSceneMgr->destroySceneNode(mRoadNode->getName());
+			mRoadNode = 0;
+		}
+	}
+	
+	// Turn on bounding box.
+    if ( mRoadNode )
+    	mRoadNode->showBoundingBox( true );
+}
+
 
 void WorldView::onLostFocus(wxFocusEvent& e)
 {
@@ -156,6 +244,7 @@ void WorldView::onMouse(wxMouseEvent &e)
 	{
 		if(e.m_leftDown) {
 			if(mEditMode == node) onSelectNode(e);
+			else if(mEditMode == edge) onSelectRoad(e);
 		}
 	}
 
@@ -193,6 +282,17 @@ void WorldView::onLeftDragged(wxMouseEvent &e)
 
 void WorldView::setEditMode(EditModeListener::EditMode mode) {
 	mEditMode = mode;
+	switch(mode) {
+		case node:
+			if(mRoadNode) mRoadNode->showBoundingBox(false);
+			if(mCurrentNode) mCurrentNode->showBoundingBox(true);
+			break;
+		case edge:
+			if(mCurrentNode) mCurrentNode->showBoundingBox(false);
+			if(mRoadNode) mRoadNode->showBoundingBox(true);
+			break;
+	}
+	update();
 }
 
 void WorldView::setSelectMode(SelectModeListener::SelectMode mode) {

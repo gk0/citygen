@@ -19,7 +19,7 @@ public:
 	SelectModeToolBar(wxWindow* parent, wxWindowID id, long style, bool largeToolbar = false);
 
 	void setEditMode(EditModeListener::EditMode mode);
-	void init(EditModeListener::EditMode mode);
+	void init();
 	void setListener(SelectModeListener* listener);
 
 	void onSelectSelMode(wxCommandEvent &e);

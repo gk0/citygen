@@ -27,36 +27,42 @@ SelectModeToolBar::SelectModeToolBar(wxWindow* parent, wxWindowID id, long style
 {
 	mLargeToolbar = largeToolbar;
 
-	init(node);
-
-	if(FindById(IDM_GRAPH_SELNODE)) EnableTool(IDM_GRAPH_SELNODE, false);
-	if(FindById(IDM_GRAPH_ADDNODE)) EnableTool(IDM_GRAPH_ADDNODE, false);
-	if(FindById(IDM_GRAPH_DELNODE)) EnableTool(IDM_GRAPH_DELNODE, false);
+	init();
+	setEditMode(view);
 }
 
 void SelectModeToolBar::setEditMode(EditModeListener::EditMode mode) 
 {
 	//Remove What we don't want
-	if(mode != view) {
-		if(FindById(IDM_GRAPH_SELEDGE)) RemoveTool(IDM_GRAPH_SELEDGE);
-		if(FindById(IDM_GRAPH_ADDEDGE)) RemoveTool(IDM_GRAPH_ADDEDGE);
-		if(FindById(IDM_GRAPH_DELEDGE)) RemoveTool(IDM_GRAPH_DELEDGE);
-		if(FindById(IDM_GRAPH_SELNODE)) RemoveTool(IDM_GRAPH_SELNODE);
-		if(FindById(IDM_GRAPH_ADDNODE)) RemoveTool(IDM_GRAPH_ADDNODE);
-		if(FindById(IDM_GRAPH_DELNODE)) RemoveTool(IDM_GRAPH_DELNODE);
-		init(mode);
-	}else{
-		if(FindById(IDM_GRAPH_SELEDGE)) EnableTool(IDM_GRAPH_SELEDGE, false);
-		if(FindById(IDM_GRAPH_ADDEDGE)) EnableTool(IDM_GRAPH_ADDEDGE, false);
-		if(FindById(IDM_GRAPH_DELEDGE)) EnableTool(IDM_GRAPH_DELEDGE, false);
-		if(FindById(IDM_GRAPH_SELNODE)) EnableTool(IDM_GRAPH_SELNODE, false);
-		if(FindById(IDM_GRAPH_ADDNODE)) EnableTool(IDM_GRAPH_ADDNODE, false);
-		if(FindById(IDM_GRAPH_DELNODE)) EnableTool(IDM_GRAPH_DELNODE, false);
-	}
+	//if(mode != view) {
+	//	if(FindById(IDM_GRAPH_SELEDGE)) RemoveTool(IDM_GRAPH_SELEDGE);
+	//	if(FindById(IDM_GRAPH_ADDEDGE)) RemoveTool(IDM_GRAPH_ADDEDGE);
+	//	if(FindById(IDM_GRAPH_DELEDGE)) RemoveTool(IDM_GRAPH_DELEDGE);
+	//	if(FindById(IDM_GRAPH_SELNODE)) RemoveTool(IDM_GRAPH_SELNODE);
+	//	if(FindById(IDM_GRAPH_ADDNODE)) RemoveTool(IDM_GRAPH_ADDNODE);
+	//	if(FindById(IDM_GRAPH_DELNODE)) RemoveTool(IDM_GRAPH_DELNODE);
+	//	init(mode);
+	//}else{
+	//	if(FindById(IDM_GRAPH_SELEDGE)) EnableTool(IDM_GRAPH_SELEDGE, false);
+	//	if(FindById(IDM_GRAPH_ADDEDGE)) EnableTool(IDM_GRAPH_ADDEDGE, false);
+	//	if(FindById(IDM_GRAPH_DELEDGE)) EnableTool(IDM_GRAPH_DELEDGE, false);
+	//	if(FindById(IDM_GRAPH_SELNODE)) EnableTool(IDM_GRAPH_SELNODE, false);
+	//	if(FindById(IDM_GRAPH_ADDNODE)) EnableTool(IDM_GRAPH_ADDNODE, false);
+	//	if(FindById(IDM_GRAPH_DELNODE)) EnableTool(IDM_GRAPH_DELNODE, false);
+	//}
+	bool viewNode = (mode == node);
+	if(FindById(IDM_GRAPH_SELNODE)) EnableTool(IDM_GRAPH_SELNODE, viewNode);
+	if(FindById(IDM_GRAPH_ADDNODE)) EnableTool(IDM_GRAPH_ADDNODE, viewNode);
+	if(FindById(IDM_GRAPH_DELNODE)) EnableTool(IDM_GRAPH_DELNODE, viewNode);
+
+	bool viewEdge = (mode == edge);
+	if(FindById(IDM_GRAPH_SELEDGE)) EnableTool(IDM_GRAPH_SELEDGE, viewEdge);
+	if(FindById(IDM_GRAPH_ADDEDGE)) EnableTool(IDM_GRAPH_ADDEDGE, viewEdge);
+	if(FindById(IDM_GRAPH_DELEDGE)) EnableTool(IDM_GRAPH_DELEDGE, viewEdge);
 }
 
 
-void SelectModeToolBar::init(EditModeListener::EditMode mode)
+void SelectModeToolBar::init()
 {
 	// Set up toolbar
 	enum
@@ -99,16 +105,22 @@ void SelectModeToolBar::init(EditModeListener::EditMode mode)
 		}
 		SetToolBitmapSize(wxSize(w, h));
 	}
-	if(mode == node) {
-		AddTool(IDM_GRAPH_SELNODE, _T("Select Node"), toolBarBitmaps[Tool_select], _T("Select node"), wxITEM_RADIO);
-		AddTool(IDM_GRAPH_ADDNODE, _T("Add Node"), toolBarBitmaps[Tool_addnode], _T("Add node"), wxITEM_RADIO);
-		AddTool(IDM_GRAPH_DELNODE, _T("Delete Node"), toolBarBitmaps[Tool_delnode], _T("Delete node"), wxITEM_RADIO);
-	}
-	if(mode == edge) {
-		AddTool(IDM_GRAPH_SELEDGE, _T("Select Road"), toolBarBitmaps[Tool_select], _T("Select road"), wxITEM_RADIO);
-		AddTool(IDM_GRAPH_ADDEDGE, _T("Add Road"), toolBarBitmaps[Tool_deledge], _T("Add road"), wxITEM_RADIO);
-		AddTool(IDM_GRAPH_DELEDGE, _T("Delete Road"), toolBarBitmaps[Tool_deledge], _T("Delete road"), wxITEM_RADIO);
-	}
+	//if(mode == node) {
+	//	AddTool(IDM_GRAPH_SELNODE, _T("Select Node"), toolBarBitmaps[Tool_select], _T("Select node"), wxITEM_RADIO);
+	//	AddTool(IDM_GRAPH_ADDNODE, _T("Add Node"), toolBarBitmaps[Tool_addnode], _T("Add node"), wxITEM_RADIO);
+	//	AddTool(IDM_GRAPH_DELNODE, _T("Delete Node"), toolBarBitmaps[Tool_delnode], _T("Delete node"), wxITEM_RADIO);
+	//}
+	//if(mode == edge) {
+	//	AddTool(IDM_GRAPH_SELEDGE, _T("Select Road"), toolBarBitmaps[Tool_select], _T("Select road"), wxITEM_RADIO);
+	//	AddTool(IDM_GRAPH_ADDEDGE, _T("Add Road"), toolBarBitmaps[Tool_deledge], _T("Add road"), wxITEM_RADIO);
+	//	AddTool(IDM_GRAPH_DELEDGE, _T("Delete Road"), toolBarBitmaps[Tool_deledge], _T("Delete road"), wxITEM_RADIO);
+	//}
+	AddTool(IDM_GRAPH_SELNODE, _T("Select Node"), toolBarBitmaps[Tool_select], _T("Select node"), wxITEM_RADIO);
+	AddTool(IDM_GRAPH_ADDNODE, _T("Add Node"), toolBarBitmaps[Tool_addnode], _T("Add node"), wxITEM_RADIO);
+	AddTool(IDM_GRAPH_DELNODE, _T("Delete Node"), toolBarBitmaps[Tool_delnode], _T("Delete node"), wxITEM_RADIO);
+	AddTool(IDM_GRAPH_SELEDGE, _T("Select Road"), toolBarBitmaps[Tool_select], _T("Select road"), wxITEM_RADIO);
+	AddTool(IDM_GRAPH_ADDEDGE, _T("Add Road"), toolBarBitmaps[Tool_deledge], _T("Add road"), wxITEM_RADIO);
+	AddTool(IDM_GRAPH_DELEDGE, _T("Delete Road"), toolBarBitmaps[Tool_deledge], _T("Delete road"), wxITEM_RADIO);
 	Realize();
 }
 

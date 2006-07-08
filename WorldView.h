@@ -12,14 +12,18 @@ class WorldView : public OgreView, EditModeListener, SelectModeListener
 
 protected:
 	Ogre::RaySceneQuery *mRaySceneQuery;     // The ray scene query pointer
-	Ogre::SceneNode *mCurrentObject;         // The newly created object
-	int mCount;                        // The number of robots on the screen
+	Ogre::SceneNode *mCurrentNode;         // The newly created object
+
+	Ogre::SceneNode *mRoadNode;         // The newly created object
+
+	int mNodeCount, mRoadCount;                        // The number of robots on the screen
 
 	EditModeListener::EditMode mEditMode;
 	SelectModeListener::SelectMode mSelectMode;
 	
 	void onLeftDragged(wxMouseEvent &e);
 	void onSelectNode(wxMouseEvent &e);
+	void onSelectRoad(wxMouseEvent &e);
 	void onLostFocus(wxFocusEvent& e);	
 	void onMouse(wxMouseEvent &e);
 	void onSetFocus(wxFocusEvent& e);

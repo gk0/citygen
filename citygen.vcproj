@@ -195,10 +195,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Line3D.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\LogWindow.cpp"
 				>
 			</File>
@@ -258,10 +254,6 @@
 			</File>
 			<File
 				RelativePath=".\FileToolBar.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Line3D.h"
 				>
 			</File>
 			<File

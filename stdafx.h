@@ -33,6 +33,10 @@
 #include <memory.h>
 #include <tchar.h>
 
+// C++ Headers
+#include <iostream>
+#include <sstream>
+
 //OGRE includes
 #include <Ogre.h>
 //include order, umm doesn't really work
