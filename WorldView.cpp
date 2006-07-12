@@ -1,7 +1,7 @@
 // Includes 
 #include "stdafx.h"
 #include "WorldView.h"
-
+#include "WorldDoc.h"
 
 // Namespace
 using namespace Ogre;

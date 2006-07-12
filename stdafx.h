@@ -37,6 +37,12 @@
 #include <iostream>
 #include <sstream>
 
+//TinyXML Includes
+#include <tinyxml.h>
+
+//BOOST Includes
+#include <boost/graph/adjacency_list.hpp>
+
 //OGRE includes
 #include <Ogre.h>
 //include order, umm doesn't really work

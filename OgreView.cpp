@@ -124,7 +124,7 @@ void OgreView::createScene(void)
     // Fog
     // NB it's VERY important to set this before calling setWorldGeometry 
     // because the vertex program picked will be different
-	ColourValue fadeColour(0.93, 0.86, 0.76);
+	ColourValue fadeColour(0.93f, 0.86f, 0.76f);
 	mSceneMgr->setFog( FOG_LINEAR, fadeColour, .001, 500, 1000);
 	mRenderWindow->getViewport(0)->setBackgroundColour(fadeColour);
 
