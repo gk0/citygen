@@ -1,17 +1,45 @@
 #include "stdafx.h"
 #include "Application.h"
+#include "WorldView.h"
+#include "WorldDocument.h"
 
 using namespace Ogre;
 
 // Platform specific crap that creates the application, etc. //
 IMPLEMENT_APP(Application);
 
+
+Application::Application()
+: mDocManager(0),
+  mRoot(0),
+  mWindow(0)
+{
+}
+
 // Function definitions //
 // App Init
 bool Application::OnInit()
 {
+
 	if (!wxApp::OnInit()) 
 		return false;
+
+	//DocManager
+	// Create a document manager
+    mDocManager = new wxDocManager;
+
+    // Create a template relating drawing documents to their views
+    new wxDocTemplate(mDocManager, _T("Citygen XML"), _T("*.cgx"), _T(""), _T("cgx"), 
+		_T("Citygen Doc"),
+		_T("Citygen View"),
+        CLASSINFO(WorldDocument), 
+		CLASSINFO(WorldView)
+		);
+#ifdef __WXMAC__
+    wxFileName::MacRegisterDefaultTypeAndCreator( wxT("drw") , 'WXMB' , 'WXMA' ) ;
+#endif
+
+    mDocManager->SetMaxDocsOpen(1);
 
 	InitializeOgre();
 
@@ -20,7 +48,7 @@ bool Application::OnInit()
 	// now we need to create MainWindow singleton because
 	// it creates RenderWindow, which is needed for resource loading (for example, textures and VBO)
 	// we create it, but don't show to user to avoid flickness
-	mWindow = new MainWindow();
+	mWindow = new MainWindow(mDocManager);
 	SetTopWindow(mWindow); // set our MainWindow the main application window
 	mWindow->Show(true);
 
@@ -28,9 +56,9 @@ bool Application::OnInit()
 	
 	loadResources();
 
-	//
+	//Lets Start With a Document
+	mDocManager->CreateDocument("bla",wxDOC_NEW);
 	
-
 	// All clear!
 	return true;
 }

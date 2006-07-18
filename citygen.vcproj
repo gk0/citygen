@@ -39,7 +39,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/Zm129"
+				AdditionalOptions="/Zm196"
 				Optimization="0"
 				AdditionalIncludeDirectories="S:\game\boost_1_33_1;S:\game\tinyxml;&quot;S:\game\wxWidgets-2.6.3\include&quot;;&quot;S:\game\wxWidgets-2.6.3\lib\vc_lib\mswd\wx\msw&quot;;&quot;S:\game\wxWidgets-2.6.3\lib\vc_lib\mswd&quot;;&quot;S:\game\wxaui-0.9.2\include&quot;;S:\game\OgreSDK_VS8\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;TIXML_USE_STL;TUNE"
@@ -203,10 +203,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\OgreView.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\SelectModeToolBar.cpp"
 				>
 			</File>
@@ -231,11 +227,19 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\WorldDoc.cpp"
+				RelativePath=".\WorldDocument.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\WorldView.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WorldWindow.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\wxOgre.cpp"
 				>
 			</File>
 		</Filter>
@@ -269,10 +273,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\OgreView.h"
-				>
-			</File>
-			<File
 				RelativePath=".\SelectModeListener.h"
 				>
 			</File>
@@ -285,7 +285,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorldDocument.h"
+				>
+			</File>
+			<File
 				RelativePath=".\WorldView.h"
+				>
+			</File>
+			<File
+				RelativePath=".\WorldWindow.h"
+				>
+			</File>
+			<File
+				RelativePath=".\wxOgre.h"
 				>
 			</File>
 		</Filter>

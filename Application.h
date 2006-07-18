@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "MainWindow.h"
 
+class wxDocManager;
+
 /**Represents the application itself.
  * It is used to:
  *  set and get application-wide properties;
@@ -17,7 +19,11 @@ private:
 	Ogre::Root *mRoot;
 	MainWindow *mWindow;
 
+protected:
+    wxDocManager* mDocManager;
+
 public:
+	Application();
 	virtual bool OnInit();
 	virtual int OnExit();
 

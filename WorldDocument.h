@@ -1,5 +1,5 @@
-#ifndef WorldDoc_H
-#define WorldDoc_H
+#ifndef WorldDocument_H
+#define WorldDocument_H
 
 #include "stdafx.h"
 
@@ -38,33 +38,44 @@ typedef boost::adjacency_list<
 typedef boost::graph_traits<RoadGraph>::vertex_descriptor RoadVertex;
 typedef std::map<Ogre::Vector3, RoadVertex, compare_Vector3> RoadVertexMap;
 
+//I need a custom hashing function for this class
+typedef boost::graph_traits<RoadGraph>::edge_descriptor Road;
 
-class WorldDoc {
 
-private:
+#if !wxUSE_STD_IOSTREAM
+#error You must set wxUSE_STD_IOSTREAM to 1 in setup.h!
+#endif
+
+class WorldDocument : public wxDocument {
+	DECLARE_DYNAMIC_CLASS(WorldDocument)
+public:
 	RoadGraph mRoadGraph;
 	RoadVertexMap mRoadVertexMap;
 
 
 public:
 	//Default Constructor
-	WorldDoc();
+	WorldDocument();
 
 	bool addNode(const Ogre::Vector3& loc);
 	bool removeNode(const Ogre::Vector3& loc);
 	bool moveNode(const Ogre::Vector3& oldLoc, const Ogre::Vector3& newLoc);
 
-	bool addRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2);
+	bool addRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2, Road &road);
 	bool removeRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2);
 
 	void printNodes();
 	void printRoads();
-	void saveXML(const std::string& filename);
-	void loadXML(const std::string& filename);
 
-private:
+	std::ostream& SaveObject(std::ostream& text_stream);
+    std::istream& LoadObject(std::istream& text_stream);
+
+	bool findRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2, Road &road);
+
+
+	static std::string roadVertexToString(RoadVertex v);
+	static std::string roadToString(Road r);
 	static std::string pointerToString(void * ptr);
-
 };
 
 #endif

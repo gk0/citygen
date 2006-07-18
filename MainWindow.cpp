@@ -1,7 +1,7 @@
 // Includes //
 #include "stdafx.h"
 #include "MainWindow.h"
-#include "OgreView.h"
+//#include "wxOgre.h"
 
 
 // ----------------------------------------------------------------------------
@@ -61,14 +61,16 @@ END_EVENT_TABLE()
 
 
 // Frame Constructor
-MainWindow::MainWindow()
-  : wxFrame( NULL, wxID_ANY, "CityGen", wxDefaultPosition, wxSize( 640, 480 ),
-	  wxCLIP_CHILDREN | wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxTHICK_FRAME | wxSYSTEM_MENU  | wxCAPTION | wxCLOSE_BOX),
+MainWindow::MainWindow(wxDocManager* docManager)
+  : wxDocParentFrame(docManager, NULL, wxID_ANY, "CityGen", wxDefaultPosition, wxSize(800, 600), 
+	wxCLIP_CHILDREN | wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxTHICK_FRAME | wxSYSTEM_MENU  | wxCAPTION | wxCLOSE_BOX),
     mFileToolBar(this, wxNewId(), TOOLBAR_STYLE),
 	mEditModeToolBar(this, wxNewId(), TOOLBAR_STYLE),
 	mSelectModeToolBar(this, wxNewId(), TOOLBAR_STYLE)
 {
     m_horzText = false;
+
+	mDocManager = docManager;
 
 	mEditModeToolBar.setListener(this);
 
@@ -77,8 +79,8 @@ MainWindow::MainWindow()
 	mFrameManager.SetFrame(this);
 
 	// No Ogre app until it's given to us.
-	mWorldView = new WorldView(this);
-	mFrameManager.AddPane(mWorldView, wxCENTER, wxT("Render Window"));
+	mWorldWindow = new WorldWindow(0, this);
+	mFrameManager.AddPane(mWorldWindow, wxCENTER, wxT("Render Window"));
 
 	// Log Window
 	mLogWindow = new LogWindow(this);
@@ -88,7 +90,20 @@ MainWindow::MainWindow()
 
 	// Menu
 	wxMenu *menuFile = new wxMenu();
+	menuFile->Append(wxID_NEW, _T("&New..."));
+    menuFile->Append(wxID_OPEN, _T("&Open..."));
+    menuFile->Append(wxID_CLOSE, _T("&Close"));
+    menuFile->Append(wxID_SAVE, _T("&Save"));
+    menuFile->Append(wxID_SAVEAS, _T("Save &As..."));
+	menuFile->AppendSeparator();
+	menuFile->Append(wxID_PRINT, _T("&Print..."));
+    menuFile->Append(wxID_PRINT_SETUP, _T("Print &Setup..."));
+    menuFile->Append(wxID_PREVIEW, _T("Print Pre&view"));
+	menuFile->AppendSeparator();
 	menuFile->Append(wxID_EXIT, _T("E&xit:\tAlt-X"), _T("Exit this program."));
+
+	// A nice touch: a history of files visited. Use this menu.
+    mDocManager->FileHistoryUseMenu(menuFile);
 
 	wxMenu *menuView = new wxMenu();
 	//menuView->AppendCheckItem(IDM_TOGGLE_TOOLBAR, _T("Hide &toolbar"), _T("Show or hide the toolbar"));
@@ -126,11 +141,13 @@ MainWindow::MainWindow()
 					ToolbarPane().Top().
 					LeftDockable(true).RightDockable(true).Resizable(false));
 
-	mSelectModeToolBar.setListener((SelectModeListener*) mWorldView);
+	mSelectModeToolBar.setListener((SelectModeListener*) mWorldWindow);
 	mFrameManager.AddPane(&mSelectModeToolBar, wxPaneInfo().
 				Name(wxT("SelectModeToolBar")).Caption(wxT("Node Edit ToolBar")).
 				ToolbarPane().Top().
 				LeftDockable(true).RightDockable(true).Resizable(false));
+
+	enableDocumentToolbars(false);
 
 	mFrameManager.Update();
 
@@ -163,10 +180,26 @@ void MainWindow::onAbout(wxCommandEvent &e)
 
 void MainWindow::setEditMode(EditModeListener::EditMode mode) 
 {
-	mWorldView->setEditMode(mode);
+	mWorldWindow->setEditMode(mode);
 	mSelectModeToolBar.setEditMode(mode);
 
 	//Update the Toolbar Size & FrameManager
 	mFrameManager.GetPane(&mSelectModeToolBar).BestSize(mSelectModeToolBar.GetBestSize());
 	mFrameManager.Update();
+}
+
+template<> MainWindow* Ogre::Singleton<MainWindow>::ms_Singleton = 0;
+MainWindow& MainWindow::getSingleton()
+{
+	return ( *ms_Singleton );
+}
+
+MainWindow* MainWindow::getSingletonPtr()
+{
+	return ms_Singleton;
+}
+
+void MainWindow::enableDocumentToolbars(bool enable) {
+	mSelectModeToolBar.Enable(enable);
+	mEditModeToolBar.Enable(enable);
 }

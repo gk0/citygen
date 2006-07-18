@@ -1,8 +1,10 @@
 // Includes 
 #include "stdafx.h"
-#include "WorldDoc.h"
+#include "WorldDocument.h"
 
-WorldDoc::WorldDoc()
+IMPLEMENT_DYNAMIC_CLASS(WorldDocument, wxDocument)
+
+WorldDocument::WorldDocument()
  : mRoadGraph(),
    mRoadVertexMap()
 {
@@ -11,7 +13,7 @@ WorldDoc::WorldDoc()
 
 //function adds node if it is not already there
 //otherwise returns false and does nothing
-bool WorldDoc::addNode(const Ogre::Vector3& loc)
+bool WorldDocument::addNode(const Ogre::Vector3& loc)
 {
 	RoadVertexMap::iterator pos; 
 	bool inserted;
@@ -25,7 +27,7 @@ bool WorldDoc::addNode(const Ogre::Vector3& loc)
 	return inserted;
 }
 
-bool WorldDoc::moveNode(const Ogre::Vector3& oldLoc, const Ogre::Vector3& newLoc)
+bool WorldDocument::moveNode(const Ogre::Vector3& oldLoc, const Ogre::Vector3& newLoc)
 {
 	bool inserted;
 	RoadVertexMap::iterator pos = mRoadVertexMap.find(oldLoc);
@@ -42,7 +44,7 @@ bool WorldDoc::moveNode(const Ogre::Vector3& oldLoc, const Ogre::Vector3& newLoc
 	return false;
 }
 
-bool WorldDoc::removeNode(const Ogre::Vector3& loc)
+bool WorldDocument::removeNode(const Ogre::Vector3& loc)
 {
 	RoadVertexMap::iterator pos = mRoadVertexMap.find(loc);
 	// if node @ loc can be found
@@ -56,7 +58,7 @@ bool WorldDoc::removeNode(const Ogre::Vector3& loc)
 }
 
 //fckme i need to test if the 
-bool WorldDoc::addRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2)
+bool WorldDocument::addRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2, Road &road)
 {
 	RoadVertexMap::iterator pos1, pos2;
 	pos1 = mRoadVertexMap.find(loc1);
@@ -64,14 +66,14 @@ bool WorldDoc::addRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2)
 	// if node @ loc1 and node @ loc2 can be found
 	if(pos1 != mRoadVertexMap.end() && pos2 != mRoadVertexMap.end()) {
 		bool inserted;
-		boost::graph_traits<RoadGraph>::edge_descriptor e;
 		// add edge to graph
-		boost::tie(e, inserted) = add_edge(pos1->second, pos2->second, mRoadGraph);
+		boost::tie(road, inserted) = add_edge(pos1->second, pos2->second, mRoadGraph);
 		return inserted;
-	}else return false;
+	}
+	return false;
 }
 
-bool WorldDoc::removeRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2)
+bool WorldDocument::removeRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2)
 {
 	RoadVertexMap::iterator pos1, pos2;
 	pos1 = mRoadVertexMap.find(loc1);
@@ -84,7 +86,7 @@ bool WorldDoc::removeRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2)
 	}else return false;
 }
 
-void WorldDoc::printRoads() 
+void WorldDocument::printRoads() 
 {	
 	boost::graph_traits<RoadGraph>::edge_iterator i, end;
 	for (boost::tie(i, end) = edges(mRoadGraph); i != end; ++i) 
@@ -93,35 +95,57 @@ void WorldDoc::printRoads()
 		u = source(*i,mRoadGraph);
 		v = target(*i,mRoadGraph);
 		std::stringstream oss;
-		oss << "WorldDoc:edge: " << u << "-" << v << "  "<< mRoadGraph[u] << "-" << mRoadGraph[v];
+		oss << "WorldDocument:edge: " << u << "-" << v << "  "<< mRoadGraph[u] << "-" << mRoadGraph[v];
 		Ogre::LogManager::getSingleton().logMessage(oss.str());
 	}
 }
 
-void WorldDoc::printNodes() 
+void WorldDocument::printNodes() 
 {
 	RoadVertexMap::iterator pos = mRoadVertexMap.begin();
 	for(pos;pos != mRoadVertexMap.end(); pos++) {
 		std::stringstream oss;
-		oss << "WorldDoc:nodeMap: " << pos->first << " -> " << pos->second;
+		oss << "WorldDocument:nodeMap: " << pos->first << " -> " << pos->second;
 		Ogre::LogManager::getSingleton().logMessage(oss.str());
 	}
 
 	boost::graph_traits<RoadGraph>::vertex_iterator i, end;
 	for (boost::tie(i, end) = vertices(mRoadGraph); i != end; ++i) {
 		std::stringstream oss;
-		oss << "WorldDoc:node: " << *i << ": " << mRoadGraph[*i];
+		oss << "WorldDocument:node: " << *i << ": " << mRoadGraph[*i];
 		Ogre::LogManager::getSingleton().logMessage(oss.str());
 	}
 }
 
-void WorldDoc::saveXML(const std::string& filename) 
+std::string WorldDocument::roadVertexToString(RoadVertex v)
 {
+	std::stringstream oss;
+	oss << v;
+	return oss.str();
+}
+std::string WorldDocument::roadToString(Road r)
+{
+	std::stringstream oss;
+	oss << r.m_property;
+	return oss.str();
+}
+
+std::string WorldDocument::pointerToString(void * ptr) 
+{		
+	std::stringstream oss;
+	oss << ptr;
+	return oss.str();
+}
+
+std::ostream& WorldDocument::SaveObject(std::ostream& stream)
+{
+    wxDocument::SaveObject(stream);
+
 	TiXmlDocument doc;  
  	TiXmlDeclaration* decl = new TiXmlDeclaration( "1.0", "", "yes" );  
 	doc.LinkEndChild( decl );  
  
-	TiXmlElement * root = new TiXmlElement( "WorldDoc" );  
+	TiXmlElement * root = new TiXmlElement( "WorldDocument" );  
 	doc.LinkEndChild( root );  
 
 	TiXmlComment * comment = new TiXmlComment();
@@ -169,18 +193,17 @@ void WorldDoc::saveXML(const std::string& filename)
 		edge->SetAttribute("target", nodeTarget);
 	}
 
-	doc.SaveFile(filename);  //note: I shouldn't need the c_str() bit but when using /MDd I get a runtime error otherwise
-
+	//doc.SaveFile(filename);  //note: I shouldn't need the c_str() bit but when using /MDd I get a runtime error otherwise
+	stream << doc;
+    return stream;
 }
 
-
-void WorldDoc::loadXML(const std::string& filename) 
+std::istream& WorldDocument::LoadObject(std::istream& stream)
 {
-	TiXmlDocument doc(filename);
-	if(!doc.LoadFile()) {
-		//error handling
-		return;
-	}
+    wxDocument::LoadObject(stream);
+
+	TiXmlDocument doc;
+	stream >> doc;
 
 	//Yes loading XML does mean trashing our current document
 	mRoadGraph.clear();
@@ -192,11 +215,11 @@ void WorldDoc::loadXML(const std::string& filename)
 	TiXmlElement* pElem;
 	TiXmlHandle hRoot(0);
 
-	// block: root node 'WorldDoc'
+	// block: root node 'WorldDocument'
 	{
 		pElem=hDoc.FirstChildElement().Element();
 		// should always have a valid root but handle gracefully if it does
-		if (!pElem) return;
+		if (!pElem) return stream;
 		std::string name=pElem->Value();
 
 		// save this for later
@@ -236,7 +259,7 @@ void WorldDoc::loadXML(const std::string& filename)
 		for( pElem; pElem; pElem=pElem->NextSiblingElement())
 		{
 			std::string key = pElem->Value();
-			if(key == "Edges") {
+			if(key == "Edge") {
 				Ogre::Vector3 loc;
 				std::string source, target;
 				source = pElem->Attribute("source");
@@ -255,11 +278,21 @@ void WorldDoc::loadXML(const std::string& filename)
 			}
 		}
 	}
+    return stream;
 }
 
-std::string WorldDoc::pointerToString(void * ptr) 
-{		
-	std::stringstream oss;
-	oss << ptr;
-	return oss.str();
+bool WorldDocument::findRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2, Road &road)
+{
+	//given the location for two node find the road between them
+	RoadVertexMap::iterator pos1, pos2;
+	pos1 = mRoadVertexMap.find(loc1);
+	pos2 = mRoadVertexMap.find(loc2);
+	// if node @ loc1 and node @ loc2 can be found
+	if(pos1 != mRoadVertexMap.end() && pos2 != mRoadVertexMap.end())
+	{
+		bool success;
+		boost::tie(road, success) = boost::edge(pos1->second, pos2->second, mRoadGraph);
+		return success;
+	}
+	return false;
 }

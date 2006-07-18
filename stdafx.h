@@ -55,6 +55,7 @@
 	#include <wx/wx.h>
 #endif
 #include <wx/frame.h>
+#include <wx/docview.h>
 #include <wx/image.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
