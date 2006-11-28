@@ -51,13 +51,14 @@ bool Application::OnInit()
 	mWindow = new MainWindow(mDocManager);
 	SetTopWindow(mWindow); // set our MainWindow the main application window
 	mWindow->Show(true);
+	mWindow->updateOgre();
 
 	// Resources and resource initialization
 	
 	loadResources();
 
 	//Lets Start With a Document
-	mDocManager->CreateDocument("bla",wxDOC_NEW);
+	mDocManager->CreateDocument(wxT("bla"), wxDOC_NEW);
 	
 	// All clear!
 	return true;
@@ -93,7 +94,9 @@ bool Application::InitializeOgre()
    {
 	  String s = "OgreView::Init() - Exception:\n" + e.getFullDescription() + "\n";
 	  LogManager::getSingleton().logMessage(s, LML_CRITICAL);
-      wxMessageBox( e.getFullDescription().c_str(), _T("Exception!"), wxICON_EXCLAMATION);
+      wxMessageBox( wxString(e.getFullDescription().c_str(), wxConvUTF8),
+      wxT("Exception!"), 
+      wxICON_EXCLAMATION);
       return false;
    }
    return true;
@@ -105,7 +108,7 @@ void Application::setupResources(void)
 {
     // Load resource paths from config file
     ConfigFile cf;
-    cf.load("resources.cfg");
+    cf.load("./Media/resources.cfg");
 
     // Go through all sections & settings in the file
     ConfigFile::SectionIterator seci = cf.getSectionIterator();

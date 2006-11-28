@@ -4,13 +4,16 @@
 #include "stdafx.h"
 
 class EditModeListener {
-
 public:
 	enum EditMode {
 		view,
 		node,
-		edge
+		edge,
+		cell,
+		XtoZ
 	};
+	
+	virtual ~EditModeListener() {}
 	virtual void setEditMode(EditMode mode) = 0;
 
 };

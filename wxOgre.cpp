@@ -37,20 +37,28 @@ wxOgre::wxOgre(wxFrame* parent)
 
 	//Doesn't work
 	//wxControl::SetBackgroundColour(wxColour(128, 128, 128));
-	
+
+	// --------------------
 	// Create a new parameters list according to compiled OS
 	Ogre::NameValuePairList params;
-	String handle;
+	Ogre::String handle;
 #ifdef __WXMSW__
 	handle = Ogre::StringConverter::toString((size_t)((HWND)GetHandle()));
 #elif defined(__WXGTK__)
 	// TODO: Someone test this. you might to use "parentWindowHandle" if this
 	// does not work.  Ogre 1.2 + Linux + GLX platform wants a string of the
 	// format display:screen:window, which has variable types ulong:uint:ulong.
-	GdkWindow * window = GetHandle()->window
-	handle = Ogre::StringConverter::toString((ulong)GDK_WINDOW_XDISPLAY(window));
-	handle += ":0:";
-	handle += Ogre::StringConverter::toString((uint)GDK_WINDOW_XID(window));
+	GtkWidget* widget = GetHandle();
+	gtk_widget_realize( widget );	// Mandatory. Otherwise, a segfault happens.
+	std::stringstream handleStream;
+	Display* display = GDK_WINDOW_XDISPLAY( widget->window );
+	Window wid = GDK_WINDOW_XWINDOW( widget->window );	// Window is a typedef for XID, which is a typedef for unsigned int
+	/* Get the right display (DisplayString() returns ":display.screen") */
+	std::string displayStr = DisplayString( display );
+	displayStr = displayStr.substr( 1, ( displayStr.find( ".", 0 ) - 1 ) );
+	/* Put all together */
+	handleStream << displayStr << ':' << DefaultScreen( display ) << ':' << wid;
+	handle = handleStream.str();
 #else
 	#error Not supported on this platform.
 #endif
@@ -87,6 +95,8 @@ void wxOgre::Init()
 	TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
 	createScene();
+
+	toggleTimerRendering();
 }
 
 void wxOgre::UnInit() 
@@ -162,9 +172,9 @@ void wxOgre::createScene(void)
     // Fog
     // NB it's VERY important to set this before calling setWorldGeometry 
     // because the vertex program picked will be different
-	ColourValue fadeColour(0.93f, 0.86f, 0.76f);
-	mSceneMgr->setFog( FOG_LINEAR, fadeColour, .001f, 500, 1000);
-	mRenderWindow->getViewport(0)->setBackgroundColour(fadeColour);
+	//ColourValue fadeColour(0.93f, 0.86f, 0.76f);
+	//mSceneMgr->setFog( FOG_LINEAR, fadeColour, .001f, 500, 1000);
+	//mRenderWindow->getViewport(0)->setBackgroundColour(fadeColour);
 
     std::string terrain_cfg("terrain.cfg");
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
@@ -205,6 +215,9 @@ void wxOgre::destroyScene(void)
 void wxOgre::cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z)
 {
 	mCamera->moveRelative(Vector3(x, y, z));
+	std::stringstream oss;
+	oss <<"Camera position: "<<mCamera->getPosition();
+	LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
 }
 
 // Rotates the view
@@ -212,6 +225,10 @@ void wxOgre::cameraRotate(Ogre::Real yaw, Ogre::Real pitch)
 {
 	mCamera->yaw(yaw * (mCamera->getFOVy() / mCamera->getAspectRatio() / 320.0f));
 	mCamera->pitch(pitch * (mCamera->getFOVy() / 240.0f));
+
+	std::stringstream oss;
+	oss <<"Camera orientation: "<< mCamera->getOrientation();
+	LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
 }
 
 void wxOgre::OnEraseBackground(wxEraseEvent &e)
@@ -288,8 +305,16 @@ void wxOgre::OnTimer(wxTimerEvent &e)
 	Update();
 }
 
+void wxOgre::toggleTimerRendering()
+{
+	// Toggle Start/Stop
+	if (mTimer.IsRunning())
+		mTimer.Stop();
+	mTimer.Start(10);
+}
+
 void wxOgre::Update()
 {
-	wxControl::Update();
-	Ogre::Root::getSingleton().renderOneFrame();
+	//wxControl::Update();
+	if(mCamera) Ogre::Root::getSingleton().renderOneFrame();
 }

@@ -1,81 +1,58 @@
-#ifndef WorldDocument_H
-#define WorldDocument_H
+#ifndef WORLDDOCUMENT_H
+#define WORLDDOCUMENT_H
 
 #include "stdafx.h"
+#include "RoadGraph.h"
+#include "CityCell.h"
 
-/*
- * The world is basically a graph that store the road network
- * -roads are the edges
- * -nodes are the vertices
- */
 
-// This comparison function is necessary for Vector3 since the 
-// existing comparison would result in (0,1)<(1,0) and (1,0)<(0,1)
-// both resolving to false. This means that a tree based structure 
-// like a map then cannot work.
-struct compare_Vector3
+typedef std::list< CityCell >::iterator CityCellIterator;
+
+
+class WorldDocument : public wxDocument 
 {
-  bool operator()(const Ogre::Vector3& s1, const Ogre::Vector3& s2) const
-  {
-	if(s1.x < s2.x) return true;
-	else if(s1.x == s2.x) { 
-		if(s1.y < s2.y) return true;
-		else if(s1.y == s2.y){
-		  if(s1.z < s2.z) return true;
-		}
-	}
-	return false;
-  }
-};
-
-typedef boost::adjacency_list<
-	boost::setS, // I care whether I have parallel edges and want to check for them as roads aren't often on top of one another.
-	boost::listS, // selected for faster add/remove than vecS at the cost of some storage space
-	boost::undirectedS, // my roads are undirected, I'm not monitoring the direction of traffic
-	Ogre::Vector3 // set a ogre::Vector3 to store the location for each node
-> RoadGraph;
-
-typedef boost::graph_traits<RoadGraph>::vertex_descriptor RoadVertex;
-typedef std::map<Ogre::Vector3, RoadVertex, compare_Vector3> RoadVertexMap;
-
-//I need a custom hashing function for this class
-typedef boost::graph_traits<RoadGraph>::edge_descriptor Road;
-
-
-#if !wxUSE_STD_IOSTREAM
-#error You must set wxUSE_STD_IOSTREAM to 1 in setup.h!
-#endif
-
-class WorldDocument : public wxDocument {
 	DECLARE_DYNAMIC_CLASS(WorldDocument)
-public:
+private:
 	RoadGraph mRoadGraph;
-	RoadVertexMap mRoadVertexMap;
-
+	std::list< CityCell > mCityCells;
+//	std::vector< GrowthGenParams > mCellParams;
 
 public:
 	//Default Constructor
 	WorldDocument();
 
-	bool addNode(const Ogre::Vector3& loc);
-	bool removeNode(const Ogre::Vector3& loc);
-	bool moveNode(const Ogre::Vector3& oldLoc, const Ogre::Vector3& newLoc);
+	std::ostream& SaveObject(std::ostream& stream);
+	std::istream& LoadObject(std::istream& stream);
 
-	bool addRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2, Road &road);
-	bool removeRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2);
+	NodeDescriptor createNode(const Ogre::Vector2& pos) { return mRoadGraph.createNode(pos); }
+	NodeDescriptor createNode(const Ogre::Vector2& pos, void* ptrData) { return mRoadGraph.createNode(pos, ptrData); }
+	void* getNodeData1(const NodeDescriptor nd) { return mRoadGraph.getNodeData1(nd); }
+	Ogre::Vector2 getNodePosition(const NodeDescriptor nd) { return mRoadGraph.getNodePosition(nd); }
+	void setNodeData1(const NodeDescriptor nd, void* ptrData) { return mRoadGraph.setNodeData1(nd, ptrData); }
+	std::pair<const NodeIterator, const NodeIterator> getNodes() { return mRoadGraph.getNodes(); }
+	void moveNode(const NodeDescriptor nd, const Ogre::Vector2& pos) { mRoadGraph.moveNode(nd, pos); }
+	void removeNode(const NodeDescriptor nd) { mRoadGraph.removeNode(nd); }
 
-	void printNodes();
-	void printRoads();
+	RoadDescriptor createRoad(const NodeDescriptor nd1, const NodeDescriptor nd2) { return mRoadGraph.createRoad(nd1, nd2); }
+	RoadDescriptor createRoad(const NodeDescriptor nd1, const NodeDescriptor nd2, void* ptrData) { return mRoadGraph.createRoad(nd1, nd2, ptrData); }
+	bool findRoad(const NodeDescriptor nd1, const NodeDescriptor nd2, RoadDescriptor& rd) { return mRoadGraph.findRoad(nd1, nd2, rd); }
+	void* getRoadData1(const RoadDescriptor rd) { return mRoadGraph.getRoadData1(rd); }
+	std::pair<const RoadIterator, const RoadIterator> getRoads() { return mRoadGraph.getRoads(); }
+	void removeRoad(const NodeDescriptor nd1, const NodeDescriptor nd2) {  mRoadGraph.removeRoad(nd1, nd2); }
+	std::pair<const RoadIterator2, const RoadIterator2> getRoadsFromNode(const NodeDescriptor& nd) { return mRoadGraph.getRoadsFromNode(nd); }
 
-	std::ostream& SaveObject(std::ostream& text_stream);
-    std::istream& LoadObject(std::istream& text_stream);
+	NodeDescriptor getRoadSource(const RoadDescriptor rd) { return mRoadGraph.getRoadSource(rd); }
+	NodeDescriptor getRoadTarget(const RoadDescriptor rd) { return mRoadGraph.getRoadTarget(rd); }
+	void setRoadData1(const RoadDescriptor rd, void* ptrData) { mRoadGraph.setRoadData1(rd, ptrData); }
 
-	bool findRoad(const Ogre::Vector3& loc1, const Ogre::Vector3& loc2, Road &road);
+	Ogre::Vector2 findPrimitiveCenter(const Primitive& p) { return mRoadGraph.findPrimitiveCenter(p); }
+	bool pointInPolygon(const Ogre::Vector2& loc, const Primitive& p) { return mRoadGraph.pointInPolygon(loc, p); }
+
+	void divideCells();
+	bool pickCell(const Ogre::Vector2& loc, CityCell* &cell);
+	std::pair<CityCellIterator, CityCellIterator> getCells();
 
 
-	static std::string roadVertexToString(RoadVertex v);
-	static std::string roadToString(Road r);
-	static std::string pointerToString(void * ptr);
 };
 
 #endif

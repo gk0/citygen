@@ -9,6 +9,15 @@ const int IDM_GRAPH_SELEDGE = wxNewId();
 const int IDM_GRAPH_ADDEDGE = wxNewId();
 const int IDM_GRAPH_DELEDGE = wxNewId();
 
+//Bitmaps
+#ifdef USE_XPM_BITMAPS
+    #include "bitmaps/select.xpm"
+    #include "bitmaps/addnode.xpm"
+    #include "bitmaps/delnode.xpm"
+    #include "bitmaps/addedge.xpm"
+    #include "bitmaps/deledge.xpm"
+#endif // USE_XPM_BITMAPS
+
 
 // Event Table //
 BEGIN_EVENT_TABLE(SelectModeToolBar, wxToolBar)
@@ -33,23 +42,24 @@ SelectModeToolBar::SelectModeToolBar(wxWindow* parent, wxWindowID id, long style
 
 void SelectModeToolBar::setEditMode(EditModeListener::EditMode mode) 
 {
+
+
 	//Remove What we don't want
-	//if(mode != view) {
-	//	if(FindById(IDM_GRAPH_SELEDGE)) RemoveTool(IDM_GRAPH_SELEDGE);
-	//	if(FindById(IDM_GRAPH_ADDEDGE)) RemoveTool(IDM_GRAPH_ADDEDGE);
-	//	if(FindById(IDM_GRAPH_DELEDGE)) RemoveTool(IDM_GRAPH_DELEDGE);
-	//	if(FindById(IDM_GRAPH_SELNODE)) RemoveTool(IDM_GRAPH_SELNODE);
-	//	if(FindById(IDM_GRAPH_ADDNODE)) RemoveTool(IDM_GRAPH_ADDNODE);
-	//	if(FindById(IDM_GRAPH_DELNODE)) RemoveTool(IDM_GRAPH_DELNODE);
-	//	init(mode);
-	//}else{
-	//	if(FindById(IDM_GRAPH_SELEDGE)) EnableTool(IDM_GRAPH_SELEDGE, false);
-	//	if(FindById(IDM_GRAPH_ADDEDGE)) EnableTool(IDM_GRAPH_ADDEDGE, false);
-	//	if(FindById(IDM_GRAPH_DELEDGE)) EnableTool(IDM_GRAPH_DELEDGE, false);
-	//	if(FindById(IDM_GRAPH_SELNODE)) EnableTool(IDM_GRAPH_SELNODE, false);
-	//	if(FindById(IDM_GRAPH_ADDNODE)) EnableTool(IDM_GRAPH_ADDNODE, false);
-	//	if(FindById(IDM_GRAPH_DELNODE)) EnableTool(IDM_GRAPH_DELNODE, false);
-	//}
+	/*if(mode == view) {
+		if(FindById(IDM_GRAPH_SELEDGE)) RemoveTool(IDM_GRAPH_SELEDGE);
+		if(FindById(IDM_GRAPH_ADDEDGE)) RemoveTool(IDM_GRAPH_ADDEDGE);
+		if(FindById(IDM_GRAPH_DELEDGE)) RemoveTool(IDM_GRAPH_DELEDGE);
+		init(mode);
+	}else{
+		if(FindById(IDM_GRAPH_SELNODE)) RemoveTool(IDM_GRAPH_SELNODE);
+		if(FindById(IDM_GRAPH_ADDNODE)) RemoveTool(IDM_GRAPH_ADDNODE);
+		if(FindById(IDM_GRAPH_DELNODE)) RemoveTool(IDM_GRAPH_DELNODE);
+	}*/
+
+
+	//wxToolBarBase* wxTB = FindById(IDM_GRAPH_SELNODE);
+	//wxTB->
+
 	bool viewNode = (mode == node);
 	if(FindById(IDM_GRAPH_SELNODE)) EnableTool(IDM_GRAPH_SELNODE, viewNode);
 	if(FindById(IDM_GRAPH_ADDNODE)) EnableTool(IDM_GRAPH_ADDNODE, viewNode);
@@ -76,7 +86,7 @@ void SelectModeToolBar::init()
 	};
 	wxBitmap toolBarBitmaps[Tool_max];
 
-	#if USE_XPM_BITMAPS
+	#ifdef USE_XPM_BITMAPS
 		#define INIT_TOOL_BMP(bmp) \
 			toolBarBitmaps[Tool_##bmp] = wxBitmap(bmp##_xpm)
 	#else // !USE_XPM_BITMAPS
@@ -118,8 +128,9 @@ void SelectModeToolBar::init()
 	AddTool(IDM_GRAPH_SELNODE, _T("Select Node"), toolBarBitmaps[Tool_select], _T("Select node"), wxITEM_RADIO);
 	AddTool(IDM_GRAPH_ADDNODE, _T("Add Node"), toolBarBitmaps[Tool_addnode], _T("Add node"), wxITEM_RADIO);
 	AddTool(IDM_GRAPH_DELNODE, _T("Delete Node"), toolBarBitmaps[Tool_delnode], _T("Delete node"), wxITEM_RADIO);
+	AddSeparator();
 	AddTool(IDM_GRAPH_SELEDGE, _T("Select Road"), toolBarBitmaps[Tool_select], _T("Select road"), wxITEM_RADIO);
-	AddTool(IDM_GRAPH_ADDEDGE, _T("Add Road"), toolBarBitmaps[Tool_deledge], _T("Add road"), wxITEM_RADIO);
+	AddTool(IDM_GRAPH_ADDEDGE, _T("Add Road"), toolBarBitmaps[Tool_addedge], _T("Add road"), wxITEM_RADIO);
 	AddTool(IDM_GRAPH_DELEDGE, _T("Delete Road"), toolBarBitmaps[Tool_deledge], _T("Delete road"), wxITEM_RADIO);
 	Realize();
 }

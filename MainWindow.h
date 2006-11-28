@@ -2,11 +2,15 @@
 #define WXTEST_H
 
 #include "stdafx.h"
-#include "WorldWindow.h"
+#include "WorldCanvas.h"
 #include "LogWindow.h"
 #include "FileToolBar.h"
 #include "EditModeToolBar.h"
 #include "SelectModeToolBar.h"
+#include "ViewPropertyPage.h"
+#include "NodePropertyPage.h"
+#include "RoadPropertyPage.h"
+#include "CellPropertyPage.h"
 
 class wxDocManager;
 
@@ -17,6 +21,7 @@ private:
 	DECLARE_EVENT_TABLE()
 
 	wxDocManager* mDocManager;
+	wxPropertyGridManager* mPropertyGridManager;
 
 	wxToolBar* mToolBar;
 	//wxToolBar* mGraphToolBar;
@@ -32,7 +37,7 @@ private:
 	bool m_horzText;
 
 public:
-	WorldWindow *mWorldWindow;
+	WorldCanvas *mWorldCanvas;
 
 	MainWindow(wxDocManager* docManager);
 	~MainWindow();
@@ -57,6 +62,8 @@ public:
 	
 	static MainWindow& getSingleton();
 	static MainWindow* getSingletonPtr();
+
+	void updateOgre();
 
 };
 

@@ -11,6 +11,8 @@ public:
 		add,
 		del
 	};
+	
+	virtual ~SelectModeListener() {}
 	virtual void setSelectMode(SelectMode mode) = 0;
 
 };

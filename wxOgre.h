@@ -32,10 +32,10 @@ protected:
 protected:
 	DECLARE_EVENT_TABLE()
 	 
-    void chooseSceneManager(void);
-    void createCamera(void);
-    void createScene(void);
-    void createViewports(void);
+    virtual void chooseSceneManager(void);
+    virtual void createCamera(void);
+    virtual void createScene(void);
+    virtual void createViewports(void);
     void destroyScene(void);
 	void destroyViewport();
 	void destroySceneManager();
@@ -50,6 +50,7 @@ public:
 
 	void cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
 	void cameraRotate(Ogre::Real yaw, Ogre::Real pitch);
+	void toggleTimerRendering();
 	void Update();
 };
 

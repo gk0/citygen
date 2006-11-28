@@ -13,5 +13,5 @@ LogWindow::~LogWindow()
 
 void LogWindow::write(const Ogre::String &name, const Ogre::String &message, Ogre::LogMessageLevel lml /* = Ogre::LML_NORMAL */, bool maskDebug /* = false */)
 {
-	AppendText("\n" + wxString(message.c_str()));
+	AppendText(wxT("\n") + wxString(message.c_str(), wxConvUTF8));
 }

@@ -62,7 +62,7 @@ END_EVENT_TABLE()
 
 // Frame Constructor
 MainWindow::MainWindow(wxDocManager* docManager)
-  : wxDocParentFrame(docManager, NULL, wxID_ANY, "CityGen", wxDefaultPosition, wxSize(800, 600), 
+  : wxDocParentFrame(docManager, NULL, wxID_ANY, wxT("CityGen"), wxDefaultPosition, wxSize(800, 600), 
 	wxCLIP_CHILDREN | wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxTHICK_FRAME | wxSYSTEM_MENU  | wxCAPTION | wxCLOSE_BOX),
     mFileToolBar(this, wxNewId(), TOOLBAR_STYLE),
 	mEditModeToolBar(this, wxNewId(), TOOLBAR_STYLE),
@@ -78,15 +78,42 @@ MainWindow::MainWindow(wxDocManager* docManager)
 
 	mFrameManager.SetFrame(this);
 
+	ViewPropertyPage* viewPage = new ViewPropertyPage();
+	NodePropertyPage* nodePage = new NodePropertyPage();	
+	RoadPropertyPage* roadPage = new RoadPropertyPage();
+	CellPropertyPage* cellPage = new CellPropertyPage();
+
+
 	// No Ogre app until it's given to us.
-	mWorldWindow = new WorldWindow(0, this);
-	mFrameManager.AddPane(mWorldWindow, wxCENTER, wxT("Render Window"));
+	mWorldCanvas = new WorldCanvas(0, this, nodePage, cellPage);
+	mFrameManager.AddPane(mWorldCanvas, wxCENTER, wxT("Render Window"));
 
 	// Log Window
 	mLogWindow = new LogWindow(this);
 	mFrameManager.AddPane(mLogWindow, wxPaneInfo().
 						Name(wxT("LogWindow")).Caption(wxT("Log Window")).Bottom().
-						LeftDockable(false).RightDockable(false).Resizable(true));
+						LeftDockable(true).RightDockable(true).Resizable(true));
+
+	/*
+	 wxPropertyGridManager::wxPropertyGridManager  	(   	wxWindow *   	 parent,
+		wxWindowID  	id = wxID_ANY,
+		const wxPoint &  	pos = wxDefaultPosition,
+		const wxSize &  	size = wxDefaultSize,
+		long  	style = (0),
+		const wxChar *  	name = wxPropertyGridManagerNameStr
+	)  
+	*/
+	mPropertyGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxSize(180,200));
+	mFrameManager.AddPane(mPropertyGridManager, wxPaneInfo().
+						Name(wxT("PropertyInspector")).Caption(wxT("Property Inspector")).Right().
+						LeftDockable(true).RightDockable(true).Resizable(true));
+
+	// Add pages to property inspector
+	mPropertyGridManager->AddPage(wxT("View Properties"), wxNullBitmap, viewPage);
+	mPropertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, nodePage);
+	mPropertyGridManager->AddPage(wxT("Road Properties"), wxNullBitmap, roadPage);
+	mPropertyGridManager->AddPage(wxT("Cell Properties"), wxNullBitmap, cellPage);
+
 
 	// Menu
 	wxMenu *menuFile = new wxMenu();
@@ -141,7 +168,7 @@ MainWindow::MainWindow(wxDocManager* docManager)
 					ToolbarPane().Top().
 					LeftDockable(true).RightDockable(true).Resizable(false));
 
-	mSelectModeToolBar.setListener((SelectModeListener*) mWorldWindow);
+	mSelectModeToolBar.setListener((SelectModeListener*) mWorldCanvas);
 	mFrameManager.AddPane(&mSelectModeToolBar, wxPaneInfo().
 				Name(wxT("SelectModeToolBar")).Caption(wxT("Node Edit ToolBar")).
 				ToolbarPane().Top().
@@ -154,6 +181,8 @@ MainWindow::MainWindow(wxDocManager* docManager)
 	// Status Bar
 	CreateStatusBar(2);
 	SetStatusText(_T("Primary Road Network Mode."));
+
+	//mWorldCanvas->prepare();
 }
 
 // Frame Destructor
@@ -180,7 +209,8 @@ void MainWindow::onAbout(wxCommandEvent &e)
 
 void MainWindow::setEditMode(EditModeListener::EditMode mode) 
 {
-	mWorldWindow->setEditMode(mode);
+	mPropertyGridManager->SelectPage(mode);
+	mWorldCanvas->setEditMode(mode);
 	mSelectModeToolBar.setEditMode(mode);
 
 	//Update the Toolbar Size & FrameManager
@@ -202,4 +232,9 @@ MainWindow* MainWindow::getSingletonPtr()
 void MainWindow::enableDocumentToolbars(bool enable) {
 	mSelectModeToolBar.Enable(enable);
 	mEditModeToolBar.Enable(enable);
+}
+
+void MainWindow::updateOgre()
+{
+	mWorldCanvas->Update();
 }

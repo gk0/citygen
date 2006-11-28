@@ -2,31 +2,32 @@
 #define _WORLDVIEW_H_
 
 #include "stdafx.h"
-
-#include "WorldWindow.h"
+#include "wxOgre.h"
+#include "WorldCanvas.h"
+#include "WorldDocument.h"
 
 
 class WorldView : public wxView
 {
-    DECLARE_DYNAMIC_CLASS(WorldView)
+      DECLARE_DYNAMIC_CLASS(WorldView);
 private:
+	//std::map<>
+
 public:
-    wxFrame *frame;
-    WorldWindow *canvas;
+    wxFrame *mFrame;
+    WorldCanvas *canvas;
     
-    WorldView(void) { canvas = (WorldWindow *) NULL; frame = (wxFrame *) NULL; };
+    WorldView(void);
     virtual ~WorldView();
     
-    bool OnCreate(wxDocument *doc, long flags);
-    void OnDraw(wxDC *dc);
-    void OnUpdate(wxView *sender, wxObject *hint = (wxObject *) NULL);
-    bool OnClose(bool deleteWindow = true);
-
+    virtual bool OnCreate(wxDocument *doc, long flags);
 
 	//virtual void OnActivateView(bool activate, wxView *activeView, wxView *deactiveView);
+	virtual void OnDraw(wxDC *dc);
     //virtual void OnPrint(wxDC *dc, wxObject *info);
-    //virtual void OnUpdate(wxView *sender, wxObject *hint = (wxObject *) NULL);
+    virtual void OnUpdate(wxView *sender, wxObject *hint = (wxObject *) NULL);
     //virtual void OnClosingDocument();
+	bool OnClose(bool);
 	/*virtual void OnChangeFilename() {
 		int i=0;
 	}*/

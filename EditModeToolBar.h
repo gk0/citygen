@@ -12,6 +12,7 @@ private:
 	void onSelectViewMode(wxCommandEvent &e);
 	void onSelectNodeMode(wxCommandEvent &e);
 	void onSelectEdgeMode(wxCommandEvent &e);
+	void onSelectCellMode(wxCommandEvent &e);
 
 public:
 	// wxToolBar(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, 

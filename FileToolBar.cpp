@@ -3,14 +3,14 @@
 #include "FileToolBar.h"
 
 //Bitmaps
-#if USE_XPM_BITMAPS
+#ifdef USE_XPM_BITMAPS
     #include "bitmaps/newdoc.xpm"
     #include "bitmaps/open.xpm"
     #include "bitmaps/save.xpm"
-    #include "bitmaps/copy.xpm"
-    #include "bitmaps/cut.xpm"
-    #include "bitmaps/preview.xpm"  // paste XPM
-    #include "bitmaps/print.xpm"
+//    #include "bitmaps/copy.xpm"
+//    #include "bitmaps/cut.xpm"
+//    #include "bitmaps/preview.xpm"  // paste XPM
+//   #include "bitmaps/print.xpm"
     #include "bitmaps/help.xpm"
 #endif // USE_XPM_BITMAPS
 
@@ -38,7 +38,7 @@ FileToolBar::FileToolBar(wxWindow* parent, wxWindowID id, long style, bool large
 
     wxBitmap toolBarBitmaps[Tool_Max];
 
-#if USE_XPM_BITMAPS
+#ifdef USE_XPM_BITMAPS
     #define INIT_TOOL_BMP(bmp) \
         toolBarBitmaps[Tool_##bmp] = wxBitmap(bmp##_xpm)
 #else // !USE_XPM_BITMAPS
