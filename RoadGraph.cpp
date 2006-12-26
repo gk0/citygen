@@ -1038,3 +1038,28 @@ bool RoadGraph::findClosestIntersection(const Vector2& a, const Vector2& b, Road
 	}
 	return hasIntersection;	
 }
+
+
+bool RoadGraph::getNodeClosestToPoint(const Ogre::Vector2 &loc, NodeDescriptor &nd, Ogre::Real &distance)
+{
+	Ogre::Real currDist = numeric_limits<Ogre::Real>::max();
+	NodeDescriptor currNode;
+	NodeIterator nIt, nEnd;
+	bool success = false;
+	for(boost::tie(nIt, nEnd) = vertices(mGraph); nIt != nEnd; nIt++)
+	{
+		Vector2 temp(mGraph[*nIt].mPosition - loc);
+		if(temp.squaredLength() < currDist) 
+		{
+			currDist = temp.squaredLength();
+			currNode = *nIt;
+			success = true;
+		}
+	}
+	if(success) 
+	{
+		nd = currNode;
+		distance = Math::Sqrt(currDist);
+	}
+	return success;
+}

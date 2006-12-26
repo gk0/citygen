@@ -10,10 +10,13 @@ const long ID_RENDERTIMER = wxNewId();
 
 #define CRAZY_MOUSE_OFFSET 0	//this really should be reqd. but is here until i find out whats going on
 
-
 BEGIN_EVENT_TABLE(WorldCanvas, wxOgre)
 	EVT_CHAR(WorldCanvas::OnChar)
-    EVT_MOUSE_EVENTS(WorldCanvas::OnMouse)
+
+	EVT_MOTION(WorldCanvas::OnMouseMove)
+	EVT_LEFT_UP(WorldCanvas::OnLeftPressed)
+	EVT_MOUSEWHEEL(WorldCanvas::OnMouseWheel)
+
 //	EVT_ERASE_BACKGROUND(WorldCanvas::onEraseBackground) 
 //	EVT_KILL_FOCUS(WorldCanvas::onLostFocus)
 //	EVT_PAINT(WorldCanvas::onPaint)
@@ -29,12 +32,14 @@ WorldCanvas::WorldCanvas(wxView *v, wxFrame *frame, NodePropertyPage* nProp, Cel
 	mNodePropertyPage(nProp),
 	mCellPropertyPage(cProp)
 {
-
     view = v;
 	mNodePropertyPage->setCanvas(this);
 	mCellPropertyPage->setCanvas(this);
 
-	mCurrentNode = 0;
+	mCurrentWorldNode = 0;
+	mSelectedWorldNode = 0;
+	//mCurrentNode = 0;
+	mCityCell = 0;
 	mRoadNode = 0;
 	mEditMode = EditModeListener::view;
 	mSelectMode = sel;
@@ -43,10 +48,10 @@ WorldCanvas::WorldCanvas(wxView *v, wxFrame *frame, NodePropertyPage* nProp, Cel
 	prepared = false;
 }
 
+//Disable all render to texture stuff
+
 void WorldCanvas::createScene(void) 
 {	
-    Plane waterPlane;
-
     // Set ambient light
     mSceneMgr->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
 
@@ -55,7 +60,7 @@ void WorldCanvas::createScene(void)
     // Accept default settings: point light, white diffuse, just set position
     // NB I could attach the light to a SceneNode if I wanted it to move automatically with
     //  other objects, but I don't
-    l->setPosition(20,80,50);
+    l->setPosition(20,180,50);
 
     // Fog
     // NB it's VERY important to set this before calling setWorldGeometry 
@@ -75,7 +80,35 @@ void WorldCanvas::createScene(void)
     {
         mCamera->setFarClipDistance(0);
     }
+/*
+	// Water
+	Entity* waterEntity;
+    Plane waterPlane;
 
+	// create a water plane/scene node
+	waterPlane.normal = Vector3::UNIT_Y;
+	waterPlane.d = -1.5;
+	MeshManager::getSingleton().createPlane(
+		"WaterPlane",
+		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		waterPlane,
+		8000, 8000,
+		20, 20,
+		true, 1,
+		100, 100,
+		Vector3::UNIT_Z);
+
+	waterEntity = mSceneMgr->createEntity("water", "WaterPlane");
+	waterEntity->setMaterialName("Examples/TextureEffect4");
+	SceneNode *waterNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("WaterNode");
+	waterNode->attachObject(waterEntity);
+	waterNode->translate(4000, 20, 4000);
+
+	// Create a light
+Light* pLight = mSceneMgr->createLight("MainLight2");
+pLight->setType( Light::LT_DIRECTIONAL );
+pLight->setDirection( 0, -100, 0 );
+*/
     // Define the required skyplane
     Plane plane;
     // 5000 world units from the camera
@@ -99,7 +132,7 @@ void WorldCanvas::prepare()
 
 	// Create our ray query
 	mRaySceneQuery = mSceneMgr->createRayQuery(Ray());
-
+/*
 	// Create the texture
 	TexturePtr texture = TextureManager::getSingleton().createManual(
 		"DynamicTexture", // name
@@ -110,6 +143,7 @@ void WorldCanvas::prepare()
 		PF_BYTE_BGRA,     // pixel format
 		TU_RENDERTARGET);      // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
 						  // textures updated very often (e.g. each frame)
+*/
 
 	/* 
 	I only need this to create a partially transparent 
@@ -135,10 +169,9 @@ void WorldCanvas::prepare()
 		}
 	// Unlock the pixel buffer
 	pixelBuffer->unlock();
-	*/
+*/
 
-
-
+/*
 	RenderTarget *rttTex = texture->getBuffer()->getRenderTarget();
     {
         mRTTCam = mSceneMgr->createCamera("ReflectCam");
@@ -170,7 +203,7 @@ void WorldCanvas::prepare()
 		t->setProjectiveTexturing(true, mRTTCam);  //let sproject our texture onto the object (yes, like a projector)
 		rttTex->addListener(this);
     }
-
+*/
 	//Make big cube or plane to view the tex on
 	//Entity *ent = mSceneMgr->createEntity("cubey", "cube.mesh");
 	//ent->setMaterialName("RttMat");
@@ -188,32 +221,32 @@ void WorldCanvas::OnDraw(wxDC& dc)
 
 void WorldCanvas::moveCurrentNode(wxMouseEvent &e)
 {
-	if(!mCurrentNode) return;
+	if(!mCurrentWorldNode) return;
 
 	RaySceneQueryResult rayResult = doMouseRay(e);
 	Vector3* vec = getTerrainIntersection(rayResult);
 	if(vec) 
-		moveNode(mCurrentNode, *vec);
+		moveNode(mCurrentWorldNode, *vec);
 }
 
-void WorldCanvas::moveNode(SceneNode* sn, const Vector3& pos)
-{	
+void WorldCanvas::moveNode(WorldNode* wn, const Vector3& pos)
+{
 	// Find any roads that link to the node and update them too
 	WorldDocument* doc = static_cast<WorldDocument*>(view->GetDocument());
 	if(!doc) return;
 
 	// update position of node
-	doc->moveNode(mSceneNodeMap[sn].nodeDesc, convert3DPointTo2D(pos));
+	doc->moveNode(mSceneNodeMap[wn->getSceneNode()].nodeDesc, convert3DPointTo2D(pos));
 
 	// update Node
-    mCurrentNode->setPosition(pos);
+    wn->setPosition(pos);
 
 	// update my property display
-	mNodePropertyPage->updateData(sn->getName(), pos.x, pos.y, pos.z);
+	mNodePropertyPage->updateData(wn->getName(), pos.x, pos.y, pos.z);
 
 	// update position of all connnected roads
 	RoadIterator2 rit, rend;
-	boost::tie(rit, rend) = doc->getRoadsFromNode(mSceneNodeMap[mCurrentNode].nodeDesc);
+	boost::tie(rit, rend) = doc->getRoadsFromNode(mSceneNodeMap[wn->getSceneNode()].nodeDesc);
 	for(; rit!=rend; rit++)
 	{
 		Ogre::SceneNode* sn = static_cast<Ogre::SceneNode*>(doc->getRoadData1(*rit));
@@ -237,34 +270,48 @@ void WorldCanvas::moveNode(SceneNode* sn, const Vector3& pos)
 }
 
 
-void WorldCanvas::OnSelectNode(wxMouseEvent &e)
+void WorldCanvas::selectNode(wxMouseEvent &e)
 {
+	// Find any roads that link to the node and update them too
+	WorldDocument* doc = static_cast<WorldDocument*>(view->GetDocument());
+	if(!doc) return;
+
 	// Turn off bounding box.
-    if(mCurrentNode)
-    	mSceneNodeMap[mCurrentNode].worldNode->showBoundingBox(false);
+//    if(mCurrentNode)
+//    	mSceneNodeMap[mCurrentNode].worldNode->showBoundingBox(false);
 
 	RaySceneQueryResult rayResult = doMouseRay(e);
 
 	switch(mSelectMode) 
 	{
 	case sel:
-		mCurrentNode = getMovable(rayResult, "Node");
-		if(mCurrentNode)
-			selectNode(mCurrentNode);
+		{
+		if(mSelectedWorldNode) mSelectedWorldNode->showSelected(false);
+		mSelectedWorldNode = mCurrentWorldNode;
+		if(mSelectedWorldNode) mSelectedWorldNode->showSelected(true);
+		}
 		break;
 	case del:
-		mCurrentNode = getMovable(rayResult, "Node");
-		if(mCurrentNode) deleteNode(mCurrentNode);
+		//mCurrentNode = getMovable(rayResult, "Node");
+		if(mCurrentWorldNode) deleteNode(mCurrentWorldNode);
 		break;
 	case add:
 		Vector3* intersection = getTerrainIntersection(rayResult);
-		if(intersection) createNode(*intersection);
+		if(intersection)
+		{
+			WorldNode* wn = createNode(*intersection);
+			NodeDescriptor nd = doc->createNode(convert3DPointTo2D(*intersection), wn);
+			NodePair np;
+			np.worldNode = wn;
+			np.nodeDesc = nd;
+			mSceneNodeMap[wn->getSceneNode()] = np;
+		}
 		break;
 	}
 	
 	// Turn on bounding box.
-    if(mCurrentNode)
-    	mSceneNodeMap[mCurrentNode].worldNode->showBoundingBox(true);
+//    if(mCurrentNode)
+//    	mSceneNodeMap[mCurrentNode].worldNode->showBoundingBox(true);
 }
 
 void WorldCanvas::clear()
@@ -275,7 +322,7 @@ void WorldCanvas::clear()
 	{
 		delete ni->second.worldNode;
 	}
-	mCurrentNode = 0;
+	mCurrentWorldNode = 0;
 
 	// Remove roads from the scene
 	SceneRoadMap::const_iterator ri, rend;
@@ -305,7 +352,7 @@ void WorldCanvas::loadDoc()
 	if(!doc) return;
 
 	// clear existing data
-	//clear();
+	clear();
 	
 	// create nodes in the scene
 	NodeIterator ni, nend;
@@ -356,6 +403,7 @@ WorldNode* WorldCanvas::createNode(const Vector3& pos)
 	return new WorldNode(mSceneMgr, name, name.substr(4,name.length()), pos);
 }
 
+
 SceneNode* WorldCanvas::createRoad(const Vector3& u, const Vector3& v) 
 {
 	std::stringstream oss;
@@ -382,7 +430,7 @@ SceneNode* WorldCanvas::createRoad(const Vector3& u, const Vector3& v, const std
 	return node;
 }
 
-void WorldCanvas::OnSelectRoad(wxMouseEvent &e)
+void WorldCanvas::selectRoad(wxMouseEvent &e)
 {
 	SceneNode* tmp = 0;
 
@@ -461,85 +509,46 @@ void WorldCanvas::OnLostFocus(wxFocusEvent& e)
 	//Should tidy up my dragging logic here
 }
 
-void WorldCanvas::OnMouse(wxMouseEvent &e)
+void WorldCanvas::OnMouseMove(wxMouseEvent &e)
 {
-	if(!view) return;
+	// Compute deltas
+	mMouseDeltaX = e.m_x - mMouseX;
+	mMouseDeltaY = e.m_y - mMouseY;
 
-	//If you click on me get back focus
-	//focus should really be assigned by what your mouse is over but until then...
-	if(e.m_leftDown) {
-		this->SetFocusFromKbd();
-		this->SetFocus();
-	}
-
-	//Check for mouse wheel scroll
-	if (e.GetWheelRotation() != 0)
-	{
-		Vector3 mTranslateVector(0,0,0);
-		mTranslateVector.z = e.GetWheelRotation() / 10;
-		mCamera->moveRelative(mTranslateVector);
-		//DEBUG crap
-		//std::stringstream oss;
-		//oss <<"Camera position: "<<mCamera->getPosition();
-		//LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
-		//mCamera-> e.GetWheelRotation()
-	}
-
-
-	// Camera controls
-	if(e.Dragging())
-	{
-		// Compute deltas
-		long	delta_x = e.m_x - mMouseX,
-				delta_y = e.m_y - mMouseY;
-
-		// Dolly, orient or pan?
-		if(e.m_leftDown && e.m_rightDown)
-			cameraMove(0.0f, 0.0f, delta_y);
-		else if(e.m_leftDown) {
-			if(mEditMode == node) OnLeftDragged(e);
-			else cameraRotate(delta_x*2, delta_y);
-		}else if(e.m_rightDown)
-			cameraMove((Real)(-delta_x), (Real)delta_y, 0.0f);
-	} 
-	else 
-	{
-		if(e.m_leftDown) {
-			switch(mEditMode) 
-			{
-			case node:
-				OnSelectNode(e);
-				break;
-			case edge:
-				OnSelectRoad(e);
-				break;
-			case cell:
-				OnSelectCell(e);
-				break;
-			default:
-				break;
-			}
-		}
-	}
+	if(e.m_leftDown) OnLeftDragged(e);
+	//else if(e.m_middleDown) OnMiddleDragged(e);
+	else if(e.m_rightDown) OnRightDragged(e);
 
 	// Save mouse position (for computing deltas for dragging)
 	mMouseX = e.m_x;
 	mMouseY = e.m_y;
 
-	// Tell OGRE to redraw.
-	Update();
-}
-
-void WorldCanvas::OnSetFocus(wxFocusEvent& e)
-{
-	
+	switch(mEditMode)
+	{
+	case node:
+	case cell:
+		{
+		RaySceneQueryResult rayResult = doMouseRay(e);
+		Vector3* intersection2 = getTerrainIntersection(rayResult);
+		highlightNodeFromLoc(convert3DPointTo2D(*intersection2));
+		}
+		break;
+	case edge:
+		break;
+	default:
+		break;
+	}
 }
 
 void WorldCanvas::OnLeftDragged(wxMouseEvent &e)
 {
 	switch(mEditMode) {
-		case EditModeListener::view:
-
+		case EditModeListener::view:		
+			if(e.m_rightDown)
+				cameraMove(0.0f, 0.0f, mMouseDeltaY);
+			else
+				cameraRotate(mMouseDeltaX*2, mMouseDeltaY);
+			break;
 		case EditModeListener::node:
 			if(mSelectMode ==sel)
 			{
@@ -551,20 +560,74 @@ void WorldCanvas::OnLeftDragged(wxMouseEvent &e)
 	}
 }
 
-void WorldCanvas::setEditMode(EditModeListener::EditMode mode) {
+void WorldCanvas::OnRightDragged(wxMouseEvent &e)
+{
+	switch(mEditMode) {
+		case EditModeListener::view:
+			if(!e.m_leftDown)
+				cameraMove((Real)(-mMouseDeltaX), (Real)mMouseDeltaY, 0.0f);
+			break;
+		case EditModeListener::node:
+			break;
+		default:
+			break;
+	}
+}
+
+void WorldCanvas::OnLeftPressed(wxMouseEvent &e)
+{
+	//If you click on me get back focus
+	//focus should really be assigned by what your mouse is over but until then...
+	this->SetFocusFromKbd();
+	this->SetFocus();
+
+	switch(mEditMode) 
+	{
+	case node:
+		selectNode(e);
+		break;
+	case edge:
+		selectRoad(e);
+		break;
+	case cell:
+		selectCell(e);
+		break;
+	default:
+		break;
+	}
+}
+
+void WorldCanvas::OnMouseWheel(wxMouseEvent &e)
+{
+	if(e.GetWheelRotation()!=0)
+	{
+		Vector3 translateVector(0,0,0);
+		translateVector.z = e.GetWheelRotation() / 10;
+		mCamera->moveRelative(translateVector);
+	}
+}
+
+void WorldCanvas::OnSetFocus(wxFocusEvent& e)
+{
+	
+}
+
+
+void WorldCanvas::setEditMode(EditModeListener::EditMode mode) 
+{
 	mEditMode = mode;
 	switch(mode) {
 	case node:
 		if(mRoadNode) mRoadNode->showBoundingBox(false);
-		if(mCurrentNode) mCurrentNode->showBoundingBox(true);
+		if(mSelectedWorldNode) mSelectedWorldNode->showSelected(true);
 		break;
 	case edge:
-		if(mCurrentNode) mCurrentNode->showBoundingBox(false);
+		if(mSelectedWorldNode) mSelectedWorldNode->showSelected(false);
 		if(mRoadNode) mRoadNode->showBoundingBox(true);
 		break;
 	case cell:
 		if(mRoadNode) mRoadNode->showBoundingBox(false);
-		if(mCurrentNode) mCurrentNode->showBoundingBox(false);
+		if(mSelectedWorldNode) mSelectedWorldNode->showSelected(false);
 		//ok lets show the cells
 		WorldDocument* doc = static_cast<WorldDocument*>(view->GetDocument());
 		if(doc)
@@ -600,6 +663,7 @@ void WorldCanvas::setSelectMode(SelectModeListener::SelectMode mode) {
 	mSelectMode = mode;
 }
 
+/*
 void WorldCanvas::preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt)
 {
 	
@@ -625,10 +689,10 @@ void WorldCanvas::preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt)
 
 	if(view) {
 		// Show roads on the scene
-/*		SceneRoadMap::const_iterator ri, rend;
-		for (ri = mSceneRoadMap.begin(), rend = mSceneRoadMap.end(); ri != rend; ++ri) 
-			ri->first->setVisible(true);
-*/
+		//SceneRoadMap::const_iterator ri, rend;
+		//for (ri = mSceneRoadMap.begin(), rend = mSceneRoadMap.end(); ri != rend; ++ri) 
+		//	ri->first->setVisible(true);
+
 		// Hide nodes on the scene
 		SceneNodeMap::const_iterator ni, nend;
 		for (ni = mSceneNodeMap.begin(), nend = mSceneNodeMap.end(); ni != nend; ++ni) 
@@ -654,17 +718,17 @@ void WorldCanvas::postRenderTargetUpdate(const Ogre::RenderTargetEvent& evt)
 
 	if(view) {
 		// Hide roads on the scene
-/*		SceneRoadMap::const_iterator ri, rend;
-		for (ri = mSceneRoadMap.begin(), rend = mSceneRoadMap.end(); ri != rend; ++ri) 
-			ri->first->setVisible(false);
-*/
+		//SceneRoadMap::const_iterator ri, rend;
+		//for (ri = mSceneRoadMap.begin(), rend = mSceneRoadMap.end(); ri != rend; ++ri) 
+		//	ri->first->setVisible(false);
+
 		// Show nodes on the scene
 		SceneNodeMap::const_iterator ni, nend;
 		for (ni = mSceneNodeMap.begin(), nend = mSceneNodeMap.end(); ni != nend; ++ni) 
 			ni->second.worldNode->setVisible(true);
-	}
-	
+	}	
 }
+*/
 
 void WorldCanvas::OnChar(wxKeyEvent& event)
 {
@@ -698,7 +762,7 @@ void WorldCanvas::OnChar(wxKeyEvent& event)
 	}
 }
 
-void WorldCanvas::OnSelectCell(wxMouseEvent &e)
+void WorldCanvas::selectCell(wxMouseEvent &e)
 {
 	WorldDocument* doc = static_cast<WorldDocument*>(view->GetDocument());
 	if(doc)
@@ -838,49 +902,48 @@ void WorldCanvas::refreshSceneNodeMap()
 	{
 		// get SceneNode ptr from doc node
 		WorldNode* wn = static_cast<WorldNode*>(doc->getNodeData1(*nodeIt));
-		NodePair np;
-		np.worldNode = wn;
-		np.nodeDesc = *nodeIt;
 
 		// insert into the scene->node map
-		mSceneNodeMap[wn->getSceneNode()] = np;
+		mSceneNodeMap[wn->getSceneNode()] = NodePair(wn, *nodeIt);
 	}
 }
 
 void WorldCanvas::setNodeProperties(const string& l, const double& x, const double& y, const double& z)
 {
-	if(mCurrentNode)
+	if(mSelectedWorldNode)
 	{
-		mSceneNodeMap[mCurrentNode].worldNode->setLabel(l);
+		SceneNode* sn = mSelectedWorldNode->getSceneNode();
+		mSelectedWorldNode->setLabel(l);
 
 		//mCurrentNode->
 		Vector3 pos(static_cast<Real>(x), static_cast<Real>(y), static_cast<Real>(z));
 		if(plotPointOnTerrain(convert3DPointTo2D(pos), pos))
-			moveNode(mCurrentNode, pos);
-		else
+			moveNode(mSelectedWorldNode, pos);
+		//else
 			// no move has taken place because the new location could not be plotted on the terrain
 			// -write back the last correct values to the property inspector
-			selectNode(mCurrentNode);
+			//selectNode(mCurrentWorldNode);
 		Update();
 	}
 }
 
-void WorldCanvas::selectNode(SceneNode* sn)
+void WorldCanvas::selectNode(WorldNode* wn)
 {
-	mCurrentNode = sn;
-	const Vector3& pos = mSceneNodeMap[mCurrentNode].worldNode->getPosition();
-	mNodePropertyPage->updateData(mSceneNodeMap[mCurrentNode].worldNode->getLabel(), pos.x, pos.y, pos.z);
+	mSelectedWorldNode = wn;
+	const Vector3& pos = wn->getPosition();
+	mNodePropertyPage->updateData(wn->getLabel(), pos.x, pos.y, pos.z);
 }
 
 
-void WorldCanvas::deleteNode(SceneNode* sn)
+void WorldCanvas::deleteNode(WorldNode* wn)
 {
 	WorldDocument* doc = static_cast<WorldDocument*>(view->GetDocument());
 	if(doc) 
 	{
 		//Delete Roads From Our Scene
 		RoadIterator2 rit, rend;
-		boost::tie(rit, rend) = doc->getRoadsFromNode(mSceneNodeMap[mCurrentNode].nodeDesc);
+		SceneNode* sn = wn->getSceneNode();
+		boost::tie(rit, rend) = doc->getRoadsFromNode(mSceneNodeMap[sn].nodeDesc);
 		for(; rit!=rend; rit++)
 		{
 			Ogre::SceneNode* sn = static_cast<Ogre::SceneNode*>(doc->getRoadData1(*rit));
@@ -893,13 +956,15 @@ void WorldCanvas::deleteNode(SceneNode* sn)
 			}
 		}
 		//Delete the Node
-		NodeDescriptor nd = mSceneNodeMap[mCurrentNode].nodeDesc;
-		doc->removeNode(nd);
-		mSceneNodeMap.erase(mCurrentNode);
+		doc->removeNode(mSceneNodeMap[sn].nodeDesc);
+		WorldNode* wn = mSceneNodeMap[sn].worldNode;
+		mSceneNodeMap.erase(sn);
+		delete wn;
 
-		if(mRoadNode == mCurrentNode) mRoadNode = 0;
-		mSceneMgr->destroySceneNode(mCurrentNode->getName());
-		mCurrentNode = 0;
+
+		//if(mRoadNode == mCurrentNode) mRoadNode = 0;
+		//mSceneMgr->destroySceneNode(mCurrentWorldNode->getName());
+		mCurrentWorldNode = 0;
 
 		// if using vecS for vertices deleting a node will remove
 		//We need to update
@@ -968,3 +1033,50 @@ void WorldCanvas::createCell(CityCell* cell)
 
 	mCellSceneMap[cell] = node;
 }
+/*
+void clearInnerRoads() 
+{
+	CellSceneMap::const_iterator cIt, cEnd;
+	for(cIt = mCellSceneMap.begin(), cEnd = mCellSceneMap.end(); cIt != cEnd; cIt++)
+	{
+		string name(cIt->second->getName());
+		mSceneMgr->destroySceneNode(name);
+		mSceneMgr->destroyManualObject(name);
+		//Update();
+	}
+}
+*/
+
+//void 
+//{
+//get change cells from edited node
+//clear the cells 
+//regenerate the changed cell
+//update
+//}
+//void updateCells();
+
+
+bool WorldCanvas::highlightNodeFromLoc(const Vector2 &loc)
+{
+    if(mCurrentWorldNode) mCurrentWorldNode->showHighlighted(false); 
+
+	const Real snapLimit = 18;
+	WorldDocument* doc = static_cast<WorldDocument*>(view->GetDocument());
+	if(doc) 
+	{
+		Real distance;
+		NodeDescriptor nd;
+		if(doc->getNodeClosestToPoint(loc, nd, distance))
+		{
+			if(distance <= snapLimit)
+			{
+				mCurrentWorldNode = static_cast<WorldNode*>(doc->getNodeData1(nd));
+				mCurrentWorldNode->showHighlighted(true);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+

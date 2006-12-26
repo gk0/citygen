@@ -25,7 +25,8 @@ private:
 
 	wxToolBar* mToolBar;
 	//wxToolBar* mGraphToolBar;
-	wxFrameManager mFrameManager;
+	wxAuiManager mFrameManager;
+
 	FileToolBar mFileToolBar;
 	EditModeToolBar mEditModeToolBar;
 	SelectModeToolBar mSelectModeToolBar;

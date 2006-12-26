@@ -48,8 +48,13 @@ void CityCell::growthGenerate()
 {
 	mRoadGraph.clear();
 
-	// 1. find the centre point from the boundary
+	// find the centre point from the boundary
 	Vector2 location = mParentRoadGraph->findPrimitiveCenter(mBoundaryPrimitive);
+
+	// continue if centre point is inside boundary
+	if(!(mParentRoadGraph->pointInPolygon(location, mBoundaryPrimitive))) return;
+
+	// add boundary as initial cell edges
 
 	// 2. find longest edge vector
 	Primitive& p(mBoundaryPrimitive);

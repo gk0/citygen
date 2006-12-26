@@ -160,6 +160,9 @@ public:
 
 	bool findClosestIntersection(const Vector2& a, const Vector2& b, RoadDescriptor& rd, Vector2& intersection) const;
 
+	bool getNodeClosestToPoint(const Ogre::Vector2 &loc, NodeDescriptor &nd, Ogre::Real &distance);
+
+
 private:
 	std::string nodeDescriptorToString(NodeDescriptor nd);
 };

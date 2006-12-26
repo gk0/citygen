@@ -83,16 +83,15 @@ MainWindow::MainWindow(wxDocManager* docManager)
 	RoadPropertyPage* roadPage = new RoadPropertyPage();
 	CellPropertyPage* cellPage = new CellPropertyPage();
 
-
 	// No Ogre app until it's given to us.
 	mWorldCanvas = new WorldCanvas(0, this, nodePage, cellPage);
 	mFrameManager.AddPane(mWorldCanvas, wxCENTER, wxT("Render Window"));
 
 	// Log Window
 	mLogWindow = new LogWindow(this);
-	mFrameManager.AddPane(mLogWindow, wxPaneInfo().
-						Name(wxT("LogWindow")).Caption(wxT("Log Window")).Bottom().
-						LeftDockable(true).RightDockable(true).Resizable(true));
+	mFrameManager.AddPane(mLogWindow, wxBOTTOM, wxT("Log"));
+
+	//mFrameManager.AddPane(
 
 	/*
 	 wxPropertyGridManager::wxPropertyGridManager  	(   	wxWindow *   	 parent,
@@ -104,9 +103,7 @@ MainWindow::MainWindow(wxDocManager* docManager)
 	)  
 	*/
 	mPropertyGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxSize(180,200));
-	mFrameManager.AddPane(mPropertyGridManager, wxPaneInfo().
-						Name(wxT("PropertyInspector")).Caption(wxT("Property Inspector")).Right().
-						LeftDockable(true).RightDockable(true).Resizable(true));
+	mFrameManager.AddPane(mPropertyGridManager, wxRIGHT, wxT("Property Inspector"));
 
 	// Add pages to property inspector
 	mPropertyGridManager->AddPage(wxT("View Properties"), wxNullBitmap, viewPage);
@@ -157,22 +154,22 @@ MainWindow::MainWindow(wxDocManager* docManager)
 	SetMenuBar(menuBar);
 	
 	//Toolbar
-	mFrameManager.AddPane(&mFileToolBar, wxPaneInfo().
+	mFrameManager.AddPane(&mFileToolBar,  wxAuiPaneInfo().
 					Name(wxT("FileToolBar")).Caption(wxT("File ToolBar")).
 					ToolbarPane().Top().
-					LeftDockable(false).RightDockable(false).Resizable(false));
+					LeftDockable(false).RightDockable(false).Resizable(false)); 
 
 	//Toolbar
-	mFrameManager.AddPane(&mEditModeToolBar, wxPaneInfo().
-					Name(wxT("EditModeToolBar")).Caption(wxT("Edit Mode ToolBar")).
+	mFrameManager.AddPane(&mEditModeToolBar, wxAuiPaneInfo().
+					Name(wxT("EditModeTb")).Caption(wxT("Edit Mode ToolBar")).
 					ToolbarPane().Top().
-					LeftDockable(true).RightDockable(true).Resizable(false));
-
+					LeftDockable(false).RightDockable(false).Resizable(false)); 
 	mSelectModeToolBar.setListener((SelectModeListener*) mWorldCanvas);
-	mFrameManager.AddPane(&mSelectModeToolBar, wxPaneInfo().
-				Name(wxT("SelectModeToolBar")).Caption(wxT("Node Edit ToolBar")).
-				ToolbarPane().Top().
-				LeftDockable(true).RightDockable(true).Resizable(false));
+
+	mFrameManager.AddPane(&mSelectModeToolBar,  wxAuiPaneInfo().
+					Name(wxT("NodeEditTb")).Caption(wxT("Node Edit ToolBar")).
+					ToolbarPane().Top().
+					LeftDockable(false).RightDockable(false).Resizable(false)); 
 
 	enableDocumentToolbars(false);
 

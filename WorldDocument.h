@@ -52,6 +52,8 @@ public:
 	bool pickCell(const Ogre::Vector2& loc, CityCell* &cell);
 	std::pair<CityCellIterator, CityCellIterator> getCells();
 
+	bool getNodeClosestToPoint(const Ogre::Vector2 &loc, NodeDescriptor &nd, Ogre::Real &distance) { return mRoadGraph.getNodeClosestToPoint(loc, nd, distance); }
+
 
 };
 

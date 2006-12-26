@@ -13,6 +13,34 @@ material gk/Hilite/Yellow
 	}
 }
 
+material Material
+{
+	technique
+	{
+		pass
+		{
+
+			texture_unit
+			{
+				texture dkyellow.png
+			}
+		}
+	}
+}
+
+material gk/Hilite/Red2
+{
+	technique
+	{
+		pass
+		{
+	      ambient 0.1 0.1 0.1
+	      diffuse 0.5 0.0 0.0
+	      specular 0.7 0.7 0.7 128
+		}
+	}
+}
+
 material default
 {
 	technique
@@ -48,35 +76,105 @@ material gk/Terrain
 {
    technique
    {
-     pass
-     {
-       // lighting on
-       // Base Pass
-       ambient 1 1 1
-       diffuse 1 1 1
-       texture_unit
-       {
-         // Base Texture
-         texture terrain_texture.jpg
-       }
-       texture_unit
-      {
-         texture terrain_detail.jpg
-         colour_op_ex modulate_x2 src_current src_texture
-         scale 0.03 0.03
-      }         
-     }  
-     
-     pass
-    {
-        scene_blend alpha_blend
-
-        texture_unit
-        {
-            texture gk_testalpha.png
-            tex_coord_set 0
-            colour_op modulate
-        }
-    }
+		pass
+		{
+			// lighting on
+			// Base Pass
+			ambient 1 1 1
+			diffuse 1 1 1
+			texture_unit
+			{
+				// Base Texture
+				texture terrain_texture.jpg
+			}
+			texture_unit
+			{
+				texture terrain_detail.jpg
+				colour_op_ex modulate_x2 src_current src_texture
+				scale 0.03 0.03
+			}         
+		}  
+	}
 } 
+
+material gk/Terrain2
+{
+   technique
+   {
+		pass
+		{
+			// lighting on
+			// Base Pass
+			ambient 1 1 1
+			diffuse 1 1 1
+			texture_unit
+			{
+				// Base Texture
+				texture terrain_texture.jpg
+			}
+			texture_unit
+			{
+				texture terrain_detail.jpg
+				colour_op_ex modulate_x2 src_current src_texture
+				scale 0.03 0.03
+			}         
+		}  
+		 
+		pass
+		{
+			scene_blend alpha_blend
+
+			texture_unit
+			{
+				texture gk_testalpha.png
+				tex_coord_set 0
+				colour_op modulate
+			}
+		}
+	}
+} 
+
+material Examples/TextureEffect4
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.3 0.3 0.3
+			scene_blend colour_blend
+			cull_hardware none
+			cull_software none
+
+			texture_unit
+			{
+				texture Water02.jpg
+				scroll_anim 0.01 0.01
+			}
+		}
+	}
+}
+
+material gk/MyWater
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.3 0.3 0.3
+			scene_blend colour_blend
+			cull_hardware none
+			cull_software none
+
+			texture_unit
+			{
+				texture Water02.jpg
+				scroll_anim 0.01 0.01
+			}
+			texture_unit NormalMap
+			{
+				texture water_normal.jpg
+			}
+		}
+	}
+}
 

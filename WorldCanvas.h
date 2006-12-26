@@ -28,6 +28,7 @@ public:
 typedef std::map< Ogre::SceneNode*, NodePair > SceneNodeMap;
 typedef std::map< Ogre::SceneNode*, RoadDescriptor > SceneRoadMap;
 typedef std::map< Ogre::SceneNode*, std::pair<CityCell*, RoadDescriptor> > SceneInnerRoadMap;
+typedef std::map< CityCell*, SceneNode*> CellSceneMap;
 
 class WorldCanvas : public wxOgre, EditModeListener, SelectModeListener, public Ogre::RenderTargetListener
 {
@@ -43,8 +44,12 @@ private:
 	CityCell* mCityCell;
 
 	//Ogre::SceneNode* mCityCellNode;
+	long mMouseDeltaX, mMouseDeltaY;
 
-	std::map< CityCell*, SceneNode*> mCellSceneMap;
+	CellSceneMap mCellSceneMap;
+
+	WorldNode* mCurrentWorldNode;
+	WorldNode* mSelectedWorldNode;
 
 public:
     wxView *view;
@@ -65,7 +70,7 @@ public:
 protected:
 	Ogre::RaySceneQuery *mRaySceneQuery;     // The ray scene query pointer
 	Ogre::RaySceneQueryResult result2;
-	Ogre::SceneNode *mCurrentNode;         // The newly created object
+	//Ogre::SceneNode *mCurrentNode;         // The newly created object
 
 	Ogre::SceneNode *mRoadNode;         // The newly created object
 	Ogre::Camera * mRTTCam;
@@ -82,16 +87,23 @@ protected:
 	
 	void OnChar(wxKeyEvent& event);
 	void OnLeftDragged(wxMouseEvent &e);
-	void OnSelectCell(wxMouseEvent &e);
-	void OnSelectNode(wxMouseEvent &e);
-	void OnSelectRoad(wxMouseEvent &e);
-	void OnLostFocus(wxFocusEvent& e);	
-	void OnMouse(wxMouseEvent &e);
+	void OnRightDragged(wxMouseEvent &e);
+
+	void OnLostFocus(wxFocusEvent& e);
+
+	void OnMouseMove(wxMouseEvent &e);
+	void OnLeftPressed(wxMouseEvent &e);
+	void OnMouseWheel(wxMouseEvent &e);
+
 	void OnSetFocus(wxFocusEvent& e);
+
+	void selectCell(wxMouseEvent &e);
+	void selectNode(wxMouseEvent &e);
+	void selectRoad(wxMouseEvent &e);
 	
 
-	void preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
-    void postRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
+	//void preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
+    //void postRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
 
 	virtual void createScene(void);
 
@@ -107,10 +119,10 @@ protected:
 
 	void growRoad(const Ogre::Vector2& direction, const Ogre::Vector2& location, int rotateInterval = 90);
 
-	void moveNode(SceneNode* sn, const Vector3& pos);
-	void selectNode(SceneNode* sn);
+	void moveNode(WorldNode* sn, const Vector3& pos);
+	void selectNode(WorldNode* wn);
 
-	void deleteNode(SceneNode* sn);
+	void deleteNode(WorldNode* wn);
 
 	void createCell(CityCell* cell);
 
@@ -122,6 +134,10 @@ protected:
 	bool plotPointOnTerrain(const Ogre::Vector2& pos2D, Ogre::Vector3& pos3D);
 	Ogre::Vector2 convert3DPointTo2D(const Ogre::Vector3& pos3D);
 	void refreshSceneNodeMap();
+
+	bool highlightNodeFromLoc(const Vector2 &loc);
+	//void highlightNode(SceneNode* sn);
+
 
 public:
 
