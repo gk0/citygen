@@ -19,3 +19,6 @@ addnode BITMAP "bitmaps/addnode.bmp"
 delnode BITMAP "bitmaps/delnode.bmp"
 addedge BITMAP "bitmaps/addedge.bmp"
 deledge BITMAP "bitmaps/deledge.bmp"
+
+graph BITMAP "bitmaps/viewgraph.bmp"
+roads BITMAP "bitmaps/viewroads.bmp"

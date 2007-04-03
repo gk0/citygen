@@ -1,3 +1,29 @@
+material gk/Terrain
+{
+   technique
+   {
+		pass
+		{
+			// lighting on
+			// Base Pass
+			ambient 1 1 1
+			diffuse 1 1 1
+			texture_unit
+			{
+				// Base Texture
+				texture terrain_texture.jpg
+			}
+			texture_unit
+			{
+				texture terrain_detail.jpg
+				colour_op_ex modulate_x2 src_current src_texture
+				scale 0.03 0.03
+			}         
+		}  
+	}
+} 
+
+
 material gk/Hilite/Yellow
 {
 	technique
@@ -34,9 +60,9 @@ material gk/Hilite/Red2
 	{
 		pass
 		{
-	      ambient 0.1 0.1 0.1
-	      diffuse 0.5 0.0 0.0
-	      specular 0.7 0.7 0.7 128
+			ambient 0.2 0.1 0.1
+			diffuse 0.5 0.0 0.0
+			specular 0.7 0.7 0.7 50
 		}
 	}
 }
@@ -71,31 +97,6 @@ material gk/Hilite/Red
 		}
 	}
 }
-
-material gk/Terrain
-{
-   technique
-   {
-		pass
-		{
-			// lighting on
-			// Base Pass
-			ambient 1 1 1
-			diffuse 1 1 1
-			texture_unit
-			{
-				// Base Texture
-				texture terrain_texture.jpg
-			}
-			texture_unit
-			{
-				texture terrain_detail.jpg
-				colour_op_ex modulate_x2 src_current src_texture
-				scale 0.03 0.03
-			}         
-		}  
-	}
-} 
 
 material gk/Terrain2
 {
@@ -177,4 +178,50 @@ material gk/MyWater
 		}
 	}
 }
+
+material gk/Building
+{
+	technique
+	{
+		pass
+		{
+			ambient 0.2 0.2 0.2
+			diffuse 0.4 0.4 0.4
+			specular 0.6 0.6 0.6 32
+		}
+	}
+}
+
+material gk/Road
+{
+	technique
+	{
+		pass
+		{
+			ambient 1 1 1
+			diffuse 1 1 1 
+			specular 0.2 0.2 0.2 10
+			
+			texture_unit
+			{
+				// Base Texture
+				texture road.png
+				//filtering anisotropic 
+			}
+			//texture_unit
+			//{
+			//	texture road_detail.png
+			//	colour_op alpha_blend //white no alpha
+			//	colour_op_ex blend_texture_alpha src_current src_texture //nothing
+			//	colour_op_ex modulate_x2 src_current src_texture //works but lightens everything
+			//	colour_op_ex modulate src_current src_texture //works but is a bit dark
+			//	colour_op_ex add src_current src_texture
+			//	scale 0.2 0.2
+			//	filtering anisotropic 
+			//}   
+		}
+	}
+}
+
+
 
