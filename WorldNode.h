@@ -3,129 +3,61 @@
 
 #include "stdafx.h"
 #include "WorldObject.h"
-#include "MoveableText.h"
+#include "NodeInterface.h"
+#include "MovableText.h"
+#include "RoadGraph.h"
 
-class WorldNode : public WorldObject
+class WorldRoad;
+
+class WorldNode : public WorldObject, public NodeInterface
 {
 
 private:
+	static int mInstanceCount;
+	Ogre::Entity* mMesh;
+	Ogre::Entity* mHighlight;
+	Ogre::Entity* mSelected;
+	Ogre::MovableText* mLabel;
+	Ogre::SceneManager* mCreator;
+	std::vector<WorldRoad*> mRoads;
 
-protected:
-	Entity* mMesh;
-	Entity* mHighlight;
-	Entity* mSelected;
-	//SceneNode* mMeshNode;
-	MovableText* mLabel;
-
+	void init(const Ogre::String& name, const Ogre::String& label);
 
 public:
-	WorldNode(SceneManager* creator, const String& name, const String& label, const Vector3& pos)
-	{
-		mHighlight = 0;
-		mSelected = 0;
+	NodeId mSimpleNodeId;
 
-		// create our scene node
-		mSceneNode = creator->getRootSceneNode()->createChildSceneNode(name, pos);
-		Vector3 po = mSceneNode->getPosition();
+	WorldNode(Ogre::SceneManager* creator, const Ogre::String& name);
+	WorldNode(Ogre::SceneManager* creator);
+	WorldNode(Ogre::SceneManager* creator, const Ogre::Vector3& pos);
+	~WorldNode();
 
-		// create mesh
-		mMesh = creator->createEntity(name+"Mesh", "node.mesh" );
-		MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().getByName("gk/Hilite/Red2");
-		//MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().create("gk/Hilite/Red2");
-		mat->getTechnique(0)->getPass(0)->setAmbient(0.1, 0.1, 0.1);
-		mat->getTechnique(0)->getPass(0)->setDiffuse(0.5, 0, 0, 1.0);
-		mat->getTechnique(0)->getPass(0)->setSpecular(0.7, 0.7, 0.7, 0.5);
-		mMesh->setMaterialName("gk/Hilite/Red2");
+	void setLabel(const Ogre::String& label);
+	const Ogre::String& getLabel() const;
+	void showHighlighted(bool highlighted);
+	void showSelected(bool selected);
+	Ogre::Vector3 getPosition3D() const;
+	void setPosition(const Ogre::Vector3 &pos);
+	bool setPosition2D(Ogre::Real x, Ogre::Real z);
+	void setPosition3D(Ogre::Real x, Ogre::Real y, Ogre::Real z);
+	void setPosition3D(const Ogre::Vector3& pos);
+	void setPosition(Ogre::Real x, Ogre::Real y, Ogre::Real z);
 
-		// create highlight mesh
-		mHighlight = creator->createEntity(name+"Highlight", "flange.mesh" );
-		mHighlight->setMaterialName("gk/Hilite/Yellow");
-		mHighlight->setVisible(false);
-		//mHighlight->setVisibilityFlags(
+	Ogre::Vector2 getPosition2D() const;
+	const Ogre::Vector3& getPosition() const { return WorldObject::getPosition(); }
 
-		// create select mesh
-		mSelected = creator->createEntity(name+"Selected", "node.mesh" );
-		mSelected->setMaterialName("gk/Hilite/Yellow");
-		mSelected->setVisible(false);
+	void attach(WorldObject* wo);
+	void detach(WorldObject* wo);
 
-		// create moveable text label
-		mLabel = new MovableText("Label"+name, label);
-		mLabel->setCharacterHeight(5);
-		mLabel->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE); // Center horizontally and display above the node
-		mLabel->setAdditionalHeight( 5.0f );
+	bool move(Ogre::Vector2 pos);
 
-		// attach objects and set scale
-		//mMeshNode = mSceneNode->createChildSceneNode();
-		//mMeshNode->attachObject( mMesh );
-		mSceneNode->attachObject( mMesh);
-		mSceneNode->attachObject(mHighlight);
-		mSceneNode->attachObject(mSelected);
-		mSceneNode->attachObject(mLabel);
-		//mSceneNode->setScale( 0.1f, 0.1f, 0.1f );
+	void notify();
+	
+	bool loadXML(const TiXmlHandle& nodeRoot);
+	bool hasRoadIntersection();
 
-		//mSceneNode->setPosition(0,5,0);
-
-	}
-
-	virtual ~WorldNode()
-	{
-		SceneManager* destroyer = mSceneNode->getCreator();
-		destroyer->destroyEntity(mMesh);
-		destroyer->destroyEntity(mHighlight);
-		destroyer->destroyEntity(mSelected);
-		delete mLabel;
-		destroyer->destroySceneNode(mSceneNode->getName());
-	}
-
-	void setLabel(const String& label)
-	{
-		mLabel->setCaption(label);
-	}
-
-	const String& getLabel() const
-	{
-		return mLabel->getCaption();
-	}
-
-	void showBoundingBox(bool show)
-	{
-		mSceneNode->showBoundingBox(show);
-	}
-
-	void showHighlighted(bool highlighted)
-	{
-		mHighlight->setVisible(highlighted);
-		//mMesh->setVisible(!highlighted & !(mSelected->getVisible()));
-	}
-
-	void showSelected(bool selected)
-	{
-		mSelected->setVisible(selected);
-		//mMesh->setVisible(!selected);
-	}
-
-/*
-	void setNodeProperties(const double& x, const double& y, const double& z)
-	{
-		if(mSelectedWorldNode)
-		{
-			SceneNode* sn = mSelectedWorldNode->getSceneNode();
-			mSceneNodeMap[sn].worldNode->setLabel(l);
-
-			//mCurrentNode->
-			Vector3 pos(static_cast<Real>(x), static_cast<Real>(y), static_cast<Real>(z));
-			if(plotPointOnTerrain(convert3DPointTo2D(pos), pos))
-				moveNode(sn, pos);
-			else
-				// no move has taken place because the new location could not be plotted on the terrain
-				// -write back the last correct values to the property inspector
-				selectNode(mCurrentWorldNode);
-			Update();
-		}
-	}
-*/
+	void build() { return; }
 
 
-};
+}; 
 
 #endif

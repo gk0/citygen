@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Application.h"
-#include "WorldView.h"
-#include "WorldDocument.h"
+
 
 using namespace Ogre;
 
@@ -10,8 +9,7 @@ IMPLEMENT_APP(Application);
 
 
 Application::Application()
-: mDocManager(0),
-  mRoot(0),
+: mRoot(0),
   mWindow(0)
 {
 }
@@ -24,31 +22,18 @@ bool Application::OnInit()
 	if (!wxApp::OnInit()) 
 		return false;
 
-	//DocManager
-	// Create a document manager
-    mDocManager = new wxDocManager;
 
-    // Create a template relating drawing documents to their views
-    new wxDocTemplate(mDocManager, _T("Citygen XML"), _T("*.cgx"), _T(""), _T("cgx"), 
-		_T("Citygen Doc"),
-		_T("Citygen View"),
-        CLASSINFO(WorldDocument), 
-		CLASSINFO(WorldView)
-		);
-#ifdef __WXMAC__
-    wxFileName::MacRegisterDefaultTypeAndCreator( wxT("drw") , 'WXMB' , 'WXMA' ) ;
-#endif
-
-    mDocManager->SetMaxDocsOpen(1);
 
 	InitializeOgre();
 
 	setupResources();
+	//loadResources();
+
+	mWindow = new MainWindow(0); 
 
 	// now we need to create MainWindow singleton because
 	// it creates RenderWindow, which is needed for resource loading (for example, textures and VBO)
 	// we create it, but don't show to user to avoid flickness
-	mWindow = new MainWindow(mDocManager);
 	SetTopWindow(mWindow); // set our MainWindow the main application window
 	mWindow->Show(true);
 	mWindow->updateOgre();
@@ -56,9 +41,6 @@ bool Application::OnInit()
 	// Resources and resource initialization
 	
 	loadResources();
-
-	//Lets Start With a Document
-	mDocManager->CreateDocument(wxT("bla"), wxDOC_NEW);
 	
 	// All clear!
 	return true;
@@ -95,7 +77,7 @@ bool Application::InitializeOgre()
 	  String s = "OgreView::Init() - Exception:\n" + e.getFullDescription() + "\n";
 	  LogManager::getSingleton().logMessage(s, LML_CRITICAL);
       wxMessageBox( wxString(e.getFullDescription().c_str(), wxConvUTF8),
-      wxT("Exception!"), 
+      _("Exception!"), 
       wxICON_EXCLAMATION);
       return false;
    }

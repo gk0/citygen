@@ -19,9 +19,6 @@ private:
 	Ogre::Root *mRoot;
 	MainWindow *mWindow;
 
-protected:
-    wxDocManager* mDocManager;
-
 public:
 	Application();
 	virtual bool OnInit();

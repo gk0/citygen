@@ -46,11 +46,20 @@
 	#define USE_XPM_BITMAPS 1
 #endif
 
+// Visual Leak Detector
+// http://dmoulding.googlepages.com/vld
+// helps find memory leaks
+//#define DLLCODE
+//#include <vld.h>
+
 // C RunTime Header Files
-#include <stdlib.h>
+#include <stdlib.h>  
 #include <malloc.h>
 #include <memory.h>
-//#include <tchar.h>
+
+#ifdef WIN32
+#include <tchar.h>
+#endif
 
 // C++ Headers
 #include <iostream>
@@ -75,20 +84,16 @@
 	#include <wx/wx.h>
 #endif
 #include <wx/frame.h>
-#include <wx/docview.h>
 #include <wx/image.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 #include <wx/textctrl.h>
 #include <wx/timer.h>
 #include <wx/toolbar.h>
-#include <wx/propgrid/manager.h>
-#include <wx/propgrid/advprops.h>
-#ifdef WIN32
-	#include <wx/aui/aui.h>
-#else
-	#include "manager.h"
-#endif
+//#include <wx/propgrid/manager.h>
+//#include <wx/propgrid/advprops.h>
+#include <wx/aui/aui.h>
+
 
 // wxGTK (Linux & Others)
 #ifdef __WXGTK__

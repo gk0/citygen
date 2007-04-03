@@ -6,18 +6,16 @@
  * @author  2003 by cTh see gavocanov@rambler.ru
  * @update  2006 by barraq see nospam@barraquand.com
  */
-
 #include "stdafx.h"
-//#include "Ogre.h"
 #include "OgreFontManager.h"
-#include "MoveableText.h"
+#include "MovableText.h"
 
 using namespace Ogre;
 
 #define POS_TEX_BINDING    0
 #define COLOUR_BINDING     1
 
-MovableText::MovableText(const String &name, const String &caption, const String &fontName, int charHeight, const ColourValue &color)
+MovableText::MovableText(const String &name, const String &caption, const String &fontName, Real charHeight, const ColourValue &color)
 : mpCam(NULL)
 , mpWin(NULL)
 , mpFont(NULL)
@@ -36,10 +34,10 @@ MovableText::MovableText(const String &name, const String &caption, const String
 , mAdditionalHeight(0.0)
 {
     if (name == "")
-        Exception(Exception::ERR_INVALIDPARAMS, "Trying to create MovableText without name", "MovableText::MovableText");
+        throw Exception(Exception::ERR_INVALIDPARAMS, "Trying to create MovableText without name", "MovableText::MovableText");
 
     if (caption == "")
-        Exception(Exception::ERR_INVALIDPARAMS, "Trying to create MovableText without caption", "MovableText::MovableText");
+        throw Exception(Exception::ERR_INVALIDPARAMS, "Trying to create MovableText without caption", "MovableText::MovableText");
 
     mRenderOp.vertexData = NULL;
     this->setFontName(mFontName);
@@ -64,7 +62,7 @@ void MovableText::setFontName(const String &fontName)
         mFontName = fontName;
         mpFont = (Font *)FontManager::getSingleton().getByName(mFontName).getPointer();
         if (!mpFont)
-            Exception(Exception::ERR_ITEM_NOT_FOUND, "Could not find font " + fontName, "MovableText::setFontName");
+            throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Could not find font " + fontName, "MovableText::setFontName");
 
         mpFont->load();
         if (!mpMaterial.isNull())
@@ -78,7 +76,11 @@ void MovableText::setFontName(const String &fontName)
             mpMaterial->load();
 
         mpMaterial->setDepthCheckEnabled(!mOnTop);
+#if OGRE_VERSION_MAJOR == 1 && OGRE_VERSION_MINOR <= 2
         mpMaterial->setDepthBias(!mOnTop);
+#else
+		mpMaterial->setDepthBias(1.0,1.0);
+#endif
         mpMaterial->setDepthWriteEnabled(mOnTop);
         mpMaterial->setLightingEnabled(false);
         mNeedUpdate = true;
@@ -103,7 +105,7 @@ void MovableText::setColor(const ColourValue &color)
     }
 }
 
-void MovableText::setCharacterHeight(uint height)
+void MovableText::setCharacterHeight(Real height)
 {
     if (height != mCharHeight)
     {
@@ -112,7 +114,7 @@ void MovableText::setCharacterHeight(uint height)
     }
 }
 
-void MovableText::setSpaceWidth(uint width)
+void MovableText::setSpaceWidth(Real width)
 {
     if (width != mSpaceWidth)
     {
@@ -149,7 +151,11 @@ void MovableText::showOnTop(bool show)
     if( mOnTop != show && !mpMaterial.isNull() )
     {
         mOnTop = show;
+#if OGRE_VERSION_MAJOR == 1 && OGRE_VERSION_MINOR <= 2
         mpMaterial->setDepthBias(!mOnTop);
+#else
+		mpMaterial->setDepthBias(1.0,1.0);
+#endif
         mpMaterial->setDepthCheckEnabled(!mOnTop);
         mpMaterial->setDepthWriteEnabled(mOnTop);
     }
@@ -278,7 +284,17 @@ void MovableText::_setupGeometry()
 
         Real horiz_height = mpFont->getGlyphAspectRatio(*i);
         Real u1, u2, v1, v2; 
+        
+#if OGRE_VERSION_MAJOR == 1 && OGRE_VERSION_MINOR <= 2
         mpFont->getGlyphTexCoords(*i, u1, v1, u2, v2);
+#else
+		Ogre::Font::UVRect utmp;
+        utmp = mpFont->getGlyphTexCoords(*i);
+        u1 = utmp.left;
+        u2 = utmp.right;
+        v1 = utmp.top;
+        v2 = utmp.bottom;
+#endif   
 
         // each vert is (x, y, z, u, v)
         //-------------------------------------------------------------------------------------

@@ -1,71 +1,86 @@
-#ifndef WXTEST_H
-#define WXTEST_H
+#ifndef _MAINWINDOW_H_
+#define _MAINWINDOW_H_
 
 #include "stdafx.h"
-#include "WorldCanvas.h"
-#include "LogWindow.h"
-#include "FileToolBar.h"
-#include "EditModeToolBar.h"
-#include "SelectModeToolBar.h"
-#include "ViewPropertyPage.h"
-#include "NodePropertyPage.h"
-#include "RoadPropertyPage.h"
-#include "CellPropertyPage.h"
+#include "LogFrame.h"
 
-class wxDocManager;
+class WorldFrame;
 
-// MainWindow class declaration //
-class MainWindow : public wxDocParentFrame, public Ogre::Singleton<MainWindow>, EditModeListener
+class MainWindow : public wxFrame
 {
+public:
+	enum EditMode {
+		view,
+		node,
+		road,
+		cell
+	};
+	enum ActiveTool {
+		viewTool,
+		selNode,
+		addNode,
+		delNode,
+		selRoad,
+		addRoad,
+		delRoad,
+		selCell
+	};
+
 private:
-	DECLARE_EVENT_TABLE()
-
-	wxDocManager* mDocManager;
-	wxPropertyGridManager* mPropertyGridManager;
-
-	wxToolBar* mToolBar;
-	//wxToolBar* mGraphToolBar;
 	wxAuiManager mFrameManager;
+	WorldFrame *mWorldFrame;
+	LogFrame *mLogFrame;
 
-	FileToolBar mFileToolBar;
-	EditModeToolBar mEditModeToolBar;
-	SelectModeToolBar mSelectModeToolBar;
-	
-	
-	LogWindow *mLogWindow;
+	// edit mode
+	EditMode mEditMode;
+	ActiveTool mActiveTool;
 
-	long mMouseX, mMouseY;
-	bool m_horzText;
+	wxToolBar *mFileToolBar, *mViewModeToolBar, *mEditModeToolBar, 
+		*mNodeEditToolBar, *mRoadEditToolBar;
+
+	// doc variables
+	wxString mDocFile;
+    bool mSavedYet;
+	bool mModified;
+
+private:
+	void setFilename(const wxString &file);
+	bool save();
+	bool saveAs();
+	bool doSave(const wxString &file);
+	bool onSaveModified();
+	void initEditModeToolBar();
+	void onChangeEditMode();
+	void initNodeEdit();
+	void initRoadEdit();
+	void initCellEdit();
+
+protected:
+	void onOpen(wxCommandEvent &e);
+	void onClose(wxCommandEvent &e);
+	void onNew(wxCommandEvent &e);
+	void onSave(wxCommandEvent &e);
+	void onSaveAs(wxCommandEvent &e);
+
+	void onSelectViewMode(wxCommandEvent &e);
+	void onSelectNodeMode(wxCommandEvent &e);
+	void onSelectRoadMode(wxCommandEvent &e);
+	void onSelectCellMode(wxCommandEvent &e);
+
+	void onSelectNode(wxCommandEvent &e);
+	void onSelectNodeAdd(wxCommandEvent &e);
+	void onSelectNodeDel(wxCommandEvent &e);
+
+	DECLARE_EVENT_TABLE();
 
 public:
-	WorldCanvas *mWorldCanvas;
-
-	MainWindow(wxDocManager* docManager);
+	MainWindow(wxWindow* parent);
 	~MainWindow();
 
-	void onQuit(wxCommandEvent &e);
-	void onAbout(wxCommandEvent &e);
-	void onNodeAdd(wxCommandEvent &e);
-	void onNodeDelete(wxCommandEvent &e);
-
-
-	void onViewModeSelect(wxCommandEvent &e);
-	void onNodeModeSelect(wxCommandEvent &e);
-	void onEdgeModeSelect(wxCommandEvent &e);
-
-	void CreateToolbar();
-	void CreateGraphToolbar();
-
-	void setEditMode(EditModeListener::EditMode mode);
-
-	void enableDocumentToolbars(bool enable=true);
-
-	
-	static MainWindow& getSingleton();
-	static MainWindow* getSingletonPtr();
-
 	void updateOgre();
+	void modify(bool m) { mModified = m; }
+	bool isModified() { return mModified; }
 
 };
 
-#endif
+#endif //__MainWindow_H__

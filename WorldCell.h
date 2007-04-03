@@ -3,77 +3,80 @@
 
 #include "stdafx.h"
 #include "WorldObject.h"
-#include "MoveableText.h"
-#include "CityCell.h"
+#include "RoadGraph.h"
+
+class WorldRoad;
+class NodeInterface;
+class RoadInterface;
+
+typedef struct {
+	int seed;
+	Ogre::Real segmentSize;
+	Ogre::Real segmentDeviance;
+	unsigned int degree;
+	Ogre::Real degreeDeviance;
+	Ogre::Real snapSize;
+	Ogre::Real snapDeviance;
+} GrowthGenParams;
 
 class WorldCell : public WorldObject
 {
 
 private:
+	static int mInstanceCount;
 
-protected:
-	ManualObject* mManualObject;
+	Ogre::String mName;
+	Ogre::Vector2 mCentre;
+	Ogre::ManualObject* mManualObject;
+	Ogre::ManualObject* mManualObject2;
+
+	RoadGraph mRoadGraph;
+	RoadGraph &mParentRoadGraph;
+	GrowthGenParams mGrowthGenParams;
+
+	std::set<RoadInterface*> mBoundaryRoads;
+	std::vector<NodeInterface*> mBoundaryCycle;
+	std::vector<RoadInterface*> mFilamentRoads;
 
 public:
-	WorldCell(SceneManager* creator, const CityCell& cell, const String& name, const Vector3& pos)
-	{
-		//
-		mSceneNode = creator->getRootSceneNode()->createChildSceneNode(name); 
+	WorldCell(RoadGraph &p);
+	WorldCell(RoadGraph &p, std::vector<NodeInterface*> &n, std::set<RoadInterface*> &b);
+	WorldCell(RoadGraph &p, std::set<RoadInterface*> &b);
+	virtual ~WorldCell();
 
+	GrowthGenParams getGrowthGenParams() const;
+	void setGrowthGenParams(const GrowthGenParams &g);
 
-		ManualObject* mManualObject = new ManualObject(name); 
-		mManualObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
-		Vector3 offset(0,3,0);
+	const std::set<RoadInterface*>& getBoundary() const;
+	void setBoundary(const std::vector<NodeInterface*> &nodeCycle, const std::set<RoadInterface*> &b);
+	void setBoundary(const std::set<RoadInterface*> &b);
 
-		//better create some roads for these cells.
-		RoadIterator ri, rend;
-		for(boost::tie(ri, rend) = cell.mRoadGraph.getRoads(); ri != rend; ++ri)
-		{
-			const Ogre::Vector2& source2(cell.mRoadGraph.getNodePosition(cell.mRoadGraph.getRoadSource(*ri)));
-			const Ogre::Vector2& target2(cell.mRoadGraph.getNodePosition(cell.mRoadGraph.getRoadTarget(*ri)));
-			Ogre::Vector3 source3, target3;
+	const std::vector<RoadInterface*>& getFilaments() const;
+	void addFilament(WorldRoad* f);
+	void removeFilament(WorldRoad* f);
+	
+	void update();
+	//void createCell();
+	//void destroyCell();
 
-			if(plotPointOnTerrain(source2, source3) && plotPointOnTerrain(target2, target3))
-			{
-				mManualObject->position(source3+offset); 
-				mManualObject->position(target3+offset); 
-			}
-		}
-		mManualObject->end(); 
+	void build();
+	bool isInside(const Ogre::Vector2 &loc) const;
+	bool isOnBoundary(NodeInterface *ni);
 
-		node->attachObject(mManualObject);
+private:
+	void clearRoadGraph();
+	void init();
+	void clearBoundary();
+	void clearFilaments();
+	void destroySceneObject();
 
-		CityCell* cellPtr = &cell;
-
-		mCellSceneMap[cellPtr] = node;
-	}
-
-
-	}
-
-	virtual ~WorldCELL()
-	{
-		SceneManager* destroyer = mSceneCELL->getCreator();
-		destroyer->destroyEntity(mMesh);
-		destroyer->destroyMovableObject(mLabel);
-		destroyer->destroySceneCELL(mSceneCELL->getName());
-	}
-
-	void setLabel(const String& label)
-	{
-		mLabel->setCaption(label);
-	}
-
-	const String& getLabel() const
-	{
-		return mLabel->getCaption();
-	}
-
-	void showBoundingBox(bool show)
-	{
-		mSceneCELL->showBoundingBox(show);
-	}
-
+	NodeInterface* createNode(const Ogre::Vector2 &pos);
+	RoadInterface* createRoad(NodeInterface *n1, NodeInterface *n2);
+	void deleteRoad(RoadInterface *ri);
+	std::vector<NodeInterface*> getBoundaryCycle();
+	void installGraph();
+	void installRoad(RoadInterface* r, std::map<NodeInterface*, NodeInterface*> &nodeMap);
+	RoadInterface* getLongestBoundaryRoad() const;
 };
 
 #endif
