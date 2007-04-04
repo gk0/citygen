@@ -86,7 +86,11 @@ void WorldCell::clearRoadGraph()
 	// delete roads
 	RoadIterator rIt, rEnd;
 	for(tie(rIt, rEnd) = mRoadGraph.getRoads(); rIt != rEnd; rIt++) 
-		delete mRoadGraph.getRoad((*rIt));
+	{
+		RoadInterface* ri = mRoadGraph.getRoad((*rIt));
+		if(typeid(*ri) != typeid(WorldRoad))
+			delete ri;
+	}
 
 	// delete nodes
 	NodeIterator nIt, nEnd;
@@ -217,20 +221,39 @@ void WorldCell::build()
 			case 1: 
 				{
 				// road intersection
-				NodeInterface *cursorNode = createNode(newPoint);
+				//NodeInterface *cursorNode = createNode(newPoint);
+				NodeInterface *cursorNode = new SimpleNode(newPoint);
+				NodeId cursorNodeId = mRoadGraph.addNode(cursorNode);
+				cursorNode->mNodeId = cursorNodeId;
 				createRoad(currentNode, cursorNode);
 
 				// get intersected source src and dst
 				RoadInterface *ri = mRoadGraph.getRoad(rd);
-				NodeInterface *srcNode = ri->getSrcNode();
-				NodeInterface *dstNode = ri->getDstNode();
+				NodeId srcNodeId = mRoadGraph.getSrc(rd);
+				NodeId dstNodeId = mRoadGraph.getDst(rd);
 
-				// delete the road rd
-				deleteRoad(ri);
+				//if road is a boundary road
+				if(typeid(*ri) == typeid(WorldRoad))
+				{
+					// remove road segment from graph
+					mRoadGraph.removeRoad(srcNodeId, dstNodeId);
 
-				// reconstruct road in the form of two segments
-				createRoad(srcNode, cursorNode);
-				createRoad(cursorNode, dstNode);
+					// create replacement segments
+					RoadId rd;
+					if(mRoadGraph.addRoad(srcNodeId, cursorNodeId, rd))
+						mRoadGraph.setRoad(rd, ri);
+					if(mRoadGraph.addRoad(cursorNodeId, dstNodeId, rd))
+						mRoadGraph.setRoad(rd, ri);
+				}
+				else
+				{
+					// delete the road rd
+					deleteRoad(ri);
+
+					// reconstruct road in the form of two segments
+					createRoad(mRoadGraph.getNode(srcNodeId), cursorNode);
+					createRoad(cursorNode, mRoadGraph.getNode(dstNodeId));
+				}
 				}
 				break;
 			case 2:
@@ -293,9 +316,9 @@ void WorldCell::build()
 		Real foundation = (*(ncIt->begin()))->getPosition3D().y - 1;
 		//Real height = 200;
 		vector<Vector2> result;
-		Geometry::polygonInset(0.3f, pointList2);
 
-
+		if(!Geometry::polygonInset(0.3f, pointList2))
+			continue;
 
 		// roof
 		if(Triangulate::Process(pointList2, result))
@@ -439,7 +462,13 @@ void WorldCell::installRoad(RoadInterface* r, map<NodeInterface*, NodeInterface*
 			nodeMap[dstNd] = createNode(dstNd->getPosition2D());
 
 		// create the road seg
-		createRoad(nodeMap[srcNd], nodeMap[dstNd]);
+		//createRoad(nodeMap[srcNd], nodeMap[dstNd]);
+		RoadId rd;
+		if(mRoadGraph.addRoad(nodeMap[srcNd]->mNodeId, nodeMap[dstNd]->mNodeId, rd))
+		{
+			mRoadGraph.setRoad(rd, r);
+		}
+		else throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not Installed", "WorldCell::installRoad");
 	}
 }
 
@@ -635,3 +664,5 @@ bool WorldCell::isOnBoundary(NodeInterface *ni)
 	}
 	return false;
 }
+
+

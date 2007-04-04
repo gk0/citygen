@@ -38,6 +38,7 @@ private:
 
 	Ogre::Real mRoadSegSz;
 	Ogre::Real mRoadDeviance;
+	Ogre::Real mRoadWidth;
 
 	std::vector<RoadId> mRoadSegmentList;
 	std::vector<Ogre::Vector3> mPlotList;
@@ -68,6 +69,7 @@ public:
 	bool rayCross(const Ogre::Vector2& loc);
 	Ogre::Real getLengthSquared() const;
 	const std::vector<RoadId>& getRoadSegmentList();
+	Ogre::Real getWidth() const;
 
 private:
 	void plotRoad();

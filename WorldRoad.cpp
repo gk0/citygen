@@ -13,6 +13,7 @@ WorldRoad::WorldRoad(SceneManager* creator, WorldNode* src, WorldNode* dst, Road
 	  mDstNode(dst),
 	  mRoadGraph(rg),
 	  mRoadSegSz(10), //DEBUG: set to v. big 50 normal is 10
+	  mRoadWidth(1.0),
 	  mRoadDeviance(30),
 	  mManualObject(0)
 {
@@ -218,9 +219,6 @@ void WorldRoad::build()
 	mManualObject = new ManualObject(mName); 
 	mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-	// constants
-	Real roadWidth = 1.0;
-
 	// vars
 	Vector3 currRoadSegNormal, nextRoadSegNormal;
 	Vector3 currRoadSegVector, nextRoadSegVector;
@@ -243,7 +241,7 @@ void WorldRoad::build()
 		// calculate the offset of length roadWidth
 		nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
 		nextRoadSegOffset.normalise();
-		nextRoadSegOffset *= roadWidth;
+		nextRoadSegOffset *= mRoadWidth;
 
 		// calculate normal
 		nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
@@ -296,7 +294,7 @@ void WorldRoad::build()
 		// calculate the offset of length roadWidth
 		nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
 		nextRoadSegOffset.normalise();
-		nextRoadSegOffset *= roadWidth;
+		nextRoadSegOffset *= mRoadWidth;
 
 		// calculate normal
 		Vector3 nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
@@ -314,7 +312,7 @@ void WorldRoad::build()
 	// finish end
 	if(mPlotList.size() >= 2)
 	{
-		int i = mPlotList.size() - 2;
+		size_t i = mPlotList.size() - 2;
 
 		// for a road segment pointA -> pointB
 		a = mPlotList[i], b = mPlotList[i+1];
@@ -347,114 +345,6 @@ void WorldRoad::build()
 		buildSegment(a1, a2, aNormal, b1, b2, bNormal, uMin, uMax);
 		uMin += currRoadSegLength;
 	}
-
-
-
-	// vars
-	//Vector3 prevLeft, prevRight, prevNormal;
-	//if(mPlotList.size() > 1)
-	//{
-	//	// get road perps
-	//	Vector2 plotA(mPlotList[0].x, mPlotList[0].z), plotB(mPlotList[1].x, mPlotList[1].z);
-	//	Vector2 offset((plotA - plotB).perpendicular());
-	//	offset.normalise();
-	//	offset *= roadWidth;
-
-	//	prevLeft.x = mPlotList[0].x + offset.x;
-	//	prevLeft.y = mPlotList[0].y;
-	//	prevLeft.z = mPlotList[0].z + offset.y;
-
-	//	prevRight.x = mPlotList[0].x - offset.x;
-	//	prevRight.y = mPlotList[0].y;
-	//	prevRight.z = mPlotList[0].z - offset.y;
-	//}
-
-	//// create each road segment
-	//for(size_t i=1; i<(mPlotList.size()-1); i++)
-	//{
-	//	// get road perps
-	//	// TODO, shouldn't use perps should use seg averages
-	//	Vector3 direction3D(mPlotList[i] - mPlotList[i+1]);
-	//	Vector2 direction2D(direction3D.x, direction3D.z);
-	//	Real length = direction2D.length();
-
-	//	Vector2 offset = direction2D.perpendicular();
-	//	offset.normalise();
-	//	offset *= roadWidth;
-
-	//	// calculate normal
-	//	Vector3 normal = Vector3(offset.x, 0, offset.y).crossProduct(direction3D);
-	//	normal.normalise();
-	//	//Vector3 normal = Vector3::UNIT_Y;
-
-	//	Vector3 currLeft(mPlotList[i].x + offset.x, mPlotList[i].y, mPlotList[i].z + offset.y);
-	//	Vector3 currRight(mPlotList[i].x - offset.x, mPlotList[i].y, mPlotList[i].z - offset.y);
-
-	//	// create road segment
-	//	mManualObject->position(prevLeft);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(0, 0);
-	//	mManualObject->position(prevRight);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(0, 1);
-	//	mManualObject->position(currLeft);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(length, 0);
-
-	//	mManualObject->position(prevRight);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(0, 1);
-	//	mManualObject->position(currRight);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(length, 1);
-	//	mManualObject->position(currLeft);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(length, 0);
-
-	//	prevLeft = currLeft;
-	//	prevRight = currRight;
-	//}
-
-	//if(mPlotList.size() > 1)
-	//{
-	//	size_t i = mPlotList.size()-1;
-	//	// get road perps
-	//	Vector3 direction3D(mPlotList[i-1] - mPlotList[i]);
-	//	Vector2 direction2D(direction3D.x, direction3D.z);
-
-	//	Vector2 offset = direction2D.perpendicular();
-	//	offset.normalise();
-	//	offset *= roadWidth;
-
-	//	// calculate normal
-	//	Vector3 normal = Vector3(offset.x, 0, offset.y).crossProduct(direction3D);
-	//	normal.normalise();
-	//	//Vector3 normal = Vector3::UNIT_Y;
-
-	//	Vector3 currLeft(mPlotList[i].x + offset.x, mPlotList[i].y, mPlotList[i].z + offset.y);
-	//	Vector3 currRight(mPlotList[i].x - offset.x, mPlotList[i].y, mPlotList[i].z - offset.y);
-
-	//	// create road segment
-	//	mManualObject->position(prevLeft);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(0, 0);
-	//	mManualObject->position(prevRight);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(0, 1);
-	//	mManualObject->position(currLeft);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(1, 0);
-
-	//	mManualObject->position(prevRight);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(0, 1);
-	//	mManualObject->position(currRight);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(1, 1);
-	//	mManualObject->position(currLeft);
-	//	mManualObject->normal(normal);
-	//	mManualObject->textureCoord(1, 0);
-	//}
 
 	mManualObject->end();
 	mSceneNode->attachObject(mManualObject);
@@ -756,4 +646,9 @@ const std::vector<RoadId>& WorldRoad::getRoadSegmentList()
 {
 	validate();
 	return mRoadSegmentList;
+}
+
+Real WorldRoad::getWidth() const
+{
+	return mRoadWidth;
 }

@@ -250,8 +250,6 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 		// Filament found, not necessarily rooted at v0.
 		extractFilament(vprev, getFirstAdjacent(vprev, g), g, heap, filaments);
 
-
-
 		//Guessing madness - no i don't understand
 		//setEdgeColour(v0, getFirstAdjacent(v0, g), black_color);
 		//heap.erase(v0);

@@ -4,6 +4,7 @@
 
 
 SimpleRoad::SimpleRoad(NodeInterface *src, NodeInterface *dst)
+ : mRoadWidth(0.5)
 {
 	mSrcNode = src;
 	mDstNode = dst;
@@ -39,3 +40,7 @@ Ogre::Real SimpleRoad::getLengthSquared() const
 	return (mSrcNode->getPosition2D() - mDstNode->getPosition2D()).squaredLength();
 }
 
+Ogre::Real SimpleRoad::getWidth() const
+{
+	return mRoadWidth;
+}

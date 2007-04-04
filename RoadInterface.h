@@ -15,6 +15,7 @@ public:
 	virtual void setRoadCycle(bool cycle) = 0;
 	virtual bool rayCross(const Ogre::Vector2& loc) = 0;
 	virtual Ogre::Real getLengthSquared() const = 0;
+	virtual Ogre::Real getWidth() const = 0;
 
 }; 
 
