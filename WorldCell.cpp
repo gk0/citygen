@@ -369,9 +369,8 @@ void WorldCell::build()
 	mSceneNode->attachObject(mManualObject2);
 
 	wxLongLong lt = (wxDateTime::UNow() - t).GetMilliseconds();
-	wxString wStr = lt.ToString();
-	string s = wStr.mb_str();
-	LogManager::getSingleton().logMessage("Cell build time: "+s+"ms.", LML_CRITICAL);
+	String strTime = static_cast<const char*>(lt.ToString().mb_str());
+	LogManager::getSingleton().logMessage("Cell build time: "+strTime+"ms.", LML_CRITICAL);
 
 	busy = false;
 	return;
