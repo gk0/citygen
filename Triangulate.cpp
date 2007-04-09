@@ -12,11 +12,11 @@ static const float EPSILON=0.0000000001f;
 float Triangulate::Area(const std::vector<Vector2> &contour)
 {
 
-  int n = contour.size();
+  size_t N = contour.size();
 
   float A=0.0f;
 
-  for(int p=n-1,q=0; q<n; p=q++)
+  for(size_t p = N - 1, q = 0; q < N; p = q++)
   {
     A+= contour[p].x*contour[q].y - contour[q].x*contour[p].y;
   }
@@ -133,8 +133,6 @@ bool Triangulate::Process(const std::vector<Vector2> &contour, std::vector<Vecto
       count = 2*nv;
     }
   }
-
-
 
   delete V;
 

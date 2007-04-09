@@ -4,7 +4,7 @@
 
 
 SimpleRoad::SimpleRoad(NodeInterface *src, NodeInterface *dst)
- : mRoadWidth(0.5)
+ : mRoadWidth(0.1)
 {
 	mSrcNode = src;
 	mDstNode = dst;

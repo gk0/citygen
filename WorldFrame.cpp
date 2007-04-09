@@ -675,6 +675,9 @@ WorldNode* WorldFrame::createNode()
 // ideally we'd like to save the cell and its lovely user specified params
 void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 {	
+	//NOTE: need to write an insert node function for WorldCell
+	// sux
+/*
 	modify(true);
 
 	// get cells attached to this road
@@ -692,7 +695,7 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 
 	// get cell boundaries and params
 	size_t numOfCells = attachedCells.size();
-	vector< set<RoadInterface*> > boundaries(numOfCells);
+	vector< vector<RoadInterface*> > boundaries(numOfCells);
 	vector<GrowthGenParams> genParams(numOfCells);
 	for(size_t i=0; i<numOfCells; i++)
 	{
@@ -737,7 +740,7 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 		// set complete boundary
 		attachedCells[i]->setBoundary(boundaries[i]);
 	}
-
+*/
 }
 
 void WorldFrame::deleteNode(WorldNode* wn)
@@ -781,7 +784,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 
 		// check the road graph to get a count of the number of cycles
 		vector< vector<NodeInterface*> > nodeCycles;
-		vector< set<RoadInterface*> > roadCycles;
+		vector< vector<RoadInterface*> > roadCycles;
 		vector<RoadInterface*> filaments;
 		mSimpleRoadGraph.extractPrimitives(filaments, nodeCycles, roadCycles);
 		//mRoadGraph.extractPrimitives(filaments, nodeCycles, roadCycles);
@@ -801,12 +804,12 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 				assert(nodeCycles.size() == roadCycles.size());
 
 				vector< vector<NodeInterface*> >::iterator ncIt = nodeCycles.begin();
-				vector< set<RoadInterface*> >::iterator rcIt, rcEnd;
+				vector< vector<RoadInterface*> >::iterator rcIt, rcEnd;
 
 				for(rcIt = roadCycles.begin(), rcEnd = roadCycles.end(); rcIt != rcEnd; rcIt++, ncIt++)
 				{
 					// if cell has boundary of cycle
-					if((*cellIt)->getBoundary() == (*rcIt))
+					if((*cellIt)->compareBoundary(*rcIt))
 					{
 						// remove cycle, as its not new
 						roadCycles.erase(rcIt);
@@ -903,8 +906,12 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 	case 1:
 		{
 			// could be a boundary edge or a filament
-			const set<RoadInterface*> &boundary(attachedCells[0]->getBoundary());
-			if(boundary.find(wr) != boundary.end())
+			const vector<RoadInterface*> &boundary(attachedCells[0]->getBoundary());
+			size_t i;
+			for(i=0; i<boundary.size(); i++)
+				if(boundary[i] == wr) break;
+
+			if(i<boundary.size())
 			{
 				mCells.erase(attachedCells[0]);
 				delete attachedCells[0];
@@ -922,13 +929,19 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 
 			// get common road
 			RoadInterface* ri = 0;
-			set<RoadInterface*> roads0 = attachedCells[0]->getBoundary();
-			set<RoadInterface*> roads1 = attachedCells[1]->getBoundary();
-			set<RoadInterface*>::iterator rIt0, rIt1, rEnd0;
+			vector<RoadInterface*> roads0 = attachedCells[0]->getBoundary();
+			vector<RoadInterface*> roads1 = attachedCells[1]->getBoundary();
+			vector<RoadInterface*>::iterator rIt0, rIt1, rEnd0, rEnd1;
 			for(rIt0 = roads0.begin(), rEnd0 = roads0.end(); rIt0 != rEnd0; rIt0++)
 			{
-				rIt1 = roads1.find(*rIt0);
-				if(rIt1 != roads1.end())
+				//rIt1 = roads1.find(*rIt0);
+				for(rIt1 = roads1.begin(), rEnd1 = roads1.end(); rIt1 != rEnd1; rIt1++)
+				{
+					if((*rIt1) == (*rIt0)) 
+						break;
+				}
+				//if(rIt1 != roads1.end())
+				if(rIt1 != rEnd1)
 				{
 					ri = (*rIt1);
 					break;
@@ -938,11 +951,14 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			// check common road is wr
 			assert(static_cast<WorldRoad*>(ri) == wr);
 
-			// union bounary and filaments
-			roads0.insert(roads1.begin(), roads1.end());
+			// remove wr from boundary 1
+			roads1.erase(rIt1);
 
-			// remove wr from boundary
-			roads0.erase(ri);
+			// union bounary and filaments
+			roads0.insert(rIt0, roads1.begin(), roads1.end());
+
+			// remove wr from boundary 0
+			roads0.erase(rIt0);
 			
 			// delete extraneous cell
 			mCells.erase(attachedCells[1]);

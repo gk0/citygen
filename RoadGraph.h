@@ -162,7 +162,7 @@ public:
 
 	void extractPrimitives(std::vector<RoadInterface*> &filaments, 
 		std::vector< std::vector<NodeInterface*> > &nodeCycles, 
-		std::vector< std::set<RoadInterface*> > &roadCycles);
+		std::vector< std::vector<RoadInterface*> > &roadCycles);
 
 private:
 	static bool getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g);
@@ -175,7 +175,7 @@ private:
 	static void extractPrimitive(NodeId v0, Graph &g, std::list<NodeId>& heap, 
 		std::vector<RoadInterface*>& filaments, 
 		std::vector< std::vector<NodeInterface*> > &nodeCycles, 
-		std::vector< std::set<RoadInterface*> > &roadCycles);
+		std::vector< std::vector<RoadInterface*> > &roadCycles);
 
 	static void removeFromHeap(NodeId v0, std::list<NodeId>& heap);
 	static NodeId getFirstAdjacent(NodeId nd, const Graph &g);

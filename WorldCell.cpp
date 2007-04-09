@@ -19,7 +19,7 @@ WorldCell::WorldCell(RoadGraph &p)
 	init();
 }
 
-WorldCell::WorldCell(RoadGraph &p, set<RoadInterface*> &b)
+WorldCell::WorldCell(RoadGraph &p, vector<RoadInterface*> &b)
  : 	mParentRoadGraph(p)
 {
 	init();
@@ -27,7 +27,7 @@ WorldCell::WorldCell(RoadGraph &p, set<RoadInterface*> &b)
 }
 
 
-WorldCell::WorldCell(RoadGraph &p, vector<NodeInterface*> &n, set<RoadInterface*> &b)
+WorldCell::WorldCell(RoadGraph &p, vector<NodeInterface*> &n, vector<RoadInterface*> &b)
  : 	mParentRoadGraph(p)
 {
 	init();
@@ -38,7 +38,7 @@ void WorldCell::init()
 {
 	// set up some default growth gen params
 	mGrowthGenParams.seed = 0;
-	mGrowthGenParams.segmentSize = 5;
+	mGrowthGenParams.segmentSize = 10;
 	mGrowthGenParams.segmentDeviance = 0.4;
 	mGrowthGenParams.degree = 4;
 	mGrowthGenParams.degreeDeviance = 0.1;
@@ -143,28 +143,6 @@ void WorldCell::build()
 	direction.normalise();   
 	direction *= mGrowthGenParams.segmentSize;
 
-
-/*
-	// create each road segment
-	//for(unsigned int i=0; i<(mPlotList.size()-1); i++)
-	//{
-		// create road segment
-		Vector3 centre3D(mCentre.x, 0, mCentre.y);
-		WorldFrame::getSingleton().plotPointOnTerrain(centre3D.x, centre3D.y, centre3D.z);
-
-		centre3D.y += 5; //a bit of ground clearance
-		mManualObject->position(centre3D);
-
-		centre3D.x += direction.x;
-		centre3D.z += direction.y;
-		mManualObject->position(centre3D);
-	//}
-
-	mManualObject->end();
-	mSceneNode->attachObject(mManualObject);
-*/
-
-
 	// work out how many times to rotate 
 	//unsigned int rotateCount = (Math::TWO_PI / theta);
 	//unsigned int degree = 4;
@@ -266,12 +244,6 @@ void WorldCell::build()
 			}
 		}
 	}
-	// build boxes
-	// check the road graph to get a count of the number of cycles
-	vector< vector<NodeInterface*> > nodeCycles;
-	vector< set<RoadInterface*> > roadCycles;
-	vector<RoadInterface*> filaments;
-	mRoadGraph.extractPrimitives(filaments, nodeCycles, roadCycles);
 
 	// declare the manual object
 	mManualObject = new ManualObject(mName);
@@ -291,64 +263,64 @@ void WorldCell::build()
 
 	//TODO: oh shit, it works for small cells but not bigns
 
+	// build boxes
+	// check the road graph to get a count of the number of cycles
+	vector< vector<NodeInterface*> > nodeCycles;
+	vector< vector<RoadInterface*> > roadCycles;
+	vector<RoadInterface*> filaments;
+	mRoadGraph.extractPrimitives(filaments, nodeCycles, roadCycles);
+
+
+	//TODO: oh shit, it works for small cells but not bigns
+
 
 	// declare the manual object
 	mManualObject2 = new ManualObject(mName+"b");
-
 	mManualObject2->begin("gk/Building", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 	// create lot of little boxes with our cycles
 	vector< vector<NodeInterface*> >::const_iterator ncIt, ncEnd;
-	for(ncIt = nodeCycles.begin(), ncEnd = nodeCycles.end(); ncIt != ncEnd; ncIt++)
+	vector< vector<RoadInterface*> >::const_iterator rcIt, rcEnd;
+	for(ncIt = nodeCycles.begin(), ncEnd = nodeCycles.end(),
+		rcIt = roadCycles.begin(), rcEnd = roadCycles.end(); 
+		ncIt != ncEnd, rcIt != rcEnd; ncIt++, rcIt++)
 	{
-		vector<Vector2> pointList2;
-		pointList2.reserve(ncIt->size());
-
-		// given the points of the cycle, we must move in 
-		vector<NodeInterface*>::const_iterator nIt, nEnd;
-		for(nIt = ncIt->begin(), nEnd = ncIt->end(); nIt != nEnd; nIt++)
-		{
-			// since the point list is returned in clockwise order
-			// tranlating each line perp left will reduce the footprint
-			pointList2.push_back((*nIt)->getPosition2D());
-			
-		}
-		Real foundation = (*(ncIt->begin()))->getPosition3D().y - 1;
-		//Real height = 200;
-		vector<Vector2> result;
-
-		if(!Geometry::polygonInset(0.3f, pointList2))
+		// get the foot print
+		vector<Vector2> footprint, result;
+		if(!extractFootprint(*ncIt, *rcIt, footprint))
 			continue;
 
+		// get base foundation height
+		Real foundation = (*(ncIt->begin()))->getPosition3D().y - 1;
+
 		// roof
-		if(Triangulate::Process(pointList2, result))
+		if(Triangulate::Process(footprint, result))
 		{
 			// get building height
-			//Real foundation = pointList2[0].y - 1;
 			Real height = foundation + 1.2 + (((float)rand()/(float)RAND_MAX) * 4);
 			
 			
 			// sides
-			size_t i, j, N = pointList2.size();
+			size_t i, j, N = footprint.size();
 			for(i = 0; i < N; i++)
 			{
 				j = (i + 1) % N;
-				Vector2 perp((pointList2[i] - pointList2[j]).perpendicular());
+				Vector2 perp((footprint[i] - footprint[j]).perpendicular());
 				Vector3 normal(perp.x, 0, perp.y);
 				normal.normalise();
-				mManualObject2->position(Vector3(pointList2[i].x, height, pointList2[i].y));
+				mManualObject2->position(Vector3(footprint[i].x, height, footprint[i].y));
 				mManualObject2->normal(normal);
-				mManualObject2->position(Vector3(pointList2[j].x, foundation, pointList2[j].y));
+				mManualObject2->position(Vector3(footprint[j].x, foundation, footprint[j].y));
 				mManualObject2->normal(normal);
-				mManualObject2->position(Vector3(pointList2[i].x, foundation, pointList2[i].y));
+				mManualObject2->position(Vector3(footprint[i].x, foundation, footprint[i].y));
 				mManualObject2->normal(normal);
 
 
-				mManualObject2->position(Vector3(pointList2[i].x, height, pointList2[i].y));
+				mManualObject2->position(Vector3(footprint[i].x, height, footprint[i].y));
 				mManualObject2->normal(normal);
-				mManualObject2->position(Vector3(pointList2[j].x, height, pointList2[j].y));
+				mManualObject2->position(Vector3(footprint[j].x, height, footprint[j].y));
 				mManualObject2->normal(normal);
-				mManualObject2->position(Vector3(pointList2[j].x, foundation, pointList2[j].y));
+				mManualObject2->position(Vector3(footprint[j].x, foundation, footprint[j].y));
 				mManualObject2->normal(normal);
 			}
 
@@ -365,7 +337,6 @@ void WorldCell::build()
 
 	}
 	mManualObject2->end();
-	//mManualObject2->setScale(0.9);
 	mSceneNode->attachObject(mManualObject2);
 
 	wxLongLong lt = (wxDateTime::UNow() - t).GetMilliseconds();
@@ -379,7 +350,7 @@ void WorldCell::build()
 bool WorldCell::isInside(const Ogre::Vector2 &loc) const
 {
 	bool rayCross = false;
-	set<RoadInterface*>::const_iterator rIt, rEnd;
+	vector<RoadInterface*>::const_iterator rIt, rEnd;
 	for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
 	{
 		if((*rIt)->rayCross(loc)) rayCross = !rayCross;
@@ -391,7 +362,7 @@ RoadInterface* WorldCell::getLongestBoundaryRoad() const
 {
 	RoadInterface* longest = 0;
 	Ogre::Real length;
-	set<RoadInterface*>::const_iterator rIt, rEnd;
+	vector<RoadInterface*>::const_iterator rIt, rEnd;
 	for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
 	{
 		if(longest == 0 || (*rIt)->getLengthSquared() > length)
@@ -431,7 +402,7 @@ void WorldCell::installGraph()
 	{
 		nodeMap[*nIt] = createNode((*nIt)->getPosition2D());
 	}
-	set<RoadInterface*>::iterator bIt, bEnd;
+	vector<RoadInterface*>::iterator bIt, bEnd;
 	for(bIt = mBoundaryRoads.begin(), bEnd = mBoundaryRoads.end(); bIt != bEnd; bIt++)
 	{
 		installRoad(*bIt, nodeMap);
@@ -471,7 +442,7 @@ void WorldCell::installRoad(RoadInterface* r, map<NodeInterface*, NodeInterface*
 	}
 }
 
-void WorldCell::setBoundary(const vector<NodeInterface*> &nodeCycle, const set<RoadInterface*> &b)
+void WorldCell::setBoundary(const vector<NodeInterface*> &nodeCycle, const vector<RoadInterface*> &b)
 {
 	if(b != mBoundaryRoads)
 	{
@@ -481,7 +452,7 @@ void WorldCell::setBoundary(const vector<NodeInterface*> &nodeCycle, const set<R
 		mBoundaryCycle = nodeCycle;
 
 		// set up listeners to receive invalidate events from roads
-		set<RoadInterface*>::iterator rIt, rEnd;
+		vector<RoadInterface*>::iterator rIt, rEnd;
 		for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
 		{
 			if(typeid(*(*rIt)) == typeid(WorldRoad))
@@ -493,7 +464,7 @@ void WorldCell::setBoundary(const vector<NodeInterface*> &nodeCycle, const set<R
 	}
 }
 
-void WorldCell::setBoundary(const set<RoadInterface*> &b)
+void WorldCell::setBoundary(const vector<RoadInterface*> &b)
 {
 	if(b != mBoundaryRoads)
 	{
@@ -503,7 +474,7 @@ void WorldCell::setBoundary(const set<RoadInterface*> &b)
 		mBoundaryCycle = getBoundaryCycle();
 
 		// set up listeners to receive invalidate events from roads
-		set<RoadInterface*>::iterator rIt, rEnd;
+		vector<RoadInterface*>::iterator rIt, rEnd;
 		for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
 		{
 			if(typeid(*(*rIt)) == typeid(WorldRoad))
@@ -540,7 +511,7 @@ void WorldCell::removeFilament(WorldRoad* f)
 
 void WorldCell::clearBoundary()
 {
-	set<RoadInterface*>::iterator rIt, rEnd;
+	vector<RoadInterface*>::iterator rIt, rEnd;
 	for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
 	{
 		if(typeid(*(*rIt)) == typeid(WorldRoad))
@@ -571,7 +542,7 @@ void WorldCell::setGrowthGenParams(const GrowthGenParams &g)
 	mGrowthGenParams = g;
 }
 
-const set<RoadInterface*>& WorldCell::getBoundary() const
+const vector<RoadInterface*>& WorldCell::getBoundary() const
 {
 	return mBoundaryRoads;
 }
@@ -621,8 +592,8 @@ vector<NodeInterface*> WorldCell::getBoundaryCycle()
 	vector<NodeInterface*> cycle;
 
 
-	set<RoadInterface*> boundaries(mBoundaryRoads);
-	set<RoadInterface*>::iterator rIt = boundaries.begin(), rEnd; 
+	vector<RoadInterface*> boundaries(mBoundaryRoads);
+	vector<RoadInterface*>::iterator rIt = boundaries.begin(), rEnd; 
 	if(rIt != boundaries.end())
 	{
 		cycle.push_back((*rIt)->getSrcNode());
@@ -664,4 +635,98 @@ bool WorldCell::isOnBoundary(NodeInterface *ni)
 	return false;
 }
 
+bool WorldCell::compareBoundary(const vector<RoadInterface*>& roadCycle) const
+{
+	// compare size
+	if(roadCycle.size() != mBoundaryRoads.size()) 
+		return false;
 
+	// find match
+	size_t i, j, offset, N = roadCycle.size();
+	for(i = 0; i < N; i++)
+	{
+		if(roadCycle[0] == mBoundaryRoads[i]) 
+			break;
+	}
+	if(i >= N)
+		return false;
+	else
+		offset = i;
+
+	// try forwards
+	for(i = 1; i < N; i++)
+	{
+		if(roadCycle[i] != mBoundaryRoads[(i + offset) % N])
+			break;
+	}
+	if(i >= N)
+		return true;
+
+	// try backwards
+	for(i = 1, j = offset-1; i < N; i++, j--)
+	{
+		if(roadCycle[i] != mBoundaryRoads[j % N])
+			return false;
+	}
+	return true;
+}
+
+bool WorldCell::extractFootprint(const vector<NodeInterface*> &nodeCycle, 
+								const vector<RoadInterface*> &roadCycle,
+								vector<Vector2> &footprint)
+{
+	// get size
+	size_t i, j, N = nodeCycle.size();
+
+	// check cycle
+	if(N < 3 || N != roadCycle.size())
+		throw Exception(Exception::ERR_INVALIDPARAMS, 
+		"Invalid number of nodes/roads in cycle", "WorldCell::extractFootprint");
+
+	// prepare footprint data structures
+	vector<Vector2> originalFootprint, newFootprint(N);
+	originalFootprint.reserve(N);
+	for(i = 0; i < N; i++) originalFootprint.push_back(nodeCycle[i]->getPosition2D()); 
+
+	// create footprint edge structure
+	vector< pair<Vector2, Vector2> > edges;
+	edges.reserve(N);
+
+	// get footprint edge vectors
+	Vector2 prevPoint = originalFootprint[(N-1)];
+	for(i = 0; i < N; i++)
+	{
+		Vector2 dir(originalFootprint[i] - prevPoint);
+		dir = dir.perpendicular();
+		dir.normalise();
+		dir *= roadCycle[i]->getWidth();
+		edges.push_back(make_pair(prevPoint + dir, originalFootprint[i] + dir));
+		prevPoint = originalFootprint[i];
+	}
+	//for(i = 0; i < N; i++)
+	//{
+	//	j = (i + 1) % N;
+	//	Vector2 dir(originalFootprint[j] - originalFootprint[i]);
+	//	dir = dir.perpendicular();
+	//	dir.normalise();
+	//	dir *= roadCycle[j]->getWidth();
+	//	edges.push_back(make_pair(originalFootprint[i] + dir, originalFootprint[j] + dir));
+	//}
+
+	// calculate footprint points from edges
+	for(i = 0; i < N; i++)
+	{
+		j = (i + 1) % N;
+
+		// get edge intersection point
+		if(!Geometry::lineIntersect(edges[i].first, edges[i].second, edges[j].first, 
+			edges[j].second, newFootprint[i]))
+			return false;
+
+		// require point to be inside original footprint
+		if(!Geometry::isInside(newFootprint[i], originalFootprint))
+			return false;
+	}
+	footprint = newFootprint;
+	return true;
+}

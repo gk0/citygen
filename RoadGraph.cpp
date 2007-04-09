@@ -46,7 +46,7 @@ bool RoadGraph::sortVertex(const NodeId& v0, const NodeId& v1)
     
 void RoadGraph::extractPrimitives(vector<RoadInterface*> &filaments, 
 								  vector< vector<NodeInterface*> > &nodeCycles, 
-								  vector< set<RoadInterface*> > &roadCycles)
+								  vector< vector<RoadInterface*> > &roadCycles)
 {
 	// create a copy of our road graph to work on
 	Graph g(mGraph);
@@ -220,11 +220,11 @@ void RoadGraph::extractFilament(NodeId v0, NodeId v1, Graph &g, list<NodeId>& he
 void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap, 
 								 vector<RoadInterface*> &filaments, 
 								 vector< vector<NodeInterface*> > &nodeCycles, 
-								 vector< set<RoadInterface*> > &roadCycles)
+								 vector< vector<RoadInterface*> > &roadCycles)
 {
 	set<NodeId> visited;
 	vector<NodeInterface*> nodeCycle;
-	set<RoadInterface*> roadCycle;
+	vector<RoadInterface*> roadCycle;
 
 	NodeId v1;
 	bool vertexFound = getClockwiseMost(v0, v1, g);
@@ -237,7 +237,7 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 	while(vertexFound && vcurr != v0 && visited.find(vcurr) == visited.end())
 	{
 		nodeCycle.push_back(g[vcurr]);
-		roadCycle.insert(g[edge(vprev, vcurr, g).first]);
+		roadCycle.push_back(g[edge(vprev, vcurr, g).first]);
 		visited.insert(vcurr);
 		vertexFound = getCounterClockwiseMostFromPrev(vprev, vcurr, vnext, g);
 		vprev = vcurr;
@@ -263,14 +263,14 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 
 		// add the last edge
 		nodeCycle.push_back(g[vcurr]);
-		roadCycle.insert(g[edge(vprev, vcurr, g).first]);
+		roadCycle.push_back(g[edge(vprev, vcurr, g).first]);
 
 		// add a cell to our list
 		nodeCycles.push_back(nodeCycle);
 		roadCycles.push_back(roadCycle);
 
 		// mark every edge in the cycle as a cycle edge
-		set< RoadInterface* >::iterator rIt, rEnd;
+		vector< RoadInterface* >::iterator rIt, rEnd;
 		for(rIt = roadCycle.begin(), rEnd = roadCycle.end(); rIt != rEnd; rIt++)
 			(*rIt)->setRoadCycle(true);
 		
