@@ -119,11 +119,11 @@
 </configuration>
 <configuration artifactExtension="bin" artifactName="citygen" cleanCommand="rm -rf" description="Debug on Ubuntu Feisty using gcc" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213" name="Debug GCC" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
 <toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.417609412" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug">
-<builder command="make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.983604903" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
+<builder arguments="-j 2 -k" command="make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.983604903" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1886762458" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
 <tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.2137126500" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
 <option id="gnu.cpp.compiler.option.include.paths.340771013" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/usr/include/OGRE"/>
+<listOptionValue builtIn="false" value="/home/gk/ogre/include/OGRE"/>
 <listOptionValue builtIn="false" value="/usr/include/atk-1.0"/>
 <listOptionValue builtIn="false" value="/usr/include/cairo"/>
 <listOptionValue builtIn="false" value="/usr/include/pango-1.0"/>
@@ -145,7 +145,9 @@
 <listOptionValue builtIn="false" value="X11"/>
 <listOptionValue builtIn="false" value="Xaw"/>
 </option>
-<option id="gnu.cpp.link.option.paths.1200380566" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths"/>
+<option id="gnu.cpp.link.option.paths.1200380566" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
+<listOptionValue builtIn="false" value="/home/gk/ogre/lib"/>
+</option>
 <option id="gnu.cpp.link.option.flags.2037415617" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="`wx-config --libs`" valueType="string"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.1195283524" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug"/>
