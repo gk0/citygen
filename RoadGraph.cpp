@@ -611,138 +611,6 @@ int RoadGraph::findClosestSnappedIntersection(const Vector2& srcPos, const Vecto
 	return 0;
 }
 
-/*
-// TODO:
-// may need a rewrite which is shit
-// is quicker than the current alternative but also crashes which is shit
-int RoadGraph::findClosestSnappedIntersection(const Vector2& srcPos, const Vector2& dstPos, 
-										const Ogre::Real& snapSzSquared, NodeId& nd,
-										RoadId& rd, Vector2& intersection) const
-{
-	bool isSnappedToNode = false;
-	bool hasIntersection = false;
-	Vector2 currentIntersection, closestIntersection;
-	RoadId closestRoad;
-	NodeId snappedToNode;
-	Ogre::Real currentDistance, closestDistance(std::numeric_limits<Ogre::Real>::max());
-	RoadIterator rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
-	{
-		if(roadIntersection(srcPos, dstPos, *rIt, currentIntersection)
-			&& currentIntersection != srcPos)
-		{
-			hasIntersection = true;
-			currentDistance = (srcPos - currentIntersection).squaredLength();
-			if(currentDistance < closestDistance)
-			{
-				// closer intersection found, update closest vars
-				closestIntersection = currentIntersection;
-				closestDistance = currentDistance;
-				closestRoad = *rIt;
-				isSnappedToNode = false;
-
-				if((getNode(getSrc(*rIt))->getPosition2D() - currentIntersection).squaredLength() < snapSzSquared)
-				{
-					// snap to intersecting road source
-					isSnappedToNode = true;
-					snappedToNode = getSrc(*rIt);
-					const Ogre::Vector2& roadSrcPos(getNode(snappedToNode)->getPosition2D());
-
-					if(roadSrcPos != currentIntersection)
-					{
-						closestDistance = (roadSrcPos - currentIntersection).squaredLength();
-
-						// if snapped, a new road section is proposed which must be considered
-						switch(findClosestSnappedIntersection(srcPos, roadSrcPos, snapSzSquared, 
-							snappedToNode, closestRoad, closestIntersection))
-						{
-						case 1:		// road intersection
-							isSnappedToNode = false;
-						case 2:		// snapped to road node
-							closestDistance = (srcPos - closestIntersection).squaredLength();
-							break;
-						}
-					}
-				}
-				else if((getNode(getDst(*rIt))->getPosition2D() - currentIntersection).squaredLength() < snapSzSquared)
-				{
-					// snap to intersecting road destination
-					isSnappedToNode = true;
-					snappedToNode = getDst(*rIt);
-					const Ogre::Vector2& roadDstPos(getNode(snappedToNode)->getPosition2D());
-
-					if(roadDstPos != currentIntersection)
-					{
-						closestDistance = (roadDstPos - currentIntersection).squaredLength();
-
-						// if snapped, a new road section is proposed which must be considered
-						switch(findClosestSnappedIntersection(srcPos, roadDstPos, snapSzSquared, 
-							snappedToNode, closestRoad, closestIntersection))
-						{
-						case 1:		// road intersection
-							isSnappedToNode = false;
-						case 2:		// snapped to road node
-							closestDistance = (srcPos - closestIntersection).squaredLength();
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// no intersection found
-	if(!hasIntersection)
-	{
-		// find closest node snap
-		Ogre::Real distanceSq;
-		NodeId temp;
-		if(getNodeClosestSq(dstPos, temp, distanceSq))
-		{
-			if(distanceSq < snapSzSquared)
-			{
-				const Ogre::Vector2& nodePos(getNode(temp)->getPosition2D());
-				if(nodePos != dstPos)
-				{
-					snappedToNode = temp;
-					isSnappedToNode = true;
-
-					// if snapped, a new road section is proposed which must be considered
-					switch(findClosestSnappedIntersection(srcPos, nodePos, snapSzSquared, 
-						snappedToNode, closestRoad, closestIntersection))
-					{
-					case 1:		// road intersection
-						hasIntersection = true;
-						isSnappedToNode = false;
-					case 2:		// snapped to road node
-						hasIntersection = true;
-						closestDistance = (srcPos - closestIntersection).squaredLength();
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	if(hasIntersection)
-	{
-		intersection = closestIntersection;
-		rd = closestRoad;
-		if(!isSnappedToNode)
-			return 1;
-	}
-	if(isSnappedToNode)
-	{
-		nd = snappedToNode;
-		return 2;
-	}
-	else
-	{
-		return 0;
-	}
-}*/
-
-
 bool RoadGraph::getNodeClosest(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Real &distance) const
 {
 	if(getNodeClosestSq(loc, nd, distance)) 
@@ -924,3 +792,159 @@ bool RoadGraph::hasIntersection(const RoadId rd)
 	}
 	return false;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool RoadGraph::findClosestIntersection(NodeId srcNd, 
+							 const Vector2 &srcPos,
+							 const Vector2 &dstPos,
+							 RoadId& rd, Vector2& pos) const
+{
+	bool hasIntersection = false;
+	Ogre::Real currentDistance, closestDistance;
+	Vector2 currentIntersection;
+	RoadIterator rIt, rEnd;
+	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
+	{
+		// exclude road connected to the srcNode
+		if(getSrc(*rIt) == srcNd || getDst(*rIt) == srcNd)
+			continue;
+
+		// test for an intersection
+		if(Geometry::lineSegmentIntersect(srcPos, dstPos, getNode(getSrc(*rIt))->getPosition2D(), 
+			getNode(getDst(*rIt))->getPosition2D(), currentIntersection))
+		{
+			// if no previous intersection
+			if(!hasIntersection)
+			{
+				// set the initial closest distance and params
+				hasIntersection = true;
+				closestDistance = (srcPos - currentIntersection).squaredLength();
+				pos = currentIntersection;
+				rd = *rIt;
+			}
+			else
+			{				
+				// test is it the closest
+				currentDistance = (srcPos - currentIntersection).squaredLength();
+				if(currentDistance < closestDistance)
+				{
+					// set the new closest distance and params
+					closestDistance = currentDistance;
+					pos = currentIntersection;
+					rd = *rIt;
+				}
+			}
+		}
+	}
+	return hasIntersection;	
+}
+
+
+
+int RoadGraph::snapInfo(NodeId srcNd, const Vector2 &dstPos, Real snapSzSquared,
+						NodeId& nd, RoadId& rd, Vector2& pos) const
+{
+	Vector2 srcPos = getNode(srcNd)->getPosition2D();
+
+	NodeId snappedToNode;
+	bool nodeSnapped = false;
+
+	// Find Closest Intersection
+	if(findClosestIntersection(srcNd, srcPos, dstPos, rd, pos))
+	{
+		// Intersection!
+		// Snap to Road Node
+		if(snapToRoadNode(pos, rd, snapSzSquared, snappedToNode))
+		{
+			nodeSnapped = true;
+		}
+		else
+		{
+			// INTERSECTION
+			return 1;
+		}
+	}
+	else
+	{
+		// No intersection!
+		// Snap To Node
+		nodeSnapped = snapToNode(dstPos, snapSzSquared, snappedToNode);
+	}
+
+	// if node snapped we alter the direction of our proposed road and must retest it
+	while(nodeSnapped)
+	{
+		// Find Closest Intersection
+		if(findClosestIntersection(srcNd, srcPos, dstPos, rd, pos))
+		{
+			// Snap to Road Node
+			NodeId tmp; 
+			if(snapToRoadNode(pos, rd, snapSzSquared, tmp))
+			{
+				if(snappedToNode != tmp) continue;
+			}
+			else
+			{
+				// INTERSECTION
+				return 1;
+			}
+		}
+		// NODE SNAP
+		nd = snappedToNode;
+		return 2;
+	}
+
+	// NO INTERSECTION
+	return 0;
+}
+

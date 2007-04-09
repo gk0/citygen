@@ -1,0 +1,1291 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<uml version="5">
+  <argo version="5">
+    <documentation>
+      <authorname></authorname>
+      <authoremail></authoremail>
+      <version>0.24</version>
+      <description>
+        
+      </description>
+    </documentation>
+    <settings>
+      <notationlanguage>UML 1.4</notationlanguage>
+      <useguillemots>false</useguillemots>
+      <showvisibility>false</showvisibility>
+      <showmultiplicity>false</showmultiplicity>
+      <showinitialvalue>false</showinitialvalue>
+      <showproperties>false</showproperties>
+      <showtypes>true</showtypes>
+      <showstereotypes>false</showstereotypes>
+      <showsingularmultiplicities>true</showsingularmultiplicities>
+      <defaultshadowwidth>1</defaultshadowwidth>
+    </settings>
+    
+    <searchpath href="PROJECT_DIR" />
+    <member type="xmi"
+            name="citygen.xmi" />
+    <member type="pgml"
+            name="citygen_ClassDiagram1.pgml"
+            diagramclass="org.argouml.uml.diagram.static_structure.ui.UMLClassDiagram"
+            diagramname="Class Diagram 1" />
+    <member type="pgml"
+            name="citygen_UsecaseDiagram1.pgml"
+            diagramclass="org.argouml.uml.diagram.use_case.ui.UMLUseCaseDiagram"
+            diagramname="Usecase Diagram 1" />
+    <member type="pgml"
+            name="citygen_untitledModel0.pgml"
+            diagramclass="org.argouml.uml.diagram.state.ui.UMLStateDiagram"
+            diagramname="RoadGraph::snapInfo" />
+    <member type="todo"
+            name="citygen.todo" />
+    <historyfile name="" />
+  </argo>
+<XMI xmi.version = '1.2' xmlns:UML = 'org.omg.xmi.namespace.UML' timestamp = 'Mon Apr 09 23:00:15 BST 2007'>
+  <XMI.header>    <XMI.documentation>
+      <XMI.exporter>ArgoUML (using Netbeans XMI Writer version 1.0)</XMI.exporter>
+      <XMI.exporterVersion>0.24(5) revised on $Date: 2006-11-06 19:55:22 +0100 (Mon, 06 Nov 2006) $ </XMI.exporterVersion>
+    </XMI.documentation>
+    <XMI.metamodel xmi.name="UML" xmi.version="1.4"/></XMI.header>
+  <XMI.content>
+    <UML:Model xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000077B'
+      name = 'untitledModel' isSpecification = 'false' isRoot = 'false' isLeaf = 'false'
+      isAbstract = 'false'>
+      <UML:Namespace.ownedElement>
+        <UML:StateMachine xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007DA'
+          name = 'RoadGraph::snapInfo' isSpecification = 'false'>
+          <UML:StateMachine.top>
+            <UML:CompositeState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007DB'
+              name = 'top' isSpecification = 'false' isConcurrent = 'false'>
+              <UML:CompositeState.subvertex>
+                <UML:Pseudostate xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007DC'
+                  isSpecification = 'false' kind = 'initial'>
+                  <UML:StateVertex.outgoing>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000845'/>
+                  </UML:StateVertex.outgoing>
+                </UML:Pseudostate>
+                <UML:SimpleState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4'
+                  name = 'Node Snapped' isSpecification = 'false'>
+                  <UML:StateVertex.outgoing>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083F'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000841'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000843'/>
+                  </UML:StateVertex.outgoing>
+                  <UML:StateVertex.incoming>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000825'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083F'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000841'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000847'/>
+                  </UML:StateVertex.incoming>
+                  <UML:State.internalTransition>
+                    <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083F'
+                      isSpecification = 'false'>
+                      <UML:Transition.trigger>
+                        <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000840'/>
+                      </UML:Transition.trigger>
+                      <UML:Transition.source>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4'/>
+                      </UML:Transition.source>
+                      <UML:Transition.target>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4'/>
+                      </UML:Transition.target>
+                    </UML:Transition>
+                    <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000841'
+                      isSpecification = 'false'>
+                      <UML:Transition.trigger>
+                        <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000842'/>
+                      </UML:Transition.trigger>
+                      <UML:Transition.source>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4'/>
+                      </UML:Transition.source>
+                      <UML:Transition.target>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4'/>
+                      </UML:Transition.target>
+                    </UML:Transition>
+                  </UML:State.internalTransition>
+                </UML:SimpleState>
+                <UML:SimpleState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000818'
+                  name = 'Find Closest Intersection' isSpecification = 'false'>
+                  <UML:StateVertex.outgoing>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000820'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082E'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000844'/>
+                  </UML:StateVertex.outgoing>
+                  <UML:StateVertex.incoming>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082E'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000845'/>
+                  </UML:StateVertex.incoming>
+                  <UML:State.internalTransition>
+                    <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082E'
+                      isSpecification = 'false'>
+                      <UML:Transition.trigger>
+                        <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082F'/>
+                      </UML:Transition.trigger>
+                      <UML:Transition.source>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000818'/>
+                      </UML:Transition.source>
+                      <UML:Transition.target>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000818'/>
+                      </UML:Transition.target>
+                    </UML:Transition>
+                  </UML:State.internalTransition>
+                </UML:SimpleState>
+                <UML:SimpleState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081D'
+                  name = 'Snap to Node' isSpecification = 'false'>
+                  <UML:StateVertex.outgoing>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000823'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000825'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000829'/>
+                  </UML:StateVertex.outgoing>
+                  <UML:StateVertex.incoming>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000820'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000829'/>
+                  </UML:StateVertex.incoming>
+                  <UML:State.internalTransition>
+                    <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000829'
+                      isSpecification = 'false'>
+                      <UML:Transition.trigger>
+                        <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082A'/>
+                      </UML:Transition.trigger>
+                      <UML:Transition.source>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081D'/>
+                      </UML:Transition.source>
+                      <UML:Transition.target>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081D'/>
+                      </UML:Transition.target>
+                    </UML:Transition>
+                  </UML:State.internalTransition>
+                </UML:SimpleState>
+                <UML:SimpleState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000822'
+                  name = 'No Intersection' isSpecification = 'false'>
+                  <UML:StateVertex.incoming>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000823'/>
+                  </UML:StateVertex.incoming>
+                </UML:SimpleState>
+                <UML:SimpleState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082D'
+                  name = 'Find Closest Intersection 2' isSpecification = 'false'>
+                  <UML:StateVertex.outgoing>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000830'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000834'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000837'/>
+                  </UML:StateVertex.outgoing>
+                  <UML:StateVertex.incoming>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000830'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000843'/>
+                  </UML:StateVertex.incoming>
+                  <UML:State.internalTransition>
+                    <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000830'
+                      isSpecification = 'false'>
+                      <UML:Transition.trigger>
+                        <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000831'/>
+                      </UML:Transition.trigger>
+                      <UML:Transition.source>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082D'/>
+                      </UML:Transition.source>
+                      <UML:Transition.target>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082D'/>
+                      </UML:Transition.target>
+                    </UML:Transition>
+                  </UML:State.internalTransition>
+                </UML:SimpleState>
+                <UML:SimpleState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000833'
+                  name = 'Node Snapped' isSpecification = 'false'>
+                  <UML:StateVertex.incoming>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000834'/>
+                  </UML:StateVertex.incoming>
+                </UML:SimpleState>
+                <UML:SimpleState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000836'
+                  name = 'Snap to Road Node' isSpecification = 'false'>
+                  <UML:StateVertex.outgoing>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083B'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000847'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084C'/>
+                  </UML:StateVertex.outgoing>
+                  <UML:StateVertex.incoming>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000837'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083B'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000844'/>
+                  </UML:StateVertex.incoming>
+                  <UML:State.internalTransition>
+                    <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083B'
+                      isSpecification = 'false'>
+                      <UML:Transition.trigger>
+                        <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083C'/>
+                      </UML:Transition.trigger>
+                      <UML:Transition.source>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000836'/>
+                      </UML:Transition.source>
+                      <UML:Transition.target>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000836'/>
+                      </UML:Transition.target>
+                    </UML:Transition>
+                  </UML:State.internalTransition>
+                </UML:SimpleState>
+                <UML:SimpleState xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000849'
+                  name = 'Road Intersection' isSpecification = 'false'>
+                  <UML:StateVertex.outgoing>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084A'/>
+                  </UML:StateVertex.outgoing>
+                  <UML:StateVertex.incoming>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084A'/>
+                    <UML:Transition xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084C'/>
+                  </UML:StateVertex.incoming>
+                  <UML:State.internalTransition>
+                    <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084A'
+                      isSpecification = 'false'>
+                      <UML:Transition.trigger>
+                        <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084B'/>
+                      </UML:Transition.trigger>
+                      <UML:Transition.source>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000849'/>
+                      </UML:Transition.source>
+                      <UML:Transition.target>
+                        <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000849'/>
+                      </UML:Transition.target>
+                    </UML:Transition>
+                  </UML:State.internalTransition>
+                </UML:SimpleState>
+              </UML:CompositeState.subvertex>
+            </UML:CompositeState>
+          </UML:StateMachine.top>
+          <UML:StateMachine.transitions>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000820'
+              isSpecification = 'false'>
+              <UML:Transition.trigger>
+                <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000821'/>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000818'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081D'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000823'
+              isSpecification = 'false'>
+              <UML:Transition.trigger>
+                <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000824'/>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081D'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000822'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000825'
+              isSpecification = 'false'>
+              <UML:Transition.trigger>
+                <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000826'/>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081D'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000834'
+              isSpecification = 'false'>
+              <UML:Transition.trigger>
+                <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000835'/>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082D'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000833'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000837'
+              isSpecification = 'false'>
+              <UML:Transition.trigger>
+                <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000838'/>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082D'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000836'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000843'
+              isSpecification = 'false'>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082D'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000844'
+              isSpecification = 'false'>
+              <UML:Transition.trigger>
+                <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000846'/>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000818'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000836'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000845'
+              isSpecification = 'false'>
+              <UML:Transition.source>
+                <UML:Pseudostate xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007DC'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000818'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000847'
+              isSpecification = 'false'>
+              <UML:Transition.trigger>
+                <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000848'/>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000836'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4'/>
+              </UML:Transition.target>
+            </UML:Transition>
+            <UML:Transition xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084C'
+              isSpecification = 'false'>
+              <UML:Transition.trigger>
+                <UML:SignalEvent xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084D'/>
+              </UML:Transition.trigger>
+              <UML:Transition.source>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000836'/>
+              </UML:Transition.source>
+              <UML:Transition.target>
+                <UML:SimpleState xmi.idref = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000849'/>
+              </UML:Transition.target>
+            </UML:Transition>
+          </UML:StateMachine.transitions>
+        </UML:StateMachine>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007E6'
+          name = 'Check for intersections' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007E9'
+          name = 'Is with snap distance of road source or target' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007EB'
+          name = 'No' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007ED'
+          name = 'Is within snap distance of node' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007EF'
+          name = 'Intersects with existing road?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F1'
+          name = 'Intersects' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F3'
+          name = 'No Intersections' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F6'
+          name = 'yes' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F8'
+          name = 'no' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007FC'
+          name = 'yes' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:00000000000007FF'
+          name = 'Intersects with existing road?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000801'
+          name = 'Intersects with existing road?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000803'
+          name = 'Intersects with existing road?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000805'
+          name = 'Intersects with existing road?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000807'
+          name = 'no' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000809'
+          name = 'Is with snap distance of road source or target?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000080B'
+          name = 'Is within snap distance of node?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000080D'
+          name = 'Intersects with existing road?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000080F'
+          name = 'Intersects with existing road?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000811'
+          name = 'No Intersections' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000813'
+          name = 'road intersects' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000815'
+          name = 'yes' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081A'
+          name = 'Check for road intersections' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081C'
+          name = 'road intersects' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000081F'
+          name = 'Check if point is within snap distance of node' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000821'
+          name = 'no intersections' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000824'
+          name = 'no' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000826'
+          name = 'yes' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000828'
+          name = 'Is within snap distance of road source or target?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082A'
+          name = 'Is within snap distance of any node' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082C'
+          name = 'Is within snap distance of road source or target node?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000082F'
+          name = 'Check for road intersections' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000831'
+          name = 'Check for road intersections' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000835'
+          name = 'no intersections' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000838'
+          name = 'road intersects' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083A'
+          name = 'Is within snap distance of road source or target node?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083C'
+          name = 'Is within snap distance of road source or target node?' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000083E'
+          name = 'Set pos = node-&gt;getPos' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000840'
+          name = 'Set pos = node-&gt;getPos' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000842'
+          name = 'Set snapNode = node' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000846'
+          name = 'road intersection' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:0000000000000848'
+          name = 'snap to road node' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084B'
+          name = 'Set pos = intersectionPoint' isSpecification = 'false'/>
+        <UML:SignalEvent xmi.id = '10-0-0-103-108222e1:111d6feb978:-8000:000000000000084D'
+          name = 'no snap' isSpecification = 'false'/>
+      </UML:Namespace.ownedElement>
+    </UML:Model>
+  </XMI.content>
+</XMI>
+<pgml description="org.argouml.uml.diagram.static_structure.ui.UMLClassDiagram|10-0-0-103-108222e1:111d6feb978:-8000:000000000000077B"
+      name="Class Diagram 1"
+>
+</pgml>
+<pgml description="org.argouml.uml.diagram.use_case.ui.UMLUseCaseDiagram|10-0-0-103-108222e1:111d6feb978:-8000:000000000000077B"
+      name="Usecase Diagram 1"
+>
+</pgml>
+<pgml description="org.argouml.uml.diagram.state.ui.UMLStateDiagram|10-0-0-103-108222e1:111d6feb978:-8000:00000000000007DA"
+      name="RoadGraph::snapInfo"
+>
+  <group name="Fig0"
+       description="org.argouml.uml.diagram.state.ui.FigInitialState[264, 8, 16, 16]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:00000000000007DC"
+       fill="1"
+       fillcolor="black"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <ellipse name="Fig0.0"
+      x="272"
+      y="16"
+      rx="8"
+      ry="8"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="1"
+      strokecolor="0 255 255"
+    />
+    <ellipse name="Fig0.1"
+      x="272"
+      y="16"
+      rx="8"
+      ry="8"
+      fill="1"
+      fillcolor="black"
+      stroke="1"
+      strokecolor="black"
+    />
+  </group>
+  <group name="Fig1"
+       description="org.argouml.uml.diagram.state.ui.FigSimpleState[129, 352, 139, 55]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:00000000000007F4"
+       fill="1"
+       fillcolor="white"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <rectangle name="Fig1.0"
+      x="129"
+      y="352"
+      width="139"
+      height="55"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="0"
+      strokecolor="0 255 255"
+      rounding="16"
+    />
+    <rectangle name="Fig1.1"
+      x="129"
+      y="352"
+      width="139"
+      height="55"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+      rounding="16"
+    />
+    <text name="Fig1.2"
+      x="131"
+      y="352"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Node Snapped</text>
+    <path name="Fig1.3"
+      description="org.tigris.gef.presentation.FigLine"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="129"
+              y="373" />
+      <lineto x="267"
+              y="373" />
+    </path>
+    <text name="Fig1.4"
+      x="131"
+      y="373"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Set pos = node-&gt;getPos
+Set snapNode = node</text>
+  </group>
+  <group name="Fig2"
+       description="org.argouml.uml.diagram.state.ui.FigSimpleState[230, 112, 134, 44]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000818"
+       fill="1"
+       fillcolor="white"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <rectangle name="Fig2.0"
+      x="230"
+      y="112"
+      width="134"
+      height="44"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="0"
+      strokecolor="0 255 255"
+      rounding="16"
+    />
+    <rectangle name="Fig2.1"
+      x="230"
+      y="112"
+      width="134"
+      height="44"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+      rounding="16"
+    />
+    <text name="Fig2.2"
+      x="232"
+      y="112"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Find Closest Intersection</text>
+    <path name="Fig2.3"
+      description="org.tigris.gef.presentation.FigLine"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="230"
+              y="133" />
+      <lineto x="363"
+              y="133" />
+    </path>
+    <text name="Fig2.4"
+      x="232"
+      y="133"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Check for road intersections</text>
+  </group>
+  <group name="Fig3"
+       description="org.argouml.uml.diagram.state.ui.FigSimpleState[24, 208, 217, 44]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:000000000000081D"
+       fill="1"
+       fillcolor="white"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <rectangle name="Fig3.0"
+      x="24"
+      y="208"
+      width="217"
+      height="44"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="0"
+      strokecolor="0 255 255"
+      rounding="16"
+    />
+    <rectangle name="Fig3.1"
+      x="24"
+      y="208"
+      width="217"
+      height="44"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+      rounding="16"
+    />
+    <text name="Fig3.2"
+      x="26"
+      y="208"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Snap to Node</text>
+    <path name="Fig3.3"
+      description="org.tigris.gef.presentation.FigLine"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="24"
+              y="229" />
+      <lineto x="240"
+              y="229" />
+    </path>
+    <text name="Fig3.4"
+      x="26"
+      y="229"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Is within snap distance of any node</text>
+  </group>
+  <group name="Fig4"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000820"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig2.0"
+      destPortFig="Fig3.0"
+      sourceFigNode="Fig2"
+      destFigNode="Fig3"
+    </private>
+    <path name="Fig4.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="233"
+              y="156" />
+      <lineto x="233"
+              y="208" />
+    </path>
+  </group>
+  <group name="Fig5"
+       description="org.argouml.uml.diagram.state.ui.FigSimpleState[24, 352, 83, 44]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000822"
+       fill="1"
+       fillcolor="white"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <rectangle name="Fig5.0"
+      x="24"
+      y="352"
+      width="83"
+      height="44"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="0"
+      strokecolor="0 255 255"
+      rounding="16"
+    />
+    <rectangle name="Fig5.1"
+      x="24"
+      y="352"
+      width="83"
+      height="44"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+      rounding="16"
+    />
+    <text name="Fig5.2"
+      x="26"
+      y="352"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >No Intersection</text>
+    <path name="Fig5.3"
+      description="org.tigris.gef.presentation.FigLine"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="24"
+              y="373" />
+      <lineto x="106"
+              y="373" />
+    </path>
+    <text name="Fig5.4"
+      x="26"
+      y="373"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    ></text>
+  </group>
+  <group name="Fig6"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000823"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig3.0"
+      destPortFig="Fig5.0"
+      sourceFigNode="Fig3"
+      destFigNode="Fig5"
+    </private>
+    <path name="Fig6.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="59"
+              y="252" />
+      <lineto x="59"
+              y="352" />
+    </path>
+  </group>
+  <group name="Fig7"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000825"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig3.0"
+      destPortFig="Fig1.0"
+      sourceFigNode="Fig3"
+      destFigNode="Fig1"
+    </private>
+    <path name="Fig7.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="193"
+              y="252" />
+      <lineto x="193"
+              y="352" />
+    </path>
+  </group>
+  <group name="Fig8"
+       description="org.argouml.uml.diagram.state.ui.FigSimpleState[136, 472, 136, 44]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:000000000000082D"
+       fill="1"
+       fillcolor="white"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <rectangle name="Fig8.0"
+      x="136"
+      y="472"
+      width="136"
+      height="44"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="0"
+      strokecolor="0 255 255"
+      rounding="16"
+    />
+    <rectangle name="Fig8.1"
+      x="136"
+      y="472"
+      width="136"
+      height="44"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+      rounding="16"
+    />
+    <text name="Fig8.2"
+      x="138"
+      y="472"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Find Closest Intersection 2</text>
+    <path name="Fig8.3"
+      description="org.tigris.gef.presentation.FigLine"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="136"
+              y="493" />
+      <lineto x="271"
+              y="493" />
+    </path>
+    <text name="Fig8.4"
+      x="138"
+      y="493"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Check for road intersections</text>
+  </group>
+  <group name="Fig9"
+       description="org.argouml.uml.diagram.state.ui.FigSimpleState[168, 584, 83, 44]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000833"
+       fill="1"
+       fillcolor="white"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <rectangle name="Fig9.0"
+      x="168"
+      y="584"
+      width="83"
+      height="44"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="0"
+      strokecolor="0 255 255"
+      rounding="16"
+    />
+    <rectangle name="Fig9.1"
+      x="168"
+      y="584"
+      width="83"
+      height="44"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+      rounding="16"
+    />
+    <text name="Fig9.2"
+      x="170"
+      y="584"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Node Snapped</text>
+    <path name="Fig9.3"
+      description="org.tigris.gef.presentation.FigLine"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="168"
+              y="605" />
+      <lineto x="250"
+              y="605" />
+    </path>
+    <text name="Fig9.4"
+      x="170"
+      y="605"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    ></text>
+  </group>
+  <group name="Fig10"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000834"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig8.0"
+      destPortFig="Fig9.0"
+      sourceFigNode="Fig8"
+      destFigNode="Fig9"
+    </private>
+    <path name="Fig10.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="208"
+              y="516" />
+      <lineto x="208"
+              y="584" />
+    </path>
+  </group>
+  <group name="Fig11"
+       description="org.argouml.uml.diagram.state.ui.FigSimpleState[384, 360, 255, 44]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000836"
+       fill="1"
+       fillcolor="white"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <rectangle name="Fig11.0"
+      x="384"
+      y="360"
+      width="255"
+      height="44"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="0"
+      strokecolor="0 255 255"
+      rounding="16"
+    />
+    <rectangle name="Fig11.1"
+      x="384"
+      y="360"
+      width="255"
+      height="44"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+      rounding="16"
+    />
+    <text name="Fig11.2"
+      x="386"
+      y="360"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Snap to Road Node</text>
+    <path name="Fig11.3"
+      description="org.tigris.gef.presentation.FigLine"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="384"
+              y="381" />
+      <lineto x="638"
+              y="381" />
+    </path>
+    <text name="Fig11.4"
+      x="386"
+      y="381"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Is within snap distance of road source or target node?</text>
+  </group>
+  <group name="Fig12"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000837"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig8.0"
+      destPortFig="Fig11.0"
+      sourceFigNode="Fig8"
+      destFigNode="Fig11"
+    </private>
+    <path name="Fig12.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="272"
+              y="480" />
+      <lineto x="472"
+              y="480" />
+      <lineto x="472"
+              y="404" />
+    </path>
+  </group>
+  <group name="Fig13"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000843"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig1.0"
+      destPortFig="Fig8.0"
+      sourceFigNode="Fig1"
+      destFigNode="Fig8"
+    </private>
+    <path name="Fig13.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="208"
+              y="407" />
+      <lineto x="208"
+              y="472" />
+    </path>
+  </group>
+  <group name="Fig14"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000844"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig2.0"
+      destPortFig="Fig11.0"
+      sourceFigNode="Fig2"
+      destFigNode="Fig11"
+    </private>
+    <path name="Fig14.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="364"
+              y="156" />
+      <lineto x="384"
+              y="360" />
+    </path>
+  </group>
+  <group name="Fig15"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000845"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig0.0"
+      destPortFig="Fig2.0"
+      sourceFigNode="Fig0"
+      destFigNode="Fig2"
+    </private>
+    <path name="Fig15.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="272"
+              y="23" />
+      <lineto x="272"
+              y="112" />
+    </path>
+  </group>
+  <group name="Fig16"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000847"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig11.0"
+      destPortFig="Fig1.0"
+      sourceFigNode="Fig11"
+      destFigNode="Fig1"
+    </private>
+    <path name="Fig16.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="384"
+              y="400" />
+      <lineto x="268"
+              y="400" />
+    </path>
+  </group>
+  <group name="Fig17"
+       description="org.argouml.uml.diagram.state.ui.FigSimpleState[448, 584, 131, 44]pathVisible=false;"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:0000000000000849"
+       fill="1"
+       fillcolor="white"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+    </private>
+    
+    <rectangle name="Fig17.0"
+      x="448"
+      y="584"
+      width="131"
+      height="44"
+      fill="1"
+      fillcolor="0 255 255"
+      stroke="0"
+      strokecolor="0 255 255"
+      rounding="16"
+    />
+    <rectangle name="Fig17.1"
+      x="448"
+      y="584"
+      width="131"
+      height="44"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+      rounding="16"
+    />
+    <text name="Fig17.2"
+      x="450"
+      y="584"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Road Intersection</text>
+    <path name="Fig17.3"
+      description="org.tigris.gef.presentation.FigLine"
+      fill="1"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="448"
+              y="605" />
+      <lineto x="578"
+              y="605" />
+    </path>
+    <text name="Fig17.4"
+      x="450"
+      y="605"
+      fill="0"
+      fillcolor="white"
+      stroke="0"
+      strokecolor="black"
+      font="Dialog"
+      textsize="10"
+    >Set pos = intersectionPoint</text>
+  </group>
+  <group name="Fig18"
+       description="org.argouml.uml.diagram.state.ui.FigTransition"
+       href="10-0-0-103-108222e1:111d6feb978:-8000:000000000000084C"
+       stroke="1"
+       strokecolor="black"
+  >
+    <private>
+      sourcePortFig="Fig11.0"
+      destPortFig="Fig17.0"
+      sourceFigNode="Fig11"
+      destFigNode="Fig17"
+    </private>
+    <path name="Fig18.0"
+      description="org.tigris.gef.presentation.FigPoly"
+      fill="0"
+      fillcolor="white"
+      stroke="1"
+      strokecolor="black"
+    >
+      <moveto x="536"
+              y="404" />
+      <lineto x="536"
+              y="584" />
+    </path>
+  </group>
+</pgml>
+<todo>
+<todolist>
+</todolist>
+<resolvedcritics>
+</resolvedcritics>
+</todo>
+</uml>

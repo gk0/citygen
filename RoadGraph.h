@@ -164,6 +164,9 @@ public:
 		std::vector< std::vector<NodeInterface*> > &nodeCycles, 
 		std::vector< std::vector<RoadInterface*> > &roadCycles);
 
+	int snapInfo(NodeId srcNd, const Ogre::Vector2 &dstPoint, Ogre::Real snapSzSquared,
+						NodeId& nd, RoadId& rd, Ogre::Vector2& pos) const;
+
 private:
 	static bool getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g);
 	static bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext, const Graph &g);
@@ -185,6 +188,9 @@ private:
 	static RoadId getSecondRoad(NodeId nd, const Graph &g);
 
 	bool sortVertex(const NodeId& v0, const NodeId& v1);
+
+	bool findClosestIntersection(NodeId srcNd, const Ogre::Vector2 &srcPos,
+							 const Ogre::Vector2 &dstPos, RoadId& rd, Ogre::Vector2& pos) const;
 
 
 private:

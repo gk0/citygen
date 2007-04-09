@@ -38,10 +38,10 @@ void WorldCell::init()
 {
 	// set up some default growth gen params
 	mGrowthGenParams.seed = 0;
-	mGrowthGenParams.segmentSize = 10;
+	mGrowthGenParams.segmentSize = 6;
 	mGrowthGenParams.segmentDeviance = 0.4;
 	mGrowthGenParams.degree = 4;
-	mGrowthGenParams.degreeDeviance = 0.1;
+	mGrowthGenParams.degreeDeviance = 0.01;
 	mGrowthGenParams.snapSize = 2.4;
 	mGrowthGenParams.snapDeviance = 0.1;
 
@@ -157,7 +157,7 @@ void WorldCell::build()
 	//int degDev = mGrowthGenParams.degree * mGrowthGenParams.degreeDeviance;
 	//int degBase = mGrowthGenParams.degree - degDev;
 	Real degDev = mGrowthGenParams.degree * mGrowthGenParams.degreeDeviance;
-	Real degBase = mGrowthGenParams.degree - degDev;
+	Real degBase = mGrowthGenParams.degree - (degDev / 2);
 
 	queue<NodeInterface*> q;
 	q.push(startNode);
@@ -186,7 +186,8 @@ void WorldCell::build()
 			NodeId nd;
 			Vector2 newPoint;
 
-			switch(mRoadGraph.findClosestSnappedIntersection(currentNode->getPosition2D(), cursor, snapSzSquared, nd, rd, newPoint))
+			//switch(mRoadGraph.findClosestSnappedIntersection(currentNode->getPosition2D(), cursor, snapSzSquared, nd, rd, newPoint))
+			switch(mRoadGraph.snapInfo(currentNode->mNodeId, cursor, snapSzSquared, nd, rd, newPoint))
 			{
 			case 0: 
 				{
