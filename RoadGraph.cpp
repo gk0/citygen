@@ -855,7 +855,7 @@ bool RoadGraph::findClosestIntersection(NodeId srcNd,
 	RoadIterator rIt, rEnd;
 	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
 	{
-		// exclude road connected to the srcNode
+		// exclude roads connected to the srcNode
 		if(getSrc(*rIt) == srcNd || getDst(*rIt) == srcNd)
 			continue;
 
@@ -925,13 +925,16 @@ int RoadGraph::snapInfo(NodeId srcNd, const Vector2 &dstPos, Real snapSzSquared,
 	while(nodeSnapped)
 	{
 		// Find Closest Intersection
-		if(findClosestIntersection(srcNd, srcPos, dstPos, rd, pos))
+		if(findClosestIntersection(srcNd, srcPos, getNode(snappedToNode)->getPosition2D(), rd, pos))
 		{
 			// Snap to Road Node
 			NodeId tmp; 
 			if(snapToRoadNode(pos, rd, snapSzSquared, tmp))
 			{
-				if(snappedToNode != tmp) continue;
+				if(snappedToNode != tmp) {
+					snappedToNode = tmp;
+					continue;
+				}
 			}
 			else
 			{

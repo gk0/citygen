@@ -186,6 +186,8 @@ void WorldCell::build()
 			NodeId nd;
 			Vector2 newPoint;
 
+			// 6600 vs. 8600 debug
+			// 94 vs. 109 release
 			//switch(mRoadGraph.findClosestSnappedIntersection(currentNode->getPosition2D(), cursor, snapSzSquared, nd, rd, newPoint))
 			switch(mRoadGraph.snapInfo(currentNode->mNodeId, cursor, snapSzSquared, nd, rd, newPoint))
 			{
@@ -254,14 +256,17 @@ void WorldCell::build()
 	for(boost::tie(rIt, rEnd) = mRoadGraph.getRoads(); rIt != rEnd; rIt++)
 	{
 		RoadInterface* r = mRoadGraph.getRoad(*rIt);
-		mManualObject->position(r->getSrcNode()->getPosition3D());
-		mManualObject->position(r->getDstNode()->getPosition3D());
+		if(typeid(*r) != typeid(WorldRoad))
+		{
+			mManualObject->position(mRoadGraph.getSrcNode(*rIt)->getPosition3D());
+			mManualObject->position(mRoadGraph.getDstNode(*rIt)->getPosition3D());
+		}
 	}
 
 	mManualObject->end();
 	mSceneNode->attachObject(mManualObject);
 
-
+/*
 	//TODO: oh shit, it works for small cells but not bigns
 
 	// build boxes
@@ -339,7 +344,7 @@ void WorldCell::build()
 	}
 	mManualObject2->end();
 	mSceneNode->attachObject(mManualObject2);
-
+*/
 	wxLongLong lt = (wxDateTime::UNow() - t).GetMilliseconds();
 	String strTime = static_cast<const char*>(lt.ToString().mb_str());
 	LogManager::getSingleton().logMessage("Cell build time: "+strTime+"ms.", LML_CRITICAL);
