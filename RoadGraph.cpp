@@ -855,14 +855,14 @@ bool RoadGraph::findClosestIntersection(NodeId srcNd,
 	RoadIterator rIt, rEnd;
 	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
 	{
-		// exclude roads connected to the srcNode
-		if(getSrc(*rIt) == srcNd || getDst(*rIt) == srcNd)
-			continue;
-
 		// test for an intersection
 		if(Geometry::lineSegmentIntersect(srcPos, dstPos, getNode(getSrc(*rIt))->getPosition2D(), 
 			getNode(getDst(*rIt))->getPosition2D(), currentIntersection))
 		{
+			// exclude roads connected to the srcNode
+			if(getSrc(*rIt) == srcNd || getDst(*rIt) == srcNd)
+				continue;
+
 			// if no previous intersection
 			if(!hasIntersection)
 			{

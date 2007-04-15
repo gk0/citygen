@@ -28,13 +28,13 @@ public:
 		Ogre::Real y;
 		if(WorldFrame::getSingleton().plotPointOnTerrain(x, y, z))
 		{
-			setPosition3D(x,y+1,z);
+			setPosition3D(x,y+0.199,z);
 			return true;
 		}
 		return false;
 	}
 
-	Ogre::Vector2 getPosition2D() const
+	inline Ogre::Vector2 getPosition2D() const
 	{
 		return Ogre::Vector2(mPosition.x, mPosition.z);
 	}

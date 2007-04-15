@@ -91,14 +91,14 @@ void ToolView::OnMouseMove(wxMouseEvent &e)
 	if(e.m_leftDown)
 	{
 		if(e.m_rightDown)
-			mWorldFrame->cameraMove(0.0f, 0.0f, mMouseDeltaY);
+			mWorldFrame->cameraMove(0.0f, 0.0f, mMouseDeltaY * (mMoveSpeed / 4));
 		else
 			mWorldFrame->cameraRotate(mMouseDeltaX*2, mMouseDeltaY);
 		mWorldFrame->update();
 	}
 	else if(e.m_rightDown)
 	{
-		mWorldFrame->cameraMove((Ogre::Real)(-mMouseDeltaX), (Ogre::Real)mMouseDeltaY, 0.0f);
+		mWorldFrame->cameraMove((Ogre::Real)(-mMouseDeltaX) * (mMoveSpeed / 4), (Ogre::Real)mMouseDeltaY * (mMoveSpeed / 4), 0.0f);
 		mWorldFrame->update();
 	}
 

@@ -82,6 +82,16 @@ private:
 	static bool extractFootprint(const std::vector<NodeInterface*> &nodeCycle, 
 						 const std::vector<RoadInterface*> &roadCycle, 
 						 std::vector<Ogre::Vector2> &footprint); 
+
+	void createBuilding(Ogre::ManualObject* m, const std::vector<Ogre::Vector2> &footprint,
+							   const Ogre::Real foundation, const Ogre::Real height);
+
+	void buildSegment(const Ogre::Vector3 &a1, const Ogre::Vector3 &a2, const Ogre::Vector3 &aNorm,
+			const Ogre::Vector3 &b1, const Ogre::Vector3 &b2, const Ogre::Vector3 &bNorm, 
+			Ogre::Real uMin, Ogre::Real uMax);
+
+	bool createJunction(const NodeId nd, Ogre::ManualObject *m);
+	void createRoad(const RoadId rd, Ogre::ManualObject *m);
 };
 
 #endif

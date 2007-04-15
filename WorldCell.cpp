@@ -112,7 +112,7 @@ void WorldCell::build()
 	}
 	busy = true;
 	// get time:
-	wxDateTime t = wxDateTime::UNow();
+	wxDateTime t2, t1 = wxDateTime::UNow();
 
 	//1. Clear Road Graph and destroy scene object
 	destroySceneObject();
@@ -125,12 +125,14 @@ void WorldCell::build()
 	//  the direction of the centre point
 
 	// 2. Get Center as a start point !!return if its node inside the cell	
-	vector<Vector2> pointList;
-	vector<NodeInterface*>::const_iterator nIt, nEnd;
-	for(nIt = mBoundaryCycle.begin(), nEnd = mBoundaryCycle.end(); nIt != nEnd; nIt++)
-		pointList.push_back((*nIt)->getPosition2D());
+	{
+		vector<Vector2> pointList;
+		vector<NodeInterface*>::const_iterator nIt, nEnd;
+		for(nIt = mBoundaryCycle.begin(), nEnd = mBoundaryCycle.end(); nIt != nEnd; nIt++)
+			pointList.push_back((*nIt)->getPosition2D());
 
-	mCentre = Geometry::centerOfMass(pointList);
+		mCentre = Geometry::centerOfMass(pointList);
+	}
 
 	if(!isInside(mCentre)) 
 		return;
@@ -179,7 +181,8 @@ void WorldCell::build()
 			// doesn't work grrrrrrrrrr
 
 			direction.normalise();
-			direction *= (segSzBase + (segDevSz *  ((float)rand()/(float)RAND_MAX)));
+			Real segSz = (segSzBase + (segDevSz *  ((float)rand()/(float)RAND_MAX)));
+			direction *= segSz;
 			Vector2 cursor(direction + currentNode->getPosition2D());
 
 			RoadId rd;
@@ -247,26 +250,28 @@ void WorldCell::build()
 			}
 		}
 	}
+	// get time interval
+	t2 = wxDateTime::UNow();
 
-	// declare the manual object
+	// Create the Road Network
 	mManualObject = new ManualObject(mName);
-	mManualObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
+	mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
+	// Road Segments
 	RoadIterator rIt, rEnd;
 	for(boost::tie(rIt, rEnd) = mRoadGraph.getRoads(); rIt != rEnd; rIt++)
-	{
-		RoadInterface* r = mRoadGraph.getRoad(*rIt);
-		if(typeid(*r) != typeid(WorldRoad))
-		{
-			mManualObject->position(mRoadGraph.getSrcNode(*rIt)->getPosition3D());
-			mManualObject->position(mRoadGraph.getDstNode(*rIt)->getPosition3D());
-		}
-	}
+		createRoad(*rIt, mManualObject);
+	
+	// Road Junctions
+	int junctionFailCount = 0;
+	NodeIterator nIt, nEnd;
+	for(boost::tie(nIt, nEnd) = mRoadGraph.getNodes(); nIt != nEnd; nIt++)
+		if(!createJunction(*nIt, mManualObject)) junctionFailCount++;
 
 	mManualObject->end();
 	mSceneNode->attachObject(mManualObject);
 
-/*
+
 	//TODO: oh shit, it works for small cells but not bigns
 
 	// build boxes
@@ -298,57 +303,21 @@ void WorldCell::build()
 
 		// get base foundation height
 		Real foundation = (*(ncIt->begin()))->getPosition3D().y - 1;
+		Real height = foundation + 1.2 + (((float)rand()/(float)RAND_MAX) * 4);
 
-		// roof
-		if(Triangulate::Process(footprint, result))
-		{
-			// get building height
-			Real height = foundation + 1.2 + (((float)rand()/(float)RAND_MAX) * 4);
-			
-			
-			// sides
-			size_t i, j, N = footprint.size();
-			for(i = 0; i < N; i++)
-			{
-				j = (i + 1) % N;
-				Vector2 perp((footprint[i] - footprint[j]).perpendicular());
-				Vector3 normal(perp.x, 0, perp.y);
-				normal.normalise();
-				mManualObject2->position(Vector3(footprint[i].x, height, footprint[i].y));
-				mManualObject2->normal(normal);
-				mManualObject2->position(Vector3(footprint[j].x, foundation, footprint[j].y));
-				mManualObject2->normal(normal);
-				mManualObject2->position(Vector3(footprint[i].x, foundation, footprint[i].y));
-				mManualObject2->normal(normal);
-
-
-				mManualObject2->position(Vector3(footprint[i].x, height, footprint[i].y));
-				mManualObject2->normal(normal);
-				mManualObject2->position(Vector3(footprint[j].x, height, footprint[j].y));
-				mManualObject2->normal(normal);
-				mManualObject2->position(Vector3(footprint[j].x, foundation, footprint[j].y));
-				mManualObject2->normal(normal);
-			}
-
-			for(size_t i=0; i<result.size(); i+=3)
-			{
-				mManualObject2->position(Vector3(result[i+2].x, height, result[i+2].y));
-				mManualObject2->normal(Vector3::UNIT_Y);
-				mManualObject2->position(Vector3(result[i+1].x, height, result[i+1].y));
-				mManualObject2->normal(Vector3::UNIT_Y);
-				mManualObject2->position(Vector3(result[i].x, height, result[i].y));
-				mManualObject2->normal(Vector3::UNIT_Y);
-			}
-		}
+		//
+		createBuilding(mManualObject2, footprint, foundation, height);
 
 	}
 	mManualObject2->end();
 	mSceneNode->attachObject(mManualObject2);
-*/
-	wxLongLong lt = (wxDateTime::UNow() - t).GetMilliseconds();
-	String strTime = static_cast<const char*>(lt.ToString().mb_str());
-	LogManager::getSingleton().logMessage("Cell build time: "+strTime+"ms.", LML_CRITICAL);
 
+	wxLongLong lTimeGen = (t2 - t1).GetMilliseconds();
+	wxLongLong lTimeTotal = (wxDateTime::UNow() - t1).GetMilliseconds();
+	String strTimeGen = static_cast<const char*>(lTimeGen.ToString().mb_str());
+	String strTimeTotal = static_cast<const char*>(lTimeTotal.ToString().mb_str());
+	LogManager::getSingleton().logMessage("Cell build time: "+strTimeTotal+"ms. ("+strTimeGen+"ms)", LML_CRITICAL);
+	LogManager::getSingleton().logMessage(" junction fail count: "+StringConverter::toString(junctionFailCount), LML_CRITICAL);
 	busy = false;
 	return;
 }
@@ -735,4 +704,208 @@ bool WorldCell::extractFootprint(const vector<NodeInterface*> &nodeCycle,
 	}
 	footprint = newFootprint;
 	return true;
+}
+
+void WorldCell::createBuilding(ManualObject* m, const vector<Vector2> &footprint,
+							   const Real foundation, const Real height)
+{
+	vector<Vector2> result;
+
+	// roof
+	if(Triangulate::Process(footprint, result))
+	{
+		// sides
+		size_t i, j, N = footprint.size();
+		for(i = 0; i < N; i++)
+		{
+			j = (i + 1) % N;
+			Vector2 perp((footprint[i] - footprint[j]).perpendicular());
+			Vector3 normal(perp.x, 0, perp.y);
+			normal.normalise();
+			m->position(Vector3(footprint[i].x, height, footprint[i].y));
+			m->normal(normal);
+			m->position(Vector3(footprint[j].x, foundation, footprint[j].y));
+			m->normal(normal);
+			m->position(Vector3(footprint[i].x, foundation, footprint[i].y));
+			m->normal(normal);
+
+
+			m->position(Vector3(footprint[i].x, height, footprint[i].y));
+			m->normal(normal);
+			m->position(Vector3(footprint[j].x, height, footprint[j].y));
+			m->normal(normal);
+			m->position(Vector3(footprint[j].x, foundation, footprint[j].y));
+			m->normal(normal);
+		}
+
+		for(size_t i=0; i<result.size(); i+=3)
+		{
+			m->position(Vector3(result[i+2].x, height, result[i+2].y));
+			m->normal(Vector3::UNIT_Y);
+			m->position(Vector3(result[i+1].x, height, result[i+1].y));
+			m->normal(Vector3::UNIT_Y);
+			m->position(Vector3(result[i].x, height, result[i].y));
+			m->normal(Vector3::UNIT_Y);
+		}
+	}
+}
+
+void WorldCell::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3 &aNorm,
+			const Vector3 &b1, const Vector3 &b2, const Vector3 &bNorm, Real uMin, Real uMax)
+{
+	// create road segment
+	mManualObject->position(a1);
+	mManualObject->normal(aNorm);
+	mManualObject->textureCoord(uMin, 0);
+	mManualObject->position(a2);
+	mManualObject->normal(aNorm);
+	mManualObject->textureCoord(uMin, 1);
+	mManualObject->position(b1);
+	mManualObject->normal(bNorm);
+	mManualObject->textureCoord(uMax, 0);
+
+	mManualObject->position(a2);
+	mManualObject->normal(aNorm);
+	mManualObject->textureCoord(uMin, 1);
+	mManualObject->position(b2);
+	mManualObject->normal(bNorm);
+	mManualObject->textureCoord(uMax, 1);
+	mManualObject->position(b1);
+	mManualObject->normal(bNorm);
+	mManualObject->textureCoord(uMax, 0);
+}
+
+void WorldCell::createRoad(const RoadId rd, ManualObject *m)
+{
+	RoadInterface* r = mRoadGraph.getRoad(rd);
+	if(typeid(*r) != typeid(WorldRoad))
+	{
+		//const Vector3 a3, b3;
+		//a3 = mRoadGraph.getSrcNode(*rIt)->getPosition3D();
+		//b3 = mRoadGraph.getDstNode(*rIt)->getPosition3D();
+		Real roadWidth = r->getWidth();
+
+		Vector2 a, b, dir, offset;
+		a = mRoadGraph.getSrcNode(rd)->getPosition2D();
+		b = mRoadGraph.getDstNode(rd)->getPosition2D();
+		dir = b - a;
+		dir.normalise(); // for radius crap
+		offset = dir.perpendicular();
+		offset.normalise();
+		offset *= roadWidth;
+
+		// give a little room for junctions
+		// TODO: the problem is MUCH more complicated than this
+		dir *= (roadWidth);
+		a += dir;
+		b -= dir;
+
+		//mManualObject->position(mRoadGraph.getSrcNode(*rIt)->getPosition3D());
+		//mManualObject->position(mRoadGraph.getDstNode(*rIt)->getPosition3D());
+
+		Real ay = mRoadGraph.getSrcNode(rd)->getPosition3D().y - 0.002;
+		Real by = mRoadGraph.getDstNode(rd)->getPosition3D().y - 0.001;
+		Vector3 a1(a.x - offset.x, ay, a.y - offset.y);
+		Vector3 a2(a.x + offset.x, ay, a.y + offset.y);
+		Vector3 b1(b.x - offset.x, by, b.y - offset.y);
+		Vector3 b2(b.x + offset.x, by, b.y + offset.y);
+
+		buildSegment(a1, a2, Vector3::UNIT_Y, b1, b2, Vector3::UNIT_Y, 0, 4);
+	}
+}
+
+
+bool WorldCell::createJunction(const NodeId nd, ManualObject *m)
+{
+	// how many roads connect here
+	size_t degree = mRoadGraph.getDegree(nd);
+
+	switch(degree)
+	{
+	case 0:
+	case 1:
+	case 2:
+		// nothing to do here
+		return true;
+	case 3:
+		//createTJunction(nd, m);
+		break;
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+		//createTJunction(nd, m);
+		break;
+	default:
+		// can't do this aggh
+		return false;
+	}
+
+	NodeInterface *node = mRoadGraph.getNode(nd);
+	Vector2 nodePos2D = node->getPosition2D();
+	Real height = node->getPosition3D().y;
+
+	//THINK!!
+	//
+	//Vector2 previousRoad, 
+
+	//SHIT need to sort these clock wise
+	vector<Vector2> pointlist;
+	RoadIterator2 rIt, rEnd;
+	boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(nd); 
+	if(rIt != rEnd)
+	{
+		NodeId dstNd = mRoadGraph.getDst(*rIt);
+		size_t degree = mRoadGraph.getDegree(nd);
+		Real roadWidth = mRoadGraph.getRoad(*rIt)->getWidth();
+		// get dir
+		Vector2 dir(mRoadGraph.getNode(dstNd)->getPosition2D() - nodePos2D);
+		Vector2 offset = dir.perpendicular();
+		offset.normalise();
+		offset *= (roadWidth * 0.1);
+		dir.normalise();
+
+		// get width
+		Vector2 srcPos = nodePos2D + (dir * roadWidth);
+		//pointlist.push_back(srcPos);
+		pointlist.push_back(srcPos + offset);
+		pointlist.push_back(srcPos - offset);
+
+		for(size_t i = 1; i < degree; i++)
+		{
+			if(mRoadGraph.getCounterClockwiseMostFromPrev(dstNd, nd, dstNd))
+			{
+				// get dir
+				dir = mRoadGraph.getNode(dstNd)->getPosition2D() - nodePos2D;
+				offset = dir.perpendicular();
+				offset.normalise();
+				offset *= (roadWidth * 0.1);
+				dir.normalise();
+
+				// get width
+				srcPos = nodePos2D + (dir * roadWidth);
+				//pointlist.push_back(srcPos);
+				pointlist.push_back(srcPos + offset);
+				pointlist.push_back(srcPos - offset);
+			}
+		}
+	}
+
+	//
+	//Triangulate it 
+	vector<Vector2> result;
+	if(Triangulate::Process(pointlist, result))
+	{
+		for(size_t i=0; i<result.size(); i+=3)
+		{
+			m->position(Vector3(result[i+2].x, height, result[i+2].y));
+			m->normal(Vector3::UNIT_Y);
+			m->position(Vector3(result[i+1].x, height, result[i+1].y));
+			m->normal(Vector3::UNIT_Y);
+			m->position(Vector3(result[i].x, height, result[i].y));
+			m->normal(Vector3::UNIT_Y);
+		}
+		return true;
+	}
+	else return false;
 }

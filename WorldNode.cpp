@@ -63,7 +63,7 @@ void WorldNode::init(const String& name, const String& label)
 	mLabel = new MovableText("Label"+name, label);
 	mLabel->setCharacterHeight(5);
 	mLabel->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE); // Center horizontally and display above the node
-	mLabel->setAdditionalHeight( 5.0f );
+	mLabel->setAdditionalHeight( 4.0f );
 
 	// attach objects
 	mSceneNode->attachObject(mMesh);
@@ -120,7 +120,7 @@ bool WorldNode::setPosition2D(Real x, Real z)
 	Real y;
 	if(WorldFrame::getSingleton().plotPointOnTerrain(x, y, z))
 	{
-		setPosition(x,y,z);
+		setPosition(x,y + 0.1,z);
 		return true;
 	}
 	return false;

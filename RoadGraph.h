@@ -2,6 +2,8 @@
 #define ROADGRAPH_H
 
 #include "stdafx.h"
+//#include "Geometry.h"
+//#include "NodeInterface.h"
 
 class NodeInterface;
 class RoadInterface;
@@ -74,6 +76,11 @@ public:
 	inline NodeInterface* getNode(const NodeId nd) const
 	{
 		return mGraph[nd];
+	}
+
+	inline size_t getDegree(const NodeId nd) const
+	{
+		return out_degree(nd, mGraph);
 	}
 
 	inline std::pair<const NodeIterator, const NodeIterator> getNodes() const
@@ -167,11 +174,24 @@ public:
 	int snapInfo(NodeId srcNd, const Ogre::Vector2 &dstPoint, Ogre::Real snapSzSquared,
 						NodeId& nd, RoadId& rd, Ogre::Vector2& pos) const;
 
+
+		
+	bool getClockwiseMost(NodeId vcurr, NodeId& vnext)
+	{
+		 return getClockwiseMost(vcurr, vnext, mGraph);
+	}
+
+	bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext)
+	{
+		return getCounterClockwiseMostFromPrev(prev, vcurr, vnext, mGraph);
+	}
+
+
 private:
+
 	static bool getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g);
 	static bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext, const Graph &g);
 
-	
 	static void extractFilament(NodeId v0, NodeId v1, Graph &g, std::list<NodeId>& heap, 
 		std::vector<RoadInterface*>& filaments);
 
@@ -189,8 +209,54 @@ private:
 
 	bool sortVertex(const NodeId& v0, const NodeId& v1);
 
-	bool findClosestIntersection(NodeId srcNd, const Ogre::Vector2 &srcPos,
+	inline bool findClosestIntersection(NodeId srcNd, const Ogre::Vector2 &srcPos,
 							 const Ogre::Vector2 &dstPos, RoadId& rd, Ogre::Vector2& pos) const;
+/*
+	inline bool findClosestIntersection(NodeId srcNd, 
+							 const Ogre::Vector2 &srcPos,
+							 const Ogre::Vector2 &dstPos,
+							 RoadId& rd, Ogre::Vector2& pos) const
+	{
+		bool hasIntersection = false;
+		Ogre::Real currentDistance, closestDistance;
+		Ogre::Vector2 currentIntersection;
+		RoadIterator rIt, rEnd;
+		for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
+		{
+			// test for an intersection
+			if(Geometry::lineSegmentIntersect(srcPos, dstPos, getNode(getSrc(*rIt))->getPosition2D(), 
+				getNode(getDst(*rIt))->getPosition2D(), currentIntersection))
+			{
+				// exclude roads connected to the srcNode
+				if(getSrc(*rIt) == srcNd || getDst(*rIt) == srcNd)
+					continue;
+
+				// if no previous intersection
+				if(!hasIntersection)
+				{
+					// set the initial closest distance and params
+					hasIntersection = true;
+					closestDistance = (srcPos - currentIntersection).squaredLength();
+					pos = currentIntersection;
+					rd = *rIt;
+				}
+				else
+				{				
+					// test is it the closest
+					currentDistance = (srcPos - currentIntersection).squaredLength();
+					if(currentDistance < closestDistance)
+					{
+						// set the new closest distance and params
+						closestDistance = currentDistance;
+						pos = currentIntersection;
+						rd = *rIt;
+					}
+				}
+			}
+		}
+		return hasIntersection;	
+	}
+*/
 
 
 private:

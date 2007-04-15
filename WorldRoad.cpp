@@ -97,7 +97,7 @@ void WorldRoad::plotRoad()
 	Ogre::Real segmentSizeSq(mRoadSegSz * mRoadSegSz);
 	Ogre::Vector2 direction;
 	Ogre::Angle devAngle(mRoadDeviance);
-	Vector3 groundClearance(0,1,0);
+	Vector3 groundClearance(0,0.3,0);
 	Vector2 cursor2D(mSrcNode->getPosition2D());
 	Vector2 dstPoint2D(mDstNode->getPosition2D());
 	int segCount = 0;
