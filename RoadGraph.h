@@ -58,6 +58,15 @@ public:
 		return mGraph[rd];
 	}
 
+	inline RoadId getRoad(const NodeId src, const NodeId dst) const
+	{
+		bool success;
+		RoadId rd;
+		tie(rd, success) = edge(src, dst, mGraph);
+		if(!success) throw new Ogre::Exception(Ogre::Exception::ERR_ITEM_NOT_FOUND, "Edge not found", "RoadGraph::getRoad");
+		return rd;
+	}
+
 	inline void removeRoad(const NodeId nd1, const NodeId nd2)
 	{
 		remove_edge(nd1, nd2, mGraph);

@@ -796,9 +796,9 @@ void WorldCell::createRoad(const RoadId rd, ManualObject *m)
 
 		// give a little room for junctions
 		// TODO: the problem is MUCH more complicated than this
-		dir *= (roadWidth);
-		a += dir;
-		b -= dir;
+		//dir *= (roadWidth);
+		//a += dir;
+		//b -= dir;
 
 		//mManualObject->position(mRoadGraph.getSrcNode(*rIt)->getPosition3D());
 		//mManualObject->position(mRoadGraph.getDstNode(*rIt)->getPosition3D());
@@ -829,7 +829,7 @@ bool WorldCell::createJunction(const NodeId nd, ManualObject *m)
 		return true;
 	case 3:
 		//createTJunction(nd, m);
-		break;
+		return true;
 	case 4:
 	case 5:
 	case 6:
@@ -843,53 +843,35 @@ bool WorldCell::createJunction(const NodeId nd, ManualObject *m)
 
 	NodeInterface *node = mRoadGraph.getNode(nd);
 	Vector2 nodePos2D = node->getPosition2D();
-	Real height = node->getPosition3D().y;
+	Real height = node->getPosition3D().y + 0.1;
 
 	//THINK!!
 	//
-	//Vector2 previousRoad, 
+	RoadId firstRoad, previousRoad, currentRoad;
+	NodeId currentNode;
 
-	//SHIT need to sort these clock wise
 	vector<Vector2> pointlist;
 	RoadIterator2 rIt, rEnd;
 	boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(nd); 
-	if(rIt != rEnd)
+	firstRoad = previousRoad = *rIt;
+
+	// start with the second road using the first as prev
+	for(size_t i = 1; i < degree; i++)
 	{
-		NodeId dstNd = mRoadGraph.getDst(*rIt);
-		size_t degree = mRoadGraph.getDegree(nd);
-		Real roadWidth = mRoadGraph.getRoad(*rIt)->getWidth();
-		// get dir
-		Vector2 dir(mRoadGraph.getNode(dstNd)->getPosition2D() - nodePos2D);
-		Vector2 offset = dir.perpendicular();
-		offset.normalise();
-		offset *= (roadWidth * 0.1);
-		dir.normalise();
-
-		// get width
-		Vector2 srcPos = nodePos2D + (dir * roadWidth);
-		//pointlist.push_back(srcPos);
-		pointlist.push_back(srcPos + offset);
-		pointlist.push_back(srcPos - offset);
-
-		for(size_t i = 1; i < degree; i++)
-		{
-			if(mRoadGraph.getCounterClockwiseMostFromPrev(dstNd, nd, dstNd))
-			{
-				// get dir
-				dir = mRoadGraph.getNode(dstNd)->getPosition2D() - nodePos2D;
-				offset = dir.perpendicular();
-				offset.normalise();
-				offset *= (roadWidth * 0.1);
-				dir.normalise();
-
-				// get width
-				srcPos = nodePos2D + (dir * roadWidth);
-				//pointlist.push_back(srcPos);
-				pointlist.push_back(srcPos + offset);
-				pointlist.push_back(srcPos - offset);
-			}
-		}
+		mRoadGraph.getCounterClockwiseMostFromPrev(mRoadGraph.getDst(previousRoad), nd, currentNode);
+		currentRoad = mRoadGraph.getRoad(nd, currentNode);
+		Vector2 pos;
+		if(getRoadBounaryIntersection(previousRoad, currentRoad, pos))
+			pointlist.push_back(pos);
+		else
+			return false;
+		previousRoad = currentRoad;
 	}
+	Vector2 pos;
+	if(getRoadBounaryIntersection(previousRoad, firstRoad, pos))
+		pointlist.push_back(pos);
+	else
+		return false;
 
 	//
 	//Triangulate it 
@@ -908,4 +890,33 @@ bool WorldCell::createJunction(const NodeId nd, ManualObject *m)
 		return true;
 	}
 	else return false;
+}
+
+bool WorldCell::getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR, Vector2 &pos)
+{
+	Real lWidth, rWidth;
+	Vector2 l1, l2, r1, r2, lOffset, rOffset;
+
+	l1 = mRoadGraph.getSrcNode(leftR)->getPosition2D();
+	l2 = mRoadGraph.getDstNode(leftR)->getPosition2D();
+	r1 = mRoadGraph.getSrcNode(rightR)->getPosition2D();
+	r2 = mRoadGraph.getDstNode(rightR)->getPosition2D();
+
+	lWidth = mRoadGraph.getRoad(leftR)->getWidth();
+	rWidth = mRoadGraph.getRoad(rightR)->getWidth();
+
+	lOffset = (l2 - l1).perpendicular();
+	lOffset.normalise();
+	lOffset *= lWidth;
+
+	rOffset = (r2 - r1).perpendicular();
+	rOffset.normalise();
+	rOffset *= rWidth;
+
+	l1 -= lOffset;
+	l2 -= lOffset;
+	r1 += rOffset;
+	r2 += rOffset;
+
+	return Geometry::lineIntersect(l1, l2, r1, r2, pos);
 }

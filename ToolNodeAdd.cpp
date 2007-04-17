@@ -26,12 +26,13 @@ void ToolNodeAdd::activate()
 
 void ToolNodeAdd::deactivate()
 {
-	delete mProposedNode;
-	if(!mProposedRoad)
+	if(mProposedRoad)
 	{
 		delete mProposedRoad;
 		mProposedRoad = 0;
 	}
+	delete mProposedNode;
+	mWorldFrame->update();
 }
 
 

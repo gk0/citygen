@@ -92,6 +92,7 @@ private:
 
 	bool createJunction(const NodeId nd, Ogre::ManualObject *m);
 	void createRoad(const RoadId rd, Ogre::ManualObject *m);
+	bool getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR, Ogre::Vector2 &pos);
 };
 
 #endif
