@@ -662,9 +662,9 @@ bool WorldFrame::pickNode(wxMouseEvent &e, Real snapSq, WorldNode *&wn)
 
 WorldNode* WorldFrame::createNode()
 {
-	WorldNode* wn = new WorldNode(mSceneManager);
-	wn->mSimpleNodeId = mSimpleRoadGraph.addNode(wn);
-	wn->mNodeId = mRoadGraph.addNode(wn);
+	WorldNode* wn = new WorldNode(mRoadGraph, mSimpleRoadGraph, mSceneManager);
+	//wn->mSimpleNodeId = mSimpleRoadGraph.addNode(wn);
+	//wn->mNodeId = mRoadGraph.addNode(wn);
 	mSceneNodeMap[wn->getSceneNode()] = wn;
 
 	modify(true);

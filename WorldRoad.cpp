@@ -462,8 +462,12 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 	}
 	else
 	{
+		//HACK
+		mRoadGraph.removeNode(mDstNode->mNodeId);
 		// no intersection!, try and snap to a node
 		nodeSnapped = mRoadGraph.snapToNode(mDstNode->getPosition2D(), snapSzSquared, snappedToNode);
+
+		mDstNode->mNodeId = mRoadGraph.addNode(mDstNode);
 	}
 
 	if(nodeSnapped)

@@ -9,30 +9,19 @@ using namespace Ogre;
 int WorldNode::mInstanceCount = 0;
 
 
-WorldNode::WorldNode(SceneManager* creator, const String& name)
+WorldNode::WorldNode(RoadGraph &g, RoadGraph& s, SceneManager* creator)
+  : mGraph(g),
+    mSimpleGraph(s)
 {
 	mCreator = creator;
-	init(name, name);
-}
 
-WorldNode::WorldNode(SceneManager* creator)
-{
-	mCreator = creator;
-	// set the name
-	Ogre::String nodeCount(StringConverter::toString(mInstanceCount++));
-	Ogre::String name("node"+nodeCount);
-	init(name, nodeCount);
-}
-
-WorldNode::WorldNode(SceneManager* creator, const Vector3& pos)
-{
-	mCreator = creator;
+	mSimpleNodeId = mSimpleGraph.addNode(this);
+	mNodeId = mGraph.addNode(this);
 
 	// set the name
 	Ogre::String nodeCount(StringConverter::toString(mInstanceCount++));
 	Ogre::String name("node"+nodeCount);
 	init(name, nodeCount);
-	setPosition(pos);
 }
 
 void WorldNode::init(const String& name, const String& label)
@@ -216,4 +205,9 @@ bool WorldNode::move(Ogre::Vector2 pos)
 		return false;
 	}
 	return true;
+}
+
+void WorldNode::build()
+{
+
 }

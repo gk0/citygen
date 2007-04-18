@@ -17,8 +17,9 @@ ToolNodeAdd::ToolNodeAdd(WorldFrame* wf, SceneManager* sm, RoadGraph &g)
 void ToolNodeAdd::activate()
 {
 	//
-	mProposedNode = new WorldNode(mWorldFrame->getSceneManager(), "proposedNode");
-	mProposedNode->setLabel("?");
+	//mProposedNode = new WorldNode(mWorldFrame->getSceneManager(), "proposedNode");
+	mProposedNode = mWorldFrame->createNode();
+	mProposedNode->setLabel("?");   
 	mProposedNode->setVisible(false);
 	mProposedRoad = 0;
 }
@@ -31,7 +32,7 @@ void ToolNodeAdd::deactivate()
 		delete mProposedRoad;
 		mProposedRoad = 0;
 	}
-	delete mProposedNode;
+	mWorldFrame->deleteNode(mProposedNode);
 	mWorldFrame->update();
 }
 
@@ -113,7 +114,8 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 				delete mProposedRoad;
 				mProposedRoad = 0;
 			}
-			if(mWorldFrame->highlightNodeFromLoc(Vector2(intersection.x, intersection.z)))
+			if(mWorldFrame->highlightNodeFromLoc(Vector2(intersection.x, intersection.z))
+				&& mWorldFrame->getHighlighted() != mProposedNode)
 				mProposedNode->setVisible(false);
 			else
 			{

@@ -13,6 +13,8 @@ class WorldNode : public WorldObject, public NodeInterface
 {
 
 private:
+	RoadGraph& mGraph;
+	RoadGraph& mSimpleGraph;
 	static int mInstanceCount;
 	Ogre::Entity* mMesh;
 	Ogre::Entity* mHighlight;
@@ -22,14 +24,13 @@ private:
 	std::vector<WorldRoad*> mRoads;
 
 	void init(const Ogre::String& name, const Ogre::String& label);
+	
 
 public:
 	NodeId mSimpleNodeId;
-
-	WorldNode(Ogre::SceneManager* creator, const Ogre::String& name);
-	WorldNode(Ogre::SceneManager* creator);
-	WorldNode(Ogre::SceneManager* creator, const Ogre::Vector3& pos);
 	~WorldNode();
+	WorldNode(RoadGraph& g, RoadGraph& s, Ogre::SceneManager *creator);
+
 
 	void setLabel(const Ogre::String& label);
 	const Ogre::String& getLabel() const;
@@ -55,7 +56,7 @@ public:
 	bool loadXML(const TiXmlHandle& nodeRoot);
 	bool hasRoadIntersection();
 
-	void build() { return; }
+	void build();
 
 
 }; 
