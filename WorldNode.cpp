@@ -205,6 +205,8 @@ void WorldNode::build()
 	// how many roads connect here
 	size_t degree = mRoadGraph.getDegree(mNodeId);
 
+	lastDegree = degree;
+
 	switch(degree)
 	{
 	case 0:
@@ -217,7 +219,7 @@ void WorldNode::build()
 		break;
 	case 3:
 		//createTJunction(nd, m);
-		//return;
+		break;
 	case 4:
 	case 5:
 	case 6:
@@ -240,18 +242,38 @@ void WorldNode::build()
 
 	std::vector<Vector2> pointlist;
 	RoadIterator2 rIt2, rEnd2;
-	boost::tie(rIt2, rEnd2) = mRoadGraph.getRoadsFromNode(mNodeId); 
-	firstRoad = previousRoad = *rIt2;
+	//boost::tie(rIt2, rEnd2) = mRoadGraph.getRoadsFromNode(mNodeId); 
+	//firstRoad = previousRoad = *rIt2;
+	//roadClockwiseList.push_back(previousRoad);
+
+	NodeId previousNode;
+	mRoadGraph.getClockwiseMost(mNodeId, previousNode);
+	firstRoad = previousRoad = mRoadGraph.getRoad(mNodeId, previousNode);
 	roadClockwiseList.push_back(previousRoad);
 
+	//DEBUG:
+/*	std::vector<RoadId> roadList;
+	std::vector<Vector2> roadDstPos;
+	for(;rIt2 != rEnd2; rIt2++)
+	{
+		roadList.push_back(*rIt2);
+		roadDstPos.push_back(mRoadGraph.getDstNode(*rIt2)->getPosition2D());
+	}
+*/
+
 	// start with the second road using the first as prev
+	// NOTE: a dest node exactly on the src node screws this up
 	for(size_t i = 1; i < degree; i++)
 	{
-		mRoadGraph.getCounterClockwiseMostFromPrev(mRoadGraph.getDst(previousRoad), mNodeId, currentNode);
+		//previousNode = mRoadGraph.getDst(previousRoad);
+		mRoadGraph.getCounterClockwiseMostFromPrev(previousNode, mNodeId, currentNode);
 		currentRoad = mRoadGraph.getRoad(mNodeId, currentNode);
 		pointlist.push_back(getRoadBounaryIntersection(previousRoad, currentRoad));	
+		roadClockwiseList.push_back(currentRoad);
+
+		// advance
 		previousRoad = currentRoad;
-		roadClockwiseList.push_back(previousRoad);
+		previousNode = currentNode;
 	}
 	pointlist.push_back(getRoadBounaryIntersection(previousRoad, currentRoad));	
 
@@ -268,7 +290,6 @@ void WorldNode::build()
 							Vector3(pointlist[j].x, height, pointlist[j].y));
 
 	}
-
 
 	//Triangulate it 
 	std::vector<Vector2> result;
@@ -361,7 +382,11 @@ std::pair<Vector3, Vector3> WorldNode::getRoadJunction(RoadId rd)
 	std::map<RoadId, std::pair<Vector3, Vector3>, road_less_than >::iterator rIt;
 	rIt = mRoadJunction.find(rd);
 	if(rIt == mRoadJunction.end())
+	{
+		//size_t degree = mRoadGraph.getDegree(mNodeId);
 		throw new Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "WorldNode::getRoadJunction");
+		//return std::make_pair(getPosition3D(), getPosition3D());
+	}
 
 	return rIt->second;
 }

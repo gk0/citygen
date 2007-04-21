@@ -13,6 +13,8 @@ class WorldNode : public WorldObject, public NodeInterface
 {
 
 private:
+	size_t lastDegree;
+
 	RoadGraph& mRoadGraph;
 	RoadGraph& mSimpleRoadGraph;
 	static int mInstanceCount;

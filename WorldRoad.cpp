@@ -24,15 +24,6 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	// create our scene node
 	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(mName);
 
-	//omg i should like draw a line from my old node to my new node
-	bindToGraph = bind;
-
-	//mSrcNode->attach(this);
-	//mDstNode->attach(this);
-
-	//mSrcNode->invalidate();
-	//mDstNode->invalidate();
-
 	plotRoad();
 }
 
@@ -152,11 +143,7 @@ void WorldRoad::plotRoad()
 
 //	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
 //	LogManager::getSingleton().logMessage(oss.str(), LML_DEBUG);
-
-	if(bindToGraph)
-	{
-		createRoadGraph();
-	}
+	createRoadGraph();
 }
 
 void WorldRoad::createRoadGraph()
@@ -262,26 +249,7 @@ void WorldRoad::build()
 
 //get the first b from the node
 		b = mPlotList[0];
-		if(bindToGraph) 
-		{
-			//mSrcNode->invalidate();
-			//getSrcNode()->validate();
-			if(mRoadGraph.getSrcNode(mRoadSegmentList[0])->getPosition3D() != mPlotList[0])
-				boost::tie(b1, b2) = getSrcNode()->getRoadJunction(mRoadSegmentList[0]);
-			else
-				boost::tie(b2, b1) = getSrcNode()->getRoadJunction(mRoadSegmentList[0]);
-		}
-		else
-		{
-		// calculate vertex positions using the offset
-		b1.x = b.x - nextRoadSegOffset.x;
-		b1.y = b.y;
-		b1.z = b.z - nextRoadSegOffset.y;
-		b2.x = b.x + nextRoadSegOffset.x;
-		b2.y = b.y;
-		b2.z = b.z + nextRoadSegOffset.y;
-		}
-
+		boost::tie(b1, b2) = getSrcNode()->getRoadJunction(mRoadSegmentList[0]);
 	}
 
 	for(size_t i=0; i<(mPlotList.size()-2); i++)
@@ -356,27 +324,10 @@ void WorldRoad::build()
 		a2 = b2;
 		aNormal = bNormal;
 
-
-		if(bindToGraph)
-		{
-			//mDstNode->invalidate();
-			//getDstNode()->validate();
-			size_t lastSeg = mRoadSegmentList.size()-1;
-			if(mRoadGraph.getDstNode(mRoadSegmentList[lastSeg])->getPosition3D() != mPlotList[mPlotList.size()-1])
-				boost::tie(b2, b1) = getDstNode()->getRoadJunction(mRoadSegmentList[lastSeg]);
-			else
-				boost::tie(b1, b2) = getDstNode()->getRoadJunction(mRoadSegmentList[lastSeg]);
-		}
-		else
-		{
-		// calculate vertex positions using the offset
-		b1.x = b.x - currRoadSegOffset.x;
-		b1.y = b.y;
-		b1.z = b.z - currRoadSegOffset.y;
-		b2.x = b.x + currRoadSegOffset.x;
-		b2.y = b.y;
-		b2.z = b.z + currRoadSegOffset.y;
-		}
+		//mDstNode->invalidate();
+		//getDstNode()->validate();
+		size_t lastSeg = mRoadSegmentList.size()-1;
+		boost::tie(b2, b1) = getDstNode()->getRoadJunction(mRoadSegmentList[lastSeg]);
 
 		// calculate b normal 
 		bNormal = (currRoadSegNormal + Vector3::UNIT_Y) / 2;
@@ -621,11 +572,14 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 	while(nodeSnapped)
 	{
 		// DANGER
-		Vector2 snapPos = mRoadGraph.getNode(snappedToNode)->getPosition2D();
-		getDstNode()->setPosition2D(snapPos.x, snapPos.y);
+		if(snappedToNode != getSrcNode()->mNodeId)
+		{
+			Vector2 snapPos = mRoadGraph.getNode(snappedToNode)->getPosition2D();
+			getDstNode()->setPosition2D(snapPos.x, snapPos.y);
 
-		//DOH have to reget the snappedToNode since any set position recreated the road segs
-		nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->mNodeId, snapSzSquared, snappedToNode);
+			//DOH have to reget the snappedToNode since any set position recreated the road segs
+			nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->mNodeId, snapSzSquared, snappedToNode);
+		}
 
 		// Find Closest Intersection
 		if(getClosestIntersection(rd, pos))
@@ -654,7 +608,18 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 			return world_node;
 		else
 		{
-			return simple_node;
+			// A simple node intersection is the same as a road intersection,
+			// since simple nodes are only plot points in a WorldRoad
+			RoadIterator2 rIt, rEnd;
+			boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(nd);
+			if(rIt != rEnd)
+			{
+				rd = *rIt;
+				return road;
+			}
+			else
+				throw new Exception(Exception::ERR_ITEM_NOT_FOUND, "Snapped to an Isolated SimpleNode", 
+				"WorldRoad::snap");
 		}
 	}
 	// NO INTERSECTION

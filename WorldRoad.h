@@ -43,7 +43,6 @@ private:
 
 	std::vector<RoadId> mRoadSegmentList;
 	std::vector<Ogre::Vector3> mPlotList;
-	bool bindToGraph;
 	void buildSegment(const Ogre::Vector3 &a1, const Ogre::Vector3 &a2, const Ogre::Vector3 &aNorm,
 		const Ogre::Vector3 &b1, const Ogre::Vector3 &b2, const Ogre::Vector3 &bNorm, Ogre::Real uMin, Ogre::Real uMax);
 

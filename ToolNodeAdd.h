@@ -18,6 +18,7 @@ private:
 
 	WorldRoad::RoadIntersectionState mSnapState;
 	RoadId mIntersectingRoad;
+	NodeId mSnapNode;
 
 
 public:
