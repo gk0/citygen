@@ -87,9 +87,9 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 
 			NodeId nd;
 			Vector2 newPoint;
-			//mSnapState = mProposedRoad->snap(25, nd, mIntersectingRoad, newPoint);
+			mSnapState = mProposedRoad->snap(25, nd, mIntersectingRoad, newPoint);
 			LogManager::getSingleton().logMessage("Snap:"+StringConverter::toString(mSnapState));
-/*
+
 			switch(mSnapState)
 			{
 			case WorldRoad::none:
@@ -98,15 +98,13 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 				break;
 			case WorldRoad::world_node:
 				{
-//					NodeInterface* nb = mRoadGraph.getNode(nd);
-//					mWorldFrame->highlightNode(static_cast<WorldNode*>(nb));
+					NodeInterface* nb = mRoadGraph.getNode(nd);
+					mWorldFrame->highlightNode(static_cast<WorldNode*>(nb));
 //					mProposedRoad->setDstNode(static_cast<WorldNode*>(nb));
-//					mProposedNode->setVisible(false);
+					mProposedNode->setVisible(false);
 				}
 				break;
 			}
-*/
-
 		}
 		// only a proposed node
 		else

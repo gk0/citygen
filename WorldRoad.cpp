@@ -541,77 +541,6 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 	//LogManager::getSingleton().logMessage("Nadda SAl");
 	return none;
 }
-*/
-
-WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos)
-{
-	NodeId snappedToNode;
-	bool nodeSnapped = false;
-	NodeInterface* dstNode = getDstNode();
-
-	if(getClosestIntersection(rd, pos))
-	{
-		// intersection!, try and snap to a node on the intersecting road
-		if(mRoadGraph.snapToRoadNode(pos, rd, snapSzSquared, snappedToNode))
-			nodeSnapped = true;
-		else
-		{
-			if(pos != dstNode->getPosition2D())
-			{
-				// position the destination node at the point of intersection 
-				dstNode->setPosition2D(pos.x, pos.y);
-				// Note: we have changed the segment so we must recurse
-				//plotRoad();
-				WorldRoad::RoadIntersectionState recursiveSnap = snap(snapSzSquared, nd, rd, pos);
-				if(recursiveSnap != none) return recursiveSnap;
-				else return road;
-			}
-			else return road;
-		}
-	}
-	else
-	{
-		//HACK
-		mRoadGraph.removeNode(dstNode->mNodeId);
-		// no intersection!, try and snap to a node
-		nodeSnapped = mRoadGraph.snapToNode(dstNode->getPosition2D(), snapSzSquared, snappedToNode);
-
-		dstNode->mNodeId = mRoadGraph.addNode(dstNode);
-	}
-
-	if(nodeSnapped)
-	{
-		// check if the node is different to existing
-		if(snappedToNode != nd)
-		{
-			// a new road section is proposed which must be considered
-			nd = snappedToNode;
-
-			// get the position of the new node & update dst node
-			Vector2 p = mRoadGraph.getNode(nd)->getPosition2D();
-			dstNode->setPosition2D(p.x, p.y);
-			
-			// rebuild the point list
-			//plotRoad();
-
-			// recursively snap
-			return snap(snapSzSquared, nd, rd, pos);
-		}
-		else
-		{
-			nd = snappedToNode;
-			NodeInterface* nb = mRoadGraph.getNode(nd);
-			if(typeid(*nb) == typeid(WorldNode))		
-				return world_node;
-			else
-				return simple_node;
-		}
-	}
-	//LogManager::getSingleton().logMessage("Nadda SAl");
-	return none;
-}
-
-
 
 bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 {
@@ -654,10 +583,124 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 	//LogManager::getSingleton().logMessage("No intersection on "+StringConverter::toString(mPlotList.size())+" segments.", LML_CRITICAL);
 	return false;
 }
+*/
 
 
-//doh must rewrite this function
-// and also review the invalidate business could be plotting far too much
+// Note: should only try to snap to road network, ie those accessible from 
+// the simple road graph. 
+// Simple Node is the same as a road intersection, either way have to split road
+
+WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos)
+{
+	NodeId snappedToNode;
+	bool nodeSnapped = false;
+
+	// Find Closest Intersection
+	if(getClosestIntersection(rd, pos))
+	{
+		// Intersection!
+		// Snap to Road Node
+		if(mRoadGraph.snapToRoadNode(pos, rd, snapSzSquared, snappedToNode))
+		{
+			nodeSnapped = true;
+		}
+		else
+		{
+			// INTERSECTION
+			return road;
+		}
+	}
+	else
+	{
+		// No intersection!
+		// Snap To Node
+		nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->mNodeId, snapSzSquared, snappedToNode);
+	}
+
+	// if node snapped we alter the direction of our proposed road and must retest it
+	while(nodeSnapped)
+	{
+		// DANGER
+		Vector2 snapPos = mRoadGraph.getNode(snappedToNode)->getPosition2D();
+		getDstNode()->setPosition2D(snapPos.x, snapPos.y);
+
+		//DOH have to reget the snappedToNode since any set position recreated the road segs
+		nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->mNodeId, snapSzSquared, snappedToNode);
+
+		// Find Closest Intersection
+		if(getClosestIntersection(rd, pos))
+		{
+			// Snap to Road Node
+			NodeId tmp; 
+			if(mRoadGraph.snapToRoadNode(pos, rd, snapSzSquared, tmp))
+			{
+				if(snappedToNode != tmp) {
+					snappedToNode = tmp;
+					continue;
+				}
+			}
+			else
+			{
+				// INTERSECTION
+				return road;
+			}
+		}
+		if(!nodeSnapped) break;
+
+		// NODE SNAP
+		nd = snappedToNode;
+		NodeInterface* nb = mRoadGraph.getNode(nd);
+		if(typeid(*nb) == typeid(WorldNode))		
+			return world_node;
+		else
+		{
+			return simple_node;
+		}
+	}
+	// NO INTERSECTION
+	return none;
+}
+
+bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
+{
+	for(size_t i=0; i<mRoadSegmentList.size(); i++)
+	{
+		NodeId srcNd = mRoadGraph.getSrc(mRoadSegmentList[i]);
+		NodeId dstNd = mRoadGraph.getDst(mRoadSegmentList[i]);
+		if(mRoadGraph.findClosestIntersection(srcNd, dstNd, rd, pos))
+			return true;
+	}
+	return false;
+}
+
+/*
+bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
+{
+	for(size_t i=0; i<mRoadSegmentList.size(); i++)
+	{
+		// get segment src & dst
+		Vector2 srcPos = mRoadGraph.getSrcNode(mRoadSegmentList[i])->getPosition2D();
+		Vector2 dstPos = mRoadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
+
+		// for each road
+		RoadIterator rIt, rEnd;
+		boost::tie(rIt, rEnd) = mSimpleRoadGraph.getRoads();
+		for(; rIt != rEnd; rIt++)
+		{
+			RoadInterface* ri = mSimpleRoadGraph.getRoad(*rIt);
+			if(typeid(*ri) == typeid(WorldRoad))
+			{
+				WorldRoad* wr = static_cast<WorldRoad*>(ri);
+				if(wr != this)
+				{
+					wr->findClosestIntersection(srcPos, dstPos, distance, rd, pos);
+				}
+			}
+		}
+	}
+	return false;
+}
+*/
 
 bool WorldRoad::hasIntersection()
 {
@@ -668,63 +711,6 @@ bool WorldRoad::hasIntersection()
 	}
 	return false;
 }
-
-/*
-//doh must rewrite this function
-// and also review the invalidate business could be plotting far too much
-
-bool WorldRoad::hasIntersection()
-{
-	bool hasIntersection = false;
-
-	// remove our road segments from the graph so we don't intersect with them
-	destroyRoadGraph();
-
-	// for each road segment in this road
-	for(unsigned int i=0; i<mPlotList.size()-1; i++)
-	{
-		// get the src and dst points for this segment
-		const Vector2 srcPos(mPlotList[i].x, mPlotList[i].z);
-		const Vector2 dstPos(mPlotList[i+1].x, mPlotList[i+1].z);
-
-		// test the road segment in the graph and exclude the mSrcNode intersection
-		Vector2 pos;
-		if(mRoadGraph.hasIntersection(srcPos, dstPos, pos))
-		{
-			// if first segment
-			if(i == 0)
-			{
-				// exclude mSrcNode intersection
-				if(pos != mSrcNode->getPosition2D())
-				{
-					hasIntersection = true;
-					break;
-				}
-			}
-			// if last segment
-			else if(i == (mPlotList.size()-2))
-			{
-				// exclude mDstNode intersection
-				if(pos != mDstNode->getPosition2D()) 
-				{
-					hasIntersection = true;
-					break;
-				}
-			}
-			else
-			{
-				hasIntersection = true;
-				break;
-			}
-			
-		}
-	}
-	
-	// add our selves back to the road graph
-	createRoadGraph();
-	
-	return hasIntersection;
-}*/
 
 bool WorldRoad::isRoadCycle()
 {

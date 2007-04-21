@@ -929,7 +929,7 @@ bool RoadGraph::findClosestIntersection(NodeId srcNd,
 
 
 
-int RoadGraph::snapInfo(NodeId srcNd, const Vector2 &dstPos, Real snapSzSquared,
+int RoadGraph::snapInfo(const NodeId srcNd, const Vector2 &dstPos, const Real snapSzSquared,
 						NodeId& nd, RoadId& rd, Vector2& pos) const
 {
 	Vector2 srcPos = getNode(srcNd)->getPosition2D();
@@ -987,5 +987,73 @@ int RoadGraph::snapInfo(NodeId srcNd, const Vector2 &dstPos, Real snapSzSquared,
 
 	// NO INTERSECTION
 	return 0;
+}
+
+
+
+bool RoadGraph::findClosestIntersection(const NodeId srcNd, const NodeId dstNd,
+							 RoadId& rd, Vector2& pos) const
+{
+	bool hasIntersection = false;
+	Vector2 srcPos = getNode(srcNd)->getPosition2D();
+	Vector2 dstPos = getNode(dstNd)->getPosition2D();
+	Real currentDistance, closestDistance;
+	Vector2 currentIntersection;
+	RoadIterator rIt, rEnd;
+	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
+	{
+		// test for an intersection
+		if(Geometry::lineSegmentIntersect(srcPos, dstPos, getNode(getSrc(*rIt))->getPosition2D(), 
+			getNode(getDst(*rIt))->getPosition2D(), currentIntersection))
+		{
+			// exclude roads connected to the srcNode
+			if(getSrc(*rIt) == srcNd || getDst(*rIt) == srcNd ||
+				getSrc(*rIt) == dstNd || getDst(*rIt) == dstNd)
+				continue;
+
+			// if no previous intersection
+			if(!hasIntersection)
+			{
+				// set the initial closest distance and params
+				hasIntersection = true;
+				closestDistance = (srcPos - currentIntersection).squaredLength();
+				pos = currentIntersection;
+				rd = *rIt;
+			}
+			else
+			{				
+				// test is it the closest
+				currentDistance = (srcPos - currentIntersection).squaredLength();
+				if(currentDistance < closestDistance)
+				{
+					// set the new closest distance and params
+					closestDistance = currentDistance;
+					pos = currentIntersection;
+					rd = *rIt;
+				}
+			}
+		}
+	}
+	return hasIntersection;	
+}
+
+bool RoadGraph::snapToOtherNode(const NodeId nd, const Real& snapSzSq, NodeId& otherNd) const
+{
+	Ogre::Real closestDistSq = snapSzSq;
+	Vector2 pos = getNode(nd)->getPosition2D();
+	bool success = false;
+	NodeIterator nIt, nEnd;
+	for(boost::tie(nIt, nEnd) = vertices(mGraph); nIt != nEnd; nIt++)
+	{
+		Vector2 nodePos(mGraph[*nIt]->getPosition2D());
+		Real currDistSq =(nodePos - pos).squaredLength();
+		if(currDistSq < closestDistSq && *nIt != nd) 
+		{
+			closestDistSq = currDistSq;
+			otherNd = *nIt;
+			success = true;
+		}
+	}
+	return success;
 }
 

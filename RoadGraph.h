@@ -188,6 +188,11 @@ public:
 		return getCounterClockwiseMostFromPrev(prev, vcurr, vnext, mGraph);
 	}
 
+	bool findClosestIntersection(const NodeId srcNd, const NodeId dstNd,
+		RoadId& rd, Ogre::Vector2& pos) const;
+
+	bool snapToOtherNode(const NodeId nd, const Ogre::Real& snapSzSq, NodeId& otherNd) const;
+
 
 private:
 
@@ -259,6 +264,7 @@ private:
 		return hasIntersection;	
 	}
 */
+
 
 
 private:
