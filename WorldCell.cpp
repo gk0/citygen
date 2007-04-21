@@ -102,6 +102,7 @@ void WorldCell::clearRoadGraph()
 
 void WorldCell::build()
 {
+	return;
 	// possibly(most likely) dangerous and stupid, but make any other thread accessing this method sleep until done
 	static bool busy = false;
 	if(busy)

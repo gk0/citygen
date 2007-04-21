@@ -13,11 +13,12 @@ RoadGraph::RoadGraph()
 }
 
 
+
 bool RoadGraph::addRoad(const NodeId nd1, const NodeId nd2, RoadId& rd)
 {
 	assert(nd1 != nd2);
 	bool inserted = false;
-	tie(rd, inserted) = add_edge(nd1, nd2, mGraph);
+	tie(rd, inserted) = add_edge(nd1, nd2, (RoadInterface*)0, mGraph);
 	return inserted;
 }
 
@@ -25,10 +26,15 @@ bool RoadGraph::addRoad(const NodeId nd1, const NodeId nd2, RoadInterface* r, Ro
 {
 	bool inserted = false;
 	tie(rd, inserted) = add_edge(nd1, nd2, r, mGraph);
+	if(inserted) 
+	{
+		getNode(nd1)->onAddRoad();
+		getNode(nd2)->onAddRoad();
+	}
 	return inserted;
 }
 
-bool RoadGraph::findRoad(const NodeId nd1, const NodeId nd2, RoadId& rd)
+bool RoadGraph::findRoad(const NodeId nd1, const NodeId nd2, RoadId& rd) const
 {
 	RoadId r;
 	bool found = false;
@@ -36,6 +42,38 @@ bool RoadGraph::findRoad(const NodeId nd1, const NodeId nd2, RoadId& rd)
 	if(found) rd = r;
 	return found;
 }
+
+bool RoadGraph::testRoad(const NodeId nd1, const NodeId nd2) const
+{
+	RoadId r;
+	bool found = false;
+	tie(r, found) = edge(nd1, nd2, mGraph);
+	return found;
+}
+
+void RoadGraph::removeRoad(const NodeId nd1, const NodeId nd2)
+{
+	RoadId rd;
+	bool found = false;
+	tie(rd, found) = edge(nd1, nd2, mGraph);
+	if(found)
+	{
+		remove_edge(rd, mGraph);
+		mGraph[nd1]->onRemoveRoad();
+		mGraph[nd2]->onRemoveRoad();
+	}
+}
+
+void RoadGraph::removeRoad(const RoadId rd)
+{
+	NodeInterface *n1, *n2;
+	n1 = getSrcNode(rd);
+	n2 = getDstNode(rd);
+	remove_edge(rd, mGraph);
+	n1->onRemoveRoad();
+	n2->onRemoveRoad();
+}
+
 
 bool RoadGraph::sortVertex(const NodeId& v0, const NodeId& v1)
 {

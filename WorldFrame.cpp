@@ -101,7 +101,7 @@ WorldFrame::WorldFrame(wxFrame* parent)
 
 	mTools.push_back(new ToolView(this));
 	mTools.push_back(new ToolNodeSelect(this));
-	mTools.push_back(new ToolNodeAdd(this, mSceneManager, mRoadGraph));
+	mTools.push_back(new ToolNodeAdd(this, mSceneManager, mRoadGraph, mSimpleRoadGraph));
 	mTools.push_back(new ToolNodeDelete(this));
 	mActiveTool = MainWindow::viewTool;
 
@@ -773,13 +773,10 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 {
 	modify(true);
 
-	RoadId rd;
-	if(mSimpleRoadGraph.addRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId, rd))
+	if(!mSimpleRoadGraph.testRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId))
 	{
 		// create the road in the scene
-		WorldRoad* wr = new WorldRoad(mSceneManager, wn1, wn2, mRoadGraph);
-		wr->mSimpleRoadId = rd;
-		mSimpleRoadGraph.setRoad(rd, wr);
+		WorldRoad* wr = new WorldRoad(wn1, wn2, mRoadGraph, mSimpleRoadGraph, mSceneManager);
 		mSceneRoadMap[wr->getSceneNode()] = wr;
 
 		// check the road graph to get a count of the number of cycles

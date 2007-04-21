@@ -14,8 +14,8 @@ private:
 public:
 	SimpleRoad(NodeInterface *src, NodeInterface *dst);
 
-	NodeInterface* getSrcNode();
-	NodeInterface* getDstNode();
+	NodeInterface* getSrcNode() const;
+	NodeInterface* getDstNode() const;
 	bool isRoadCycle();
 	void setRoadCycle(bool cycle);
 	bool rayCross(const Ogre::Vector2& loc);

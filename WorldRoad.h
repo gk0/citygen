@@ -23,7 +23,7 @@ public:
 private:
 	static int mRoadCount;
 
-	int status;
+	RoadId mSimpleRoadId;
 
 	Ogre::ManualObject *mManualObject;
 
@@ -32,9 +32,10 @@ private:
 	Ogre::String mName;
 
 	bool mIsRoadCycle;
-	WorldNode *mSrcNode, *mDstNode;
+//	WorldNode *mSrcNode, *mDstNode;
 
 	RoadGraph &mRoadGraph;
+	RoadGraph &mSimpleRoadGraph;
 
 	Ogre::Real mRoadSegSz;
 	Ogre::Real mRoadDeviance;
@@ -48,16 +49,12 @@ private:
 
 
 public:
-	RoadId mSimpleRoadId;
-
-	WorldRoad(Ogre::SceneManager* creator, WorldNode* src, WorldNode* dst, RoadGraph& rg, bool bind = true);
+	WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
+					 RoadGraph& s, Ogre::SceneManager *creator, bool bind = true);
 	virtual ~WorldRoad();
 
-	void setSrcNode(WorldNode* src);
-	void setDstNode(WorldNode* dst);
-
-	NodeInterface* getSrcNode();
-	NodeInterface* getDstNode();
+	NodeInterface* getSrcNode() const;
+	NodeInterface* getDstNode() const;
 
 	RoadIntersectionState snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Ogre::Vector2& intersection);
 
@@ -70,14 +67,16 @@ public:
 	Ogre::Real getLengthSquared() const;
 	const std::vector<RoadId>& getRoadSegmentList();
 	Ogre::Real getWidth() const;
+	
+	void onMoveNode();
 
 private:
-	void plotRoad();
 	void build();
 	void destroyRoadObject();
 
 	void createRoadGraph();
 	void destroyRoadGraph();
+	void plotRoad();
 
 
 	Ogre::Vector3 findNextPoint(const Ogre::Vector2& cursor, const Ogre::Vector2& direction, const Ogre::Degree& dev) const;

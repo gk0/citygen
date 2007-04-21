@@ -8,24 +8,32 @@
 int WorldRoad::mRoadCount = 0;
 using namespace Ogre;
 
-WorldRoad::WorldRoad(SceneManager* creator, WorldNode* src, WorldNode* dst, RoadGraph& rg, bool bind)
-	: mSrcNode(src),
-	  mDstNode(dst),
-	  mRoadGraph(rg),
+WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
+					 RoadGraph& s, Ogre::SceneManager *creator, bool bind)
+	: mRoadGraph(g),
+	  mSimpleRoadGraph(s),
 	  mRoadSegSz(10), //DEBUG: set to v. big 50 normal is 10
 	  mRoadWidth(1.0),
 	  mRoadDeviance(30),
 	  mManualObject(0)
 {
-	Ogre::String name("Road"+StringConverter::toString(mRoadCount++));
+	mSimpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, mSimpleRoadId);
+	mSimpleRoadGraph.setRoad(mSimpleRoadId, this);
+
+	mName = "Road" + StringConverter::toString(mRoadCount++);
 	// create our scene node
-	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(name);
+	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(mName);
 
 	//omg i should like draw a line from my old node to my new node
 	bindToGraph = bind;
 
-	mSrcNode->attach(this);
-	mDstNode->attach(this);
+	//mSrcNode->attach(this);
+	//mDstNode->attach(this);
+
+	//mSrcNode->invalidate();
+	//mDstNode->invalidate();
+
+	plotRoad();
 }
 
 WorldRoad::~WorldRoad()
@@ -33,42 +41,42 @@ WorldRoad::~WorldRoad()
 	destroyRoadObject();
 	SceneManager* destroyer = mSceneNode->getCreator();
 	destroyer->destroySceneNode(mSceneNode->getName());
-	mSrcNode->detach(this);
-	mDstNode->detach(this);
+
 	destroyRoadGraph();
+	mSimpleRoadGraph.removeRoad(mSimpleRoadId);
 }
 
 
-void WorldRoad::setSrcNode(WorldNode* src)
+//void WorldRoad::setSrcNode(WorldNode* src)
+//{
+//	if(src != mSrcNode)
+//	{
+//		mSrcNode->detach(this);
+//		mSrcNode = src;
+//		mSrcNode->attach(this);
+//		mSrcNode->invalidate();
+//	}
+//}
+//
+//void WorldRoad::setDstNode(WorldNode* dst)
+//{
+//	if(dst != mDstNode)
+//	{
+//		mDstNode->detach(this);
+//		mDstNode = dst;
+//		mDstNode->attach(this);
+//		mDstNode->invalidate();
+//	}
+//}
+
+NodeInterface* WorldRoad::getSrcNode() const
 {
-	if(src != mSrcNode)
-	{
-		mSrcNode->detach(this);
-		mSrcNode = src;
-		mSrcNode->attach(this);
-		invalidate();
-	}
+	return mSimpleRoadGraph.getSrcNode(mSimpleRoadId);
 }
 
-void WorldRoad::setDstNode(WorldNode* dst)
+NodeInterface* WorldRoad::getDstNode() const
 {
-	if(dst != mDstNode)
-	{
-		mDstNode->detach(this);
-		mDstNode = dst;
-		mDstNode->attach(this);
-		invalidate();
-	}
-}
-
-NodeInterface* WorldRoad::getSrcNode()
-{
-	return mSrcNode;
-}
-
-NodeInterface* WorldRoad::getDstNode()
-{
-	return mDstNode;
+	return mSimpleRoadGraph.getDstNode(mSimpleRoadId);
 }
 /*
 //simple
@@ -88,8 +96,9 @@ void WorldRoad::createRoadObject()
 
 void WorldRoad::plotRoad()
 {
-	status = 1;
-
+	// Carefull Now!
+	// if its valid someone must've plotted the road
+	if(isValid()) return;		
 
 	// always destroy previous
 	mPlotList.clear();
@@ -98,12 +107,12 @@ void WorldRoad::plotRoad()
 	Ogre::Vector2 direction;
 	Ogre::Angle devAngle(mRoadDeviance);
 	Vector3 groundClearance(0,0.3,0);
-	Vector2 cursor2D(mSrcNode->getPosition2D());
-	Vector2 dstPoint2D(mDstNode->getPosition2D());
+	Vector2 cursor2D(getSrcNode()->getPosition2D());
+	Vector2 dstPoint2D(getDstNode()->getPosition2D());
 	int segCount = 0;
 
 	// set our start node
-	mPlotList.push_back(mSrcNode->getPosition3D() + groundClearance);
+	mPlotList.push_back(getSrcNode()->getPosition3D() + groundClearance);
 
 	std::stringstream oss;
 	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
@@ -137,14 +146,17 @@ void WorldRoad::plotRoad()
 	}
 	
 
-//#ifdef DEBUG
-	//LogManager::getSingleton().logMessage("Plotted "+StringConverter::toString(mPlotList.size())+" segments.", LML_CRITICAL);
-//#endif
+//	LogManager::getSingleton().logMessage("Plotted "+StringConverter::toString(mPlotList.size())+" segments.", LML_DEBUG);
 
-	mPlotList.push_back(mDstNode->getPosition3D() + groundClearance);
+	mPlotList.push_back(getDstNode()->getPosition3D() + groundClearance);
 
 //	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
-//	LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
+//	LogManager::getSingleton().logMessage(oss.str(), LML_DEBUG);
+
+	if(bindToGraph)
+	{
+		createRoadGraph();
+	}
 }
 
 void WorldRoad::createRoadGraph()
@@ -156,25 +168,23 @@ void WorldRoad::createRoadGraph()
 	{
 		// create first road segment
 		RoadId roadSegId;
-		mRoadGraph.addRoad(mSrcNode->mNodeId, mDstNode->mNodeId, this, roadSegId);
+		mRoadGraph.addRoad(getSrcNode()->mNodeId, getDstNode()->mNodeId, this, roadSegId);
 		mRoadSegmentList.push_back(roadSegId);
 	}
 	else
 	{
 		// create first road segment
-		SimpleNode* bn = new SimpleNode();
-		bn->setPosition3D(mPlotList[1]);
+		SimpleNode* bn = new SimpleNode(mPlotList[1]);
 		NodeId cursorNode = mRoadGraph.addNode(bn);
 		RoadId roadSegId;
-		mRoadGraph.addRoad(mSrcNode->mNodeId, cursorNode, this, roadSegId);
+		mRoadGraph.addRoad(getSrcNode()->mNodeId, cursorNode, this, roadSegId);
 		mRoadSegmentList.push_back(roadSegId);
 
 		// create each road segment
 		for(unsigned int i=2; i<(mPlotList.size()-1); i++)
 		{
 			// add our nodes to the road graph
-			SimpleNode* bn = new SimpleNode();
-			bn->setPosition3D(mPlotList[i]);
+			SimpleNode* bn = new SimpleNode(mPlotList[i]);
 			NodeId nextNodeId = mRoadGraph.addNode(bn);
 			mRoadGraph.addRoad(cursorNode, nextNodeId, this, roadSegId);
 			mRoadSegmentList.push_back(roadSegId);
@@ -184,9 +194,12 @@ void WorldRoad::createRoadGraph()
 		}
 
 		// create last road segment
-		mRoadGraph.addRoad(cursorNode, mDstNode->mNodeId, this, roadSegId);
+		mRoadGraph.addRoad(cursorNode, getDstNode()->mNodeId, this, roadSegId);
 		mRoadSegmentList.push_back(roadSegId);
 	}
+
+	//mSrcNode->invalidate();
+	//mDstNode->invalidate();
 }
 
 void WorldRoad::destroyRoadGraph()
@@ -208,12 +221,10 @@ void WorldRoad::destroyRoadGraph()
 
 void WorldRoad::build()
 {
-	// always destroy previous
-	destroyRoadGraph();
-	destroyRoadObject();
+	//return;
 
-	plotRoad();
-	if(bindToGraph) createRoadGraph();
+	// always destroy previous
+	destroyRoadObject();
 
 	// declare the manual object
 	mManualObject = new ManualObject(mName); 
@@ -248,20 +259,36 @@ void WorldRoad::build()
 		nextRoadSegNormal.normalise();
 		bNormal = (nextRoadSegNormal + Vector3::UNIT_Y) / 2;
 
-		// calculate vertex positions using the offset
+
+//get the first b from the node
 		b = mPlotList[0];
+		if(bindToGraph) 
+		{
+			//mSrcNode->invalidate();
+			//getSrcNode()->validate();
+			if(mRoadGraph.getSrcNode(mRoadSegmentList[0])->getPosition3D() != mPlotList[0])
+				boost::tie(b1, b2) = getSrcNode()->getRoadJunction(mRoadSegmentList[0]);
+			else
+				boost::tie(b2, b1) = getSrcNode()->getRoadJunction(mRoadSegmentList[0]);
+		}
+		else
+		{
+		// calculate vertex positions using the offset
 		b1.x = b.x - nextRoadSegOffset.x;
 		b1.y = b.y;
 		b1.z = b.z - nextRoadSegOffset.y;
 		b2.x = b.x + nextRoadSegOffset.x;
 		b2.y = b.y;
 		b2.z = b.z + nextRoadSegOffset.y;
+		}
+
 	}
 
 	for(size_t i=0; i<(mPlotList.size()-2); i++)
 	{
 		// for a road segment pointA -> pointB
-		a = mPlotList[i], b = mPlotList[i+1], c = mPlotList[i+2];
+		a = b;
+		b = mPlotList[i+1], c = mPlotList[i+2];
 
 		// get current from last runs next vars
 		currRoadSegVector = nextRoadSegVector;
@@ -329,6 +356,19 @@ void WorldRoad::build()
 		a2 = b2;
 		aNormal = bNormal;
 
+
+		if(bindToGraph)
+		{
+			//mDstNode->invalidate();
+			//getDstNode()->validate();
+			size_t lastSeg = mRoadSegmentList.size()-1;
+			if(mRoadGraph.getDstNode(mRoadSegmentList[lastSeg])->getPosition3D() != mPlotList[mPlotList.size()-1])
+				boost::tie(b2, b1) = getDstNode()->getRoadJunction(mRoadSegmentList[lastSeg]);
+			else
+				boost::tie(b1, b2) = getDstNode()->getRoadJunction(mRoadSegmentList[lastSeg]);
+		}
+		else
+		{
 		// calculate vertex positions using the offset
 		b1.x = b.x - currRoadSegOffset.x;
 		b1.y = b.y;
@@ -336,6 +376,7 @@ void WorldRoad::build()
 		b2.x = b.x + currRoadSegOffset.x;
 		b2.y = b.y;
 		b2.z = b.z + currRoadSegOffset.y;
+		}
 
 		// calculate b normal 
 		bNormal = (currRoadSegNormal + Vector3::UNIT_Y) / 2;
@@ -432,13 +473,12 @@ Vector3 WorldRoad::findNextPoint(const Vector2& cursor, const Vector2& direction
 	return lowestDiffPoint;
 }
 
-
+/*
 WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos)
 {
-	plotRoad();
-	status = 2;
 	NodeId snappedToNode;
 	bool nodeSnapped = false;
+	NodeInterface* dstNode = getDstNode();
 
 	if(getClosestIntersection(rd, pos))
 	{
@@ -447,10 +487,10 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 			nodeSnapped = true;
 		else
 		{
-			if(pos != mDstNode->getPosition2D())
+			if(pos != dstNode->getPosition2D())
 			{
 				// position the destination node at the point of intersection 
-				mDstNode->setPosition2D(pos.x, pos.y);
+				dstNode->setPosition2D(pos.x, pos.y);
 				// Note: we have changed the segment so we must recurse
 				//plotRoad();
 				WorldRoad::RoadIntersectionState recursiveSnap = snap(snapSzSquared, nd, rd, pos);
@@ -463,11 +503,11 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 	else
 	{
 		//HACK
-		mRoadGraph.removeNode(mDstNode->mNodeId);
+		mRoadGraph.removeNode(dstNode->mNodeId);
 		// no intersection!, try and snap to a node
-		nodeSnapped = mRoadGraph.snapToNode(mDstNode->getPosition2D(), snapSzSquared, snappedToNode);
+		nodeSnapped = mRoadGraph.snapToNode(dstNode->getPosition2D(), snapSzSquared, snappedToNode);
 
-		mDstNode->mNodeId = mRoadGraph.addNode(mDstNode);
+		dstNode->mNodeId = mRoadGraph.addNode(dstNode);
 	}
 
 	if(nodeSnapped)
@@ -480,7 +520,7 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 
 			// get the position of the new node & update dst node
 			Vector2 p = mRoadGraph.getNode(nd)->getPosition2D();
-			mDstNode->setPosition2D(p.x, p.y);
+			dstNode->setPosition2D(p.x, p.y);
 			
 			// rebuild the point list
 			//plotRoad();
@@ -498,22 +538,92 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 				return simple_node;
 		}
 	}
-	//LogManager::getSingleton().logMessage("Nadda SAl", LML_CRITICAL);
+	//LogManager::getSingleton().logMessage("Nadda SAl");
 	return none;
 }
+*/
+
+WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos)
+{
+	NodeId snappedToNode;
+	bool nodeSnapped = false;
+	NodeInterface* dstNode = getDstNode();
+
+	if(getClosestIntersection(rd, pos))
+	{
+		// intersection!, try and snap to a node on the intersecting road
+		if(mRoadGraph.snapToRoadNode(pos, rd, snapSzSquared, snappedToNode))
+			nodeSnapped = true;
+		else
+		{
+			if(pos != dstNode->getPosition2D())
+			{
+				// position the destination node at the point of intersection 
+				dstNode->setPosition2D(pos.x, pos.y);
+				// Note: we have changed the segment so we must recurse
+				//plotRoad();
+				WorldRoad::RoadIntersectionState recursiveSnap = snap(snapSzSquared, nd, rd, pos);
+				if(recursiveSnap != none) return recursiveSnap;
+				else return road;
+			}
+			else return road;
+		}
+	}
+	else
+	{
+		//HACK
+		mRoadGraph.removeNode(dstNode->mNodeId);
+		// no intersection!, try and snap to a node
+		nodeSnapped = mRoadGraph.snapToNode(dstNode->getPosition2D(), snapSzSquared, snappedToNode);
+
+		dstNode->mNodeId = mRoadGraph.addNode(dstNode);
+	}
+
+	if(nodeSnapped)
+	{
+		// check if the node is different to existing
+		if(snappedToNode != nd)
+		{
+			// a new road section is proposed which must be considered
+			nd = snappedToNode;
+
+			// get the position of the new node & update dst node
+			Vector2 p = mRoadGraph.getNode(nd)->getPosition2D();
+			dstNode->setPosition2D(p.x, p.y);
+			
+			// rebuild the point list
+			//plotRoad();
+
+			// recursively snap
+			return snap(snapSzSquared, nd, rd, pos);
+		}
+		else
+		{
+			nd = snappedToNode;
+			NodeInterface* nb = mRoadGraph.getNode(nd);
+			if(typeid(*nb) == typeid(WorldNode))		
+				return world_node;
+			else
+				return simple_node;
+		}
+	}
+	//LogManager::getSingleton().logMessage("Nadda SAl");
+	return none;
+}
+
+
 
 bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 {
 	// for each road segment in this road
-	if(mPlotList.size() < 2) return false;
-	else
+	if(mPlotList.size() > 2)
 	{
 		// get the src and dst points for this segment
 		const Vector2 srcPos(mPlotList[0].x, mPlotList[0].z);
 		const Vector2 dstPos(mPlotList[1].x, mPlotList[1].z);
 
 		// test the first segment excluding roads connecting to its src node 
-		if(mRoadGraph.findClosestIntersection3(srcPos, dstPos, mSrcNode->mNodeId, rd, pos))
+		if(mRoadGraph.findClosestIntersection3(srcPos, dstPos, getSrcNode()->mNodeId, rd, pos))
 		{
 			//LogManager::getSingleton().logMessage("Intersection on seg: 1", LML_CRITICAL);
 			return true;
@@ -524,23 +634,22 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 		//	oss << "No int on seg 1: ("<<srcPos<<") ("<<dstPos<<");";
 		//	LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
 		//}
-	}
 
-	for(unsigned int i=1; i<mPlotList.size()-1; i++)
-	{
-		// get the src and dst points for this segment
-		const Vector2 srcPos(mPlotList[i].x, mPlotList[i].z);
-		const Vector2 dstPos(mPlotList[i+1].x, mPlotList[i+1].z);
-
-		// test the segment against all roads in the graph 
-		if(mRoadGraph.findClosestIntersection(srcPos, dstPos, rd, pos))
+		for(unsigned int i=1; i<mPlotList.size()-1; i++)
 		{
-			//std::stringstream oss;
-			//oss << "Int on seg "<<(i+1)<<": ("<<srcPos<<") ("<<dstPos<<");";
-			//LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
-			return true;
+			// get the src and dst points for this segment
+			const Vector2 srcPos(mPlotList[i].x, mPlotList[i].z);
+			const Vector2 dstPos(mPlotList[i+1].x, mPlotList[i+1].z);
+
+			// test the segment against all roads in the graph 
+			if(mRoadGraph.findClosestIntersection(srcPos, dstPos, rd, pos))
+			{
+				//std::stringstream oss;
+				//oss << "Int on seg "<<(i+1)<<": ("<<srcPos<<") ("<<dstPos<<");";
+				//LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
+				return true;
+			}
 		}
-			
 	}
 	//LogManager::getSingleton().logMessage("No intersection on "+StringConverter::toString(mPlotList.size())+" segments.", LML_CRITICAL);
 	return false;
@@ -641,8 +750,8 @@ bool WorldRoad::rayCross(const Ogre::Vector2& loc)
 
 Ogre::Real WorldRoad::getLengthSquared() const
 {
-	Vector2 src = mSrcNode->getPosition2D();
-	Vector2 dst = mDstNode->getPosition2D();
+	Vector2 src = getSrcNode()->getPosition2D();
+	Vector2 dst = getDstNode()->getPosition2D();
 	return (src - dst).squaredLength();
 }
 
@@ -655,4 +764,11 @@ const std::vector<RoadId>& WorldRoad::getRoadSegmentList()
 Real WorldRoad::getWidth() const
 {
 	return mRoadWidth;
+}
+
+void WorldRoad::onMoveNode()
+{
+	invalidate();
+	// keep the graph up to date
+	plotRoad();
 }

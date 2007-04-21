@@ -21,8 +21,25 @@ public:
 	{
 		setPosition2D(pos.x, pos.y);
 	}
+	SimpleNode(const Ogre::Vector3 &pos)
+	{
+		setPosition3D(pos.x, pos.y, pos.z);
+	}
+
+	inline Ogre::Vector2 getPosition2D() const
+	{
+		return Ogre::Vector2(mPosition.x, mPosition.z);
+	}
 
 
+	Ogre::Vector3 getPosition3D() const
+	{
+		return mPosition;
+	}
+
+
+private:
+	
 	bool setPosition2D(Ogre::Real x, Ogre::Real z)
 	{
 		Ogre::Real y;
@@ -34,11 +51,6 @@ public:
 		return false;
 	}
 
-	inline Ogre::Vector2 getPosition2D() const
-	{
-		return Ogre::Vector2(mPosition.x, mPosition.z);
-	}
-
 	void setPosition3D(Ogre::Real x, Ogre::Real y, Ogre::Real z)
 	{
 		mPosition.x = x;
@@ -46,15 +58,6 @@ public:
 		mPosition.z = z;
 	}
 
-	Ogre::Vector3 getPosition3D() const
-	{
-		return mPosition;
-	}
-
-	void setPosition3D(const Ogre::Vector3& pos)
-	{
-		mPosition = pos;
-	}
 
 }; 
 

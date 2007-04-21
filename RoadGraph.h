@@ -67,15 +67,8 @@ public:
 		return rd;
 	}
 
-	inline void removeRoad(const NodeId nd1, const NodeId nd2)
-	{
-		remove_edge(nd1, nd2, mGraph);
-	}
-
-	inline void removeRoad(const RoadId rd)
-	{
-		remove_edge(rd, mGraph);
-	}
+	void removeRoad(const NodeId nd1, const NodeId nd2);
+	void removeRoad(const RoadId rd);
 
 	inline void clear()
 	{
@@ -135,8 +128,8 @@ public:
 
 	bool addRoad(const NodeId nd1, const NodeId nd2, RoadId& rd);
 	bool addRoad(const NodeId nd1, const NodeId nd2, RoadInterface* r, RoadId &rd);
-	bool findRoad(const NodeId nd1, const NodeId nd2, RoadId &rd);
-
+	bool findRoad(const NodeId nd1, const NodeId nd2, RoadId &rd) const;
+	bool testRoad(const NodeId nd1, const NodeId nd2) const;
 
 	bool roadIntersection(const RoadId rd1, const RoadId rd2, Ogre::Vector2& intersection) const;
 	bool roadIntersection(const Ogre::Vector2& a, const Ogre::Vector2& b, 

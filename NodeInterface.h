@@ -14,7 +14,16 @@ public:
 	virtual Ogre::Vector3 getPosition3D() const = 0;
 	virtual bool setPosition2D(Ogre::Real x, Ogre::Real z) = 0;
 
-	virtual void setPosition3D(Ogre::Real x, Ogre::Real y, Ogre::Real z) = 0;
+//	virtual void setPosition3D(Ogre::Real x, Ogre::Real y, Ogre::Real z) = 0;
+
+	virtual void onAddRoad() {}
+	virtual void onRemoveRoad() {}
+	
+	virtual std::pair<Ogre::Vector3, Ogre::Vector3> getRoadJunction(RoadId rd)
+	{
+		return std::make_pair(Ogre::Vector3(), Ogre::Vector3());
+	};
+
 
 };     
 

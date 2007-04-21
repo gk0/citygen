@@ -3,34 +3,34 @@
 #include "WorldRoad.h"
 #include "WorldFrame.h"
 #include "MovableText.h"
+#include "Triangulate.h"
+#include "Geometry.h"
 
 using namespace Ogre;
 
 int WorldNode::mInstanceCount = 0;
 
 
-WorldNode::WorldNode(RoadGraph &g, RoadGraph& s, SceneManager* creator)
-  : mGraph(g),
-    mSimpleGraph(s)
+WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
+  : mRoadGraph(g),
+    mSimpleRoadGraph(s)
 {
 	mCreator = creator;
 
-	mSimpleNodeId = mSimpleGraph.addNode(this);
-	mNodeId = mGraph.addNode(this);
+	mSimpleNodeId = mSimpleRoadGraph.addNode(this);
+	mNodeId = mRoadGraph.addNode(this);
 
 	// set the name
 	Ogre::String nodeCount(StringConverter::toString(mInstanceCount++));
-	Ogre::String name("node"+nodeCount);
-	init(name, nodeCount);
-}
+	mName = "node"+nodeCount;
 
-void WorldNode::init(const String& name, const String& label)
-{
 	// create our scene node
-	mSceneNode = mCreator->getRootSceneNode()->createChildSceneNode(name);
+	mSceneNode = mCreator->getRootSceneNode()->createChildSceneNode(mName);
+
+	mJunctionPlate = 0;
 
 	// create mesh
-	mMesh = mCreator->createEntity(name+"Mesh", "node.mesh" );
+	mMesh = mCreator->createEntity(mName+"Mesh", "node.mesh" );
 //	MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().getByName("gk/Hilite/Red2");
 	//MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().create("gk/Hilite/Red2");
 //	mat->getTechnique(0)->getPass(0)->setAmbient(0.1, 0.1, 0.1);
@@ -39,17 +39,17 @@ void WorldNode::init(const String& name, const String& label)
 	mMesh->setMaterialName("gk/Hilite/Red2");
 
 	// create highlight mesh
-	mHighlight = mCreator->createEntity(name+"Highlight", "flange.mesh" );
+	mHighlight = mCreator->createEntity(mName+"Highlight", "flange.mesh" );
 	mHighlight->setMaterialName("gk/Hilite/Yellow");
 	mHighlight->setVisible(false);
 
 	// create select mesh
-	mSelected = mCreator->createEntity(name+"Selected", "node.mesh" );
+	mSelected = mCreator->createEntity(mName+"Selected", "node.mesh" );
 	mSelected->setMaterialName("gk/Hilite/Yellow");
 	mSelected->setVisible(false);
 
 	// create moveable text label
-	mLabel = new MovableText("Label"+name, label);
+	mLabel = new MovableText("Label"+mName, nodeCount);
 	mLabel->setCharacterHeight(5);
 	mLabel->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE); // Center horizontally and display above the node
 	mLabel->setAdditionalHeight( 4.0f );
@@ -67,6 +67,11 @@ WorldNode::~WorldNode()
 	mCreator->destroyEntity(mHighlight);
 	mCreator->destroyEntity(mSelected);
 	delete mLabel;
+	if(mJunctionPlate)
+	{
+		delete mJunctionPlate;
+		mJunctionPlate = 0;
+	}
 	mCreator->destroySceneNode(mSceneNode->getName());
 }
 
@@ -94,14 +99,21 @@ void WorldNode::showSelected(bool selected)
 
 void WorldNode::setPosition(const Ogre::Vector3 &pos)
 {
-	WorldObject::setPosition(pos);
-	invalidate();
+	setPosition(pos.x, pos.y, pos.z);
 }
 
 void WorldNode::setPosition(Real x, Real y, Real z)
 {
 	WorldObject::setPosition(x,y,z);
-	invalidate();
+	// the roads are stored in a vector since the iterator may be trashed by onMoveNode
+	// in the case of WorldRoad this is most definite
+	std::vector<RoadInterface*> roads;
+	RoadIterator2 rIt, rEnd;
+	for(boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(mNodeId); rIt != rEnd; rIt++)
+		roads.push_back(mRoadGraph.getRoad(*rIt));
+
+	for(size_t i=0; i<roads.size(); i++)
+		roads[i]->onMoveNode();
 }
 
 bool WorldNode::setPosition2D(Real x, Real z)
@@ -131,42 +143,23 @@ Vector2 WorldNode::getPosition2D() const
 	return Vector2(pos.x, pos.z);
 }
 
-void WorldNode::attach(WorldObject* wo)
-{
-	WorldObject::attach(wo);
-	// if its a road add it to our road list
-	if(typeid(*wo) == typeid(WorldRoad))
-		mRoads.push_back(static_cast<WorldRoad*>(wo));
-}
-
-void WorldNode::detach(WorldObject* wo)
-{
-	WorldObject::detach(wo);
-	if(typeid(*wo) == typeid(WorldRoad))
-	{
-		WorldRoad *wr = static_cast<WorldRoad*>(wo); 
-		std::vector<WorldRoad*>::iterator rIt, rEnd;
-		for(rIt = mRoads.begin(), rEnd = mRoads.end(); rIt != rEnd; )
-		{
-			if((*rIt) == wr)
-			{
-				rIt = mRoads.erase(rIt); 
-				rEnd = mRoads.end();
-			}
-			else rIt++;
-		}
-	}
-}
-
-
 /* this function should return false if the current posiotion 
 */
 bool WorldNode::hasRoadIntersection()
 {
 	// check for any intersections
-	std::vector<WorldRoad*>::iterator rIt, rEnd;
-	for(rIt = mRoads.begin(), rEnd = mRoads.end(); rIt != rEnd; rIt++)
-		if((*rIt)->hasIntersection()) return true;
+	RoadIterator2 rIt, rEnd;
+	boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(mNodeId); 
+	for(; rIt != rEnd; rIt++)
+	{
+		//HACKISH
+		RoadInterface* ri = mRoadGraph.getRoad(*rIt);
+		if(typeid(*ri) == typeid(WorldRoad))
+		{
+			WorldRoad* wr = static_cast<WorldRoad*>(ri);
+			if(wr->hasIntersection()) return true;
+		}
+	}
 	return false;
 }
 
@@ -193,15 +186,9 @@ bool WorldNode::move(Ogre::Vector2 pos)
 	setPosition2D(pos.x, pos.y);
 
 	// check for any intersections
-	std::vector<WorldRoad*>::iterator rIt, rEnd;
-	for(rIt = mRoads.begin(), rEnd = mRoads.end(); rIt != rEnd; rIt++)
-		(*rIt)->validate();
-
 	if(hasRoadIntersection())
 	{
 		setPosition(oldPos);
-		for(rIt = mRoads.begin(), rEnd = mRoads.end(); rIt != rEnd; rIt++)
-			(*rIt)->validate();
 		return false;
 	}
 	return true;
@@ -209,5 +196,192 @@ bool WorldNode::move(Ogre::Vector2 pos)
 
 void WorldNode::build()
 {
+	if(mJunctionPlate)
+	{
+		delete mJunctionPlate;
+		mJunctionPlate = 0;
+	}
 
+	// how many roads connect here
+	size_t degree = mRoadGraph.getDegree(mNodeId);
+
+	switch(degree)
+	{
+	case 0:
+		return;
+	case 1:
+		createTerminus();
+		return;
+	case 2:
+		// use generic
+		break;
+	case 3:
+		//createTJunction(nd, m);
+		//return;
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+		//createTJunction(nd, m);
+		break;
+	default:
+		// can't do this aggh
+		return;
+	}
+
+	Vector2 nodePos2D = getPosition2D();
+	Real height = getPosition3D().y + 0.3;
+
+	//THINK!!
+	//
+	RoadId firstRoad, previousRoad, currentRoad;
+	NodeId currentNode;
+	std::vector<RoadId> roadClockwiseList;
+
+	std::vector<Vector2> pointlist;
+	RoadIterator2 rIt2, rEnd2;
+	boost::tie(rIt2, rEnd2) = mRoadGraph.getRoadsFromNode(mNodeId); 
+	firstRoad = previousRoad = *rIt2;
+	roadClockwiseList.push_back(previousRoad);
+
+	// start with the second road using the first as prev
+	for(size_t i = 1; i < degree; i++)
+	{
+		mRoadGraph.getCounterClockwiseMostFromPrev(mRoadGraph.getDst(previousRoad), mNodeId, currentNode);
+		currentRoad = mRoadGraph.getRoad(mNodeId, currentNode);
+		pointlist.push_back(getRoadBounaryIntersection(previousRoad, currentRoad));	
+		previousRoad = currentRoad;
+		roadClockwiseList.push_back(previousRoad);
+	}
+	pointlist.push_back(getRoadBounaryIntersection(previousRoad, currentRoad));	
+
+	// fill the junction data for use by roads
+	mRoadJunction.clear();
+	size_t i, j, N = pointlist.size();
+	for(i=0; i < N; i++)
+	{
+		j = (i - 1) % N;
+
+		// create a junction -> road join pair
+		mRoadJunction[roadClockwiseList[i]] = 
+			std::make_pair(Vector3(pointlist[i].x, height, pointlist[i].y), 
+							Vector3(pointlist[j].x, height, pointlist[j].y));
+
+	}
+
+
+	//Triangulate it 
+	std::vector<Vector2> result;
+	if(Triangulate::Process(pointlist, result))
+	{
+		// declare the manual object
+		mJunctionPlate = new ManualObject(mName+"j");
+		mJunctionPlate->begin("gk/Building", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+		Vector2 poser = getPosition2D();
+		for(i=0; i<result.size(); i+=3)
+		{
+			// we must be relative to the scenenode
+			result[i] -= poser;
+			result[i+1] -= poser;
+			result[i+2] -= poser;
+
+			mJunctionPlate->position(Vector3(result[i+2].x, 0.3, result[i+2].y));
+			mJunctionPlate->normal(Vector3::UNIT_Y);
+			mJunctionPlate->position(Vector3(result[i+1].x, 0.3, result[i+1].y));
+			mJunctionPlate->normal(Vector3::UNIT_Y);
+			mJunctionPlate->position(Vector3(result[i].x, 0.3, result[i].y));
+			mJunctionPlate->normal(Vector3::UNIT_Y);
+		}
+		mJunctionPlate->end();
+		mSceneNode->attachObject(mJunctionPlate);
+		mMesh->setVisible(false);
+	}
+}
+
+void WorldNode::createTerminus()
+{
+	mRoadJunction.clear();
+
+	// get road
+	RoadIterator2 rIt2, rEnd2;
+	boost::tie(rIt2, rEnd2) = mRoadGraph.getRoadsFromNode(mNodeId); 
+	if(rIt2 != rEnd2)
+	{		
+		Real h = getPosition3D().y + 0.3;
+		Vector2 p1, p2, offset;
+		p1 = mRoadGraph.getSrcNode(*rIt2)->getPosition2D();
+		p2 = mRoadGraph.getDstNode(*rIt2)->getPosition2D();
+		offset = (p2 - p1).perpendicular();
+		offset.normalise();
+		offset *= mRoadGraph.getRoad(*rIt2)->getWidth();;
+
+
+		mRoadJunction[*rIt2] = std::make_pair(Vector3(p1.x - offset.x, h, p1.y - offset.y),
+						Vector3(p1.x + offset.x, h, p1.y + offset.y));
+	}
+}
+
+Vector2 WorldNode::getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR)
+{
+	Real lWidth, rWidth;
+	Vector2 l1, l2, r1, r2, lOffset, rOffset;
+
+	l1 = mRoadGraph.getSrcNode(leftR)->getPosition2D();
+	l2 = mRoadGraph.getDstNode(leftR)->getPosition2D();
+	r1 = mRoadGraph.getSrcNode(rightR)->getPosition2D();
+	r2 = mRoadGraph.getDstNode(rightR)->getPosition2D();
+
+	lWidth = mRoadGraph.getRoad(leftR)->getWidth();
+	rWidth = mRoadGraph.getRoad(rightR)->getWidth();
+
+	lOffset = (l2 - l1).perpendicular();
+	lOffset.normalise();
+	lOffset *= lWidth;
+
+	rOffset = (r2 - r1).perpendicular();
+	rOffset.normalise();
+	rOffset *= rWidth;
+
+	l1 -= lOffset;
+	l2 -= lOffset;
+	r1 += rOffset;
+	r2 += rOffset;
+
+	// if parallel, use l1 as pos
+	Vector2 pos;
+	if(Geometry::lineIntersect(l1, l2, r1, r2, pos))
+		return pos;
+	else
+		return l1;
+}
+
+std::pair<Vector3, Vector3> WorldNode::getRoadJunction(RoadId rd) 
+{
+	std::map<RoadId, std::pair<Vector3, Vector3>, road_less_than >::iterator rIt;
+	rIt = mRoadJunction.find(rd);
+	if(rIt == mRoadJunction.end())
+		throw new Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "WorldNode::getRoadJunction");
+
+	return rIt->second;
+}
+
+void WorldNode::onMove()
+{
+	RoadIterator2 rIt, rEnd;
+	boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(mNodeId); 
+	for(; rIt != rEnd; rIt++)
+	{
+		mRoadGraph.getRoad(*rIt)->onMoveNode();
+	}
+}
+
+void WorldNode::onAddRoad()
+{
+	invalidate();
+}
+
+void WorldNode::onRemoveRoad()
+{
+	invalidate();
 }

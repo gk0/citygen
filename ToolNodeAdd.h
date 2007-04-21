@@ -11,6 +11,7 @@ class ToolNodeAdd : public ToolView
 private:
 	Ogre::SceneManager* mSceneManager;
 	RoadGraph& mRoadGraph;
+	RoadGraph& mSimpleRoadGraph;
 
 	WorldNode *mProposedNode;
 	WorldRoad *mProposedRoad;
@@ -20,7 +21,7 @@ private:
 
 
 public:
-	ToolNodeAdd(WorldFrame* wf, Ogre::SceneManager* sm, RoadGraph &g);
+	ToolNodeAdd(WorldFrame* wf, Ogre::SceneManager* sm, RoadGraph &g, RoadGraph &s);
 
 	void activate();
 	void deactivate();

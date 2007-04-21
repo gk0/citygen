@@ -13,24 +13,27 @@ class WorldNode : public WorldObject, public NodeInterface
 {
 
 private:
-	RoadGraph& mGraph;
-	RoadGraph& mSimpleGraph;
+	RoadGraph& mRoadGraph;
+	RoadGraph& mSimpleRoadGraph;
 	static int mInstanceCount;
+	Ogre::ManualObject* mJunctionPlate;
 	Ogre::Entity* mMesh;
 	Ogre::Entity* mHighlight;
 	Ogre::Entity* mSelected;
 	Ogre::MovableText* mLabel;
 	Ogre::SceneManager* mCreator;
-	std::vector<WorldRoad*> mRoads;
+	Ogre::String mName;
+	//std::vector<WorldRoad*> mRoads;
+	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > mRoadJunction;
 
-	void init(const Ogre::String& name, const Ogre::String& label);
-	
+	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
+	void onMove();
 
 public:
 	NodeId mSimpleNodeId;
-	~WorldNode();
+	
 	WorldNode(RoadGraph& g, RoadGraph& s, Ogre::SceneManager *creator);
-
+	~WorldNode();
 
 	void setLabel(const Ogre::String& label);
 	const Ogre::String& getLabel() const;
@@ -46,8 +49,8 @@ public:
 	Ogre::Vector2 getPosition2D() const;
 	const Ogre::Vector3& getPosition() const { return WorldObject::getPosition(); }
 
-	void attach(WorldObject* wo);
-	void detach(WorldObject* wo);
+	//void attach(WorldObject* wo);
+	//void detach(WorldObject* wo);
 
 	bool move(Ogre::Vector2 pos);
 
@@ -58,6 +61,12 @@ public:
 
 	void build();
 
+	std::pair<Ogre::Vector3, Ogre::Vector3> WorldNode::getRoadJunction(RoadId rd);
+
+	void createTerminus();
+
+	void onAddRoad();
+	void onRemoveRoad();
 
 }; 
 

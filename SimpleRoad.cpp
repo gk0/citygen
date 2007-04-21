@@ -10,12 +10,12 @@ SimpleRoad::SimpleRoad(NodeInterface *src, NodeInterface *dst)
 	mDstNode = dst;
 }
 
-NodeInterface* SimpleRoad::getSrcNode() 
+NodeInterface* SimpleRoad::getSrcNode() const
 {
 	return mSrcNode;
 }
 
-NodeInterface* SimpleRoad::getDstNode() 
+NodeInterface* SimpleRoad::getDstNode() const
 {
 	return mDstNode;
 }

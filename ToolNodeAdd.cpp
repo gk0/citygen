@@ -7,9 +7,10 @@
 using namespace Ogre;
 
 
-ToolNodeAdd::ToolNodeAdd(WorldFrame* wf, SceneManager* sm, RoadGraph &g)
+ToolNodeAdd::ToolNodeAdd(WorldFrame* wf, SceneManager* sm, RoadGraph &g, RoadGraph &s)
 : ToolView(wf),
-  mRoadGraph(g)
+  mRoadGraph(g),
+  mSimpleRoadGraph(s)
 {
 	mSceneManager = sm;
 }
@@ -74,23 +75,21 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 		if(mWorldFrame->getSelected())
 		{
 			// we have a selected node so we are creating a road here
-			if(!mProposedRoad) mProposedRoad = new WorldRoad(mSceneManager, 
-				mWorldFrame->getSelected(), mProposedNode, mRoadGraph, false);
-			else {
-				mProposedRoad->setSrcNode(mWorldFrame->getSelected());
-				mProposedRoad->setDstNode(mProposedNode);
-			}
+			if(!mProposedRoad) 
+				mProposedRoad = new WorldRoad(mWorldFrame->getSelected(), 
+						mProposedNode, mRoadGraph, mSimpleRoadGraph, mSceneManager);
 			
-			NodeId nd;
-			Vector2 newPoint;
+
 			mProposedNode->setVisible(true);
 			mProposedNode->setPosition(intersection);
 			mWorldFrame->highlightNode(0);
-			
-			mSnapState = mProposedRoad->snap(25, nd, mIntersectingRoad, newPoint);
-#ifdef DEBUG
-			LogManager::getSingleton().logMessage("Snap:"+StringConverter::toString(mSnapState), LML_CRITICAL);
-#endif
+
+
+			NodeId nd;
+			Vector2 newPoint;
+			//mSnapState = mProposedRoad->snap(25, nd, mIntersectingRoad, newPoint);
+			LogManager::getSingleton().logMessage("Snap:"+StringConverter::toString(mSnapState));
+/*
 			switch(mSnapState)
 			{
 			case WorldRoad::none:
@@ -99,13 +98,15 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 				break;
 			case WorldRoad::world_node:
 				{
-					NodeInterface* nb = mRoadGraph.getNode(nd);
-					mWorldFrame->highlightNode(static_cast<WorldNode*>(nb));
-					mProposedRoad->setDstNode(static_cast<WorldNode*>(nb));
-					mProposedNode->setVisible(false);
+//					NodeInterface* nb = mRoadGraph.getNode(nd);
+//					mWorldFrame->highlightNode(static_cast<WorldNode*>(nb));
+//					mProposedRoad->setDstNode(static_cast<WorldNode*>(nb));
+//					mProposedNode->setVisible(false);
 				}
 				break;
 			}
+*/
+
 		}
 		// only a proposed node
 		else
@@ -134,7 +135,14 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 			mProposedRoad = 0;
 		}
 	}
-	if(mProposedRoad) mProposedRoad->validate();
+	//NOTE: must validate nodes before roads
+	// proposed road won't be validate as part of the WorldFrame
+	if(mProposedRoad) 
+	{
+		mWorldFrame->getSelected()->validate();
+		mProposedNode->validate();
+		mProposedRoad->validate();
+	}
 }
 
 
@@ -158,14 +166,22 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 	// create proposed road
 	else if(mProposedRoad)
 	{
+		WorldNode *srcNode, *dstNode;
+
+		srcNode = static_cast<WorldNode*>(mProposedRoad->getSrcNode());
+
 		// create a real node in place of proposed node if rqd.
 		if(mProposedRoad->getDstNode() == mProposedNode)
 		{
-			WorldNode* wn = mWorldFrame->createNode();
-			wn->setPosition(mProposedNode->getPosition());
-			mProposedRoad->setDstNode(wn);
+			dstNode = mWorldFrame->createNode();
+			dstNode->setPosition(mProposedNode->getPosition());
 		}
-		WorldRoad* wr = 0;
+		else
+			dstNode = static_cast<WorldNode*>(mProposedRoad->getDstNode());
+
+		//
+		delete mProposedRoad;
+		mProposedRoad = 0;
 
 		// in these cases we are connecting to an existing road and 
 		// alterations to the road graph are necessary
@@ -174,22 +190,20 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 		{
 			// insert node on road
 			WorldRoad* ir = static_cast<WorldRoad*>(mRoadGraph.getRoad(mIntersectingRoad));
-			WorldNode* wn = static_cast<WorldNode*>(mProposedRoad->getDstNode());
-			mWorldFrame->insertNodeOnRoad(wn, ir);
+			mWorldFrame->insertNodeOnRoad(dstNode, ir);
 		}
-		//else
-		// create road
-		wr = mWorldFrame->createRoad(static_cast<WorldNode*>(mProposedRoad->getSrcNode()), 
-									static_cast<WorldNode*>(mProposedRoad->getDstNode()));
+
+		// Create Road
+		WorldRoad* wr = 0;
+		wr = mWorldFrame->createRoad(srcNode, dstNode);
 
 		//NOTE: in the event that we try to double link two nodes
 		// ie. a->b and then b->a a road will not be created and
 		// we should fail silently
 		if(wr == 0) return;
 
-
 		// advance selected
-		mWorldFrame->selectNode(static_cast<WorldNode*>(wr->getDstNode()));
+		mWorldFrame->selectNode(dstNode);
 	}
 	// create proposed node
 	else if(mProposedNode->getVisible())
