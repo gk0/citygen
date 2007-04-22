@@ -23,8 +23,6 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	mName = "Road" + StringConverter::toString(mRoadCount++);
 	// create our scene node
 	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(mName);
-
-	mWireframe = 0;
 	plotRoad();
 }
 
@@ -218,10 +216,6 @@ void WorldRoad::build()
 	mManualObject = new ManualObject(mName); 
 	mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
-	if(mWireframe) delete mWireframe;
-	mWireframe = new ManualObject(mName+"w"); 
-	mWireframe->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
-
 	// vars
 	Vector3 currRoadSegNormal, nextRoadSegNormal;
 	Vector3 currRoadSegVector, nextRoadSegVector;
@@ -345,10 +339,6 @@ void WorldRoad::build()
 
 	mManualObject->end();
 	mSceneNode->attachObject(mManualObject);
-
-	mWireframe->end();
-	mSceneNode->attachObject(mWireframe);
-
 }
 
 
@@ -375,13 +365,6 @@ void WorldRoad::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3
 	mManualObject->position(b1);
 	mManualObject->normal(bNorm);
 	mManualObject->textureCoord(uMax, 0);
-
-	mWireframe->position(a1);
-	mWireframe->position(b1);
-
-	mWireframe->position(a2);
-	mWireframe->position(b2);
-	
 }
 
 void WorldRoad::destroyRoadObject()
@@ -558,6 +541,8 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 
 WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos)
 {
+
+
 	NodeId snappedToNode;
 	bool nodeSnapped = false;
 
@@ -578,9 +563,15 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 	}
 	else
 	{
+		// create a set of nodes to ignore (all simple nodes in road and dest)
+		std::set<NodeId> ignoreNodeSet;
+		for(size_t i=0; i<mRoadSegmentList.size(); i++) 
+			ignoreNodeSet.insert(mRoadGraph.getDst(mRoadSegmentList[i]));
+
 		// No intersection!
 		// Snap To Node
-		nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->mNodeId, snapSzSquared, snappedToNode);
+		nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->getPosition2D(), 
+										ignoreNodeSet, snapSzSquared, snappedToNode);
 	}
 
 	// if node snapped we alter the direction of our proposed road and must retest it
@@ -593,7 +584,13 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 			getDstNode()->setPosition2D(snapPos.x, snapPos.y);
 
 			//DOH have to reget the snappedToNode since any set position recreated the road segs
-			nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->mNodeId, snapSzSquared, snappedToNode);
+			// create a set of nodes to ignore (all simple nodes in road and dest)
+			std::set<NodeId> ignoreNodeSet;
+			for(size_t i=0; i<mRoadSegmentList.size(); i++) 
+				ignoreNodeSet.insert(mRoadGraph.getDst(mRoadSegmentList[i]));
+
+			nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->getPosition2D(), 
+										ignoreNodeSet, snapSzSquared, snappedToNode);
 		}
 
 		// Find Closest Intersection
@@ -654,8 +651,13 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 }
 
 /*
-bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
+bool WorldRoad::findClosestIntersection(RoadId& rd, Vector2& pos) const
 {
+	bool intersectionFound = false;
+	Real currentDistSq, closestDistSq;
+	Road currentRd;
+	Vector2 currentIntersection;
+
 	for(size_t i=0; i<mRoadSegmentList.size(); i++)
 	{
 		// get segment src & dst
@@ -673,15 +675,52 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 				WorldRoad* wr = static_cast<WorldRoad*>(ri);
 				if(wr != this)
 				{
-					wr->findClosestIntersection(srcPos, dstPos, distance, rd, pos);
+					if(wr->findClosestIntersection(srcPos, dstPos, currentDistSq, currentRd, currentIntersection))
+					{
+						if(!intersectionFound) intersectionFound = true;
+						else if(currentDistSq < closestDistSq);
+						else continue;  // don't do commands below
+
+						rd = currentRd;
+						closestDistSq = currentDistSq;
+						pos = currentIntersection;
+					}
 				}
 			}
 		}
+		// The segments are from src to dst, hence the first seg is definetaly closer than the next
+		if(intersectionFound) return true;
 	}
 	return false;
 }
-*/
 
+bool WorldRoad::findClosestIntersection(const Vector2& src, const Vector2& dst, 
+					Real &closestDistSq, RoadId &rd, Vector2 &pos) const
+{
+	bool intersectionFound = false;
+	Real currentDistSq;
+	Vector2 currentIntersection;
+
+	for(size_t i=0; i<mRoadSegmentList.size(); i++)
+	{
+		Vector2 segSrc = mRoadGraph.getSrcNode(mRoadSegmentList[i])->getPosition2D();
+		Vector2 segDst = mRoadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
+
+		if(Geometry::lineSegmentIntersect(src, dst, segSrc, segDst, currentIntersection))
+		{
+			currentDistSq = (src - currentIntersection).squaredLength();
+			if(!intersectionFound) intersectionFound = true;
+			else if(currentDistSq < closestDistSq);
+			else continue; // don't do commands below
+
+			rd = mRoadSegmentList[i];
+			closestDistSq = currentDistSq;
+			pos = currentIntersection;
+		}
+	}
+	return intersectionFound;
+}
+*/
 bool WorldRoad::hasIntersection()
 {
 	for(unsigned int i=0; i<mRoadSegmentList.size(); i++)

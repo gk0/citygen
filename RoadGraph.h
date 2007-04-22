@@ -191,7 +191,8 @@ public:
 	bool findClosestIntersection(const NodeId srcNd, const NodeId dstNd,
 		RoadId& rd, Ogre::Vector2& pos) const;
 
-	bool snapToOtherNode(const NodeId nd, const Ogre::Real& snapSzSq, NodeId& otherNd) const;
+	bool snapToOtherNode(const Ogre::Vector2 pos, const std::set<NodeId> ignoreSet, 
+		const Ogre::Real& snapSzSq, NodeId& otherNd) const;
 
 
 private:

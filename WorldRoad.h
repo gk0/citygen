@@ -26,9 +26,6 @@ private:
 	RoadId mSimpleRoadId;
 
 	Ogre::ManualObject *mManualObject;
-	Ogre::ManualObject *mWireframe;
-
-	//SceneNode* mMeshNode;
 	Ogre::MovableText *mLabel;
 	Ogre::String mName;
 

@@ -86,7 +86,7 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 
 			Vector2 newPoint;
 			mSnapState = mProposedRoad->snap(25, mSnapNode, mIntersectingRoad, newPoint);
-			//LogManager::getSingleton().logMessage("Snap:"+StringConverter::toString(mSnapState));
+			LogManager::getSingleton().logMessage("Snap:"+StringConverter::toString(mSnapState));
 
 			switch(mSnapState)
 			{

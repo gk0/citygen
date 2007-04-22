@@ -1037,21 +1037,25 @@ bool RoadGraph::findClosestIntersection(const NodeId srcNd, const NodeId dstNd,
 	return hasIntersection;	
 }
 
-bool RoadGraph::snapToOtherNode(const NodeId nd, const Real& snapSzSq, NodeId& otherNd) const
+bool RoadGraph::snapToOtherNode(const Vector2 pos, const std::set<NodeId> ignoreSet, 
+								const Real& snapSzSq, NodeId& otherNd) const
 {
 	Ogre::Real closestDistSq = snapSzSq;
-	Vector2 pos = getNode(nd)->getPosition2D();
 	bool success = false;
 	NodeIterator nIt, nEnd;
 	for(boost::tie(nIt, nEnd) = vertices(mGraph); nIt != nEnd; nIt++)
 	{
 		Vector2 nodePos(mGraph[*nIt]->getPosition2D());
 		Real currDistSq =(nodePos - pos).squaredLength();
-		if(currDistSq < closestDistSq && *nIt != nd) 
+		if(currDistSq < closestDistSq) 
 		{
-			closestDistSq = currDistSq;
-			otherNd = *nIt;
-			success = true;
+			std::set<NodeId>::const_iterator inIt = ignoreSet.find(*nIt);
+			if(inIt == ignoreSet.end())
+			{
+				closestDistSq = currDistSq;
+				otherNd = *nIt;
+				success = true;
+			}
 		}
 	}
 	return success;

@@ -677,9 +677,9 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 {	
 	//NOTE: need to write an insert node function for WorldCell
 	// sux
-/*
-	modify(true);
 
+	modify(true);
+/*
 	// get cells attached to this road
 	vector<WorldCell*> attachedCells;
 	vector<WorldObject*> attachments(wr->getAllAttachments());
@@ -708,7 +708,7 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 		// set incomplete boundary
 		attachedCells[i]->setBoundary(boundaries[i]);
 	}
-
+*/
 	// store nodes
 	WorldNode* wn1 = static_cast<WorldNode*>(wr->getSrcNode());
 	WorldNode* wn2 = static_cast<WorldNode*>(wr->getDstNode());
@@ -717,19 +717,11 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 	deleteRoad(wr);
 
 	// create replacement roads
-	RoadId rd;
-	mSimpleRoadGraph.addRoad(wn1->mSimpleNodeId, wn->mSimpleNodeId, rd);
-	WorldRoad* wr1 = new WorldRoad(mSceneManager, wn1, wn, mRoadGraph);
-	wr1->mSimpleRoadId = rd;
-	mSimpleRoadGraph.setRoad(rd, wr1);
-	mSceneRoadMap[wr1->getSceneNode()] = wr1;
-
-	mSimpleRoadGraph.addRoad(wn->mSimpleNodeId, wn2->mSimpleNodeId, rd);
-	WorldRoad* wr2 = new WorldRoad(mSceneManager, wn, wn2, mRoadGraph);
-	wr2->mSimpleRoadId = rd;
-	mSimpleRoadGraph.setRoad(rd, wr2);
-	mSceneRoadMap[wr2->getSceneNode()] = wr2;
-
+	WorldRoad* wr1 = new WorldRoad(wn1, wn, mRoadGraph, mSimpleRoadGraph, mSceneManager);
+	mSceneRoadMap[wr->getSceneNode()] = wr1;
+	WorldRoad* wr2 = new WorldRoad(wn, wn2, mRoadGraph, mSimpleRoadGraph, mSceneManager);
+	mSceneRoadMap[wr->getSceneNode()] = wr2;
+/*
 	// create replacement cells
 	for(size_t i=0; i<numOfCells; i++)
 	{	
