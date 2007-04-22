@@ -13,7 +13,7 @@ class WorldNode : public WorldObject, public NodeInterface
 {
 
 private:
-	size_t lastDegree;
+	size_t mDegree;
 
 	RoadGraph& mRoadGraph;
 	RoadGraph& mSimpleRoadGraph;
@@ -44,6 +44,7 @@ public:
 	Ogre::Vector3 getPosition3D() const;
 	void setPosition(const Ogre::Vector3 &pos);
 	bool setPosition2D(Ogre::Real x, Ogre::Real z);
+	bool setPosition2D(const Ogre::Vector2& pos);
 	void setPosition3D(Ogre::Real x, Ogre::Real y, Ogre::Real z);
 	void setPosition3D(const Ogre::Vector3& pos);
 	void setPosition(Ogre::Real x, Ogre::Real y, Ogre::Real z);
@@ -53,6 +54,7 @@ public:
 
 	//void attach(WorldObject* wo);
 	//void detach(WorldObject* wo);
+	void invalidate();
 
 	bool move(Ogre::Vector2 pos);
 

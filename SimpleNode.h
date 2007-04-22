@@ -51,6 +51,11 @@ private:
 		return false;
 	}
 
+	bool setPosition2D(const Ogre::Vector2& pos)
+	{
+		return setPosition2D(pos.x, pos.y);
+	}
+
 	void setPosition3D(Ogre::Real x, Ogre::Real y, Ogre::Real z)
 	{
 		mPosition.x = x;

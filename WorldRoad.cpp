@@ -14,7 +14,7 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	  mSimpleRoadGraph(s),
 	  mRoadSegSz(10), //DEBUG: set to v. big 50 normal is 10
 	  mRoadWidth(1.0),
-	  mRoadDeviance(30),
+	  mRoadDeviance(20),
 	  mManualObject(0)
 {
 	mSimpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, mSimpleRoadId);
@@ -24,6 +24,7 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	// create our scene node
 	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(mName);
 
+	mWireframe = 0;
 	plotRoad();
 }
 
@@ -217,6 +218,10 @@ void WorldRoad::build()
 	mManualObject = new ManualObject(mName); 
 	mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
+	if(mWireframe) delete mWireframe;
+	mWireframe = new ManualObject(mName+"w"); 
+	mWireframe->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
+
 	// vars
 	Vector3 currRoadSegNormal, nextRoadSegNormal;
 	Vector3 currRoadSegVector, nextRoadSegVector;
@@ -341,6 +346,9 @@ void WorldRoad::build()
 	mManualObject->end();
 	mSceneNode->attachObject(mManualObject);
 
+	mWireframe->end();
+	mSceneNode->attachObject(mWireframe);
+
 }
 
 
@@ -367,6 +375,13 @@ void WorldRoad::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3
 	mManualObject->position(b1);
 	mManualObject->normal(bNorm);
 	mManualObject->textureCoord(uMax, 0);
+
+	mWireframe->position(a1);
+	mWireframe->position(b1);
+
+	mWireframe->position(a2);
+	mWireframe->position(b2);
+	
 }
 
 void WorldRoad::destroyRoadObject()

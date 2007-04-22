@@ -86,7 +86,7 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 
 			Vector2 newPoint;
 			mSnapState = mProposedRoad->snap(25, mSnapNode, mIntersectingRoad, newPoint);
-			LogManager::getSingleton().logMessage("Snap:"+StringConverter::toString(mSnapState));
+			//LogManager::getSingleton().logMessage("Snap:"+StringConverter::toString(mSnapState));
 
 			switch(mSnapState)
 			{
@@ -173,12 +173,12 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 		case WorldRoad::none:
 			// create new dest node
 			dstNode = mWorldFrame->createNode();
-			dstNode->setPosition(mProposedNode->getPosition());
+			dstNode->setPosition2D(mProposedNode->getPosition2D());
 			break;
 		case WorldRoad::road:
 			// create new dest node
 			dstNode = mWorldFrame->createNode();
-			dstNode->setPosition(mProposedNode->getPosition());
+			dstNode->setPosition2D(mProposedNode->getPosition2D());
 			{
 				// in these cases we are connecting to an existing road and 
 				// must insert a node at the junction
@@ -213,7 +213,7 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 	else if(mProposedNode->getVisible())
 	{
 		WorldNode* wn = mWorldFrame->createNode();
-		wn->setPosition(mProposedNode->getPosition());
+		wn->move(mProposedNode->getPosition2D());
 	}
 	else
 	{
