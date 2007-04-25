@@ -63,7 +63,8 @@ public:
 		bool success;
 		RoadId rd;
 		tie(rd, success) = edge(src, dst, mGraph);
-		if(!success) throw new Ogre::Exception(Ogre::Exception::ERR_ITEM_NOT_FOUND, "Edge not found", "RoadGraph::getRoad");
+		if(!success) 
+			throw new Ogre::Exception(Ogre::Exception::ERR_ITEM_NOT_FOUND, "Edge not found", "RoadGraph::getRoad");
 		return rd;
 	}
 

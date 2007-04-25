@@ -32,6 +32,7 @@ private:
 
 	RoadGraph mRoadGraph;
 	RoadGraph &mParentRoadGraph;
+	RoadGraph &mSimpleRoadGraph;
 	GrowthGenParams mGrowthGenParams;
 
 	std::vector<RoadInterface*> mBoundaryRoads;
@@ -39,17 +40,18 @@ private:
 	std::vector<RoadInterface*> mFilamentRoads;
 
 public:
-	WorldCell(RoadGraph &p);
-	WorldCell(RoadGraph &p, std::vector<NodeInterface*> &n, std::vector<RoadInterface*> &b);
-	WorldCell(RoadGraph &p, std::vector<RoadInterface*> &b);
+	WorldCell(RoadGraph &p, RoadGraph &s);
+	WorldCell(RoadGraph &p, RoadGraph &s, std::vector<NodeInterface*> &n, std::vector<RoadInterface*> &b);
+//	WorldCell(RoadGraph &p, std::vector<RoadInterface*> &b);
 	virtual ~WorldCell();
 
 	GrowthGenParams getGrowthGenParams() const;
 	void setGrowthGenParams(const GrowthGenParams &g);
 
-	const std::vector<RoadInterface*>& getBoundary() const;
+	const std::vector<RoadInterface*>& getBoundaryRoads() const;
+	const std::vector<NodeInterface*>& getBoundaryCycle() const;
 	void setBoundary(const std::vector<NodeInterface*> &nodeCycle, const std::vector<RoadInterface*> &b);
-	void setBoundary(const std::vector<RoadInterface*> &b);
+	void setBoundary(const std::vector<NodeInterface*> &nodeCycle);
 
 	const std::vector<RoadInterface*>& getFilaments() const;
 	void addFilament(WorldRoad* f);
@@ -63,18 +65,19 @@ public:
 	bool isInside(const Ogre::Vector2 &loc) const;
 	bool isOnBoundary(NodeInterface *ni);
 	bool compareBoundary(const std::vector<RoadInterface*>& roadCycle) const;
+	void clearBoundary();
+	void clear();
 
 private:
 	void clearRoadGraph();
 	void init();
-	void clearBoundary();
+
 	void clearFilaments();
 	void destroySceneObject();
 
 	NodeInterface* createNode(const Ogre::Vector2 &pos);
 	RoadInterface* createRoad(NodeInterface *n1, NodeInterface *n2);
 	void deleteRoad(RoadInterface *ri);
-	std::vector<NodeInterface*> getBoundaryCycle();
 	void installGraph();
 	void installRoad(RoadInterface* r, std::map<NodeInterface*, NodeInterface*> &nodeMap);
 	RoadInterface* getLongestBoundaryRoad() const;

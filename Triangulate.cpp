@@ -103,6 +103,9 @@ bool Triangulate::Process(const std::vector<Vector2> &contour, std::vector<Vecto
     /* if we loop, it is probably a non-simple polygon */
     if (0 >= (count--))
     {
+	  // ass monkey: giving me meory leaks
+	  delete V;
+
       //** Triangulate: ERROR - probable bad polygon!
       return false;
     }

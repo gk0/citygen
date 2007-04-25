@@ -11,12 +11,14 @@ using namespace Ogre;
 WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
 					 RoadGraph& s, Ogre::SceneManager *creator, bool bind)
 	: mRoadGraph(g),
-	  mSimpleRoadGraph(s),
-	  mRoadSegSz(10), //DEBUG: set to v. big 50 normal is 10
-	  mRoadWidth(1.0),
-	  mRoadDeviance(20),
-	  mManualObject(0)
+	  mSimpleRoadGraph(s)
 {
+	mRoadSegSz = 10; //DEBUG: set to v. big 50 normal is 10
+	mRoadWidth = 1.0;
+	mRoadDeviance= 20;
+	
+	mManualObject = 0;
+	
 	mSimpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, mSimpleRoadId);
 	mSimpleRoadGraph.setRoad(mSimpleRoadId, this);
 
@@ -28,12 +30,12 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 
 WorldRoad::~WorldRoad()
 {
+	destroyRoadGraph();
+	mSimpleRoadGraph.removeRoad(mSimpleRoadId);
+
 	destroyRoadObject();
 	SceneManager* destroyer = mSceneNode->getCreator();
 	destroyer->destroySceneNode(mSceneNode->getName());
-
-	destroyRoadGraph();
-	mSimpleRoadGraph.removeRoad(mSimpleRoadId);
 }
 
 
@@ -339,7 +341,7 @@ void WorldRoad::build()
 
 	mManualObject->end();
 	mSceneNode->attachObject(mManualObject);
-}
+ }
 
 
 void WorldRoad::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3 &aNorm,
@@ -776,4 +778,20 @@ void WorldRoad::onMoveNode()
 	invalidate();
 	// keep the graph up to date
 	plotRoad();
+
+	std::set<WorldObject*>::iterator aIt, aEnd;
+	for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
+	{
+		(*aIt)->invalidate();
+	}
+}
+
+void WorldRoad::invalidate()
+{
+	mValid = false;
+/*	std::set<WorldObject*>::iterator aIt, aEnd;
+	for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
+	{
+		(*aIt)->invalidate();
+	}*/
 }

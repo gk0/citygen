@@ -142,84 +142,103 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 
 void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 {
-	updateState(e);
-
-	// if node is selected and the current node is it
-	if(mWorldFrame->getSelected() && 
-		mWorldFrame->getSelected() == mWorldFrame->getHighlighted())
+	try
 	{
-		// deselect node
-		mWorldFrame->selectNode(0);
-		if(mProposedRoad)
+		updateState(e);
+
+		// if node is selected and the current node is it
+		if(mWorldFrame->getSelected() && 
+			mWorldFrame->getSelected() == mWorldFrame->getHighlighted())
 		{
+			// deselect node
+			mWorldFrame->selectNode(0);
+			if(mProposedRoad)
+			{
+				delete mProposedRoad;
+				mProposedRoad = 0;
+			}
+			mProposedNode->setVisible(false);
+		}
+		// create proposed road
+		else if(mProposedRoad)
+		{
+			// delete the proposal
 			delete mProposedRoad;
 			mProposedRoad = 0;
-		}
-		mProposedNode->setVisible(false);
-	}
-	// create proposed road
-	else if(mProposedRoad)
-	{
-		// delete the proposal
-		delete mProposedRoad;
-		mProposedRoad = 0;
 
-		// declare the src & dst for the new road
-		WorldNode *srcNode = mWorldFrame->getSelected();
-		WorldNode *dstNode;
+			// declare the src & dst for the new road
+			WorldNode *srcNode = mWorldFrame->getSelected();
+			WorldNode *dstNode;
 
-		switch(mSnapState)
-		{
-		case WorldRoad::none:
-			// create new dest node
-			dstNode = mWorldFrame->createNode();
-			dstNode->setPosition2D(mProposedNode->getPosition2D());
-			break;
-		case WorldRoad::road:
-			// create new dest node
-			dstNode = mWorldFrame->createNode();
-			dstNode->setPosition2D(mProposedNode->getPosition2D());
+			switch(mSnapState)
 			{
-				// in these cases we are connecting to an existing road and 
-				// must insert a node at the junction
-				WorldRoad* ir = static_cast<WorldRoad*>(mRoadGraph.getRoad(mIntersectingRoad));
-				mWorldFrame->insertNodeOnRoad(dstNode, ir);
+			case WorldRoad::none:
+				// create new dest node
+				dstNode = mWorldFrame->createNode();
+				dstNode->setPosition2D(mProposedNode->getPosition2D());
+				break;
+			case WorldRoad::road:
+				// create new dest node
+				dstNode = mWorldFrame->createNode();
+				dstNode->setPosition2D(mProposedNode->getPosition2D());
+				{
+					// in these cases we are connecting to an existing road and 
+					// must insert a node at the junction
+					WorldRoad* ir = static_cast<WorldRoad*>(mRoadGraph.getRoad(mIntersectingRoad));
+					mWorldFrame->insertNodeOnRoad(dstNode, ir);
+				}
+				break;
+			case WorldRoad::world_node:
+				// get the destination node
+				dstNode = static_cast<WorldNode*>(mRoadGraph.getNode(mSnapNode));
+				break;
+			default:
+				throw new Exception(Exception::ERR_INVALID_STATE, "Invalid snap state", "ToolNodeAdd::OnLeftPressed");
+				break;
 			}
-			break;
-		case WorldRoad::world_node:
-			// get the destination node
-			dstNode = static_cast<WorldNode*>(mRoadGraph.getNode(mSnapNode));
-			break;
-		default:
-			throw new Exception(Exception::ERR_INVALID_STATE, "Invalid snap state", "ToolNodeAdd::OnLeftPressed");
-			break;
+
+			// Create Road
+			WorldRoad* wr = 0;
+			wr = mWorldFrame->createRoad(srcNode, dstNode);
+
+			//NOTE: in the event that we try to double link two nodes
+			// ie. a->b and then b->a a road will not be created and
+			// we should fail silently
+			if(wr == 0) return;
+
+			//TODO: exception and catch to present error message
+
+			// advance selected
+			mWorldFrame->selectNode(dstNode);
 		}
-
-		// Create Road
-		WorldRoad* wr = 0;
-		wr = mWorldFrame->createRoad(srcNode, dstNode);
-
-		//NOTE: in the event that we try to double link two nodes
-		// ie. a->b and then b->a a road will not be created and
-		// we should fail silently
-		if(wr == 0) return;
-
-		//TODO: exception and catch to present error message
-
-		// advance selected
-		mWorldFrame->selectNode(dstNode);
+		// create proposed node
+		else if(mProposedNode->getVisible())
+		{
+			WorldNode* wn = mWorldFrame->createNode();
+			wn->move(mProposedNode->getPosition2D());
+		}
+		else
+		{
+			// change selection
+			mWorldFrame->selectNode(mWorldFrame->getHighlighted());
+		}
+		updateState(e);
+		mWorldFrame->update();
 	}
-	// create proposed node
-	else if(mProposedNode->getVisible())
+	catch(int i)
 	{
-		WorldNode* wn = mWorldFrame->createNode();
-		wn->move(mProposedNode->getPosition2D());
+		int z = 0;
 	}
-	else
+	catch(Exception &e)
 	{
-		// change selection
-		mWorldFrame->selectNode(mWorldFrame->getHighlighted());
+		int z = 0;
 	}
-	updateState(e);
-	mWorldFrame->update();
+	catch(std::exception &e)
+	{
+		int z = 0;
+	}
+	catch(...)
+	{
+		int p = 0;
+	}
 }

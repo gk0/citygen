@@ -3,6 +3,7 @@
 #include "NodeInterface.h"
 #include "RoadInterface.h"
 #include "Geometry.h"
+#include "WorldNode.h"
 #include "WorldRoad.h"
 #include "WorldFrame.h"
 #include "SimpleNode.h"
@@ -13,22 +14,24 @@ using namespace Ogre;
 using namespace std;
 int WorldCell::mInstanceCount = 0;
 
-WorldCell::WorldCell(RoadGraph &p)
- : 	mParentRoadGraph(p)
+WorldCell::WorldCell(RoadGraph &p, RoadGraph &s)
+ : 	mParentRoadGraph(p),
+	mSimpleRoadGraph(s)
 {
 	init();
 }
-
+/*
 WorldCell::WorldCell(RoadGraph &p, vector<RoadInterface*> &b)
  : 	mParentRoadGraph(p)
 {
 	init();
 	setBoundary(b);
-}
+}*/
 
 
-WorldCell::WorldCell(RoadGraph &p, vector<NodeInterface*> &n, vector<RoadInterface*> &b)
- : 	mParentRoadGraph(p)
+WorldCell::WorldCell(RoadGraph &p, RoadGraph &s, vector<NodeInterface*> &n, vector<RoadInterface*> &b)
+ : 	mParentRoadGraph(p),
+	mSimpleRoadGraph(s)
 {
 	init();
 	setBoundary(n, b);
@@ -61,6 +64,14 @@ WorldCell::~WorldCell()
 	mSceneNode->getCreator()->destroySceneNode(mSceneNode->getName());
 }
 
+void WorldCell::clear()
+{
+	clearBoundary();
+	clearFilaments();
+	clearRoadGraph();
+	destroySceneObject();
+}
+
 void WorldCell::destroySceneObject()
 {
 	if(mManualObject) {
@@ -88,8 +99,7 @@ void WorldCell::clearRoadGraph()
 	for(tie(rIt, rEnd) = mRoadGraph.getRoads(); rIt != rEnd; rIt++) 
 	{
 		RoadInterface* ri = mRoadGraph.getRoad((*rIt));
-		if(typeid(*ri) != typeid(WorldRoad))
-			delete ri;
+		if(typeid(*ri) == typeid(SimpleRoad)) delete ri;
 	}
 
 	// delete nodes
@@ -102,7 +112,7 @@ void WorldCell::clearRoadGraph()
 
 void WorldCell::build()
 {
-	return;
+	//return;
 	// possibly(most likely) dangerous and stupid, but make any other thread accessing this method sleep until done
 	static bool busy = false;
 	if(busy)
@@ -414,32 +424,61 @@ void WorldCell::installRoad(RoadInterface* r, map<NodeInterface*, NodeInterface*
 		{
 			mRoadGraph.setRoad(rd, r);
 		}
-		else throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not Installed", "WorldCell::installRoad");
+		else 
+			throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not Installed", "WorldCell::installRoad");
 	}
 }
 
 void WorldCell::setBoundary(const vector<NodeInterface*> &nodeCycle, const vector<RoadInterface*> &b)
 {
-	if(b != mBoundaryRoads)
-	{
-		clearRoadGraph();
-		clearBoundary();
-		mBoundaryRoads = b;
-		mBoundaryCycle = nodeCycle;
+	clearRoadGraph();
+	clearBoundary();
+	mBoundaryRoads = b;
+	mBoundaryCycle = nodeCycle;
 
-		// set up listeners to receive invalidate events from roads
-		vector<RoadInterface*>::iterator rIt, rEnd;
-		for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
+	// set up listeners to receive invalidate events from roads
+	vector<RoadInterface*>::iterator rIt, rEnd;
+	for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
+	{
+		if(typeid(*(*rIt)) == typeid(WorldRoad))
 		{
-			if(typeid(*(*rIt)) == typeid(WorldRoad))
-			{
-				static_cast<WorldRoad*>(*rIt)->attach(this);
-			}
+			static_cast<WorldRoad*>(*rIt)->attach(this);
 		}
-		invalidate();
 	}
+	invalidate();
 }
 
+void WorldCell::setBoundary(const vector<NodeInterface*> &nodeCycle)
+{
+	clearRoadGraph();
+	clearBoundary();
+	mBoundaryCycle = nodeCycle;
+
+	size_t i, j, N = mBoundaryCycle.size();
+	for(i=0; i<N; i++)
+	{
+		j = (i+1) % N;
+
+		// This is messy, but fuck it i don't have the time
+		WorldNode* wn1 = static_cast<WorldNode*>(mBoundaryCycle[i]);
+		WorldNode* wn2 = static_cast<WorldNode*>(mBoundaryCycle[j]);
+
+		RoadId rd = mSimpleRoadGraph.getRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId);
+		mBoundaryRoads.push_back(mSimpleRoadGraph.getRoad(rd));
+	}
+
+	// set up listeners to receive invalidate events from roads
+	vector<RoadInterface*>::iterator rIt, rEnd;
+	for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
+	{
+		if(typeid(*(*rIt)) == typeid(WorldRoad))
+		{
+			static_cast<WorldRoad*>(*rIt)->attach(this);
+		}
+	}
+	invalidate();
+}
+/*
 void WorldCell::setBoundary(const vector<RoadInterface*> &b)
 {
 	if(b != mBoundaryRoads)
@@ -460,7 +499,7 @@ void WorldCell::setBoundary(const vector<RoadInterface*> &b)
 		}
 		invalidate();
 	}
-}
+}*/
 
 void WorldCell::addFilament(WorldRoad* f)
 {
@@ -518,11 +557,15 @@ void WorldCell::setGrowthGenParams(const GrowthGenParams &g)
 	mGrowthGenParams = g;
 }
 
-const vector<RoadInterface*>& WorldCell::getBoundary() const
+const vector<RoadInterface*>& WorldCell::getBoundaryRoads() const
 {
 	return mBoundaryRoads;
 }
 
+const vector<NodeInterface*>& WorldCell::getBoundaryCycle() const
+{
+	return mBoundaryCycle;
+}
 
 const vector<RoadInterface*>& WorldCell::getFilaments() const
 {
@@ -557,7 +600,7 @@ void WorldCell::deleteRoad(RoadInterface *ri)
 	// delete it
 	delete ri;
 }
-
+/*
 // there is a decision here about whether or not i should have just calculate this when 
 // working out the cycle but I've decided that since this data is need so less often 
 // than just the boundary set it is an acceptable overhead
@@ -600,6 +643,7 @@ vector<NodeInterface*> WorldCell::getBoundaryCycle()
 	}
 	return cycle;
 }
+*/
 
 bool WorldCell::isOnBoundary(NodeInterface *ni)
 {

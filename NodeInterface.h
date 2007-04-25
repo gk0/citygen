@@ -10,7 +10,7 @@ class NodeInterface
 public:
 	NodeId mNodeId;
 	virtual ~NodeInterface() {}
-	virtual inline Ogre::Vector2 getPosition2D() const = 0;
+	virtual Ogre::Vector2 getPosition2D() const = 0;
 	virtual Ogre::Vector3 getPosition3D() const = 0;
 	virtual bool setPosition2D(Ogre::Real x, Ogre::Real z) = 0;
 	virtual bool setPosition2D(const Ogre::Vector2& pos) = 0;

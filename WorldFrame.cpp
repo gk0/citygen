@@ -679,60 +679,64 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 	// sux
 
 	modify(true);
-/*
+
+	// get road nodes
+	WorldNode* wn1 = static_cast<WorldNode*>(wr->getSrcNode());
+	WorldNode* wn2 = static_cast<WorldNode*>(wr->getDstNode());
+
 	// get cells attached to this road
 	vector<WorldCell*> attachedCells;
-	vector<WorldObject*> attachments(wr->getAllAttachments());
-	vector<WorldObject*>::iterator aIt, aEnd;
+	vector< vector<NodeInterface*> > boundaries;
+
+	set<WorldObject*> attachments(wr->getAllAttachments());
+	set<WorldObject*>::iterator aIt, aEnd;
 	for(aIt = attachments.begin(), aEnd = attachments.end(); aIt != aEnd; aIt++)
 	{
 		// if attachment is a cell
 		if(typeid(*(*aIt)) == typeid(WorldCell))
 		{
-			attachedCells.push_back(static_cast<WorldCell*>(*aIt));
+			WorldCell* wc = static_cast<WorldCell*>(*aIt);
+
+			// get cell ptr
+			attachedCells.push_back(wc);
+
+			// get cell boundary data 
+			boundaries.push_back(wc->getBoundaryCycle());
+
+			// clear cell graph, remember we are messing with its data
+			wc->clear();
 		}
 	}
 
-	// get cell boundaries and params
-	size_t numOfCells = attachedCells.size();
-	vector< vector<RoadInterface*> > boundaries(numOfCells);
-	vector<GrowthGenParams> genParams(numOfCells);
-	for(size_t i=0; i<numOfCells; i++)
-	{
-		// get cell data 
-		boundaries[i] = attachedCells[i]->getBoundary();
-
-		// remove road from boundary
-		boundaries[i].erase(static_cast<RoadInterface*>(wr));
-
-		// set incomplete boundary
-		attachedCells[i]->setBoundary(boundaries[i]);
-	}
-*/
-	// store nodes
-	WorldNode* wn1 = static_cast<WorldNode*>(wr->getSrcNode());
-	WorldNode* wn2 = static_cast<WorldNode*>(wr->getDstNode());
-
-	// remove road
-	deleteRoad(wr);
+	// delete road node
+	mSceneRoadMap.erase(wr->getSceneNode());
+	delete wr;
 
 	// create replacement roads
 	WorldRoad* wr1 = new WorldRoad(wn1, wn, mRoadGraph, mSimpleRoadGraph, mSceneManager);
-	mSceneRoadMap[wr->getSceneNode()] = wr1;
+	mSceneRoadMap[wr1->getSceneNode()] = wr1;
 	WorldRoad* wr2 = new WorldRoad(wn, wn2, mRoadGraph, mSimpleRoadGraph, mSceneManager);
-	mSceneRoadMap[wr->getSceneNode()] = wr2;
-/*
-	// create replacement cells
-	for(size_t i=0; i<numOfCells; i++)
-	{	
-		// add new roads to boundary
-		boundaries[i].insert(wr1);
-		boundaries[i].insert(wr2);
+	mSceneRoadMap[wr2->getSceneNode()] = wr2;
 
-		// set complete boundary
+	// update cell boundaries
+	size_t numOfCells = attachedCells.size();
+	for(size_t i=0; i<numOfCells; i++)
+	{
+		// insert new node into boundary cycle
+		size_t j,k,N = boundaries[i].size();
+		for(j=0; j<N; j++)
+		{
+			k = (j+1) % N;
+			if( (boundaries[i][j] == wn1 && boundaries[i][k] == wn2) 
+				|| (boundaries[i][j] == wn2 && boundaries[i][k] == wn1))
+			{
+				boundaries[i].insert(boundaries[i].begin() + k, wn);
+				break;
+			}
+		}
+		// set boundary
 		attachedCells[i]->setBoundary(boundaries[i]);
 	}
-*/
 }
 
 void WorldFrame::deleteNode(WorldNode* wn)
@@ -821,7 +825,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 			{
 			// 1: created a new cell
 			case 1:
-				mCells.insert(new WorldCell(mRoadGraph, nodeCycles[0], roadCycles[0]));
+				mCells.insert(new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0], roadCycles[0]));
 				break;
 			// 2: divided an existing cell into two
 			case 2:
@@ -835,8 +839,8 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 					delete alteredCell;
 
 					// create 2 new cells in place of old cell with old cell params
-					WorldCell* wc0 = new WorldCell(mRoadGraph, nodeCycles[0], roadCycles[0]); 
-					WorldCell* wc1 = new WorldCell(mRoadGraph, nodeCycles[1], roadCycles[1]);
+					WorldCell* wc0 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0], roadCycles[0]); 
+					WorldCell* wc1 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[1], roadCycles[1]);
 					wc0->setGrowthGenParams(g);
 					wc1->setGrowthGenParams(g);
 					mCells.insert(wc0);
@@ -877,8 +881,8 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 
 	// get cells attached to this road
 	vector<WorldCell*> attachedCells;
-	vector<WorldObject*> attachments(wr->getAllAttachments());
-	vector<WorldObject*>::iterator aIt, aEnd;
+	set<WorldObject*> attachments(wr->getAllAttachments());
+	set<WorldObject*>::iterator aIt, aEnd;
 	for(aIt = attachments.begin(), aEnd = attachments.end(); aIt != aEnd; aIt++)
 	{
 		// if attachment is a cell
@@ -895,7 +899,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 	case 1:
 		{
 			// could be a boundary edge or a filament
-			const vector<RoadInterface*> &boundary(attachedCells[0]->getBoundary());
+			const vector<RoadInterface*> &boundary(attachedCells[0]->getBoundaryRoads());
 			size_t i;
 			for(i=0; i<boundary.size(); i++)
 				if(boundary[i] == wr) break;
@@ -918,8 +922,8 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 
 			// get common road
 			RoadInterface* ri = 0;
-			vector<RoadInterface*> roads0 = attachedCells[0]->getBoundary();
-			vector<RoadInterface*> roads1 = attachedCells[1]->getBoundary();
+			vector<RoadInterface*> roads0 = attachedCells[0]->getBoundaryRoads();
+			vector<RoadInterface*> roads1 = attachedCells[1]->getBoundaryRoads();
 			vector<RoadInterface*>::iterator rIt0, rIt1, rEnd0, rEnd1;
 			for(rIt0 = roads0.begin(), rEnd0 = roads0.end(); rIt0 != rEnd0; rIt0++)
 			{
@@ -940,6 +944,11 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			// check common road is wr
 			assert(static_cast<WorldRoad*>(ri) == wr);
 
+			//union boundaries
+			{
+			
+			}
+
 			// remove wr from boundary 1
 			roads1.erase(rIt1);
 
@@ -954,17 +963,13 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			delete attachedCells[1];
 
 			// update cell
-			attachedCells[0]->setBoundary(roads0);
+//			attachedCells[0]->setBoundary(roads0);
 		}
 		break;
 	default:
 		new Exception(Exception::ERR_INTERNAL_ERROR, "What how many new cells have you got", "deleteRoad");
 		break;
 	}
-
-	WorldNode *src = static_cast<WorldNode*>(wr->getSrcNode());
-	WorldNode *dst = static_cast<WorldNode*>(wr->getDstNode());
-	mSimpleRoadGraph.removeRoad(src->mSimpleNodeId, dst->mSimpleNodeId);
 	mSceneRoadMap.erase(wr->getSceneNode());
 	delete wr;
 }

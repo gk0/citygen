@@ -67,6 +67,8 @@ public:
 	
 	void onMoveNode();
 
+	void invalidate();
+
 private:
 	void build();
 	void destroyRoadObject();
@@ -79,6 +81,7 @@ private:
 	Ogre::Vector3 findNextPoint(const Ogre::Vector2& cursor, const Ogre::Vector2& direction, const Ogre::Degree& dev) const;
 
 	bool getClosestIntersection(RoadId& rd, Ogre::Vector2& pos) const;
+
 };
 
 #endif

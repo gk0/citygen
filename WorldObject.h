@@ -5,9 +5,9 @@
 
 class WorldObject
 {
-private:
+protected:
 	bool mValid;
-	std::vector<WorldObject*> mAttachments;
+	std::set<WorldObject*> mAttachments;
 
 protected:
 	bool isValid() const { return mValid; }
@@ -71,7 +71,7 @@ public:
 	virtual void invalidate()
 	{
 		mValid = false;
-		std::vector<WorldObject*>::iterator aIt, aEnd;
+		std::set<WorldObject*>::iterator aIt, aEnd;
 		for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
 		{
 			(*aIt)->invalidate();
@@ -80,34 +80,25 @@ public:
 
 	void attach(WorldObject* wo)
 	{
-		mAttachments.push_back(wo);
+		mAttachments.insert(wo);
 	}
 
 	void detach(WorldObject* wo)
 	{
-		std::vector<WorldObject*>::iterator aIt, aEnd;
-		for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; )
-		{
-			if((*aIt) == wo)
-			{
-				aIt = mAttachments.erase(aIt); 
-				aEnd = mAttachments.end();
-			}
-			else aIt++;
-		}
+		mAttachments.erase(wo);
 	}
 
-	std::vector<WorldObject*> getAllAttachments()
+	std::set<WorldObject*> getAllAttachments()
 	{
 		// add own attachments
-		std::vector<WorldObject*> allAttachments(mAttachments);
+		std::set<WorldObject*> allAttachments(mAttachments);
 
 		// add attachments' attachments
-		std::vector<WorldObject*>::iterator aIt, aEnd;
+		std::set<WorldObject*>::iterator aIt, aEnd;
 		for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
 		{
-			std::vector<WorldObject*> a((*aIt)->getAllAttachments());
-			allAttachments.insert(allAttachments.end(), a.begin(), a.end());
+			std::set<WorldObject*> a((*aIt)->getAllAttachments());
+			allAttachments.insert(a.begin(), a.end());
 		}
 		return allAttachments;
 	}
