@@ -209,11 +209,17 @@ MainWindow::MainWindow(wxWindow* parent)
 	mPropertyGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxSize(260,200));
 	mFrameManager.AddPane(mPropertyGridManager, wxRIGHT, wxT("Property Inspector"));
 
+	// create pages
+	mViewPropertyPage = new ViewPropertyPage(mWorldFrame);
+	mNodePropertyPage =  new NodePropertyPage(mWorldFrame);
+	mRoadPropertyPage = new RoadPropertyPage();
+	mCellPropertyPage = new CellPropertyPage(mWorldFrame);
+
 	// Add pages to property inspector
-	mPropertyGridManager->AddPage(wxT("View Properties"), wxNullBitmap, new ViewPropertyPage(mWorldFrame));
-	mPropertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, new NodePropertyPage(mWorldFrame));
-	mPropertyGridManager->AddPage(wxT("Road Properties"), wxNullBitmap, new RoadPropertyPage());
-	mPropertyGridManager->AddPage(wxT("Cell Properties"), wxNullBitmap, new CellPropertyPage(mWorldFrame));
+	mPropertyGridManager->AddPage(wxT("View Properties"), wxNullBitmap, mViewPropertyPage);
+	mPropertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, mNodePropertyPage);
+	mPropertyGridManager->AddPage(wxT("Road Properties"), wxNullBitmap, mRoadPropertyPage);
+	mPropertyGridManager->AddPage(wxT("Cell Properties"), wxNullBitmap, mCellPropertyPage);
 
 	// log frame
 	mLogFrame = new LogFrame(this, wxSize(1000, 100));
@@ -478,6 +484,7 @@ void MainWindow::onChangeEditMode()
 		initRoadEdit();
 		break;
 	case cell:
+		mWorldFrame->setActiveTool(selCell);
 		break;
 	}
 
@@ -531,4 +538,33 @@ void MainWindow::onSelectNodeAdd(wxCommandEvent &e)
 void MainWindow::onSelectNodeDel(wxCommandEvent &e)
 {
 	mWorldFrame->setActiveTool(delNode);
+}
+
+void MainWindow::updateProperties()
+{
+	switch(mEditMode)
+	{
+	case view:
+		mViewPropertyPage->update();
+		break;
+	case node:
+		mNodePropertyPage->update();
+		break;
+	case road:
+		mRoadPropertyPage->update();
+		break;
+	case cell:
+		mCellPropertyPage->update();
+		break;
+	}
+}
+
+void MainWindow::modify(bool m) 
+{ 
+	mModified = m; 
+}
+
+bool MainWindow::isModified() 
+{ 
+	return mModified;
 }

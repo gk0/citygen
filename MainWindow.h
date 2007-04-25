@@ -5,6 +5,10 @@
 #include "LogFrame.h"
 
 class WorldFrame;
+class ViewPropertyPage;
+class NodePropertyPage;
+class RoadPropertyPage;
+class CellPropertyPage;
 
 class MainWindow : public wxFrame
 {
@@ -20,9 +24,9 @@ public:
 		selNode,
 		addNode,
 		delNode,
-		selRoad,
+		/*selRoad,
 		addRoad,
-		delRoad,
+		delRoad,*/
 		selCell
 	};
 
@@ -39,6 +43,10 @@ private:
 		*mNodeEditToolBar, *mRoadEditToolBar;
 
 	wxPropertyGridManager* mPropertyGridManager;
+	ViewPropertyPage* mViewPropertyPage;
+	NodePropertyPage* mNodePropertyPage;
+	RoadPropertyPage* mRoadPropertyPage;
+	CellPropertyPage* mCellPropertyPage;
 
 	// doc variables
 	wxString mDocFile;
@@ -64,6 +72,7 @@ protected:
 	void onSave(wxCommandEvent &e);
 	void onSaveAs(wxCommandEvent &e);
 
+
 	void onSelectViewMode(wxCommandEvent &e);
 	void onSelectNodeMode(wxCommandEvent &e);
 	void onSelectRoadMode(wxCommandEvent &e);
@@ -80,8 +89,9 @@ public:
 	~MainWindow();
 
 	void updateOgre();
-	void modify(bool m) { mModified = m; }
-	bool isModified() { return mModified; }
+	void modify(bool m);
+	bool isModified();
+	void updateProperties();
 
 };
 

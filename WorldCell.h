@@ -68,6 +68,8 @@ public:
 	void clearBoundary();
 	void clear();
 
+	void showSelected(bool show) {};
+
 private:
 	void clearRoadGraph();
 	void init();

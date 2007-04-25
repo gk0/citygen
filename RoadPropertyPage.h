@@ -10,6 +10,10 @@ private:
 protected:
 
 public:
+	void update()
+	{
+	}
+
 	virtual void Init()
 	{
 		// Another way

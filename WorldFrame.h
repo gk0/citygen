@@ -43,6 +43,7 @@ private:
 
 	WorldNode* mHighlightedNode;
 	WorldNode* mSelectedNode;
+	WorldCell* mSelectedCell;
 
 	std::set<WorldCell*> mCells;
 	std::vector<RoadInterface*> mFilaments;
@@ -78,6 +79,8 @@ protected:
 	void endNodeMode();
 	void beginNodeMode();
 
+	void updateProperties();
+
 public:
 	WorldFrame(wxFrame* parent);
 	virtual ~WorldFrame();
@@ -107,7 +110,10 @@ public:
 	void selectNode(WorldNode* wn);
 	void highlightNode(WorldNode* wn);
 	bool highlightNodeFromLoc(const Ogre::Vector2 &loc);
+	void moveSelectedNode(const Ogre::Vector3& pos);
 
+	bool pickCell(wxMouseEvent& e, WorldCell *&wc);
+	void selectCell(WorldCell* wn);
 
 	/**
 	 * Get the value for the currently highlighted node
@@ -125,6 +131,15 @@ public:
 	WorldNode* getSelected()
 	{
 		return mSelectedNode;
+	}
+
+	/**
+	 * Get the value for the currently selected cell
+	 * @return 0 if no cell currently selected 
+	 */
+	WorldCell* getSelectedCell()
+	{
+		return mSelectedCell;
 	}
 
 	/**

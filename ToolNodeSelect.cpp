@@ -20,14 +20,9 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 	// if left drag
 	if(e.m_leftDown)
 	{
-		wn = mWorldFrame->getSelected();
 		Ogre::Vector3 pos;
-		if(wn && mWorldFrame->pickTerrainIntersection(e, pos))
-		{
-			Ogre::Vector2 pos2D(pos.x, pos.z);
-			if(wn->move(pos2D))
-				mWorldFrame->update();
-		}
+		if(mWorldFrame->pickTerrainIntersection(e, pos))
+			mWorldFrame->moveSelectedNode(pos);
 	}
 	else if(mWorldFrame->pickNode(e, HIGHLIGHTNODESNAPSQ, wn))
 		mWorldFrame->highlightNode(wn);

@@ -20,18 +20,10 @@ protected:
 	DECLARE_EVENT_TABLE()
 
 public:
-	NodePropertyPage(WorldFrame* wf) : wxPropertyGridPage() 
-	{
-		setWorldFrame(wf);
-	}
-
-	virtual void Init();
-
+	NodePropertyPage(WorldFrame* wf);
+	void Init();
 	void update();
-	void setWorldFrame(WorldFrame* wf);
-
-	virtual void OnPropertyGridChange( wxPropertyGridEvent& event );
-
+	void OnPropertyGridChange( wxPropertyGridEvent& event );
 };
 
 #endif

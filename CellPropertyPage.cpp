@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CellPropertyPage.h"
 #include "WorldFrame.h"
+#include "WorldCell.h"
 
 // Required for WX
 IMPLEMENT_CLASS(CellPropertyPage, wxPropertyGridPage)
@@ -56,17 +57,32 @@ void CellPropertyPage::OnPropertyGridChange( wxPropertyGridEvent& event )
 }
 
 
-void CellPropertyPage::updateData(const int& seed, const float& segSz, const float& segDev, const int& degree,
-								const float& degreeDev, const float& snapSz, const float& snapDev)
+void CellPropertyPage::update()
 {
-	SetPropertyValue(seedProp, seed);
-	SetPropertyValue(segmentSizeProp, segSz);
-	SetPropertyValue(segmentDevianceProp, segDev);
-	SetPropertyValue(degreeProp, degree);
-	SetPropertyValue(degreeDevianceProp, degreeDev);
-	SetPropertyValue(snapSizeProp, snapSz);
-	SetPropertyValue(snapSizeDevianceProp, snapDev);
-
+	GrowthGenParams g;
+	WorldCell *wc = mWorldFrame->getSelectedCell();
+	if(wc)
+	{
+		g = wc->getGrowthGenParams();
+		/*
+		typedef struct {
+			int seed;
+			Ogre::Real segmentSize;
+			Ogre::Real segmentDeviance;
+			unsigned int degree;
+			Ogre::Real degreeDeviance;
+			Ogre::Real snapSize;
+			Ogre::Real snapDeviance;
+		} GrowthGenParams;
+		*/
+		SetPropertyValue(seedProp, g.seed);
+		SetPropertyValue(segmentSizeProp, g.segmentSize);
+		SetPropertyValue(segmentDevianceProp, g.segmentDeviance);
+		SetPropertyValue(degreeProp, (int) g.degree);
+		SetPropertyValue(degreeDevianceProp, g.degreeDeviance);
+		SetPropertyValue(snapSizeProp, g.snapSize);
+		SetPropertyValue(snapSizeDevianceProp, g.snapDeviance);
+	}
 	RefreshProperty(seedProp);
 	RefreshProperty(segmentSizeProp);
 	RefreshProperty(degreeProp);

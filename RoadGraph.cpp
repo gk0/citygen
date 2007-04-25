@@ -1060,4 +1060,3 @@ bool RoadGraph::snapToOtherNode(const Vector2 pos, const std::set<NodeId> ignore
 	}
 	return success;
 }
-

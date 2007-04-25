@@ -226,6 +226,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ToolCellSelect.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ToolNodeAdd.cpp"
 				>
 			</File>
@@ -243,6 +247,10 @@
 			</File>
 			<File
 				RelativePath=".\Triangulate.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ViewPropertyPage.cpp"
 				>
 			</File>
 			<File
@@ -325,6 +333,10 @@
 			</File>
 			<File
 				RelativePath=".\Tool.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ToolCellSelect.h"
 				>
 			</File>
 			<File

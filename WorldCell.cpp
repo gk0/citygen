@@ -51,7 +51,7 @@ void WorldCell::init()
 	mManualObject = 0;
 	mManualObject2 = 0;
 
-	mName = "Cell"+StringConverter::toString(mInstanceCount++);
+	mName = "cell"+StringConverter::toString(mInstanceCount++);
 	mSceneNode = WorldFrame::getSingleton().getSceneManager()->getRootSceneNode()->createChildSceneNode(mName);
 }
 

@@ -11,6 +11,7 @@
 #include "ToolNodeSelect.h"
 #include "ToolNodeAdd.h"
 #include "ToolNodeDelete.h"
+#include "ToolCellSelect.h"
 
 
 // Namespace 
@@ -103,8 +104,11 @@ WorldFrame::WorldFrame(wxFrame* parent)
 	mTools.push_back(new ToolNodeSelect(this));
 	mTools.push_back(new ToolNodeAdd(this, mSceneManager, mRoadGraph, mSimpleRoadGraph));
 	mTools.push_back(new ToolNodeDelete(this));
+	mTools.push_back(new ToolCellSelect(this));
 	mActiveTool = MainWindow::viewTool;
 
+	mSelectedNode = 0;
+	mSelectedCell = 0;
 	//toggleTimerRendering(); // only really to test fps
 }
 
@@ -542,7 +546,6 @@ TiXmlElement* WorldFrame::saveXML()
 
 void WorldFrame::setEditMode(MainWindow::EditMode mode) 
 {
-	mEditMode = mode;
 	switch(mode) {
 	case MainWindow::view:
 		endNodeMode();
@@ -555,8 +558,10 @@ void WorldFrame::setEditMode(MainWindow::EditMode mode)
 		break;
 	case MainWindow::cell:
 		endNodeMode();
+		mSelectedCell = 0;
 		break;
 	}
+	mEditMode = mode;
 	Update();
 }
 
@@ -578,8 +583,7 @@ void WorldFrame::selectNode(WorldNode* wn)
 	{
 		mSelectedNode->showSelected(true);
 	}
-	//mNodePropertyPage->setWorldNode(wn);
-	//mNodePropertyPage->update();
+	updateProperties();
 }
 
 void WorldFrame::highlightNode(WorldNode* wn)
@@ -825,7 +829,11 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 			{
 			// 1: created a new cell
 			case 1:
-				mCells.insert(new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0], roadCycles[0]));
+				{
+					WorldCell* wc = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0], roadCycles[0]);
+					mSceneCellMap[wc->getSceneNode()] = wc;
+					mCells.insert(wc);
+				}
 				break;
 			// 2: divided an existing cell into two
 			case 2:
@@ -836,11 +844,16 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 					GrowthGenParams g = alteredCell->getGrowthGenParams();
 					// delete old cell
 					mCells.erase(alteredCell);
+					mSceneCellMap.erase(alteredCell->getSceneNode());
 					delete alteredCell;
+
 
 					// create 2 new cells in place of old cell with old cell params
 					WorldCell* wc0 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0], roadCycles[0]); 
+					mSceneCellMap[wc0->getSceneNode()] = wc0;
 					WorldCell* wc1 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[1], roadCycles[1]);
+					mSceneCellMap[wc1->getSceneNode()] = wc1;
+
 					wc0->setGrowthGenParams(g);
 					wc1->setGrowthGenParams(g);
 					mCells.insert(wc0);
@@ -906,6 +919,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 
 			if(i<boundary.size())
 			{
+				mSceneCellMap.erase(attachedCells[0]->getSceneNode());
 				mCells.erase(attachedCells[0]);
 				delete attachedCells[0];
 			}
@@ -959,6 +973,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			roads0.erase(rIt0);
 			
 			// delete extraneous cell
+			mSceneCellMap.erase(attachedCells[1]->getSceneNode());
 			mCells.erase(attachedCells[1]);
 			delete attachedCells[1];
 
@@ -1028,6 +1043,56 @@ void WorldFrame::modify(bool b)
 {
 	static_cast<MainWindow*>(GetParent())->modify(b);
 }
+
+void WorldFrame::updateProperties()
+{
+	static_cast<MainWindow*>(GetParent())->updateProperties();
+}
+
+void WorldFrame::moveSelectedNode(const Vector3& pos)
+{
+	WorldNode* wn = getSelected();
+	if(wn)
+	{
+		Vector2 pos2D(pos.x, pos.z);
+		wn->move(pos2D);
+		updateProperties();
+		update();
+	}
+}
+
+bool WorldFrame::pickCell(wxMouseEvent& e, WorldCell *&wc)
+{
+	// Setup the ray scene query
+	float mouseX = float(1.0f/mViewport->getActualWidth()) * e.GetX();
+	float mouseY = float(1.0f/mViewport->getActualHeight()) * e.GetY();
+	Ray mouseRay = mCamera->getCameraToViewportRay(mouseX, mouseY);
+
+	mRaySceneQuery->setRay(mouseRay);
+    mRaySceneQuery->setSortByDistance(true);
+	RaySceneQueryResult result = mRaySceneQuery->execute();
+	for(RaySceneQueryResult::const_iterator itr = result.begin( ); itr != result.end(); itr++ )
+	{
+		if ( itr->movable && itr->movable->getName().substr(0, 4) == "cell" )
+		{
+			wc = mSceneCellMap[itr->movable->getParentSceneNode()];
+    		return true;
+		}
+	}
+	return false;
+}
+
+void WorldFrame::selectCell(WorldCell* wn)
+{
+	if(mSelectedCell) mSelectedCell->showSelected(false);
+	mSelectedCell = wn;
+	if(mSelectedCell)
+	{
+		mSelectedCell->showSelected(true);
+	}
+	updateProperties();
+}
+
 
 template<> WorldFrame* Ogre::Singleton<WorldFrame>::ms_Singleton = 0;
 WorldFrame* WorldFrame::getSingletonPtr(void)

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "NodePropertyPage.h"
 #include "WorldFrame.h"
+#include "WorldNode.h"
 
 // Required for WX
 IMPLEMENT_CLASS(NodePropertyPage, wxPropertyGridPage)
@@ -17,6 +18,13 @@ END_EVENT_TABLE()
 //    EVT_PG_CHANGED( wxID_ANY, wxMyPropertyGridPage::OnPropertyChange )
 //    EVT_PG_PAGE_CHANGED( wxID_ANY, wxMyPropertyGridPage::OnPageChange )
 //END_EVENT_TABLE()
+
+
+NodePropertyPage::NodePropertyPage(WorldFrame* wf) 
+ : wxPropertyGridPage()
+{
+	mWorldFrame = wf;
+}
 
 
 void NodePropertyPage::OnPropertyGridChange( wxPropertyGridEvent& event )
@@ -68,21 +76,22 @@ void NodePropertyPage::Init()
 void NodePropertyPage::update()
 {
 	//get data from worldframe
-	float x,y,z;
+	Ogre::Vector3 nodePos;
+	Ogre::String label;
+	WorldNode* wn = mWorldFrame->getSelected();
+	if(wn != 0)
+	{
+		nodePos = wn->getPosition3D();
+		label = wn->getLabel();
+	}
 
-//	SetPropertyValue(labelProp, l);
-	SetPropertyValue(xProp, x);
-	SetPropertyValue(yProp, y);
-	SetPropertyValue(zProp, z);
+	SetPropertyValue(labelProp, wxString(label.c_str(), wxConvUTF8));
+	SetPropertyValue(xProp, nodePos.x);
+	SetPropertyValue(yProp, nodePos.y);
+	SetPropertyValue(zProp, nodePos.z);
 
 	RefreshProperty(labelProp);
 	RefreshProperty(xProp);
 	RefreshProperty(yProp);
 	RefreshProperty(zProp);
 }
-
-void NodePropertyPage::setWorldFrame(WorldFrame* wf)
-{
-	mWorldFrame = wf;
-}
-

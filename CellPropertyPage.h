@@ -31,8 +31,8 @@ public:
 
 	virtual void Init();
 
-	void updateData(const int& seed, const float& segSz, const float& segDev, const int& degree,
-				const float& degreeDev, const float& snapSz, const float& snapDev);
+	void update();
+
 	void setWorldFrame(WorldFrame* wf);
 
 	virtual void OnPropertyGridChange( wxPropertyGridEvent& event );
