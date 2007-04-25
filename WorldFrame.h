@@ -43,6 +43,7 @@ private:
 
 	WorldNode* mHighlightedNode;
 	WorldNode* mSelectedNode;
+	WorldRoad* mSelectedRoad;
 	WorldCell* mSelectedCell;
 
 	std::set<WorldCell*> mCells;
@@ -115,6 +116,18 @@ public:
 	bool pickCell(wxMouseEvent& e, WorldCell *&wc);
 	void selectCell(WorldCell* wn);
 
+	bool pickRoad(wxMouseEvent& e, WorldRoad *&wr);
+	void selectRoad(WorldRoad* wn);
+
+	/**
+	 * Get a pointer to the camera
+	 * @return mCamera
+	 */
+	Ogre::Camera* getCamera()
+	{
+		return mCamera;
+	}
+
 	/**
 	 * Get the value for the currently highlighted node
 	 * @return 0 if no node currently highlighted 
@@ -131,6 +144,15 @@ public:
 	WorldNode* getSelected()
 	{
 		return mSelectedNode;
+	}
+
+	/**
+	 * Get the value for the currently selected cell
+	 * @return 0 if no cell currently selected 
+	 */
+	WorldRoad* getSelectedRoad()
+	{
+		return mSelectedRoad;
 	}
 
 	/**

@@ -11,6 +11,7 @@
 #include "ToolNodeSelect.h"
 #include "ToolNodeAdd.h"
 #include "ToolNodeDelete.h"
+#include "ToolRoadSelect.h"
 #include "ToolCellSelect.h"
 
 
@@ -104,10 +105,12 @@ WorldFrame::WorldFrame(wxFrame* parent)
 	mTools.push_back(new ToolNodeSelect(this));
 	mTools.push_back(new ToolNodeAdd(this, mSceneManager, mRoadGraph, mSimpleRoadGraph));
 	mTools.push_back(new ToolNodeDelete(this));
+	mTools.push_back(new ToolRoadSelect(this));
 	mTools.push_back(new ToolCellSelect(this));
 	mActiveTool = MainWindow::viewTool;
 
 	mSelectedNode = 0;
+	mSelectedRoad = 0;
 	mSelectedCell = 0;
 	//toggleTimerRendering(); // only really to test fps
 }
@@ -266,9 +269,12 @@ void WorldFrame::cameraMove(Real x, Real y, Real z)
 {
 	modify(true);
 	mCamera->moveRelative(Vector3(x, y, z));
-	stringstream oss;
-	oss <<"Camera position: "<<mCamera->getPosition();
-	LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
+
+	if(mEditMode == MainWindow::view)
+		updateProperties();
+	//stringstream oss;
+	//oss <<"Camera position: "<<mCamera->getPosition();
+	//LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
 }
 
 // Rotates the view
@@ -278,9 +284,12 @@ void WorldFrame::cameraRotate(Real yaw, Real pitch)
 	mCamera->yaw(yaw * (mCamera->getFOVy() / mCamera->getAspectRatio() / 320.0f));
 	mCamera->pitch(pitch * (mCamera->getFOVy() / 240.0f));
 
-	stringstream oss;
-	oss <<"Camera orientation: " << mCamera->getOrientation();
-	LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
+
+	if(mEditMode == MainWindow::view)
+		updateProperties();
+	//stringstream oss;
+	//oss <<"Camera orientation: " << mCamera->getOrientation();
+	//LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
 }
 
 bool WorldFrame::highlightNodeFromLoc(const Vector2 &loc)
@@ -546,6 +555,7 @@ TiXmlElement* WorldFrame::saveXML()
 
 void WorldFrame::setEditMode(MainWindow::EditMode mode) 
 {
+	/*
 	switch(mode) {
 	case MainWindow::view:
 		endNodeMode();
@@ -555,12 +565,16 @@ void WorldFrame::setEditMode(MainWindow::EditMode mode)
 		break;
 	case MainWindow::road:
 		endNodeMode();
+		selectRoad(0);
 		break;
 	case MainWindow::cell:
 		endNodeMode();
-		mSelectedCell = 0;
+		selectCell(0);
 		break;
-	}
+	}*/
+	selectNode(0);
+	selectRoad(0);
+	selectCell(0);
 	mEditMode = mode;
 	Update();
 }
@@ -1089,6 +1103,38 @@ void WorldFrame::selectCell(WorldCell* wn)
 	if(mSelectedCell)
 	{
 		mSelectedCell->showSelected(true);
+	}
+	updateProperties();
+}
+
+bool WorldFrame::pickRoad(wxMouseEvent& e, WorldRoad *&wr)
+{
+	// Setup the ray scene query
+	float mouseX = float(1.0f/mViewport->getActualWidth()) * e.GetX();
+	float mouseY = float(1.0f/mViewport->getActualHeight()) * e.GetY();
+	Ray mouseRay = mCamera->getCameraToViewportRay(mouseX, mouseY);
+
+	mRaySceneQuery->setRay(mouseRay);
+    mRaySceneQuery->setSortByDistance(true);
+	RaySceneQueryResult result = mRaySceneQuery->execute();
+	for(RaySceneQueryResult::const_iterator itr = result.begin( ); itr != result.end(); itr++ )
+	{
+		if ( itr->movable && itr->movable->getName().substr(0, 4) == "road" )
+		{
+			wr = mSceneRoadMap[itr->movable->getParentSceneNode()];
+    		return true;
+		}
+	}
+	return false;
+}
+
+void WorldFrame::selectRoad(WorldRoad* wr)
+{
+	if(mSelectedRoad) mSelectedRoad->showSelected(false);
+	mSelectedRoad = wr;
+	if(mSelectedRoad)
+	{
+		mSelectedRoad->showSelected(true);
 	}
 	updateProperties();
 }

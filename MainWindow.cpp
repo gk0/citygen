@@ -197,6 +197,7 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	mNodeEditToolBar = 0;
 	mRoadEditToolBar = 0;
+	mEditMode = view;
 
 
 	// WINDOW PANES
@@ -212,7 +213,7 @@ MainWindow::MainWindow(wxWindow* parent)
 	// create pages
 	mViewPropertyPage = new ViewPropertyPage(mWorldFrame);
 	mNodePropertyPage =  new NodePropertyPage(mWorldFrame);
-	mRoadPropertyPage = new RoadPropertyPage();
+	mRoadPropertyPage = new RoadPropertyPage(mWorldFrame);
 	mCellPropertyPage = new CellPropertyPage(mWorldFrame);
 
 	// Add pages to property inspector
@@ -481,7 +482,8 @@ void MainWindow::onChangeEditMode()
 		initNodeEdit();
 		break;
 	case road:
-		initRoadEdit();
+		//initRoadEdit();
+		mWorldFrame->setActiveTool(selRoad);
 		break;
 	case cell:
 		mWorldFrame->setActiveTool(selCell);

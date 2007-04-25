@@ -13,16 +13,18 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	: mRoadGraph(g),
 	  mSimpleRoadGraph(s)
 {
-	mRoadSegSz = 10; //DEBUG: set to v. big 50 normal is 10
-	mRoadWidth = 1.0;
-	mRoadDeviance= 20;
+	mGenParams.segmentSize = 10; //DEBUG: set to v. big 50 normal is 10
+	mGenParams.roadWidth = 1.0;
+	mGenParams.segmentDeviance= 20;
+
+	mSelected = false;
 	
 	mManualObject = 0;
 	
 	mSimpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, mSimpleRoadId);
 	mSimpleRoadGraph.setRoad(mSimpleRoadId, this);
 
-	mName = "Road" + StringConverter::toString(mRoadCount++);
+	mName = "road" + StringConverter::toString(mRoadCount++);
 	// create our scene node
 	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(mName);
 	plotRoad();
@@ -95,9 +97,9 @@ void WorldRoad::plotRoad()
 	// always destroy previous
 	mPlotList.clear();
 
-	Ogre::Real segmentSizeSq(mRoadSegSz * mRoadSegSz);
+	Ogre::Real segmentSizeSq(mGenParams.segmentSize * mGenParams.segmentSize);
 	Ogre::Vector2 direction;
-	Ogre::Angle devAngle(mRoadDeviance);
+	Ogre::Angle devAngle(mGenParams.segmentDeviance);
 	Vector3 groundClearance(0,0.3,0);
 	Vector2 cursor2D(getSrcNode()->getPosition2D());
 	Vector2 dstPoint2D(getDstNode()->getPosition2D());
@@ -216,7 +218,8 @@ void WorldRoad::build()
 
 	// declare the manual object
 	mManualObject = new ManualObject(mName); 
-	mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	if(mSelected) mManualObject->begin("gk/YellowBrickRoad", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	else mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 	// vars
 	Vector3 currRoadSegNormal, nextRoadSegNormal;
@@ -240,7 +243,7 @@ void WorldRoad::build()
 		// calculate the offset of length roadWidth
 		nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
 		nextRoadSegOffset.normalise();
-		nextRoadSegOffset *= mRoadWidth;
+		nextRoadSegOffset *= mGenParams.roadWidth;
 
 		// calculate normal
 		nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
@@ -290,7 +293,7 @@ void WorldRoad::build()
 		// calculate the offset of length roadWidth
 		nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
 		nextRoadSegOffset.normalise();
-		nextRoadSegOffset *= mRoadWidth;
+		nextRoadSegOffset *= mGenParams.roadWidth;
 
 		// calculate normal
 		Vector3 nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
@@ -395,7 +398,7 @@ Vector3 WorldRoad::findNextPoint(const Vector2& cursor, const Vector2& direction
 
 		// i wish I could just normalize it once but that doesn't seem to be acurate
 		translation.normalise();
-		translation *= mRoadSegSz;
+		translation *= mGenParams.segmentSize;
 
 		Vector3 candidate(cursor.x + translation.x, 0, cursor.y + translation.y);
 		if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
@@ -770,7 +773,7 @@ const std::vector<RoadId>& WorldRoad::getRoadSegmentList()
 
 Real WorldRoad::getWidth() const
 {
-	return mRoadWidth;
+	return mGenParams.roadWidth;
 }
 
 void WorldRoad::onMoveNode()
@@ -794,4 +797,14 @@ void WorldRoad::invalidate()
 	{
 		(*aIt)->invalidate();
 	}*/
+}
+
+const RoadGenParams& WorldRoad::getGenParams()
+{
+	return mGenParams;
+}
+
+void WorldRoad::setGenParams(const RoadGenParams& g)
+{
+	mGenParams = g;
 }

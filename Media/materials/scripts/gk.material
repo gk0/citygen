@@ -223,5 +223,24 @@ material gk/Road
 	}
 }
 
+material gk/YellowBrickRoad
+{
+	technique
+	{
+		pass
+		{
+			ambient 1 1 1
+			diffuse 1 1 1 
+			specular 0.2 0.2 0.2 10
+			
+			texture_unit
+			{
+				// Base Texture
+				texture yellowroad.png
+				//filtering anisotropic 
+			}
+		}
+	}
+}
 
 

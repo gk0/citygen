@@ -10,6 +10,12 @@
 class WorldNode;
 class WorldCanvas;
 
+typedef struct {
+	Ogre::Real segmentSize;
+	Ogre::Real segmentDeviance;
+	Ogre::Real roadWidth;
+} RoadGenParams;
+
 class WorldRoad : public WorldObject, public RoadInterface
 {
 public:
@@ -28,6 +34,7 @@ private:
 	Ogre::ManualObject *mManualObject;
 	Ogre::MovableText *mLabel;
 	Ogre::String mName;
+	bool mSelected;
 
 	bool mIsRoadCycle;
 //	WorldNode *mSrcNode, *mDstNode;
@@ -35,9 +42,7 @@ private:
 	RoadGraph &mRoadGraph;
 	RoadGraph &mSimpleRoadGraph;
 
-	Ogre::Real mRoadSegSz;
-	Ogre::Real mRoadDeviance;
-	Ogre::Real mRoadWidth;
+	RoadGenParams mGenParams;
 
 	std::vector<RoadId> mRoadSegmentList;
 	std::vector<Ogre::Vector3> mPlotList;
@@ -68,6 +73,14 @@ public:
 	void onMoveNode();
 
 	void invalidate();
+	void showSelected(bool show)
+	{
+		mSelected = show;
+		invalidate();
+	}
+
+	const RoadGenParams& getGenParams();
+	void setGenParams(const RoadGenParams& g);
 
 private:
 	void build();

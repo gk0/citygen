@@ -24,8 +24,8 @@ public:
 		selNode,
 		addNode,
 		delNode,
-		/*selRoad,
-		addRoad,
+		selRoad,
+		/*addRoad,
 		delRoad,*/
 		selCell
 	};

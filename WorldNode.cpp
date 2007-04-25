@@ -28,6 +28,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 	mSceneNode = mCreator->getRootSceneNode()->createChildSceneNode(mName);
 
 	mJunctionPlate = 0;
+	mDegree = 0;
 
 	// create mesh
 	mMesh = mCreator->createEntity(mName+"Mesh", "node.mesh" );

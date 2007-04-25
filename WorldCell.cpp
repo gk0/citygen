@@ -965,3 +965,13 @@ bool WorldCell::getRoadBounaryIntersection(const RoadId leftR, const RoadId righ
 
 	return Geometry::lineIntersect(l1, l2, r1, r2, pos);
 }
+
+void WorldCell::showSelected(bool show)
+{
+	std::vector<RoadInterface*>::iterator bIt, bEnd;
+	for(bIt = mBoundaryRoads.begin(), bEnd = mBoundaryRoads.end(); bIt != bEnd; bIt++)
+	{
+		if(typeid(*(*bIt)) == typeid(WorldRoad))
+			static_cast<WorldRoad*>(*bIt)->showSelected(show);
+	}
+}

@@ -27,6 +27,8 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 	else if(mWorldFrame->pickNode(e, HIGHLIGHTNODESNAPSQ, wn))
 		mWorldFrame->highlightNode(wn);
 
+	if(!mWorldFrame->getSelected()) ToolView::OnMouseMove(e);
+
 	// save for calc of next deltas
 	mMouseX = e.m_x;
 	mMouseY = e.m_y;

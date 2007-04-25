@@ -218,6 +218,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RoadPropertyPage.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\SimpleRoad.cpp"
 				>
 			</File>
@@ -239,6 +243,10 @@
 			</File>
 			<File
 				RelativePath=".\ToolNodeSelect.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ToolRoadSelect.cpp"
 				>
 			</File>
 			<File
@@ -349,6 +357,10 @@
 			</File>
 			<File
 				RelativePath=".\ToolNodeSelect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ToolRoadSelect.h"
 				>
 			</File>
 			<File
