@@ -5,7 +5,7 @@
 <project id="wxWidget Test.cdt.managedbuild.target.gnu.cygwin.exe.1120532601" name="Executable (Gnu on Windows)" projectType="cdt.managedbuild.target.gnu.cygwin.exe">
 <configuration artifactExtension="exe" artifactName="citygen_mingw" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271" name="Debug MinGW" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
 <toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.406587371" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug">
-<builder command="mingw32-make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.90449315" name="Gnu Make.Debug MinGW" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
+<builder arguments="-j 2 -k" command="mingw32-make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.90449315" name="Gnu Make.Debug MinGW" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1192952860" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
 <tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
 <option id="gnu.cpp.compiler.option.include.paths.653474482" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
@@ -15,6 +15,7 @@
 <listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswud/wx/msw&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswud&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/contrib/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../tinyxml&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.preprocessor.def.958259935" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="USE_PCH"/>
@@ -27,10 +28,12 @@
 <tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.1406837427" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.1751892586" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
 <option id="gnu.cpp.link.option.libs.299027777" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+<listOptionValue builtIn="false" value="wxmsw28ud_propgrid"/>
 <listOptionValue builtIn="false" value="wxmsw28ud_aui"/>
 <listOptionValue builtIn="false" value="wxmsw28ud_core"/>
 <listOptionValue builtIn="false" value="wxbase28ud"/>
 <listOptionValue builtIn="false" value="gdi32"/>
+<listOptionValue builtIn="false" value="tinyxml"/>
 <listOptionValue builtIn="false" value="comctl32"/>
 <listOptionValue builtIn="false" value="rpcrt4"/>
 <listOptionValue builtIn="false" value="kernel32"/>
@@ -48,38 +51,31 @@
 <option id="gnu.cpp.link.option.paths.1101656634" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
 <listOptionValue builtIn="false" value="../../OgreSDK_mingw/bin/debug"/>
 <listOptionValue builtIn="false" value="../../wxWidgets-2.8.3/lib/gcc_lib"/>
+<listOptionValue builtIn="false" value="../../tinyxml/Debug"/>
 </option>
 <option id="gnu.cpp.link.option.flags.1932105262" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.1844237352" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug"/>
 <macros/>
 </toolChain>
-<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271./citygen/CellPropertyPage.h" name="CellPropertyPage.h" rcbsApplicability="disable" resourcePath="/citygen/CellPropertyPage.h" toolsToInvoke=""/>
-<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271./citygen/NodePropertyPage.h" name="NodePropertyPage.h" rcbsApplicability="disable" resourcePath="/citygen/NodePropertyPage.h" toolsToInvoke=""/>
-<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271./citygen/CellPropertyPage.cpp" name="CellPropertyPage.cpp" rcbsApplicability="disable" resourcePath="/citygen/CellPropertyPage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629./citygen/CellPropertyPage.cpp">
-<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629./citygen/CellPropertyPage.cpp" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629"/>
-</resourceConfiguration>
-<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271./citygen/NodePropertyPage.cpp" name="NodePropertyPage.cpp" rcbsApplicability="disable" resourcePath="/citygen/NodePropertyPage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629./citygen/NodePropertyPage.cpp">
-<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629./citygen/NodePropertyPage.cpp" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629"/>
-</resourceConfiguration>
 <resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271./citygen/Ogre.log" name="Ogre.log" rcbsApplicability="disable" resourcePath="/citygen/Ogre.log" toolsToInvoke=""/>
 </configuration>
 <configuration artifactExtension="exe" artifactName="citygen" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1311200916" name="Release MinGW" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
 <toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.202492693" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug">
-<builder command="mingw32-make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.1147843333" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
+<builder arguments="-j 2 -k" command="mingw32-make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.1147843333" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.995697276" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
 <tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.900807029" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
 <option id="gnu.cpp.compiler.option.include.paths.1787406454" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;../../boost RC_1_34_0&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../OgreSDK_mingw/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.7.1/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.7.1/lib/gcc_lib/msw/wx/msw&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.7.1/lib/gcc_lib/msw&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.7.1/contrib/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswu/wx/msw&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswu&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/contrib/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../tinyxml&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.preprocessor.def.1594479197" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="USE_PCH"/>
-<listOptionValue builtIn="false" value="TIXML_USE_STL"/>
 </option>
 <option id="gnu.cpp.compiler.option.other.other.225279377" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -fexceptions -fident" valueType="string"/>
 <option id="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level.43596995" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
@@ -88,10 +84,10 @@
 <tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.1635305278" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.680368779" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
 <option id="gnu.cpp.link.option.libs.755953000" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="wxmsw27_propgrid"/>
-<listOptionValue builtIn="false" value="wxmsw27_aui"/>
-<listOptionValue builtIn="false" value="wxmsw27_core"/>
-<listOptionValue builtIn="false" value="wxbase27"/>
+<listOptionValue builtIn="false" value="wxmsw28u_propgrid"/>
+<listOptionValue builtIn="false" value="wxmsw28u_aui"/>
+<listOptionValue builtIn="false" value="wxmsw28u_core"/>
+<listOptionValue builtIn="false" value="wxbase28u"/>
 <listOptionValue builtIn="false" value="gdi32"/>
 <listOptionValue builtIn="false" value="comctl32"/>
 <listOptionValue builtIn="false" value="rpcrt4"/>
@@ -109,7 +105,8 @@
 </option>
 <option id="gnu.cpp.link.option.paths.180063672" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
 <listOptionValue builtIn="false" value="../../OgreSDK_mingw/bin/release"/>
-<listOptionValue builtIn="false" value="../../wxWidgets-2.7.1/lib/gcc_lib"/>
+<listOptionValue builtIn="false" value="../../wxWidgets-2.8.3/lib/gcc_lib"/>
+<listOptionValue builtIn="false" value="../../tinyxml/Release"/>
 </option>
 <option id="gnu.cpp.link.option.flags.336226238" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
 </tool>

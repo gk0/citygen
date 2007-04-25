@@ -1,6 +1,11 @@
 #include "stdafx.h"
 #include "MainWindow.h"
 #include "WorldFrame.h"
+#include "ViewPropertyPage.h"
+#include "NodePropertyPage.h"
+#include "RoadPropertyPage.h"
+#include "CellPropertyPage.h"
+
 
 // ----------------------------------------------------------------------------
 // constants
@@ -102,7 +107,7 @@ END_EVENT_TABLE()
 
 MainWindow::MainWindow(wxWindow* parent)
 	: wxFrame(parent, -1, _("Citygen"),
-	  wxDefaultPosition, wxSize(800,600), wxDEFAULT_FRAME_STYLE)
+	  wxDefaultPosition, wxSize(1024,768), wxDEFAULT_FRAME_STYLE)
 {
 	// notify wxAUI which frame to use
 	mFrameManager.SetManagedWindow(this);
@@ -200,8 +205,18 @@ MainWindow::MainWindow(wxWindow* parent)
 	mWorldFrame = new WorldFrame(this);
 	mFrameManager.AddPane(mWorldFrame, wxCENTER, _("Ogre Pane"));
 
+	// property manager
+	mPropertyGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxSize(260,200));
+	mFrameManager.AddPane(mPropertyGridManager, wxRIGHT, wxT("Property Inspector"));
+
+	// Add pages to property inspector
+	mPropertyGridManager->AddPage(wxT("View Properties"), wxNullBitmap, new ViewPropertyPage(mWorldFrame));
+	mPropertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, new NodePropertyPage(mWorldFrame));
+	mPropertyGridManager->AddPage(wxT("Road Properties"), wxNullBitmap, new RoadPropertyPage());
+	mPropertyGridManager->AddPage(wxT("Cell Properties"), wxNullBitmap, new CellPropertyPage(mWorldFrame));
+
 	// log frame
-	mLogFrame = new LogFrame(this);
+	mLogFrame = new LogFrame(this, wxSize(1000, 100));
 	mFrameManager.AddPane(mLogFrame, wxBOTTOM, _("Log"));
 
 	// tell the manager to "commit" all the changes just made
@@ -465,6 +480,9 @@ void MainWindow::onChangeEditMode()
 	case cell:
 		break;
 	}
+
+	mPropertyGridManager->SelectPage(mEditMode);
+
 
 	// update frame manager
 	mFrameManager.Update();

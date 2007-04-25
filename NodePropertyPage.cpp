@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "NodePropertyPage.h"
-#include "WorldCanvas.h"
+#include "WorldFrame.h"
 
 // Required for WX
 IMPLEMENT_CLASS(NodePropertyPage, wxPropertyGridPage)
@@ -29,7 +29,7 @@ void NodePropertyPage::OnPropertyGridChange( wxPropertyGridEvent& event )
 	if( (eventProp == xProp) || (eventProp == yProp) || (eventProp == zProp)
 		|| (eventProp == labelProp) )
 	{
-		if(mWorldCanvas)
+		if(mWorldFrame)
 		{
 //			mWorldCanvas->setNodeProperties(GetPropertyValueAsString(labelProp), GetPropertyValueAsDouble(xProp),
 //					GetPropertyValueAsDouble(yProp), GetPropertyValueAsDouble(zProp));
@@ -65,8 +65,11 @@ void NodePropertyPage::Init()
 	Append( wxPropertyCategory(wxT("Extra")) );
 }
 
-void NodePropertyPage::updateData(const string& l, const float& x, const float& y, const float& z)
+void NodePropertyPage::update()
 {
+	//get data from worldframe
+	float x,y,z;
+
 //	SetPropertyValue(labelProp, l);
 	SetPropertyValue(xProp, x);
 	SetPropertyValue(yProp, y);
@@ -78,8 +81,8 @@ void NodePropertyPage::updateData(const string& l, const float& x, const float& 
 	RefreshProperty(zProp);
 }
 
-void NodePropertyPage::setCanvas(WorldCanvas* c)
+void NodePropertyPage::setWorldFrame(WorldFrame* wf)
 {
-	mWorldCanvas = c;
+	mWorldFrame = wf;
 }
 

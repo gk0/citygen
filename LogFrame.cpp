@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "LogFrame.h"
 
-LogFrame::LogFrame(wxWindow* parent) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY), mLogRedirector(this)
+LogFrame::LogFrame(wxWindow* parent, const wxSize& sz) : wxTextCtrl(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, sz, wxTE_MULTILINE | wxTE_READONLY), mLogRedirector(this)
 {
 #if OGRE_VERSION_MAJOR == 1 && OGRE_VERSION_MINOR <= 2
 	Ogre::LogManager::getSingleton().addListener(this);

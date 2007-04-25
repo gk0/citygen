@@ -38,6 +38,8 @@ private:
 	wxToolBar *mFileToolBar, *mViewModeToolBar, *mEditModeToolBar, 
 		*mNodeEditToolBar, *mRoadEditToolBar;
 
+	wxPropertyGridManager* mPropertyGridManager;
+
 	// doc variables
 	wxString mDocFile;
     bool mSavedYet;

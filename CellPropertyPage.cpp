@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "CellPropertyPage.h"
-#include "WorldCanvas.h"
+#include "WorldFrame.h"
 
 // Required for WX
 IMPLEMENT_CLASS(CellPropertyPage, wxPropertyGridPage)
@@ -42,12 +42,12 @@ void CellPropertyPage::OnPropertyGridChange( wxPropertyGridEvent& event )
 	if( (eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) || (eventProp == snapSizeProp) 
 		|| (eventProp == segmentDevianceProp) || (eventProp == degreeDevianceProp) || (eventProp == snapSizeDevianceProp))
 	{
-		if(mWorldCanvas)
+		if(mWorldFrame)
 		{
-			mWorldCanvas->setCellProperties(GetPropertyValueAsInt(seedProp),
-				GetPropertyValueAsDouble(segmentSizeProp), GetPropertyValueAsDouble(segmentDevianceProp),
-				GetPropertyValueAsInt(degreeProp), GetPropertyValueAsDouble(degreeDevianceProp),
-					GetPropertyValueAsDouble(snapSizeProp), GetPropertyValueAsDouble(snapSizeDevianceProp));
+			//mWorldCanvas->setCellProperties(GetPropertyValueAsInt(seedProp),
+			//	GetPropertyValueAsDouble(segmentSizeProp), GetPropertyValueAsDouble(segmentDevianceProp),
+			//	GetPropertyValueAsInt(degreeProp), GetPropertyValueAsDouble(degreeDevianceProp),
+			//		GetPropertyValueAsDouble(snapSizeProp), GetPropertyValueAsDouble(snapSizeDevianceProp));
 		}
 	}
 
@@ -76,7 +76,7 @@ void CellPropertyPage::updateData(const int& seed, const float& segSz, const flo
 	RefreshProperty(snapSizeDevianceProp);
 }
 
-void CellPropertyPage::setCanvas(WorldCanvas* c)
+void CellPropertyPage::setWorldFrame(WorldFrame* wf)
 {
-	mWorldCanvas = c;
+	mWorldFrame = wf;
 }

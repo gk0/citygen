@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 
-class WorldCanvas;
+class WorldFrame;
 
 class NodePropertyPage : public wxPropertyGridPage
 {
@@ -14,16 +14,21 @@ private:
 	wxPGProperty* xProp;
 	wxPGProperty* yProp;
 	wxPGProperty* zProp;
-	WorldCanvas* mWorldCanvas;
+	WorldFrame* mWorldFrame;
 
 protected:
 	DECLARE_EVENT_TABLE()
 
 public:
+	NodePropertyPage(WorldFrame* wf) : wxPropertyGridPage() 
+	{
+		setWorldFrame(wf);
+	}
+
 	virtual void Init();
 
-	void updateData(const std::string& l, const float& x, const float& y, const float& z);
-	void setCanvas(WorldCanvas* c);
+	void update();
+	void setWorldFrame(WorldFrame* wf);
 
 	virtual void OnPropertyGridChange( wxPropertyGridEvent& event );
 

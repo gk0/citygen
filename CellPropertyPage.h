@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 
-class WorldCanvas;
+class WorldFrame;
 
 class CellPropertyPage : public wxPropertyGridPage
 {
@@ -17,18 +17,23 @@ private:
 	wxPGProperty* degreeDevianceProp;
 	wxPGProperty* snapSizeProp;
 	wxPGProperty* snapSizeDevianceProp;
-	WorldCanvas* mWorldCanvas;
+	WorldFrame* mWorldFrame;
 
 
 protected:
 	DECLARE_EVENT_TABLE()
 
 public:
+	CellPropertyPage(WorldFrame* wf) : wxPropertyGridPage() 
+	{
+		setWorldFrame(wf);
+	}
+
 	virtual void Init();
 
 	void updateData(const int& seed, const float& segSz, const float& segDev, const int& degree,
 				const float& degreeDev, const float& snapSz, const float& snapDev);
-	void setCanvas(WorldCanvas* c);
+	void setWorldFrame(WorldFrame* wf);
 
 	virtual void OnPropertyGridChange( wxPropertyGridEvent& event );
 

@@ -90,8 +90,8 @@
 #include <wx/textctrl.h>
 #include <wx/timer.h>
 #include <wx/toolbar.h>
-//#include <wx/propgrid/manager.h>
-//#include <wx/propgrid/advprops.h>
+#include <wx/propgrid/manager.h>
+#include <wx/propgrid/advprops.h>
 #include <wx/aui/aui.h>
 
 
@@ -103,6 +103,6 @@
 #endif
 
 //TinyXML Includes
-#include "tinyxml/tinyxml.h"
+#include <tinyxml.h>
 
 #include <OgreMemoryMacros.h>

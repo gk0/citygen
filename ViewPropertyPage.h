@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 
+class WorldFrame;
+
 class ViewPropertyPage : public wxPropertyGridPage
 {
 private:
@@ -10,6 +12,12 @@ private:
 protected:
 
 public:
+	ViewPropertyPage(WorldFrame* wf) : wxPropertyGridPage() 
+	{
+		//setWorldFrame(wf);
+	}
+
+
 	virtual void Init()
 	{
 		// Another way

@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm196"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\boost RC_1_34_0&quot;;&quot;..\wxWidgets-2.8.3\include&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswud\wx\msw&quot;;&quot;..\wxWidgets-2.8.3\contrib\include&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswud&quot;;..\tinyxml;..\OgreSDK_VS80\include"
+				AdditionalIncludeDirectories="&quot;..\boost RC_1_34_0&quot;;&quot;..\wxWidgets-2.8.3\include&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswud\wx\msw&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswud&quot;;&quot;..\wxWidgets-2.8.3\contrib\include&quot;;..\tinyxml;..\OgreSDK_VS80\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain_d.lib wxbase28ud.lib wxmsw28ud_core.lib wxmsw28ud_aui.lib tinyxmld.lib"
+				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain_d.lib wxbase28ud.lib wxmsw28ud_core.lib wxmsw28ud_aui.lib wxmsw29ud_propgrid.lib tinyxmld.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\wxWidgets-2.8.3\lib\vc_lib&quot;;..\OgreSDK_VS80\lib;..\tinyxml\Debug"
 				GenerateDebugInformation="true"
@@ -142,7 +142,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/verbose:lib"
-				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain.lib wxbase28u.lib wxmsw28u_core.lib wxmsw28u_aui.lib tinyxml.lib"
+				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain.lib wxbase28u.lib wxmsw28u_core.lib wxmsw28u_aui.lib wxmsw29u_propgrid.lib tinyxml.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\wxWidgets-2.8.3\lib\vc_lib&quot;;..\OgreSDK_VS80\lib;..\tinyxml\Release"
 				GenerateDebugInformation="true"
@@ -190,6 +190,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CellPropertyPage.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Geometry.cpp"
 				>
 			</File>
@@ -203,6 +207,10 @@
 			</File>
 			<File
 				RelativePath=".\MovableText.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NodePropertyPage.cpp"
 				>
 			</File>
 			<File
@@ -264,6 +272,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CellPropertyPage.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Geometry.h"
 				>
 			</File>
@@ -284,11 +296,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NodePropertyPage.h"
+				>
+			</File>
+			<File
 				RelativePath=".\RoadGraph.h"
 				>
 			</File>
 			<File
 				RelativePath=".\RoadInterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RoadPropertyPage.h"
 				>
 			</File>
 			<File
@@ -325,6 +345,10 @@
 			</File>
 			<File
 				RelativePath=".\Triangulate.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ViewPropertyPage.h"
 				>
 			</File>
 			<File
