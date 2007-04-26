@@ -76,8 +76,10 @@
 </option>
 <option id="gnu.cpp.compiler.option.preprocessor.def.1594479197" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 <listOptionValue builtIn="false" value="USE_PCH"/>
+<listOptionValue builtIn="false" value="UNICODE"/>
+<listOptionValue builtIn="false" value="_UNICODE"/>
 </option>
-<option id="gnu.cpp.compiler.option.other.other.225279377" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -fexceptions -fident" valueType="string"/>
+<option id="gnu.cpp.compiler.option.other.other.225279377" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -fexceptions -fident -mwindows" valueType="string"/>
 <option id="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level.43596995" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level.794525831" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 </tool>
@@ -88,6 +90,7 @@
 <listOptionValue builtIn="false" value="wxmsw28u_aui"/>
 <listOptionValue builtIn="false" value="wxmsw28u_core"/>
 <listOptionValue builtIn="false" value="wxbase28u"/>
+<listOptionValue builtIn="false" value="tinyxml"/>
 <listOptionValue builtIn="false" value="gdi32"/>
 <listOptionValue builtIn="false" value="comctl32"/>
 <listOptionValue builtIn="false" value="rpcrt4"/>
@@ -108,7 +111,7 @@
 <listOptionValue builtIn="false" value="../../wxWidgets-2.8.3/lib/gcc_lib"/>
 <listOptionValue builtIn="false" value="../../tinyxml/Release"/>
 </option>
-<option id="gnu.cpp.link.option.flags.336226238" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
+<option id="gnu.cpp.link.option.flags.336226238" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mwindows" valueType="string"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.1274164927" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug"/>
 <macros/>
