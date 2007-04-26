@@ -64,11 +64,11 @@ bool Triangulate::Snip(const std::vector<Vector2> &contour,int u,int v,int w,int
   Cx = contour[V[w]].x;
   Cy = contour[V[w]].y;
 
-  if ( EPSILON > (((Bx-Ax)*(Cy-Ay)) - ((By-Ay)*(Cx-Ax))) ) return false;
+  if (EPSILON > (((Bx-Ax)*(Cy-Ay)) - ((By-Ay)*(Cx-Ax)))) return false;
 
   for (p=0;p<n;p++)
   {
-    if( (p == u) || (p == v) || (p == w) ) continue;
+    if((p == u) || (p == v) || (p == w)) continue;
     Px = contour[V[p]].x;
     Py = contour[V[p]].y;
     if (InsideTriangle(Ax,Ay,Bx,By,Cx,Cy,Px,Py)) return false;
@@ -82,13 +82,13 @@ bool Triangulate::Process(const std::vector<Vector2> &contour, std::vector<Vecto
   /* allocate and initialize list of Vertices in polygon */
 
   int n = contour.size();
-  if ( n < 3 ) return false;
+  if (n < 3) return false;
 
   int *V = new int[n];
 
   /* we want a counter-clockwise polygon in V */
 
-  if ( 0.0f < Area(contour) )
+  if (0.0f < Area(contour))
     for (int v=0; v<n; v++) V[v] = v;
   else
     for(int v=0; v<n; v++) V[v] = (n-1)-v;
@@ -98,7 +98,7 @@ bool Triangulate::Process(const std::vector<Vector2> &contour, std::vector<Vecto
   /*  remove nv-2 Vertices, creating 1 triangle every time */
   int count = 2*nv;   /* error detection */
 
-  for(int m=0, v=nv-1; nv>2; )
+  for(int m=0, v=nv-1; nv>2;)
   {
     /* if we loop, it is probably a non-simple polygon */
     if (0 >= (count--))
@@ -115,7 +115,7 @@ bool Triangulate::Process(const std::vector<Vector2> &contour, std::vector<Vecto
     v = u+1; if (nv <= v) v = 0;     /* new v    */
     int w = v+1; if (nv <= w) w = 0;     /* next     */
 
-    if ( Snip(contour,u,v,w,nv,V) )
+    if (Snip(contour,u,v,w,nv,V))
     {
       int a,b,c,s,t;
 
@@ -123,9 +123,9 @@ bool Triangulate::Process(const std::vector<Vector2> &contour, std::vector<Vecto
       a = V[u]; b = V[v]; c = V[w];
 
       /* output Triangle */
-      result.push_back( contour[a] );
-      result.push_back( contour[b] );
-      result.push_back( contour[c] );
+      result.push_back(contour[a]);
+      result.push_back(contour[b]);
+      result.push_back(contour[c]);
 
       m++;
 

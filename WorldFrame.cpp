@@ -62,15 +62,15 @@ WorldFrame::WorldFrame(wxFrame* parent)
 	// does not work.  Ogre 1.2 + Linux + GLX platform wants a string of the
 	// format display:screen:window, which has variable types ulong:uint:ulong.
 	GtkWidget* widget = GetHandle();
-	gtk_widget_realize( widget );	// Mandatory. Otherwise, a segfault happens.
+	gtk_widget_realize(widget);	// Mandatory. Otherwise, a segfault happens.
 	stringstream handleStream;
-	Display* display = GDK_WINDOW_XDISPLAY( widget->window );
-	Window wid = GDK_WINDOW_XWINDOW( widget->window );	// Window is a typedef for XID, which is a typedef for unsigned int
+	Display* display = GDK_WINDOW_XDISPLAY(widget->window);
+	Window wid = GDK_WINDOW_XWINDOW(widget->window);	// Window is a typedef for XID, which is a typedef for unsigned int
 	/* Get the right display (DisplayString() returns ":display.screen") */
-	string displayStr = DisplayString( display );
-	displayStr = displayStr.substr( 1, ( displayStr.find( ".", 0 ) - 1 ) );
+	string displayStr = DisplayString(display);
+	displayStr = displayStr.substr(1, (displayStr.find(".", 0) - 1));
 	/* Put all together */
-	handleStream << displayStr << ':' << DefaultScreen( display ) << ':' << wid;
+	handleStream << displayStr << ':' << DefaultScreen(display) << ':' << wid;
 	handle = handleStream.str();
 #else
 	#error Not supported on this platform.
@@ -98,7 +98,7 @@ WorldFrame::WorldFrame(wxFrame* parent)
 	//createScene();
 	isDocOpen = false;
 
-	mEditMode = MainWindow::view;
+	mToolsetMode = MainWindow::view;
 	mActiveTool = MainWindow::addNode;
 
 	mTools.push_back(new ToolView(this));
@@ -171,8 +171,8 @@ void WorldFrame::createCamera(void)
 
     // Look back along -Z
     //mCamera->lookAt(Vector3(0,-10,0));
-	mCamera->setNearClipDistance( 1 );
-    mCamera->setFarClipDistance( 1000 );
+	mCamera->setNearClipDistance(1);
+    mCamera->setFarClipDistance(1000);
 }
 
 
@@ -192,14 +192,14 @@ void WorldFrame::createScene(void)
     // NB it's VERY important to set this before calling setWorldGeometry 
     // because the vertex program picked will be different
 	ColourValue fadeColour(0.76f, 0.86f, 0.93f);
-	mSceneManager->setFog( FOG_LINEAR, fadeColour, .001f, 500, 1000);
+	mSceneManager->setFog(FOG_LINEAR, fadeColour, .001f, 500, 1000);
 	mRenderWindow->getViewport(0)->setBackgroundColour(fadeColour);
 
     string terrain_cfg("terrain.cfg");
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
         terrain_cfg = mResourcePath + terrain_cfg;
 #endif
-    mSceneManager -> setWorldGeometry( terrain_cfg );
+    mSceneManager -> setWorldGeometry(terrain_cfg);
 
     // Infinite far plane?
     if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
@@ -270,7 +270,7 @@ void WorldFrame::cameraMove(Real x, Real y, Real z)
 	modify(true);
 	mCamera->moveRelative(Vector3(x, y, z));
 
-	if(mEditMode == MainWindow::view)
+	if(mToolsetMode == MainWindow::view)
 		updateProperties();
 	//stringstream oss;
 	//oss <<"Camera position: "<<mCamera->getPosition();
@@ -285,7 +285,7 @@ void WorldFrame::cameraRotate(Real yaw, Real pitch)
 	mCamera->pitch(pitch * (mCamera->getFOVy() / 240.0f));
 
 
-	if(mEditMode == MainWindow::view)
+	if(mToolsetMode == MainWindow::view)
 		updateProperties();
 	//stringstream oss;
 	//oss <<"Camera orientation: " << mCamera->getOrientation();
@@ -363,7 +363,7 @@ void WorldFrame::OnSize(wxSizeEvent &e)
 	int height;
 	GetSize(&width, &height);
 	if(!mRenderWindow) return;
-	mRenderWindow->resize( width, height );
+	mRenderWindow->resize(width, height);
 	// Letting Ogre know the window has been resized;
 	mRenderWindow->windowMovedOrResized();
 	// Set the aspect ratio for the new size;
@@ -406,6 +406,7 @@ void WorldFrame::update()
 	set<WorldCell*>::iterator cIt, cEnd;
 	for(cIt = mCells.begin(), cEnd = mCells.end(); cIt != cEnd; cIt++)
 		(*cIt)->validate();
+
 
 	if(mCamera) Root::getSingleton().renderOneFrame();
 }
@@ -474,6 +475,8 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 		{
 			edgeData.push_back(make_pair(pElem->Attribute("source"), pElem->Attribute("target")));
 		}
+		else if(key == "cells") 
+			break;
 	}
 
 	// create the edges now that all graph data has been read
@@ -485,10 +488,46 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 		// if source node and target node can be found
 		if(sourceIt != nodeIdTranslation.end() && targetIt != nodeIdTranslation.end()) 
 		{
-			WorldRoad* wr = createRoad(sourceIt->second, targetIt->second);
-			assert(wr != 0);
+			if(!mSimpleRoadGraph.testRoad(sourceIt->second->mSimpleNodeId, targetIt->second->mSimpleNodeId))
+			{
+				// create the road in the scene
+				WorldRoad* wr = new WorldRoad(sourceIt->second, targetIt->second, mRoadGraph, mSimpleRoadGraph, mSceneManager);
+				mSceneRoadMap[wr->getSceneNode()] = wr;
+			}
 		}
 	}
+
+	pElem=worldRoot.FirstChild("cells").FirstChild().Element();
+	for(; pElem; pElem=pElem->NextSiblingElement())
+	{
+		string key = pElem->Value();
+		if(key=="cell")
+		{
+			vector<NodeInterface*> nodeCycle;
+
+			//load the cycle
+			TiXmlElement* pElem2=pElem->FirstChild("cycle")->FirstChildElement();
+			for(; pElem2; pElem2=pElem2->NextSiblingElement())
+			{
+				key = pElem2->Value();
+				if(key=="node")
+				{
+					string strId = pElem2->Attribute("id");
+					nodeCycle.push_back(nodeIdTranslation[strId]);
+				}
+			}
+
+			if(nodeCycle.size() > 2)
+			{
+				WorldCell* wc = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycle);
+				mSceneCellMap[wc->getSceneNode()] = wc;
+				mCells.insert(wc);
+				const TiXmlHandle cellRoot(pElem);
+				wc->loadXML(pElem);
+			}
+		}
+	}
+		
 
 	update();
 	return true;
@@ -496,7 +535,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 
 TiXmlElement* WorldFrame::saveXML()
 {
-	TiXmlElement * root = new TiXmlElement( "WorldDocument" );  
+	TiXmlElement * root = new TiXmlElement("WorldDocument");  
 
 	// Save Camera
 	{
@@ -523,37 +562,48 @@ TiXmlElement* WorldFrame::saveXML()
 	TiXmlElement *roadNetwork = new TiXmlElement("graph"); 
 	roadNetwork->SetAttribute("id", "roadgraph");
 	roadNetwork->SetAttribute("edgedefault", "undirected");
-	root->LinkEndChild( roadNetwork );
+	root->LinkEndChild(roadNetwork);
 
 	NodeIterator nIt, nEnd;
 	for(boost::tie(nIt, nEnd) = mSimpleRoadGraph.getNodes(); nIt != nEnd; nIt++) 
 	{
-		Vector2 loc(mSimpleRoadGraph.getNode(*nIt)->getPosition2D());
+		NodeInterface* ni = mSimpleRoadGraph.getNode(*nIt);
+		Vector2 loc(ni->getPosition2D());
 		//string id(pointerToString(*vi));
 		//string id
 	
 		TiXmlElement * node;
-		node = new TiXmlElement( "node" );  
-		node->SetAttribute("id", (int) *nIt);
+		node = new TiXmlElement("node");  
+		node->SetAttribute("id", (int) ni);
 		node->SetDoubleAttribute("x", loc.x);
 		node->SetDoubleAttribute("y", loc.y);
-		roadNetwork->LinkEndChild( node );
+		roadNetwork->LinkEndChild(node);
 	}
 
 	RoadIterator rIt, rEnd;
 	for(boost::tie(rIt, rEnd) = mSimpleRoadGraph.getRoads(); rIt != rEnd; rIt++) 
 	{
 		TiXmlElement * edge;
-		edge = new TiXmlElement( "edge" );  
-		edge->SetAttribute("source", (int) mSimpleRoadGraph.getSrc(*rIt));
-		edge->SetAttribute("target", (int) mSimpleRoadGraph.getDst(*rIt));
-		roadNetwork->LinkEndChild( edge ); 
+		edge = new TiXmlElement("edge");  
+		edge->SetAttribute("source", (int) mSimpleRoadGraph.getSrcNode(*rIt));
+		edge->SetAttribute("target", (int) mSimpleRoadGraph.getDstNode(*rIt));
+		roadNetwork->LinkEndChild(edge); 
+	}
+
+	TiXmlElement *cells = new TiXmlElement("cells"); 
+	cells->SetAttribute("id", "cellset0");
+	root->LinkEndChild(cells);
+
+	set<WorldCell*>::iterator cIt,cEnd;
+	for(cIt = mCells.begin(), cEnd = mCells.end(); cIt != cEnd; cIt++)
+	{
+		cells->LinkEndChild((*cIt)->saveXML());
 	}
 	
 	return root;
 }
 
-void WorldFrame::setEditMode(MainWindow::EditMode mode) 
+void WorldFrame::setToolsetMode(MainWindow::ToolsetMode mode) 
 {
 	/*
 	switch(mode) {
@@ -575,7 +625,7 @@ void WorldFrame::setEditMode(MainWindow::EditMode mode)
 	selectNode(0);
 	selectRoad(0);
 	selectCell(0);
-	mEditMode = mode;
+	mToolsetMode = mode;
 	Update();
 }
 
@@ -627,7 +677,7 @@ bool WorldFrame::pickTerrainIntersection(wxMouseEvent& e, Vector3& pos)
 	mRaySceneQuery->setRay(mouseRay);
     mRaySceneQuery->setSortByDistance(false);
 	RaySceneQueryResult result = mRaySceneQuery->execute();
-	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++ )
+	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
 	{
 		if(itr->worldFragment)
 		{
@@ -648,9 +698,9 @@ bool WorldFrame::pickNode(wxMouseEvent& e, WorldNode *&wn)
 	mRaySceneQuery->setRay(mouseRay);
     mRaySceneQuery->setSortByDistance(true);
 	RaySceneQueryResult result = mRaySceneQuery->execute();
-	for(RaySceneQueryResult::const_iterator itr = result.begin( ); itr != result.end(); itr++ )
+	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
 	{
-		if ( itr->movable && itr->movable->getName().substr(0, 4) == "node" )
+		if (itr->movable && itr->movable->getName().substr(0, 4) == "node")
 		{
 			wn = mSceneNodeMap[itr->movable->getParentSceneNode()];
     		return true;
@@ -745,7 +795,7 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 		for(j=0; j<N; j++)
 		{
 			k = (j+1) % N;
-			if( (boundaries[i][j] == wn1 && boundaries[i][k] == wn2) 
+			if((boundaries[i][j] == wn1 && boundaries[i][k] == wn2) 
 				|| (boundaries[i][j] == wn2 && boundaries[i][k] == wn1))
 			{
 				boundaries[i].insert(boundaries[i].begin() + k, wn);
@@ -1038,11 +1088,11 @@ void WorldFrame::onCloseDoc()
 bool WorldFrame::plotPointOnTerrain(Real x, Real &y, Real z)
 {
 	//create scene doc using doc.x -> x, doc.y -> z  and y from ray cast
-	Ray verticalRay(Vector3(x, 5000.0f, z), Vector3::NEGATIVE_UNIT_Y );
+	Ray verticalRay(Vector3(x, 5000.0f, z), Vector3::NEGATIVE_UNIT_Y);
 	mRaySceneQuery->setRay(verticalRay);
 	RaySceneQueryResult result = mRaySceneQuery->execute();
 
-	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++ )
+	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
 	{
 		if(itr->worldFragment)
 		{
@@ -1085,9 +1135,9 @@ bool WorldFrame::pickCell(wxMouseEvent& e, WorldCell *&wc)
 	mRaySceneQuery->setRay(mouseRay);
     mRaySceneQuery->setSortByDistance(true);
 	RaySceneQueryResult result = mRaySceneQuery->execute();
-	for(RaySceneQueryResult::const_iterator itr = result.begin( ); itr != result.end(); itr++ )
+	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
 	{
-		if ( itr->movable && itr->movable->getName().substr(0, 4) == "cell" )
+		if (itr->movable && itr->movable->getName().substr(0, 4) == "cell")
 		{
 			wc = mSceneCellMap[itr->movable->getParentSceneNode()];
     		return true;
@@ -1117,9 +1167,9 @@ bool WorldFrame::pickRoad(wxMouseEvent& e, WorldRoad *&wr)
 	mRaySceneQuery->setRay(mouseRay);
     mRaySceneQuery->setSortByDistance(true);
 	RaySceneQueryResult result = mRaySceneQuery->execute();
-	for(RaySceneQueryResult::const_iterator itr = result.begin( ); itr != result.end(); itr++ )
+	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
 	{
-		if ( itr->movable && itr->movable->getName().substr(0, 4) == "road" )
+		if (itr->movable && itr->movable->getName().substr(0, 4) == "road")
 		{
 			wr = mSceneRoadMap[itr->movable->getParentSceneNode()];
     		return true;
@@ -1139,6 +1189,33 @@ void WorldFrame::selectRoad(WorldRoad* wr)
 	updateProperties();
 }
 
+void  WorldFrame::setViewMode(MainWindow::ViewMode mode)
+{
+	bool showRoads, showBuildings;
+	switch(mode)
+	{
+	case MainWindow::view_primary:
+		showRoads = false;
+		showBuildings = false;
+		break;
+	case MainWindow::view_cell:
+		showRoads = true;
+		showBuildings = false;
+		break;
+	case MainWindow::view_building:
+		showRoads = true;
+		showBuildings = true;
+		break;
+	}
+	set<WorldCell*>::iterator cIt,cEnd;
+	for(cIt = mCells.begin(), cEnd = mCells.end(); cIt != cEnd; cIt++)
+	{
+		(*cIt)->showRoads(showRoads);
+		(*cIt)->showBuildings(showBuildings);
+	}
+	mViewMode = mode;
+	update();
+}
 
 template<> WorldFrame* Ogre::Singleton<WorldFrame>::ms_Singleton = 0;
 WorldFrame* WorldFrame::getSingletonPtr(void)
@@ -1147,5 +1224,5 @@ WorldFrame* WorldFrame::getSingletonPtr(void)
 }
 WorldFrame& WorldFrame::getSingleton(void)
 {  
-    assert( ms_Singleton );  return ( *ms_Singleton );  
+    assert(ms_Singleton);  return (*ms_Singleton);  
 }

@@ -12,7 +12,7 @@ class RoadPropertyPage : public wxPropertyGridPage
 private:
 	wxPGProperty* segmentSizeProp;
 	wxPGProperty* roadWidthProp;
-	wxPGProperty* roadDevianceProp;
+	wxPGProperty* segmentDevianceProp;
 	WorldFrame* mWorldFrame;
 
 
@@ -31,7 +31,7 @@ public:
 
 	void setWorldFrame(WorldFrame* wf);
 
-	virtual void OnPropertyGridChange( wxPropertyGridEvent& event );
+	virtual void OnPropertyGridChange(wxPropertyGridEvent& event);
 
 };
 

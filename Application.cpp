@@ -76,7 +76,7 @@ bool Application::InitializeOgre()
    {
 	  String s = "OgreView::Init() - Exception:\n" + e.getFullDescription() + "\n";
 	  LogManager::getSingleton().logMessage(s, LML_CRITICAL);
-      wxMessageBox( wxString(e.getFullDescription().c_str(), wxConvUTF8),
+      wxMessageBox(wxString(e.getFullDescription().c_str(), wxConvUTF8),
       _("Exception!"), 
       wxICON_EXCLAMATION);
       return false;

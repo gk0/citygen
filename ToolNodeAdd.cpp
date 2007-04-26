@@ -225,10 +225,6 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 		updateState(e);
 		mWorldFrame->update();
 	}
-	catch(int i)
-	{
-		int z = 0;
-	}
 	catch(Exception &e)
 	{
 		int z = 0;
@@ -236,9 +232,5 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 	catch(std::exception &e)
 	{
 		int z = 0;
-	}
-	catch(...)
-	{
-		int p = 0;
 	}
 }

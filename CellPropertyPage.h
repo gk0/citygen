@@ -16,7 +16,7 @@ private:
 	wxPGProperty* degreeProp;
 	wxPGProperty* degreeDevianceProp;
 	wxPGProperty* snapSizeProp;
-	wxPGProperty* snapSizeDevianceProp;
+	wxPGProperty* snapDevianceProp;
 	WorldFrame* mWorldFrame;
 
 
@@ -35,7 +35,7 @@ public:
 
 	void setWorldFrame(WorldFrame* wf);
 
-	virtual void OnPropertyGridChange( wxPropertyGridEvent& event );
+	virtual void OnPropertyGridChange(wxPropertyGridEvent& event);
 
 };
 

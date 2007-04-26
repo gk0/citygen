@@ -13,7 +13,13 @@ class CellPropertyPage;
 class MainWindow : public wxFrame
 {
 public:
-	enum EditMode {
+	enum ViewMode {
+		view_primary,
+		view_cell,
+		view_building
+	};
+
+	enum ToolsetMode {
 		view,
 		node,
 		road,
@@ -36,10 +42,10 @@ private:
 	LogFrame *mLogFrame;
 
 	// edit mode
-	EditMode mEditMode;
+	ToolsetMode mToolsetMode;
 	ActiveTool mActiveTool;
 
-	wxToolBar *mFileToolBar, *mViewModeToolBar, *mEditModeToolBar, 
+	wxToolBar *mFileToolBar, *mViewModeToolBar, *mToolsetModeToolBar, 
 		*mNodeEditToolBar, *mRoadEditToolBar;
 
 	wxPropertyGridManager* mPropertyGridManager;
@@ -59,8 +65,8 @@ private:
 	bool saveAs();
 	bool doSave(const wxString &file);
 	bool onSaveModified();
-	void initEditModeToolBar();
-	void onChangeEditMode();
+	void initToolsetModeToolBar();
+	void onChangeToolsetMode();
 	void initNodeEdit();
 	void initRoadEdit();
 	void initCellEdit();
@@ -72,11 +78,14 @@ protected:
 	void onSave(wxCommandEvent &e);
 	void onSaveAs(wxCommandEvent &e);
 
+	void onSelectViewPrimary(wxCommandEvent &e);
+	void onSelectViewCell(wxCommandEvent &e);
+	void onSelectViewBuilding(wxCommandEvent &e);
 
-	void onSelectViewMode(wxCommandEvent &e);
-	void onSelectNodeMode(wxCommandEvent &e);
-	void onSelectRoadMode(wxCommandEvent &e);
-	void onSelectCellMode(wxCommandEvent &e);
+	void onSelectToolsetView(wxCommandEvent &e);
+	void onSelectToolsetNode(wxCommandEvent &e);
+	void onSelectToolsetRoad(wxCommandEvent &e);
+	void onSelectToolsetCell(wxCommandEvent &e);
 
 	void onSelectNode(wxCommandEvent &e);
 	void onSelectNodeAdd(wxCommandEvent &e);

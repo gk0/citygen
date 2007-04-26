@@ -452,7 +452,7 @@ bool RoadGraph::getCounterClockwiseMostFromPrev(NodeId vprev, NodeId vcurr, Node
 void RoadGraph::removeFromHeap(NodeId v0, std::list<NodeId>& heap)
 {
 	std::list<NodeId>::iterator pos = heap.begin();
-	for( ; pos != heap.end(); pos++)
+	for(; pos != heap.end(); pos++)
 	{
 		if(*pos == v0) {
 			heap.erase(pos);
@@ -521,7 +521,7 @@ bool RoadGraph::findClosestIntersection(const Vector2& a, const Vector2& b, Road
 			if(currentIntersection == a) continue;
 			if(hasIntersection)
 			{
-				currentDistance = ( (a - currentIntersection).squaredLength() );
+				currentDistance = ((a - currentIntersection).squaredLength());
 				if(currentDistance < closestDistance)
 				{
 					closestIntersection = currentIntersection;
@@ -531,7 +531,7 @@ bool RoadGraph::findClosestIntersection(const Vector2& a, const Vector2& b, Road
 			else
 			{
 				hasIntersection = true;
-				closestDistance = ( (a - currentIntersection).squaredLength() );
+				closestDistance = ((a - currentIntersection).squaredLength());
 				closestIntersection = currentIntersection;
 				closestRoad = *rIt;
 			}
@@ -564,7 +564,7 @@ bool RoadGraph::findClosestIntersection3(const Vector2& a, const Vector2& b,
 			{
 				if(hasIntersection)
 				{
-					currentDistance = ( (a - currentIntersection).squaredLength() );
+					currentDistance = ((a - currentIntersection).squaredLength());
 					if(currentDistance < closestDistance)
 					{
 						closestIntersection = currentIntersection;
@@ -574,7 +574,7 @@ bool RoadGraph::findClosestIntersection3(const Vector2& a, const Vector2& b,
 				else
 				{
 					hasIntersection = true;
-					closestDistance = ( (a - currentIntersection).squaredLength() );
+					closestDistance = ((a - currentIntersection).squaredLength());
 					closestIntersection = currentIntersection;
 					closestRoad = *rIt;
 				}
@@ -702,15 +702,15 @@ bool RoadGraph::findClosestIntersection2(const std::vector<RoadId>& roadSegments
 		for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
 		{
 			// don't check neighbouring segments
-			if( ((i-1) < 0 || *rIt != roadSegments[i-1])
-				&& ((i+1) >= roadSegments.size() || *rIt != roadSegments[i+1]) )
+			if(((i-1) < 0 || *rIt != roadSegments[i-1])
+				&& ((i+1) >= roadSegments.size() || *rIt != roadSegments[i+1]))
 			{
 				if(roadIntersection(a, b, *rIt, currentIntersection)
 					&& currentIntersection != a)
 				{
 					if(hasIntersection)
 					{
-						currentDistance = ( (a - currentIntersection).squaredLength() );
+						currentDistance = ((a - currentIntersection).squaredLength());
 						if(currentDistance < closestDistance)
 						{
 							closestIntersection = currentIntersection;
@@ -720,7 +720,7 @@ bool RoadGraph::findClosestIntersection2(const std::vector<RoadId>& roadSegments
 					else
 					{
 						hasIntersection = true;
-						closestDistance = ( (a - currentIntersection).squaredLength() );
+						closestDistance = ((a - currentIntersection).squaredLength());
 						closestIntersection = currentIntersection;
 						closestRoad = *rIt;
 					}

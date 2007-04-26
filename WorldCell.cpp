@@ -20,14 +20,14 @@ WorldCell::WorldCell(RoadGraph &p, RoadGraph &s)
 {
 	init();
 }
-/*
-WorldCell::WorldCell(RoadGraph &p, vector<RoadInterface*> &b)
- : 	mParentRoadGraph(p)
+
+WorldCell::WorldCell(RoadGraph &p, RoadGraph &s, vector<NodeInterface*> &n)
+ : 	mParentRoadGraph(p),
+	mSimpleRoadGraph(s)
 {
 	init();
-	setBoundary(b);
-}*/
-
+	setBoundary(n);
+}
 
 WorldCell::WorldCell(RoadGraph &p, RoadGraph &s, vector<NodeInterface*> &n, vector<RoadInterface*> &b)
  : 	mParentRoadGraph(p),
@@ -39,6 +39,9 @@ WorldCell::WorldCell(RoadGraph &p, RoadGraph &s, vector<NodeInterface*> &n, vect
 
 void WorldCell::init()
 {
+	mShowRoads = true;
+	mShowBuildings = true;
+
 	// set up some default growth gen params
 	mGrowthGenParams.seed = 0;
 	mGrowthGenParams.segmentSize = 6;
@@ -323,6 +326,9 @@ void WorldCell::build()
 	mManualObject2->end();
 	mSceneNode->attachObject(mManualObject2);
 
+	mManualObject->setVisible(mShowRoads);
+	mManualObject2->setVisible(mShowBuildings);
+
 	wxLongLong lTimeGen = (t2 - t1).GetMilliseconds();
 	wxLongLong lTimeTotal = (wxDateTime::UNow() - t1).GetMilliseconds();
 	String strTimeGen = static_cast<const char*>(lTimeGen.ToString().mb_str());
@@ -555,6 +561,7 @@ GrowthGenParams WorldCell::getGrowthGenParams() const
 void WorldCell::setGrowthGenParams(const GrowthGenParams &g)
 {
 	mGrowthGenParams = g;
+	invalidate();
 }
 
 const vector<RoadInterface*>& WorldCell::getBoundaryRoads() const
@@ -679,7 +686,7 @@ bool WorldCell::compareBoundary(const vector<RoadInterface*>& roadCycle) const
 		if(roadCycle[i] != mBoundaryRoads[(i + offset) % N])
 			break;
 	}
-	if(i >= N)
+	if(i >= N) 
 		return true;
 
 	// try backwards
@@ -974,4 +981,101 @@ void WorldCell::showSelected(bool show)
 		if(typeid(*(*bIt)) == typeid(WorldRoad))
 			static_cast<WorldRoad*>(*bIt)->showSelected(show);
 	}
+}
+
+bool WorldCell::loadXML(const TiXmlHandle& cellRoot)
+{
+	// Load GenParams, not Smart Enough to do our own boundary, see parent
+	{
+		TiXmlElement *element = cellRoot.FirstChild("genparams").FirstChild().Element();
+
+		for(; element; element=element->NextSiblingElement())
+		{
+			string key = element->Value();
+			
+			if(key == "seed")
+				element->QueryIntAttribute("value", &mGrowthGenParams.seed);
+			else if(key == "segmentSize")
+				element->QueryFloatAttribute("value", &mGrowthGenParams.segmentSize);
+			else if(key == "segmentDeviance")
+				element->QueryFloatAttribute("value", &mGrowthGenParams.segmentDeviance);
+			else if(key == "degree") 
+			{
+				int deg;
+				element->QueryIntAttribute("value", &deg);
+				mGrowthGenParams.degree = static_cast<unsigned int>(deg);
+			}else if(key == "degreeDeviance")
+				element->QueryFloatAttribute("value", &mGrowthGenParams.degreeDeviance);
+			else if(key == "snapSize")
+				element->QueryFloatAttribute("value", &mGrowthGenParams.snapSize);
+			else if(key == "snapDeviance")
+				element->QueryFloatAttribute("value", &mGrowthGenParams.snapDeviance);
+		}
+	}
+	return true;
+}
+
+TiXmlElement* WorldCell::saveXML()
+{
+	TiXmlElement *root = new TiXmlElement("cell"); 
+
+	TiXmlElement *cycle = new TiXmlElement("cycle"); 
+	root->LinkEndChild(cycle);
+
+	for(size_t i=0; i<mBoundaryCycle.size(); i++) 
+	{	
+		TiXmlElement * node;
+		node = new TiXmlElement("node");  
+		node->SetAttribute("id", (int) mBoundaryCycle[i]);
+		cycle->LinkEndChild(node);
+	}
+
+	TiXmlElement *growthGenParams = new TiXmlElement("genparams"); 
+	root->LinkEndChild(growthGenParams);
+
+	TiXmlElement *seed = new TiXmlElement("seed");  
+	seed->SetAttribute("value", mGrowthGenParams.seed);
+	growthGenParams->LinkEndChild(seed);
+
+	TiXmlElement *segmentSize = new TiXmlElement("segmentSize");  
+	segmentSize->SetAttribute("value", mGrowthGenParams.segmentSize);
+	growthGenParams->LinkEndChild(segmentSize);
+
+	TiXmlElement *segmentDeviance = new TiXmlElement("segmentDeviance");  
+	segmentDeviance->SetAttribute("value", mGrowthGenParams.segmentDeviance);
+	growthGenParams->LinkEndChild(segmentDeviance);
+
+	TiXmlElement *degree = new TiXmlElement("degree");  
+	degree->SetAttribute("value", mGrowthGenParams.degree);
+	growthGenParams->LinkEndChild(degree);
+
+	TiXmlElement *degreeDeviance = new TiXmlElement("degreeDeviance");  
+	degreeDeviance->SetAttribute("value", mGrowthGenParams.degreeDeviance);
+	growthGenParams->LinkEndChild(degreeDeviance);
+
+	TiXmlElement *snapSize = new TiXmlElement("snapSize");  
+	snapSize->SetAttribute("value", mGrowthGenParams.snapSize);
+	growthGenParams->LinkEndChild(snapSize);
+
+	TiXmlElement *snapDeviance = new TiXmlElement("snapDeviance");  
+	snapDeviance->SetAttribute("value", mGrowthGenParams.snapDeviance);
+	growthGenParams->LinkEndChild(snapDeviance);
+
+	return root;
+}
+
+
+
+
+
+void WorldCell::showRoads(bool show)
+{
+	mShowRoads = show;
+	if(mManualObject) mManualObject->setVisible(mShowRoads);
+}
+
+void WorldCell::showBuildings(bool show)
+{
+	mShowBuildings = show;
+	if(mManualObject2) mManualObject2->setVisible(mShowBuildings);
 }

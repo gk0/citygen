@@ -22,3 +22,4 @@ deledge BITMAP "bitmaps/deledge.bmp"
 
 graph BITMAP "bitmaps/viewgraph.bmp"
 roads BITMAP "bitmaps/viewroads.bmp"
+all BITMAP "bitmaps/viewall.bmp"

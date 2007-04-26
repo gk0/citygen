@@ -39,10 +39,12 @@ private:
 	std::vector<NodeInterface*> mBoundaryCycle;
 	std::vector<RoadInterface*> mFilamentRoads;
 
+	bool mShowRoads, mShowBuildings;
+
 public:
 	WorldCell(RoadGraph &p, RoadGraph &s);
+	WorldCell(RoadGraph &p, RoadGraph &s, std::vector<NodeInterface*> &n);
 	WorldCell(RoadGraph &p, RoadGraph &s, std::vector<NodeInterface*> &n, std::vector<RoadInterface*> &b);
-//	WorldCell(RoadGraph &p, std::vector<RoadInterface*> &b);
 	virtual ~WorldCell();
 
 	GrowthGenParams getGrowthGenParams() const;
@@ -69,6 +71,11 @@ public:
 	void clear();
 
 	void showSelected(bool show);
+	void showRoads(bool show);
+	void showBuildings(bool show);
+
+	bool loadXML(const TiXmlHandle& worldRoot);
+	TiXmlElement* saveXML();
 
 private:
 	void clearRoadGraph();

@@ -34,25 +34,25 @@ void ViewPropertyPage::update()
 
 void ViewPropertyPage::Init()
 {
-	Append( wxPropertyCategory(wxT("Position")) );
+	Append(wxPropertyCategory(wxT("Position")));
 
 	// Add float property (value type is actually double)
-	xProp = Append( wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0) );
-	yProp = Append( wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0) );
-	zProp = Append( wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0) );
+	xProp = Append(wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0));
+	yProp = Append(wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0));
+	zProp = Append(wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
 
-	Append( wxPropertyCategory(wxT("Direction")) );
+	Append(wxPropertyCategory(wxT("Direction")));
 
 	// Add float property (value type is actually double)
-	xDirProp = Append( wxFloatProperty(wxT("x_dir"), wxPG_LABEL, 0.0) );
-	yDirProp = Append( wxFloatProperty(wxT("y_dir"), wxPG_LABEL, 0.0) );
-	zDirProp = Append( wxFloatProperty(wxT("z_dir"), wxPG_LABEL, 0.0) );
+	xDirProp = Append(wxFloatProperty(wxT("x_dir"), wxPG_LABEL, 0.0));
+	yDirProp = Append(wxFloatProperty(wxT("y_dir"), wxPG_LABEL, 0.0));
+	zDirProp = Append(wxFloatProperty(wxT("z_dir"), wxPG_LABEL, 0.0));
 
 	// Another way  
-	Append( wxPropertyCategory(wxT("Advanced")) );
+	Append(wxPropertyCategory(wxT("Advanced")));
 
 	// Cursor property
-	Append( wxCursorProperty (wxT("My Cursor"),
+	Append(wxCursorProperty (wxT("My Cursor"),
 								  wxPG_LABEL,
 								  wxCURSOR_ARROW));
 }

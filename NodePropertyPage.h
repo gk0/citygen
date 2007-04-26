@@ -23,7 +23,7 @@ public:
 	NodePropertyPage(WorldFrame* wf);
 	void Init();
 	void update();
-	void OnPropertyGridChange( wxPropertyGridEvent& event );
+	void OnPropertyGridChange(wxPropertyGridEvent& event);
 };
 
 #endif

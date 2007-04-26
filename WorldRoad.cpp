@@ -807,4 +807,5 @@ const RoadGenParams& WorldRoad::getGenParams()
 void WorldRoad::setGenParams(const RoadGenParams& g)
 {
 	mGenParams = g;
+	onMoveNode();	// well it isn't but i want to do what it does
 }

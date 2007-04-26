@@ -31,7 +31,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 	mDegree = 0;
 
 	// create mesh
-	mMesh = mCreator->createEntity(mName+"Mesh", "node.mesh" );
+	mMesh = mCreator->createEntity(mName+"Mesh", "node.mesh");
 //	MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().getByName("gk/Hilite/Red2");
 	//MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().create("gk/Hilite/Red2");
 //	mat->getTechnique(0)->getPass(0)->setAmbient(0.1, 0.1, 0.1);
@@ -40,12 +40,12 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 	mMesh->setMaterialName("gk/Hilite/Red2");
 
 	// create highlight mesh
-	mHighlight = mCreator->createEntity(mName+"Highlight", "flange.mesh" );
+	mHighlight = mCreator->createEntity(mName+"Highlight", "flange.mesh");
 	mHighlight->setMaterialName("gk/Hilite/Yellow");
 	mHighlight->setVisible(false);
 
 	// create select mesh
-	mSelected = mCreator->createEntity(mName+"Selected", "node.mesh" );
+	mSelected = mCreator->createEntity(mName+"Selected", "node.mesh");
 	mSelected->setMaterialName("gk/Hilite/Yellow");
 	mSelected->setVisible(false);
 
@@ -53,7 +53,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 	mLabel = new MovableText("Label"+mName, nodeCount);
 	mLabel->setCharacterHeight(5);
 	mLabel->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE); // Center horizontally and display above the node
-	mLabel->setAdditionalHeight( 4.0f );
+	mLabel->setAdditionalHeight(4.0f);
 
 	// attach objects
 	mSceneNode->attachObject(mMesh);

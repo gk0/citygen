@@ -31,7 +31,8 @@ private:
 
 	Ogre::RaySceneQuery* mRaySceneQuery;
 
-	MainWindow::EditMode mEditMode;
+	MainWindow::ViewMode mViewMode;
+	MainWindow::ToolsetMode mToolsetMode;
 	MainWindow::ActiveTool mActiveTool;
 
 	RoadGraph mRoadGraph;
@@ -102,7 +103,8 @@ public:
 	bool loadXML(const TiXmlHandle& worldRoot);
 	TiXmlElement* saveXML();
 
-	void setEditMode(MainWindow::EditMode mode);
+	void setViewMode(MainWindow::ViewMode mode);
+	void setToolsetMode(MainWindow::ToolsetMode mode);
 	void setActiveTool(MainWindow::ActiveTool tool);
 	void onNewDoc();
 	void onCloseDoc();

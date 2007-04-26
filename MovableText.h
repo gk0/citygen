@@ -61,7 +61,7 @@ public:
 	void    setCharacterHeight(Real height);
 	void    setSpaceWidth(Real width);
 	void    setTextAlignment(const HorizontalAlignment& horizontalAlignment, const VerticalAlignment& verticalAlignment);
-	void    setAdditionalHeight( Real height );
+	void    setAdditionalHeight(Real height);
     void    showOnTop(bool show=true);
 
     // Get settings

@@ -137,9 +137,9 @@ void MovableText::setTextAlignment(const HorizontalAlignment& horizontalAlignmen
     }
 }
 
-void MovableText::setAdditionalHeight( Real height )
+void MovableText::setAdditionalHeight(Real height)
 {
-    if( mAdditionalHeight != height )
+    if(mAdditionalHeight != height)
     {
         mAdditionalHeight = height;
         mNeedUpdate = true;
@@ -148,7 +148,7 @@ void MovableText::setAdditionalHeight( Real height )
 
 void MovableText::showOnTop(bool show)
 {
-    if( mOnTop != show && !mpMaterial.isNull() )
+    if(mOnTop != show && !mpMaterial.isNull())
     {
         mOnTop = show;
 #if OGRE_VERSION_MAJOR == 1 && OGRE_VERSION_MINOR <= 2

@@ -32,14 +32,14 @@ enum
     IDM_SHOW_IConS,
     IDM_SHOW_BOTH,
 
-	IDM_GRAPH_VIEW,
-	IDM_GRAPH_NODE,
-	IDM_GRAPH_EDGE,
-	IDM_GRAPH_CELL,
+	IDM_TOOLSET_VIEW,
+	IDM_TOOLSET_NODE,
+	IDM_TOOLSET_EDGE,
+	IDM_TOOLSET_CELL,
 
-	IDM_GRAPH_SELNODE,
-	IDM_GRAPH_ADDNODE,
-	IDM_GRAPH_DELNODE,
+	IDM_NODE_SELECT,
+	IDM_NODE_ADD,
+	IDM_NODE_DELETE,
 
 	IDM_GRAPH_SELEDGE,
 	IDM_GRAPH_ADDEDGE,
@@ -48,8 +48,9 @@ enum
 	IDM_GRAPH_ADD,
 	IDM_GRAPH_DEL,
 
-	IDM_VIEW_GRAPH,
-	IDM_VIEW_ROADS,
+	IDM_VIEW_PRIMARY,
+	IDM_VIEW_CELL,
+	IDM_VIEW_BUILDING,
 
     IDM_OTHER_1,
     IDM_OTHER_2,
@@ -75,6 +76,7 @@ enum
 	
 	#include "bitmaps/graph.xpm"
 	#include "bitmaps/roads.xpm"
+	#include "bitmaps/all.xpm"
 
 	#define TOOL_BMP(bmp) wxBitmap(bmp##_xpm)
 #else
@@ -93,14 +95,18 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
     EVT_MENU(wxID_SAVE, MainWindow::onSave)
     EVT_MENU(wxID_SAVEAS, MainWindow::onSaveAs)
 
-	EVT_MENU(IDM_GRAPH_VIEW, MainWindow::onSelectViewMode)
-	EVT_MENU(IDM_GRAPH_NODE, MainWindow::onSelectNodeMode)
-	EVT_MENU(IDM_GRAPH_EDGE, MainWindow::onSelectRoadMode)
-	EVT_MENU(IDM_GRAPH_CELL, MainWindow::onSelectCellMode)
+	EVT_MENU(IDM_VIEW_PRIMARY, MainWindow::onSelectViewPrimary)
+	EVT_MENU(IDM_VIEW_CELL, MainWindow::onSelectViewCell)
+	EVT_MENU(IDM_VIEW_BUILDING, MainWindow::onSelectViewBuilding)
 
-	EVT_MENU(IDM_GRAPH_SELNODE, MainWindow::onSelectNode)
-	EVT_MENU(IDM_GRAPH_ADDNODE, MainWindow::onSelectNodeAdd)
-	EVT_MENU(IDM_GRAPH_DELNODE, MainWindow::onSelectNodeDel)
+	EVT_MENU(IDM_TOOLSET_VIEW, MainWindow::onSelectToolsetView)
+	EVT_MENU(IDM_TOOLSET_NODE, MainWindow::onSelectToolsetNode)
+	EVT_MENU(IDM_TOOLSET_EDGE, MainWindow::onSelectToolsetRoad)
+	EVT_MENU(IDM_TOOLSET_CELL, MainWindow::onSelectToolsetCell)
+
+	EVT_MENU(IDM_NODE_SELECT, MainWindow::onSelectNode)
+	EVT_MENU(IDM_NODE_ADD, MainWindow::onSelectNodeAdd)
+	EVT_MENU(IDM_NODE_DELETE, MainWindow::onSelectNodeDel)
 
 END_EVENT_TABLE()
 
@@ -137,8 +143,8 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	// graph menu
 	wxMenu *menuGraph = new wxMenu();
-	menuGraph->Append(IDM_GRAPH_ADDNODE, _("Add Node"), _("Add a node to the graph"));
-	menuGraph->Append(IDM_GRAPH_DELNODE, _("Delete Node"), _("Delete a node from the graph"));
+	menuGraph->Append(IDM_NODE_ADD, _("Add Node"), _("Add a node to the graph"));
+	menuGraph->Append(IDM_NODE_DELETE, _("Delete Node"), _("Delete a node from the graph"));
 	menuGraph->AppendSeparator();
 	menuGraph->Append(IDM_GRAPH_ADDEDGE, _("Add Edge"), _("Add an edge to the graph"));
 	menuGraph->Append(IDM_GRAPH_DELEDGE, _("Delete Edge"), _("Delete an edge from the graph"));
@@ -173,8 +179,9 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	// create a view mode toolbar
 	mViewModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mViewModeToolBar->AddTool(IDM_VIEW_GRAPH, _("View Graph"), TOOL_BMP(graph), _("Select view graph mode"), wxITEM_RADIO);
-	mViewModeToolBar->AddTool(IDM_VIEW_ROADS, _("View Roads"), TOOL_BMP(roads), _("Select roads graph mode"), wxITEM_RADIO);
+	mViewModeToolBar->AddTool(IDM_VIEW_BUILDING, _("View All"), TOOL_BMP(all), _("View buildings and all roads"), wxITEM_RADIO);
+	mViewModeToolBar->AddTool(IDM_VIEW_CELL, _("View Cells"), TOOL_BMP(roads), _("View cell roads"), wxITEM_RADIO);
+	mViewModeToolBar->AddTool(IDM_VIEW_PRIMARY, _("View Primary"), TOOL_BMP(graph), _("View primary roads only"), wxITEM_RADIO);
 	mViewModeToolBar->Realize();
 	mViewModeToolBar->Enable(false);
 
@@ -183,22 +190,21 @@ MainWindow::MainWindow(wxWindow* parent)
 		RightDockable(false).Resizable(false)); 
 
 	// create an edit mode toolbar
-	mEditModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mEditModeToolBar->AddTool(IDM_GRAPH_VIEW, _("View"), TOOL_BMP(view), _("Select view only mode"), wxITEM_RADIO);
-	mEditModeToolBar->AddTool(IDM_GRAPH_NODE, _("Node Edit"), TOOL_BMP(node), _("Select node edit mode"), wxITEM_RADIO);
-	mEditModeToolBar->AddTool(IDM_GRAPH_EDGE, _("Road Edit"), TOOL_BMP(edge), _("Select road edit mode"), wxITEM_RADIO);
-	mEditModeToolBar->AddTool(IDM_GRAPH_CELL, _("Cell Edit"), TOOL_BMP(cell), _("Select cell edit mode"), wxITEM_RADIO);
-	mEditModeToolBar->Realize();
-	mEditModeToolBar->Enable(false);
+	mToolsetModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
+	mToolsetModeToolBar->AddTool(IDM_TOOLSET_VIEW, _("View"), TOOL_BMP(view), _("Select view only mode"), wxITEM_RADIO);
+	mToolsetModeToolBar->AddTool(IDM_TOOLSET_NODE, _("Node Edit"), TOOL_BMP(node), _("Select node edit mode"), wxITEM_RADIO);
+	mToolsetModeToolBar->AddTool(IDM_TOOLSET_EDGE, _("Road Edit"), TOOL_BMP(edge), _("Select road edit mode"), wxITEM_RADIO);
+	mToolsetModeToolBar->AddTool(IDM_TOOLSET_CELL, _("Cell Edit"), TOOL_BMP(cell), _("Select cell edit mode"), wxITEM_RADIO);
+	mToolsetModeToolBar->Realize();
+	mToolsetModeToolBar->Enable(false);
 
-	mFrameManager.AddPane(mEditModeToolBar,  wxAuiPaneInfo().Name(_("EditModeTb")).
+	mFrameManager.AddPane(mToolsetModeToolBar,  wxAuiPaneInfo().Name(_("ToolsetModeTb")).
 		Caption(_("Edit Mode ToolBar")).ToolbarPane().Top().Row(0).Position(1).LeftDockable(false).
 		RightDockable(false).Resizable(false)); 
 
 	mNodeEditToolBar = 0;
 	mRoadEditToolBar = 0;
-	mEditMode = view;
-
+	mToolsetMode = view;
 
 	// WINDOW PANES
 
@@ -257,7 +263,7 @@ void MainWindow::onNew(wxCommandEvent &e)
 
 	mWorldFrame->onNewDoc();
 	mViewModeToolBar->Enable(true);
-	mEditModeToolBar->Enable(true);
+	mToolsetModeToolBar->Enable(true);
 }
 
 void MainWindow::onOpen(wxCommandEvent &e)
@@ -293,7 +299,7 @@ void MainWindow::onOpen(wxCommandEvent &e)
 			mSavedYet = true;
 			modify(false);
 			mViewModeToolBar->Enable(true);
-			mEditModeToolBar->Enable(true);
+			mToolsetModeToolBar->Enable(true);
 		}
 		else
 		{
@@ -311,7 +317,7 @@ void MainWindow::onClose(wxCommandEvent &e)
 	setFilename(_(""));
 
 	mViewModeToolBar->Enable(false);
-	mEditModeToolBar->Enable(false);
+	mToolsetModeToolBar->Enable(false);
 	mWorldFrame->onCloseDoc();
 }
 
@@ -330,7 +336,7 @@ bool MainWindow::save()
     if (!isModified() && mSavedYet)
         return true;
 
-    if ( mDocFile.empty() || !mSavedYet )
+    if (mDocFile.empty() || !mSavedYet)
         return saveAs();
 
     return doSave(mDocFile);
@@ -352,7 +358,7 @@ bool MainWindow::doSave(const wxString &file)
 {
 	//TODO
 	TiXmlDocument doc;  
- 	TiXmlDeclaration* decl = new TiXmlDeclaration( "1.0", "", "yes" );  
+ 	TiXmlDeclaration* decl = new TiXmlDeclaration("1.0", "", "yes");  
 	doc.LinkEndChild(decl);  
 	doc.LinkEndChild(mWorldFrame->saveXML());
  
@@ -413,39 +419,54 @@ void MainWindow::setFilename(const wxString &file)
 		SetTitle(wxFileNameFromPath(mDocFile) + _(" - ") + wxTheApp->GetAppName());
 }
 
-void MainWindow::onSelectViewMode(wxCommandEvent &e)
+void MainWindow::onSelectViewPrimary(wxCommandEvent &e)
 {
-	mEditMode = view;
-	onChangeEditMode();
+	mWorldFrame->setViewMode(view_primary);
 }
 
-void MainWindow::onSelectNodeMode(wxCommandEvent &e)
+void MainWindow::onSelectViewCell(wxCommandEvent &e)
 {
-	mEditMode = node;
-	onChangeEditMode();
+	mWorldFrame->setViewMode(view_cell);
 }
 
-void MainWindow::onSelectRoadMode(wxCommandEvent &e)
+void MainWindow::onSelectViewBuilding(wxCommandEvent &e)
 {
-	mEditMode = road;
-	onChangeEditMode();
+	mWorldFrame->setViewMode(view_building);
 }
 
-void MainWindow::onSelectCellMode(wxCommandEvent &e)
+void MainWindow::onSelectToolsetView(wxCommandEvent &e)
 {
-	mEditMode = cell;
-	onChangeEditMode();
+	mToolsetMode = view;
+	onChangeToolsetMode();
 }
 
-void MainWindow::onChangeEditMode()
+void MainWindow::onSelectToolsetNode(wxCommandEvent &e)
+{
+	mToolsetMode = node;
+	onChangeToolsetMode();
+}
+
+void MainWindow::onSelectToolsetRoad(wxCommandEvent &e)
+{
+	mToolsetMode = road;
+	onChangeToolsetMode();
+}
+
+void MainWindow::onSelectToolsetCell(wxCommandEvent &e)
+{
+	mToolsetMode = cell;
+	onChangeToolsetMode();
+}
+
+void MainWindow::onChangeToolsetMode()
 {
 	// change world frame edit mode
-	mWorldFrame->setEditMode(mEditMode);
+	mWorldFrame->setToolsetMode(mToolsetMode);
 
 	// create toolbars if not created and detach if created
 	mFrameManager.DetachPane(mFileToolBar);
 	mFrameManager.DetachPane(mViewModeToolBar);
-	mFrameManager.DetachPane(mEditModeToolBar);
+	mFrameManager.DetachPane(mToolsetModeToolBar);
 
 	// attach required toolbars
 	wxAuiPaneInfo toolbarSettings = wxAuiPaneInfo().ToolbarPane().Top().Row(0).
@@ -454,7 +475,7 @@ void MainWindow::onChangeEditMode()
 							Caption(_("File ToolBar")).Position(0)); 
 	mFrameManager.AddPane(mViewModeToolBar, toolbarSettings.Name(_("ViewModeTb")).
 							Caption(_("View Mode ToolBar")).Position(1)); 
-	mFrameManager.AddPane(mEditModeToolBar, toolbarSettings.Name(_("EditModeTb")).
+	mFrameManager.AddPane(mToolsetModeToolBar, toolbarSettings.Name(_("ToolsetModeTb")).
 							Caption(_("Edit Mode ToolBar")).Position(2));
 
 	// destroy all special mode toolbars
@@ -472,7 +493,7 @@ void MainWindow::onChangeEditMode()
 	}
 
 	// create the right edit mode toolbar
-	switch(mEditMode)
+	switch(mToolsetMode)
 	{
 	case view:
 		// no custom view toolbar
@@ -490,7 +511,7 @@ void MainWindow::onChangeEditMode()
 		break;
 	}
 
-	mPropertyGridManager->SelectPage(mEditMode);
+	mPropertyGridManager->SelectPage(mToolsetMode);
 
 
 	// update frame manager
@@ -501,9 +522,9 @@ void MainWindow::initNodeEdit()
 {
 	// create a toolbar and add them to it
 	mNodeEditToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mNodeEditToolBar->AddTool(IDM_GRAPH_SELNODE, _("Select Node"), TOOL_BMP(select), _("Select node"), wxITEM_RADIO);
-	mNodeEditToolBar->AddTool(IDM_GRAPH_ADDNODE, _("Add Node"), TOOL_BMP(addnode), _("Add node"), wxITEM_RADIO);
-	mNodeEditToolBar->AddTool(IDM_GRAPH_DELNODE, _("Delete Node"), TOOL_BMP(delnode), _("Delete node"), wxITEM_RADIO);
+	mNodeEditToolBar->AddTool(IDM_NODE_SELECT, _("Select Node"), TOOL_BMP(select), _("Select node"), wxITEM_RADIO);
+	mNodeEditToolBar->AddTool(IDM_NODE_ADD, _("Add Node"), TOOL_BMP(addnode), _("Add node"), wxITEM_RADIO);
+	mNodeEditToolBar->AddTool(IDM_NODE_DELETE, _("Delete Node"), TOOL_BMP(delnode), _("Delete node"), wxITEM_RADIO);
 	mNodeEditToolBar->Realize();
 
 	mFrameManager.AddPane(mNodeEditToolBar,  wxAuiPaneInfo().Name(_("NodeEditTb")).
@@ -544,7 +565,7 @@ void MainWindow::onSelectNodeDel(wxCommandEvent &e)
 
 void MainWindow::updateProperties()
 {
-	switch(mEditMode)
+	switch(mToolsetMode)
 	{
 	case view:
 		mViewPropertyPage->update();
