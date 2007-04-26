@@ -16,6 +16,7 @@ public:
 	virtual bool rayCross(const Ogre::Vector2& loc) = 0;
 	virtual Ogre::Real getLengthSquared() const = 0;
 	virtual Ogre::Real getWidth() const = 0;
+	virtual void setWidth(const Ogre::Real& w) = 0;
 
 	virtual void onMoveNode() {};
 	virtual void setEdgeBoundary(const NodeId nd, const std::pair<Ogre::Vector3, Ogre::Vector3> &pos) {};

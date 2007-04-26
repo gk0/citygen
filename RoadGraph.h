@@ -195,6 +195,8 @@ public:
 	bool snapToOtherNode(const Ogre::Vector2 pos, const std::set<NodeId> ignoreSet, 
 		const Ogre::Real& snapSzSq, NodeId& otherNd) const;
 
+	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
+
 
 private:
 

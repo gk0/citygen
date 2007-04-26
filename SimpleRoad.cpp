@@ -2,6 +2,8 @@
 #include "SimpleRoad.h"
 #include "Geometry.h"
 
+using namespace Ogre;
+
 
 SimpleRoad::SimpleRoad(NodeInterface *src, NodeInterface *dst)
  : mRoadWidth(0.4)
@@ -43,4 +45,9 @@ Ogre::Real SimpleRoad::getLengthSquared() const
 Ogre::Real SimpleRoad::getWidth() const
 {
 	return mRoadWidth;
+}
+
+void SimpleRoad::setWidth(const Ogre::Real& w)
+{
+	mRoadWidth = w;
 }

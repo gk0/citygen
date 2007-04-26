@@ -17,6 +17,7 @@ typedef struct {
 	Ogre::Real degreeDeviance;
 	Ogre::Real snapSize;
 	Ogre::Real snapDeviance;
+	Ogre::Real roadWidth;
 } GrowthGenParams;
 
 class WorldCell : public WorldObject
@@ -27,8 +28,9 @@ private:
 
 	Ogre::String mName;
 	Ogre::Vector2 mCentre;
-	Ogre::ManualObject* mManualObject;
-	Ogre::ManualObject* mManualObject2;
+	Ogre::ManualObject* mRoadNetwork;
+	Ogre::ManualObject* mRoadJunctions;
+	Ogre::ManualObject* mBuildings;
 
 	RoadGraph mRoadGraph;
 	RoadGraph &mParentRoadGraph;

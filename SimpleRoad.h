@@ -21,6 +21,7 @@ public:
 	bool rayCross(const Ogre::Vector2& loc);
 	Ogre::Real getLengthSquared() const;
 	Ogre::Real getWidth() const;
+	void setWidth(const Ogre::Real& w);
 
 };
 

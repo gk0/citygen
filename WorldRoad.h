@@ -81,6 +81,7 @@ public:
 
 	const RoadGenParams& getGenParams();
 	void setGenParams(const RoadGenParams& g);
+	void setWidth(const Ogre::Real& w);
 
 private:
 	void build();

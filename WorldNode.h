@@ -72,6 +72,8 @@ public:
 	void onAddRoad();
 	void onRemoveRoad();
 
+	bool createTJunction();
+
 }; 
 
 #endif

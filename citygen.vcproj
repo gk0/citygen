@@ -222,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SimpleNode.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\SimpleRoad.cpp"
 				>
 			</File>

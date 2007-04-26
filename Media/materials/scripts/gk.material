@@ -223,6 +223,26 @@ material gk/Road
 	}
 }
 
+
+material gk/RoadJunction
+{
+	technique
+	{
+		pass
+		{
+			ambient 1 1 1
+			diffuse 1 1 1 
+			specular 0.2 0.2 0.2 10
+			
+			texture_unit
+			{
+				// Base Texture
+				texture junction.png
+			} 
+		}
+	}
+}
+
 material gk/YellowBrickRoad
 {
 	technique

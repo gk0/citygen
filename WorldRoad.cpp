@@ -164,7 +164,7 @@ void WorldRoad::createRoadGraph()
 	else
 	{
 		// create first road segment
-		SimpleNode* bn = new SimpleNode(mPlotList[1]);
+		SimpleNode* bn = new SimpleNode(mRoadGraph, mPlotList[1]);
 		NodeId cursorNode = mRoadGraph.addNode(bn);
 		RoadId roadSegId;
 		mRoadGraph.addRoad(getSrcNode()->mNodeId, cursorNode, this, roadSegId);
@@ -174,7 +174,7 @@ void WorldRoad::createRoadGraph()
 		for(unsigned int i=2; i<(mPlotList.size()-1); i++)
 		{
 			// add our nodes to the road graph
-			SimpleNode* bn = new SimpleNode(mPlotList[i]);
+			SimpleNode* bn = new SimpleNode(mRoadGraph, mPlotList[i]);
 			NodeId nextNodeId = mRoadGraph.addNode(bn);
 			mRoadGraph.addRoad(cursorNode, nextNodeId, this, roadSegId);
 			mRoadSegmentList.push_back(roadSegId);
@@ -808,4 +808,9 @@ void WorldRoad::setGenParams(const RoadGenParams& g)
 {
 	mGenParams = g;
 	onMoveNode();	// well it isn't but i want to do what it does
+}
+
+void WorldRoad::setWidth(const Ogre::Real& w)
+{
+	mGenParams.roadWidth = w;
 }

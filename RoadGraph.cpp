@@ -1060,3 +1060,37 @@ bool RoadGraph::snapToOtherNode(const Vector2 pos, const std::set<NodeId> ignore
 	}
 	return success;
 }
+
+Vector2 RoadGraph::getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR)
+{
+	Real lWidth, rWidth;
+	Vector2 l1, l2, r1, r2, lOffset, rOffset;
+
+	l1 = getSrcNode(leftR)->getPosition2D();
+	l2 = getDstNode(leftR)->getPosition2D();
+	r1 = getSrcNode(rightR)->getPosition2D();
+	r2 = getDstNode(rightR)->getPosition2D();
+
+	lWidth = getRoad(leftR)->getWidth();
+	rWidth = getRoad(rightR)->getWidth();
+
+	lOffset = (l2 - l1).perpendicular();
+	lOffset.normalise();
+	lOffset *= lWidth;
+
+	rOffset = (r2 - r1).perpendicular();
+	rOffset.normalise();
+	rOffset *= rWidth;
+
+	l1 -= lOffset;
+	l2 -= lOffset;
+	r1 += rOffset;
+	r2 += rOffset;
+
+	// if parallel, use l1 as pos
+	Vector2 pos;
+	if(Geometry::lineIntersect(l1, l2, r1, r2, pos))
+		return pos;
+	else
+		return l1;
+}

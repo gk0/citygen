@@ -50,9 +50,11 @@ void WorldCell::init()
 	mGrowthGenParams.degreeDeviance = 0.01;
 	mGrowthGenParams.snapSize = 2.4;
 	mGrowthGenParams.snapDeviance = 0.1;
+	mGrowthGenParams.roadWidth = 0.4;
 
-	mManualObject = 0;
-	mManualObject2 = 0;
+	mRoadNetwork = 0;
+	mRoadJunctions = 0;
+	mBuildings = 0;
 
 	mName = "cell"+StringConverter::toString(mInstanceCount++);
 	mSceneNode = WorldFrame::getSingleton().getSceneManager()->getRootSceneNode()->createChildSceneNode(mName);
@@ -77,17 +79,24 @@ void WorldCell::clear()
 
 void WorldCell::destroySceneObject()
 {
-	if(mManualObject) {
-		mSceneNode->detachObject(mManualObject->getName());
-		mSceneNode->getCreator()->destroyManualObject(mManualObject);
-		delete mManualObject;
-		mManualObject = 0;
+	if(mRoadNetwork) {
+		mSceneNode->detachObject(mRoadNetwork->getName());
+		mSceneNode->getCreator()->destroyManualObject(mRoadNetwork);
+		delete mRoadNetwork;
+		mRoadNetwork = 0;
 	}
-	if(mManualObject2) {
-		mSceneNode->detachObject(mManualObject2->getName());
-		mSceneNode->getCreator()->destroyManualObject(mManualObject2);
-		delete mManualObject2;
-		mManualObject2 = 0;
+	if(mRoadJunctions) {
+		mSceneNode->detachObject(mRoadJunctions->getName());
+		mSceneNode->getCreator()->destroyManualObject(mRoadJunctions);
+		delete mRoadJunctions;
+		mRoadJunctions = 0;
+	}
+
+	if(mBuildings) {
+		mSceneNode->detachObject(mBuildings->getName());
+		mSceneNode->getCreator()->destroyManualObject(mBuildings);
+		delete mBuildings;
+		mBuildings = 0;
 	}
 }
 
@@ -220,7 +229,7 @@ void WorldCell::build()
 				{
 				// road intersection
 				//NodeInterface *cursorNode = createNode(newPoint);
-				NodeInterface *cursorNode = new SimpleNode(newPoint);
+				NodeInterface *cursorNode = new SimpleNode(mRoadGraph, newPoint);
 				NodeId cursorNodeId = mRoadGraph.addNode(cursorNode);
 				cursorNode->mNodeId = cursorNodeId;
 				createRoad(currentNode, cursorNode);
@@ -267,23 +276,37 @@ void WorldCell::build()
 	// get time interval
 	t2 = wxDateTime::UNow();
 
+
+	// Create the Road Junctions
+	mRoadJunctions = new ManualObject(mName+"Junc");
+	mRoadJunctions->begin("gk/RoadJunction", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	int junctionFailCount = 0;
+
+	NodeIterator nIt, nEnd;
+	for(boost::tie(nIt, nEnd) = mRoadGraph.getNodes(); nIt != nEnd; nIt++)
+	{
+		NodeInterface* ni = mRoadGraph.getNode(*nIt);
+		if(typeid(*ni) == typeid(SimpleNode))
+		{
+			static_cast<SimpleNode*>(ni)->createJunction(mRoadJunctions);
+		}
+	}
+
+	mRoadJunctions->end();
+	mSceneNode->attachObject(mRoadJunctions);
+
+
 	// Create the Road Network
-	mManualObject = new ManualObject(mName);
-	mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	mRoadNetwork = new ManualObject(mName+"Road");
+	mRoadNetwork->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 	// Road Segments
 	RoadIterator rIt, rEnd;
 	for(boost::tie(rIt, rEnd) = mRoadGraph.getRoads(); rIt != rEnd; rIt++)
-		createRoad(*rIt, mManualObject);
-	
-	// Road Junctions
-	int junctionFailCount = 0;
-	NodeIterator nIt, nEnd;
-	for(boost::tie(nIt, nEnd) = mRoadGraph.getNodes(); nIt != nEnd; nIt++)
-		if(!createJunction(*nIt, mManualObject)) junctionFailCount++;
+		createRoad(*rIt, mRoadNetwork);
 
-	mManualObject->end();
-	mSceneNode->attachObject(mManualObject);
+	mRoadNetwork->end();
+	mSceneNode->attachObject(mRoadNetwork);
 
 
 	//TODO: oh shit, it works for small cells but not bigns
@@ -300,8 +323,8 @@ void WorldCell::build()
 
 
 	// declare the manual object
-	mManualObject2 = new ManualObject(mName+"b");
-	mManualObject2->begin("gk/Building", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	mBuildings = new ManualObject(mName+"b");
+	mBuildings->begin("gk/Building", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 	// create lot of little boxes with our cycles
 	vector< vector<NodeInterface*> >::const_iterator ncIt, ncEnd;
@@ -320,14 +343,14 @@ void WorldCell::build()
 		Real height = foundation + 1.2 + (((float)rand()/(float)RAND_MAX) * 4);
 
 		//
-		createBuilding(mManualObject2, footprint, foundation, height);
+		createBuilding(mBuildings, footprint, foundation, height);
 
 	}
-	mManualObject2->end();
-	mSceneNode->attachObject(mManualObject2);
+	mBuildings->end();
+	mSceneNode->attachObject(mBuildings);
 
-	mManualObject->setVisible(mShowRoads);
-	mManualObject2->setVisible(mShowBuildings);
+	mRoadNetwork->setVisible(mShowRoads);
+	mBuildings->setVisible(mShowBuildings);
 
 	wxLongLong lTimeGen = (t2 - t1).GetMilliseconds();
 	wxLongLong lTimeTotal = (wxDateTime::UNow() - t1).GetMilliseconds();
@@ -484,28 +507,6 @@ void WorldCell::setBoundary(const vector<NodeInterface*> &nodeCycle)
 	}
 	invalidate();
 }
-/*
-void WorldCell::setBoundary(const vector<RoadInterface*> &b)
-{
-	if(b != mBoundaryRoads)
-	{
-		clearRoadGraph();
-		clearBoundary();
-		mBoundaryRoads = b;
-		mBoundaryCycle = getBoundaryCycle();
-
-		// set up listeners to receive invalidate events from roads
-		vector<RoadInterface*>::iterator rIt, rEnd;
-		for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
-		{
-			if(typeid(*(*rIt)) == typeid(WorldRoad))
-			{
-				static_cast<WorldRoad*>(*rIt)->attach(this);
-			}
-		}
-		invalidate();
-	}
-}*/
 
 void WorldCell::addFilament(WorldRoad* f)
 {
@@ -581,7 +582,7 @@ const vector<RoadInterface*>& WorldCell::getFilaments() const
 
 NodeInterface* WorldCell::createNode(const Vector2 &pos)
 {
-	SimpleNode *sn = new SimpleNode(pos);
+	SimpleNode *sn = new SimpleNode(mRoadGraph, pos);
 	NodeId nd = mRoadGraph.addNode(sn);
 	sn->mNodeId = nd;
 	return sn;
@@ -593,6 +594,7 @@ RoadInterface* WorldCell::createRoad(NodeInterface *n1, NodeInterface *n2)
 	if(mRoadGraph.addRoad(n1->mNodeId, n2->mNodeId, rd))
 	{
 		SimpleRoad *sr = new SimpleRoad(n1, n2);
+		sr->setWidth(mGrowthGenParams.roadWidth);
 		mRoadGraph.setRoad(rd, sr);
 		return sr;
 	}
@@ -607,50 +609,6 @@ void WorldCell::deleteRoad(RoadInterface *ri)
 	// delete it
 	delete ri;
 }
-/*
-// there is a decision here about whether or not i should have just calculate this when 
-// working out the cycle but I've decided that since this data is need so less often 
-// than just the boundary set it is an acceptable overhead
-// there isn't that much work in it!
-vector<NodeInterface*> WorldCell::getBoundaryCycle()
-{
-	// the direction is dictated by the order found in the first road seg, so random!!
-	vector<NodeInterface*> cycle;
-
-
-	vector<RoadInterface*> boundaries(mBoundaryRoads);
-	vector<RoadInterface*>::iterator rIt = boundaries.begin(), rEnd; 
-	if(rIt != boundaries.end())
-	{
-		cycle.push_back((*rIt)->getSrcNode());
-		cycle.push_back((*rIt)->getDstNode());
-		boundaries.erase(rIt);
-		rIt = boundaries.begin();
-	}
-	while(rIt != boundaries.end())
-	{
-		for(rEnd = boundaries.end(); rIt != rEnd; rIt++)
-		{
-			size_t lastCycleIndex = cycle.size() - 1;
-			if(cycle[lastCycleIndex] == (*rIt)->getSrcNode())
-			{
-				cycle.push_back((*rIt)->getDstNode());
-				boundaries.erase(rIt);
-				rIt = boundaries.begin();
-				break;
-			}
-			else if(cycle[lastCycleIndex] == (*rIt)->getDstNode())
-			{
-				cycle.push_back((*rIt)->getSrcNode());
-				boundaries.erase(rIt);
-				rIt = boundaries.begin();
-				break;
-			}
-		}
-	}
-	return cycle;
-}
-*/
 
 bool WorldCell::isOnBoundary(NodeInterface *ni)
 {
@@ -806,25 +764,25 @@ void WorldCell::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3
 			const Vector3 &b1, const Vector3 &b2, const Vector3 &bNorm, Real uMin, Real uMax)
 {
 	// create road segment
-	mManualObject->position(a1);
-	mManualObject->normal(aNorm);
-	mManualObject->textureCoord(uMin, 0);
-	mManualObject->position(a2);
-	mManualObject->normal(aNorm);
-	mManualObject->textureCoord(uMin, 1);
-	mManualObject->position(b1);
-	mManualObject->normal(bNorm);
-	mManualObject->textureCoord(uMax, 0);
+	mRoadNetwork->position(a1);
+	mRoadNetwork->normal(aNorm);
+	mRoadNetwork->textureCoord(uMin, 0);
+	mRoadNetwork->position(a2);
+	mRoadNetwork->normal(aNorm);
+	mRoadNetwork->textureCoord(uMin, 1);
+	mRoadNetwork->position(b1);
+	mRoadNetwork->normal(bNorm);
+	mRoadNetwork->textureCoord(uMax, 0);
 
-	mManualObject->position(a2);
-	mManualObject->normal(aNorm);
-	mManualObject->textureCoord(uMin, 1);
-	mManualObject->position(b2);
-	mManualObject->normal(bNorm);
-	mManualObject->textureCoord(uMax, 1);
-	mManualObject->position(b1);
-	mManualObject->normal(bNorm);
-	mManualObject->textureCoord(uMax, 0);
+	mRoadNetwork->position(a2);
+	mRoadNetwork->normal(aNorm);
+	mRoadNetwork->textureCoord(uMin, 1);
+	mRoadNetwork->position(b2);
+	mRoadNetwork->normal(bNorm);
+	mRoadNetwork->textureCoord(uMax, 1);
+	mRoadNetwork->position(b1);
+	mRoadNetwork->normal(bNorm);
+	mRoadNetwork->textureCoord(uMax, 0);
 }
 
 void WorldCell::createRoad(const RoadId rd, ManualObject *m)
@@ -832,145 +790,11 @@ void WorldCell::createRoad(const RoadId rd, ManualObject *m)
 	RoadInterface* r = mRoadGraph.getRoad(rd);
 	if(typeid(*r) != typeid(WorldRoad))
 	{
-		//const Vector3 a3, b3;
-		//a3 = mRoadGraph.getSrcNode(*rIt)->getPosition3D();
-		//b3 = mRoadGraph.getDstNode(*rIt)->getPosition3D();
-		Real roadWidth = r->getWidth();
-
-		Vector2 a, b, dir, offset;
-		a = mRoadGraph.getSrcNode(rd)->getPosition2D();
-		b = mRoadGraph.getDstNode(rd)->getPosition2D();
-		dir = b - a;
-		dir.normalise(); // for radius crap
-		offset = dir.perpendicular();
-		offset.normalise();
-		offset *= roadWidth;
-
-		// give a little room for junctions
-		// TODO: the problem is MUCH more complicated than this
-		//dir *= (roadWidth);
-		//a += dir;
-		//b -= dir;
-
-		//mManualObject->position(mRoadGraph.getSrcNode(*rIt)->getPosition3D());
-		//mManualObject->position(mRoadGraph.getDstNode(*rIt)->getPosition3D());
-
-		Real ay = mRoadGraph.getSrcNode(rd)->getPosition3D().y - 0.002;
-		Real by = mRoadGraph.getDstNode(rd)->getPosition3D().y - 0.001;
-		Vector3 a1(a.x - offset.x, ay, a.y - offset.y);
-		Vector3 a2(a.x + offset.x, ay, a.y + offset.y);
-		Vector3 b1(b.x - offset.x, by, b.y - offset.y);
-		Vector3 b2(b.x + offset.x, by, b.y + offset.y);
-
+		Vector3 a1,a2, b1, b2;
+		boost::tie(a1,a2) = mRoadGraph.getSrcNode(rd)->getRoadJunction(rd);
+		boost::tie(b2,b1) = mRoadGraph.getDstNode(rd)->getRoadJunction(rd);
 		buildSegment(a1, a2, Vector3::UNIT_Y, b1, b2, Vector3::UNIT_Y, 0, 4);
 	}
-}
-
-
-bool WorldCell::createJunction(const NodeId nd, ManualObject *m)
-{
-	// how many roads connect here
-	size_t degree = mRoadGraph.getDegree(nd);
-
-	switch(degree)
-	{
-	case 0:
-	case 1:
-	case 2:
-		// nothing to do here
-		return true;
-	case 3:
-		//createTJunction(nd, m);
-		return true;
-	case 4:
-	case 5:
-	case 6:
-	case 7:
-		//createTJunction(nd, m);
-		break;
-	default:
-		// can't do this aggh
-		return false;
-	}
-
-	NodeInterface *node = mRoadGraph.getNode(nd);
-	Vector2 nodePos2D = node->getPosition2D();
-	Real height = node->getPosition3D().y + 0.1;
-
-	//THINK!!
-	//
-	RoadId firstRoad, previousRoad, currentRoad;
-	NodeId currentNode;
-
-	vector<Vector2> pointlist;
-	RoadIterator2 rIt, rEnd;
-	boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(nd); 
-	firstRoad = previousRoad = *rIt;
-
-	// start with the second road using the first as prev
-	for(size_t i = 1; i < degree; i++)
-	{
-		mRoadGraph.getCounterClockwiseMostFromPrev(mRoadGraph.getDst(previousRoad), nd, currentNode);
-		currentRoad = mRoadGraph.getRoad(nd, currentNode);
-		Vector2 pos;
-		if(getRoadBounaryIntersection(previousRoad, currentRoad, pos))
-			pointlist.push_back(pos);
-		else
-			return false;
-		previousRoad = currentRoad;
-	}
-	Vector2 pos;
-	if(getRoadBounaryIntersection(previousRoad, firstRoad, pos))
-		pointlist.push_back(pos);
-	else
-		return false;
-
-	//
-	//Triangulate it 
-	vector<Vector2> result;
-	if(Triangulate::Process(pointlist, result))
-	{
-		for(size_t i=0; i<result.size(); i+=3)
-		{
-			m->position(Vector3(result[i+2].x, height, result[i+2].y));
-			m->normal(Vector3::UNIT_Y);
-			m->position(Vector3(result[i+1].x, height, result[i+1].y));
-			m->normal(Vector3::UNIT_Y);
-			m->position(Vector3(result[i].x, height, result[i].y));
-			m->normal(Vector3::UNIT_Y);
-		}
-		return true;
-	}
-	else return false;
-}
-
-bool WorldCell::getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR, Vector2 &pos)
-{
-	Real lWidth, rWidth;
-	Vector2 l1, l2, r1, r2, lOffset, rOffset;
-
-	l1 = mRoadGraph.getSrcNode(leftR)->getPosition2D();
-	l2 = mRoadGraph.getDstNode(leftR)->getPosition2D();
-	r1 = mRoadGraph.getSrcNode(rightR)->getPosition2D();
-	r2 = mRoadGraph.getDstNode(rightR)->getPosition2D();
-
-	lWidth = mRoadGraph.getRoad(leftR)->getWidth();
-	rWidth = mRoadGraph.getRoad(rightR)->getWidth();
-
-	lOffset = (l2 - l1).perpendicular();
-	lOffset.normalise();
-	lOffset *= lWidth;
-
-	rOffset = (r2 - r1).perpendicular();
-	rOffset.normalise();
-	rOffset *= rWidth;
-
-	l1 -= lOffset;
-	l2 -= lOffset;
-	r1 += rOffset;
-	r2 += rOffset;
-
-	return Geometry::lineIntersect(l1, l2, r1, r2, pos);
 }
 
 void WorldCell::showSelected(bool show)
@@ -1038,11 +862,11 @@ TiXmlElement* WorldCell::saveXML()
 	growthGenParams->LinkEndChild(seed);
 
 	TiXmlElement *segmentSize = new TiXmlElement("segmentSize");  
-	segmentSize->SetAttribute("value", mGrowthGenParams.segmentSize);
+	segmentSize->SetDoubleAttribute("value", mGrowthGenParams.segmentSize);
 	growthGenParams->LinkEndChild(segmentSize);
 
 	TiXmlElement *segmentDeviance = new TiXmlElement("segmentDeviance");  
-	segmentDeviance->SetAttribute("value", mGrowthGenParams.segmentDeviance);
+	segmentDeviance->SetDoubleAttribute("value", mGrowthGenParams.segmentDeviance);
 	growthGenParams->LinkEndChild(segmentDeviance);
 
 	TiXmlElement *degree = new TiXmlElement("degree");  
@@ -1050,32 +874,29 @@ TiXmlElement* WorldCell::saveXML()
 	growthGenParams->LinkEndChild(degree);
 
 	TiXmlElement *degreeDeviance = new TiXmlElement("degreeDeviance");  
-	degreeDeviance->SetAttribute("value", mGrowthGenParams.degreeDeviance);
+	degreeDeviance->SetDoubleAttribute("value", mGrowthGenParams.degreeDeviance);
 	growthGenParams->LinkEndChild(degreeDeviance);
 
 	TiXmlElement *snapSize = new TiXmlElement("snapSize");  
-	snapSize->SetAttribute("value", mGrowthGenParams.snapSize);
+	snapSize->SetDoubleAttribute("value", mGrowthGenParams.snapSize);
 	growthGenParams->LinkEndChild(snapSize);
 
 	TiXmlElement *snapDeviance = new TiXmlElement("snapDeviance");  
-	snapDeviance->SetAttribute("value", mGrowthGenParams.snapDeviance);
+	snapDeviance->SetDoubleAttribute("value", mGrowthGenParams.snapDeviance);
 	growthGenParams->LinkEndChild(snapDeviance);
 
 	return root;
 }
 
-
-
-
-
 void WorldCell::showRoads(bool show)
 {
 	mShowRoads = show;
-	if(mManualObject) mManualObject->setVisible(mShowRoads);
+	if(mRoadNetwork) mRoadNetwork->setVisible(mShowRoads);
+	if(mRoadJunctions) mRoadJunctions->setVisible(mShowRoads);
 }
 
 void WorldCell::showBuildings(bool show)
 {
 	mShowBuildings = show;
-	if(mManualObject2) mManualObject2->setVisible(mShowBuildings);
+	if(mBuildings) mBuildings->setVisible(mShowBuildings);
 }

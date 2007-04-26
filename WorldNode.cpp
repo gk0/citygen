@@ -216,18 +216,15 @@ void WorldNode::build()
 	switch(mDegree)
 	{
 	case 0:
-		mMesh->setVisible(true);
 		return;
 	case 1:
 		mMesh->setVisible(true);
 		createTerminus();
 		return;
 	case 2:
-		// use generic
-		mMesh->setVisible(false);
 		break;
 	case 3:
-		//createTJunction(nd, m);
+		if(createTJunction()) return;
 		break;
 	case 4:
 	case 5:
@@ -239,6 +236,7 @@ void WorldNode::build()
 		// can't do this aggh
 		return;
 	}
+	mMesh->setVisible(false);
 
 	Vector2 nodePos2D = getPosition2D();
 	Real height = getPosition3D().y + 0.3;
@@ -268,14 +266,14 @@ void WorldNode::build()
 		roadClockwiseList.push_back(currentRoad);
 
 		// store intersection between previous and current road
-		pointlist.push_back(getRoadBounaryIntersection(previousRoad, currentRoad));	
+		pointlist.push_back(mRoadGraph.getRoadBounaryIntersection(previousRoad, currentRoad));	
 
 		// advance
 		previousRoad = currentRoad;
 		previousNode = currentNode;
 	}
 	// store intersection between last previous and first road
-	pointlist.push_back(getRoadBounaryIntersection(previousRoad, firstRoad));	
+	pointlist.push_back(mRoadGraph.getRoadBounaryIntersection(previousRoad, firstRoad));	
 
 	// fill the junction data for use by roads
 	mRoadJunction.clear();
@@ -296,7 +294,7 @@ void WorldNode::build()
 	{
 		// declare the manual object
 		mJunctionPlate = new ManualObject(mName+"j");
-		mJunctionPlate->begin("gk/Hilite/Red2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+		mJunctionPlate->begin("gk/RoadJunction", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 		Vector2 poser = getPosition2D();
 		for(size_t i=0; i<result.size(); i+=3)
@@ -306,16 +304,15 @@ void WorldNode::build()
 			result[i+1] -= poser;
 			result[i+2] -= poser;
 
-			mJunctionPlate->position(Vector3(result[i+2].x, 0.4, result[i+2].y));
+			mJunctionPlate->position(Vector3(result[i+2].x, 0.3, result[i+2].y));
 			mJunctionPlate->normal(Vector3::UNIT_Y);
-			mJunctionPlate->position(Vector3(result[i+1].x, 0.4, result[i+1].y));
+			mJunctionPlate->position(Vector3(result[i+1].x, 0.3, result[i+1].y));
 			mJunctionPlate->normal(Vector3::UNIT_Y);
-			mJunctionPlate->position(Vector3(result[i].x, 0.4, result[i].y));
+			mJunctionPlate->position(Vector3(result[i].x, 0.3, result[i].y));
 			mJunctionPlate->normal(Vector3::UNIT_Y);
 		}
 		mJunctionPlate->end();
 		mSceneNode->attachObject(mJunctionPlate);
-		mMesh->setVisible(false);
 	}
 }
 
@@ -328,7 +325,7 @@ void WorldNode::createTerminus()
 	boost::tie(rIt2, rEnd2) = mRoadGraph.getRoadsFromNode(mNodeId); 
 	if(rIt2 != rEnd2)
 	{		
-		Real h = getPosition3D().y + 0.3;
+		Real h = getPosition3D().y + 0.4;
 		Vector2 p1, p2, offset;
 		p1 = mRoadGraph.getSrcNode(*rIt2)->getPosition2D();
 		p2 = mRoadGraph.getDstNode(*rIt2)->getPosition2D();
@@ -340,40 +337,6 @@ void WorldNode::createTerminus()
 		mRoadJunction[*rIt2] = std::make_pair(Vector3(p1.x - offset.x, h, p1.y - offset.y),
 						Vector3(p1.x + offset.x, h, p1.y + offset.y));
 	}
-}
-
-Vector2 WorldNode::getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR)
-{
-	Real lWidth, rWidth;
-	Vector2 l1, l2, r1, r2, lOffset, rOffset;
-
-	l1 = mRoadGraph.getSrcNode(leftR)->getPosition2D();
-	l2 = mRoadGraph.getDstNode(leftR)->getPosition2D();
-	r1 = mRoadGraph.getSrcNode(rightR)->getPosition2D();
-	r2 = mRoadGraph.getDstNode(rightR)->getPosition2D();
-
-	lWidth = mRoadGraph.getRoad(leftR)->getWidth();
-	rWidth = mRoadGraph.getRoad(rightR)->getWidth();
-
-	lOffset = (l2 - l1).perpendicular();
-	lOffset.normalise();
-	lOffset *= lWidth;
-
-	rOffset = (r2 - r1).perpendicular();
-	rOffset.normalise();
-	rOffset *= rWidth;
-
-	l1 -= lOffset;
-	l2 -= lOffset;
-	r1 += rOffset;
-	r2 += rOffset;
-
-	// if parallel, use l1 as pos
-	Vector2 pos;
-	if(Geometry::lineIntersect(l1, l2, r1, r2, pos))
-		return pos;
-	else
-		return l1;
 }
 
 std::pair<Vector3, Vector3> WorldNode::getRoadJunction(RoadId rd) 
@@ -425,4 +388,81 @@ void WorldNode::invalidate()
 		if(typeid(*ri) == typeid(WorldRoad))
 			static_cast<WorldRoad*>(ri)->invalidate();
 	}
+}
+
+
+bool WorldNode::createTJunction()
+{
+	mRoadJunction.clear();
+
+	std::vector<RoadId> throughRoads(2);
+	RoadId joiningRoad;
+	Ogre::Real joiningRoadWidth;
+
+	//
+	RoadIterator2 rIt, rIt2, rEnd;
+	boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(mNodeId); 
+	joiningRoad = *rIt;
+	joiningRoadWidth = mRoadGraph.getRoad(*rIt)->getWidth();
+
+	// 
+	rIt++;
+	if(mRoadGraph.getRoad(*rIt)->getWidth() == joiningRoadWidth)
+	{
+		rIt2 = rIt;
+		rIt2++;
+		if(mRoadGraph.getRoad(*rIt2)->getWidth() != joiningRoadWidth)
+		{
+			throughRoads[0] = joiningRoad;
+			throughRoads[1] = *rIt;
+			joiningRoad = *rIt2;
+		}
+		else 
+			return false;	// all roads same width not a T-Junction
+	}
+	else
+	{
+		rIt2 = rIt;
+		rIt2++;
+		if(mRoadGraph.getRoad(*rIt2)->getWidth() == joiningRoadWidth)
+		{
+			throughRoads[0] = joiningRoad;
+			throughRoads[1] = *rIt2;
+			joiningRoad = *rIt;
+		}
+		else if(mRoadGraph.getRoad(*rIt)->getWidth() == mRoadGraph.getRoad(*rIt2)->getWidth())
+		{
+			throughRoads[0] = *rIt;
+			throughRoads[1] = *rIt2;
+		}
+		else return false; 	// all roads different width not a T-Junction
+	}
+
+	// get height
+	Real h = getPosition3D().y + 0.3;
+
+	// create simple junction for through road
+	Vector2 p1 = mRoadGraph.getRoadBounaryIntersection(throughRoads[0], throughRoads[1]);
+	Vector2 p2 = mRoadGraph.getRoadBounaryIntersection(throughRoads[1], throughRoads[0]);
+
+	mRoadJunction[throughRoads[0]] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+	mRoadJunction[throughRoads[1]] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
+
+	// create the juntion for the joining road
+	NodeId ccwNd;
+	mRoadGraph.getCounterClockwiseMostFromPrev(mRoadGraph.getDst(joiningRoad), mNodeId, ccwNd);
+	if(mRoadGraph.getDst(throughRoads[0]) == ccwNd)
+	{
+		p1 = mRoadGraph.getRoadBounaryIntersection(joiningRoad, throughRoads[0]);
+		p2 = mRoadGraph.getRoadBounaryIntersection(throughRoads[1], joiningRoad);
+		mRoadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+	}
+	else
+	{
+		p1 = mRoadGraph.getRoadBounaryIntersection(joiningRoad, throughRoads[1]);
+		p2 = mRoadGraph.getRoadBounaryIntersection(throughRoads[0], joiningRoad);
+		//mRoadJunction[joiningRoad] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
+		mRoadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+	}
+	return true;
 }

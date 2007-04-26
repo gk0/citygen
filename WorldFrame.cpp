@@ -599,7 +599,6 @@ TiXmlElement* WorldFrame::saveXML()
 	{
 		cells->LinkEndChild((*cIt)->saveXML());
 	}
-	
 	return root;
 }
 

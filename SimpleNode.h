@@ -2,29 +2,21 @@
 #define BASICNODE_H
 
 #include "stdafx.h"
-#include "RoadGraph.h"
 #include "NodeInterface.h"
-#include "WorldFrame.h"
 
 class SimpleNode : public NodeInterface
 {
 private:
 	Ogre::Vector3 mPosition;
+	RoadGraph& mRoadGraph;
+	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > mRoadJunction;
+
 
 public:
-	SimpleNode() { }
-	SimpleNode(Ogre::Real x, Ogre::Real z)
-	{
-		setPosition2D(x, z);
-	}
-	SimpleNode(const Ogre::Vector2 &pos)
-	{
-		setPosition2D(pos.x, pos.y);
-	}
-	SimpleNode(const Ogre::Vector3 &pos)
-	{
-		setPosition3D(pos.x, pos.y, pos.z);
-	}
+	SimpleNode(RoadGraph &g);
+	SimpleNode(RoadGraph &g, Ogre::Real x, Ogre::Real z);
+	SimpleNode(RoadGraph &g, const Ogre::Vector2 &pos);
+	SimpleNode(RoadGraph &g, const Ogre::Vector3 &pos);
 
 	inline Ogre::Vector2 getPosition2D() const
 	{
@@ -37,20 +29,15 @@ public:
 		return mPosition;
 	}
 
+	bool setPosition2D(Ogre::Real x, Ogre::Real y);
+
+	void createJunction(Ogre::ManualObject* junctionPlate);
+	
+	std::pair<Ogre::Vector3, Ogre::Vector3> getRoadJunction(RoadId rd);
+
+
 
 private:
-	
-	bool setPosition2D(Ogre::Real x, Ogre::Real z)
-	{
-		Ogre::Real y;
-		if(WorldFrame::getSingleton().plotPointOnTerrain(x, y, z))
-		{
-			setPosition3D(x,y+0.199,z);
-			return true;
-		}
-		return false;
-	}
-
 	bool setPosition2D(const Ogre::Vector2& pos)
 	{
 		return setPosition2D(pos.x, pos.y);
@@ -62,6 +49,9 @@ private:
 		mPosition.y = y;
 		mPosition.z = z;
 	}
+
+	void createTerminus();
+	bool createTJunction();
 
 
 }; 
