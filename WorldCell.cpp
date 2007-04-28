@@ -50,6 +50,8 @@ void WorldCell::init()
 	mGrowthGenParams.degreeDeviance = 0.01;
 	mGrowthGenParams.snapSize = 2.4;
 	mGrowthGenParams.snapDeviance = 0.1;
+	mGrowthGenParams.buildingHeight = 2.4;
+	mGrowthGenParams.buildingDeviance = 0.1;
 	mGrowthGenParams.roadWidth = 0.4;
 
 	mRoadNetwork = 0;
@@ -172,12 +174,13 @@ void WorldCell::build()
 	//unsigned int rotateCount = (Math::TWO_PI / theta);
 	//unsigned int degree = 4;
 	Ogre::Real snapSzSquared = mGrowthGenParams.snapSize * mGrowthGenParams.snapSize;
+
 	//-direction;
 
 	int seed = mGrowthGenParams.seed;
 
 	Ogre::Real segDevSz = mGrowthGenParams.segmentSize * mGrowthGenParams.segmentDeviance;
-	Ogre::Real segSzBase = mGrowthGenParams.segmentSize - segDevSz;
+	Ogre::Real segSzBase = mGrowthGenParams.segmentSize - (segDevSz / 2);
 
 	//int degDev = mGrowthGenParams.degree * mGrowthGenParams.degreeDeviance;
 	//int degBase = mGrowthGenParams.degree - degDev;
@@ -326,6 +329,9 @@ void WorldCell::build()
 	mBuildings = new ManualObject(mName+"b");
 	mBuildings->begin("gk/Building", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
+	Real buildingDeviance = mGrowthGenParams.buildingHeight * mGrowthGenParams.buildingDeviance;
+	Real buildingHeight = mGrowthGenParams.buildingHeight - (buildingDeviance / 2);
+
 	// create lot of little boxes with our cycles
 	vector< vector<NodeInterface*> >::const_iterator ncIt, ncEnd;
 	vector< vector<RoadInterface*> >::const_iterator rcIt, rcEnd;
@@ -340,7 +346,7 @@ void WorldCell::build()
 
 		// get base foundation height
 		Real foundation = (*(ncIt->begin()))->getPosition3D().y - 1;
-		Real height = foundation + 1.2 + (((float)rand()/(float)RAND_MAX) * 4);
+		Real height = foundation + buildingHeight + (buildingDeviance * ((float)rand()/(float)RAND_MAX));
 
 		//
 		createBuilding(mBuildings, footprint, foundation, height);
@@ -834,6 +840,12 @@ bool WorldCell::loadXML(const TiXmlHandle& cellRoot)
 				element->QueryFloatAttribute("value", &mGrowthGenParams.snapSize);
 			else if(key == "snapDeviance")
 				element->QueryFloatAttribute("value", &mGrowthGenParams.snapDeviance);
+			else if(key == "roadWidth")
+				element->QueryFloatAttribute("value", &mGrowthGenParams.roadWidth);
+			else if(key == "buildingHeight")
+				element->QueryFloatAttribute("value", &mGrowthGenParams.buildingHeight);
+			else if(key == "buildingDeviance")
+				element->QueryFloatAttribute("value", &mGrowthGenParams.buildingDeviance);
 		}
 	}
 	return true;
@@ -884,6 +896,18 @@ TiXmlElement* WorldCell::saveXML()
 	TiXmlElement *snapDeviance = new TiXmlElement("snapDeviance");  
 	snapDeviance->SetDoubleAttribute("value", mGrowthGenParams.snapDeviance);
 	growthGenParams->LinkEndChild(snapDeviance);
+
+	TiXmlElement *roadWidth = new TiXmlElement("roadWidth");  
+	roadWidth->SetDoubleAttribute("value", mGrowthGenParams.roadWidth);
+	growthGenParams->LinkEndChild(roadWidth);
+
+	TiXmlElement *buildingHeight = new TiXmlElement("buildingHeight");  
+	buildingHeight->SetDoubleAttribute("value", mGrowthGenParams.buildingHeight);
+	growthGenParams->LinkEndChild(buildingHeight);
+
+	TiXmlElement *buildingDeviance = new TiXmlElement("buildingDeviance");  
+	buildingDeviance->SetDoubleAttribute("value", mGrowthGenParams.buildingDeviance);
+	growthGenParams->LinkEndChild(buildingDeviance);
 
 	return root;
 }

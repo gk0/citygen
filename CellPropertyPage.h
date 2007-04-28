@@ -17,6 +17,9 @@ private:
 	wxPGProperty* degreeDevianceProp;
 	wxPGProperty* snapSizeProp;
 	wxPGProperty* snapDevianceProp;
+	wxPGProperty* buildingHeightProp;
+	wxPGProperty* buildingDevianceProp;
+	wxPGProperty* roadWidthProp;
 	WorldFrame* mWorldFrame;
 
 

@@ -97,15 +97,17 @@ void SimpleNode::createJunction(ManualObject* junctionPlate)
 		currentRoad = mRoadGraph.getRoad(mNodeId, currentNode);
 		roadClockwiseList.push_back(currentRoad);
 
-		// store intersection between previous and current road
-		pointlist.push_back(mRoadGraph.getRoadBounaryIntersection(previousRoad, currentRoad));	
+		// MADNESS CHECK
+		Vector2 tmp = mRoadGraph.getRoadBounaryIntersection(previousRoad, currentRoad);
+		pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
 
 		// advance
 		previousRoad = currentRoad;
 		previousNode = currentNode;
 	}
 	// store intersection between last previous and first road
-	pointlist.push_back(mRoadGraph.getRoadBounaryIntersection(previousRoad, firstRoad));	
+	Vector2 tmp = mRoadGraph.getRoadBounaryIntersection(previousRoad, firstRoad);
+	pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
 
 	// fill the junction data for use by roads
 	mRoadJunction.clear();
@@ -156,6 +158,7 @@ std::pair<Vector3, Vector3> SimpleNode::getRoadJunction(RoadId rd)
 
 	return rIt->second;
 }
+
 bool SimpleNode::createTJunction()
 {
 	mRoadJunction.clear();
@@ -205,10 +208,13 @@ bool SimpleNode::createTJunction()
 
 	// get height
 	Real h = getPosition3D().y;
+	Vector2 nodePos2D = getPosition2D();
 
 	// create simple junction for through road
 	Vector2 p1 = mRoadGraph.getRoadBounaryIntersection(throughRoads[0], throughRoads[1]);
+	p1 = madnessCheck(nodePos2D, p1, 9.0f, 3.0f);
 	Vector2 p2 = mRoadGraph.getRoadBounaryIntersection(throughRoads[1], throughRoads[0]);
+	p2 = madnessCheck(nodePos2D, p2, 9.0f, 3.0f);
 
 	mRoadJunction[throughRoads[0]] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 	mRoadJunction[throughRoads[1]] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
@@ -219,13 +225,17 @@ bool SimpleNode::createTJunction()
 	if(mRoadGraph.getDst(throughRoads[0]) == ccwNd)
 	{
 		p1 = mRoadGraph.getRoadBounaryIntersection(joiningRoad, throughRoads[0]);
+		p1 = madnessCheck(nodePos2D, p1, 9.0f, 3.0f);
 		p2 = mRoadGraph.getRoadBounaryIntersection(throughRoads[1], joiningRoad);
+		p2 = madnessCheck(nodePos2D, p2, 9.0f, 3.0f);
 		mRoadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 	}
 	else
 	{
 		p1 = mRoadGraph.getRoadBounaryIntersection(joiningRoad, throughRoads[1]);
+		p1= madnessCheck(nodePos2D, p1, 9.0f, 3.0f);
 		p2 = mRoadGraph.getRoadBounaryIntersection(throughRoads[0], joiningRoad);
+		p2 = madnessCheck(nodePos2D, p2, 9.0f, 3.0f);
 		mRoadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 	}
 	return true;
@@ -254,3 +264,4 @@ void SimpleNode::createTerminus()
 						Vector3(p1.x + offset.x, h, p1.y + offset.y));
 	}
 }
+

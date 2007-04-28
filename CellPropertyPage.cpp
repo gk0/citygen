@@ -30,6 +30,12 @@ void CellPropertyPage::Init()
 	// Add float property (value type is actually double)
     snapSizeProp = Append(wxFloatProperty(wxT("Snap Size"), wxPG_LABEL, 4.5));
 	snapDevianceProp = Append(wxFloatProperty(wxT("Snap Size Deviance"), wxPG_LABEL, 0.1));
+
+	roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0.));
+
+	buildingHeightProp = Append(wxFloatProperty(wxT("Building Height"), wxPG_LABEL, 0.));
+	buildingDevianceProp = Append(wxFloatProperty(wxT("Building Deviance"), wxPG_LABEL, 0.));
+
 }
 
 
@@ -40,8 +46,11 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
-	if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) || (eventProp == snapSizeProp) 
-		|| (eventProp == segmentDevianceProp) || (eventProp == degreeDevianceProp) || (eventProp == snapDevianceProp))
+	if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) 
+		|| (eventProp == snapSizeProp) || (eventProp == segmentDevianceProp) 
+		|| (eventProp == degreeDevianceProp) || (eventProp == snapDevianceProp)
+		|| (eventProp == buildingHeightProp) || (eventProp == buildingDevianceProp)
+		|| (eventProp == roadWidthProp))
 	{
 		WorldCell *wc = mWorldFrame->getSelectedCell();
 		if(wc)
@@ -54,6 +63,9 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			g.degreeDeviance = GetPropertyValueAsDouble(degreeDevianceProp);
 			g.snapSize = GetPropertyValueAsDouble(snapSizeProp);
 			g.snapDeviance = GetPropertyValueAsDouble(snapDevianceProp);
+			g.roadWidth = GetPropertyValueAsDouble(roadWidthProp);
+			g.buildingHeight = GetPropertyValueAsDouble(buildingHeightProp);
+			g.buildingDeviance = GetPropertyValueAsDouble(buildingDevianceProp);
 			
 			wc->setGrowthGenParams(g);
 			mWorldFrame->update();
@@ -63,7 +75,6 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
     // Get resulting value - wxVariant is convenient here.
     wxVariant value = event.GetPropertyValue();
 }
-
 
 void CellPropertyPage::update()
 {
@@ -90,6 +101,9 @@ void CellPropertyPage::update()
 		SetPropertyValue(degreeDevianceProp, g.degreeDeviance);
 		SetPropertyValue(snapSizeProp, g.snapSize);
 		SetPropertyValue(snapDevianceProp, g.snapDeviance);
+		SetPropertyValue(roadWidthProp, g.roadWidth);
+		SetPropertyValue(buildingHeightProp, g.buildingHeight);
+		SetPropertyValue(buildingDevianceProp, g.buildingDeviance);
 	}
 	RefreshProperty(seedProp);
 	RefreshProperty(segmentSizeProp);
@@ -98,6 +112,9 @@ void CellPropertyPage::update()
 	RefreshProperty(segmentDevianceProp);
 	RefreshProperty(degreeDevianceProp);
 	RefreshProperty(snapDevianceProp);
+	RefreshProperty(roadWidthProp);
+	RefreshProperty(buildingHeightProp);
+	RefreshProperty(buildingDevianceProp);
 }
 
 void CellPropertyPage::setWorldFrame(WorldFrame* wf)

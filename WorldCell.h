@@ -17,6 +17,8 @@ typedef struct {
 	Ogre::Real degreeDeviance;
 	Ogre::Real snapSize;
 	Ogre::Real snapDeviance;
+	Ogre::Real buildingHeight;
+	Ogre::Real buildingDeviance;
 	Ogre::Real roadWidth;
 } GrowthGenParams;
 

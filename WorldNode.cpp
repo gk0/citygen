@@ -216,8 +216,11 @@ void WorldNode::build()
 	switch(mDegree)
 	{
 	case 0:
+		mLabel->setVisible(true);
+		mMesh->setVisible(true);
 		return;
 	case 1:
+		mLabel->setVisible(true);
 		mMesh->setVisible(true);
 		createTerminus();
 		return;
@@ -236,6 +239,7 @@ void WorldNode::build()
 		// can't do this aggh
 		return;
 	}
+	mLabel->setVisible(false);
 	mMesh->setVisible(false);
 
 	Vector2 nodePos2D = getPosition2D();
@@ -265,15 +269,17 @@ void WorldNode::build()
 		currentRoad = mRoadGraph.getRoad(mNodeId, currentNode);
 		roadClockwiseList.push_back(currentRoad);
 
-		// store intersection between previous and current road
-		pointlist.push_back(mRoadGraph.getRoadBounaryIntersection(previousRoad, currentRoad));	
+		// MADNESS CHECK
+		Vector2 tmp = mRoadGraph.getRoadBounaryIntersection(previousRoad, currentRoad);
+		pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
 
 		// advance
 		previousRoad = currentRoad;
 		previousNode = currentNode;
 	}
-	// store intersection between last previous and first road
-	pointlist.push_back(mRoadGraph.getRoadBounaryIntersection(previousRoad, firstRoad));	
+	// MADNESS CHECK
+	Vector2 tmp = mRoadGraph.getRoadBounaryIntersection(previousRoad, firstRoad);
+	pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
 
 	// fill the junction data for use by roads
 	mRoadJunction.clear();

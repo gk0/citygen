@@ -13,9 +13,9 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	: mRoadGraph(g),
 	  mSimpleRoadGraph(s)
 {
-	mGenParams.segmentSize = 10; //DEBUG: set to v. big 50 normal is 10
+	mGenParams.segmentSize = 5; //DEBUG: set to v. big 50 normal is 10
 	mGenParams.roadWidth = 1.0;
-	mGenParams.segmentDeviance= 20;
+	mGenParams.segmentDeviance= 25;
 
 	mSelected = false;
 	
