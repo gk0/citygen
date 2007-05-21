@@ -10,10 +10,20 @@
 class WorldNode;
 class WorldCanvas;
 
+enum RoadPlotAlgorithm
+{
+	EvenElevationDiff,
+	MinimumElevationDiff,
+	MinimumElevation
+};
+
 typedef struct {
+	RoadPlotAlgorithm algorithm;
 	Ogre::Real segmentSize;
-	Ogre::Real segmentDeviance;
+	Ogre::Degree segmentDeviance;
 	Ogre::Real roadWidth;
+	Ogre::uint16 numOfSamples;
+	bool debug;
 } RoadGenParams;
 
 class WorldRoad : public WorldObject, public RoadInterface
@@ -32,6 +42,7 @@ private:
 	RoadId mSimpleRoadId;
 
 	Ogre::ManualObject *mManualObject;
+	Ogre::ManualObject *mDebugObject;
 	Ogre::MovableText *mLabel;
 	Ogre::String mName;
 	bool mSelected;
@@ -83,6 +94,9 @@ public:
 	void setGenParams(const RoadGenParams& g);
 	void setWidth(const Ogre::Real& w);
 
+	bool loadXML(const TiXmlHandle& roadRoot);
+	TiXmlElement* saveXML();
+
 private:
 	void build();
 	void destroyRoadObject();
@@ -92,7 +106,20 @@ private:
 	void plotRoad();
 
 
-	Ogre::Vector3 findNextPoint(const Ogre::Vector2& cursor, const Ogre::Vector2& direction, const Ogre::Degree& dev) const;
+	void buildSampleFan(const Ogre::Vector2& cursor, const Ogre::Vector2& direction, 
+		std::vector<Ogre::Vector3> &samples) const;
+
+	Ogre::Vector3 selectMinElevation(const Ogre::Vector3 &lastSample, 
+		const std::vector<Ogre::Vector3> &samples);
+	
+	Ogre::Vector3 selectMinElevationDiff(const Ogre::Vector3 &lastSample, 
+		const std::vector<Ogre::Vector3> &samples);
+
+	Ogre::Vector3 selectEvenElevationDiff(const Ogre::Vector3 &lastSample, 
+		const std::vector<Ogre::Vector3> &samples, const Ogre::Vector3 &target);
+
+
+	void buildDebugSegments(const Ogre::Vector3 &pos, const std::vector<Ogre::Vector3> &samples);
 
 	bool getClosestIntersection(RoadId& rd, Ogre::Vector2& pos) const;
 

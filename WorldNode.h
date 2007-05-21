@@ -65,7 +65,7 @@ public:
 
 	void build();
 
-	std::pair<Ogre::Vector3, Ogre::Vector3> WorldNode::getRoadJunction(RoadId rd);
+	std::pair<Ogre::Vector3, Ogre::Vector3> getRoadJunction(RoadId rd);
 
 	void createTerminus();
 

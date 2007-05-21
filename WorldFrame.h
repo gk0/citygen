@@ -110,6 +110,7 @@ public:
 	void onCloseDoc();
 
 	bool plotPointOnTerrain(Ogre::Real x, Ogre::Real &y, Ogre::Real z);
+	bool plotPointOnTerrain(const Ogre::Vector2& pos2D, Ogre::Vector3& pos3D);
 	void selectNode(WorldNode* wn);
 	void highlightNode(WorldNode* wn);
 	bool highlightNodeFromLoc(const Ogre::Vector2 &loc);

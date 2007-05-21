@@ -450,6 +450,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 	// an intermediate structure is used for edges since there 
 	// is no guarantee the nodes have been loaded first
 	vector< pair<string, string> > edgeData;
+	vector<TiXmlElement*> edgeElements;
 
 	// TODO:
 	// check graph id
@@ -474,6 +475,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 		else if(key == "edge") 
 		{
 			edgeData.push_back(make_pair(pElem->Attribute("source"), pElem->Attribute("target")));
+			edgeElements.push_back(pElem);
 		}
 		else if(key == "cells") 
 			break;
@@ -493,6 +495,8 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 				// create the road in the scene
 				WorldRoad* wr = new WorldRoad(sourceIt->second, targetIt->second, mRoadGraph, mSimpleRoadGraph, mSceneManager);
 				mSceneRoadMap[wr->getSceneNode()] = wr;
+				const TiXmlHandle roadRoot(edgeElements[i]);
+				wr->loadXML(roadRoot);
 			}
 		}
 	}
@@ -583,11 +587,8 @@ TiXmlElement* WorldFrame::saveXML()
 	RoadIterator rIt, rEnd;
 	for(boost::tie(rIt, rEnd) = mSimpleRoadGraph.getRoads(); rIt != rEnd; rIt++) 
 	{
-		TiXmlElement * edge;
-		edge = new TiXmlElement("edge");  
-		edge->SetAttribute("source", (int) mSimpleRoadGraph.getSrcNode(*rIt));
-		edge->SetAttribute("target", (int) mSimpleRoadGraph.getDstNode(*rIt));
-		roadNetwork->LinkEndChild(edge); 
+		WorldRoad* wr = static_cast<WorldRoad*>(mSimpleRoadGraph.getRoad(*rIt));
+		roadNetwork->LinkEndChild(wr->saveXML());
 	}
 
 	TiXmlElement *cells = new TiXmlElement("cells"); 
@@ -1056,6 +1057,7 @@ void WorldFrame::onNewDoc()
 {
 	mHighlightedNode = 0;
 	mSelectedNode = 0;
+	mSelectedRoad = 0;
 	mIntersectionPresent = false;
 
 	
@@ -1098,6 +1100,17 @@ bool WorldFrame::plotPointOnTerrain(Real x, Real &y, Real z)
 			y = itr->worldFragment->singleIntersection.y;
 			return true;
 		}
+	}
+	return false;
+}
+
+bool WorldFrame::plotPointOnTerrain(const Vector2& pos2D, Vector3& pos3D)
+{
+	Vector3 tmp(pos2D.x, 0, pos2D.y);
+	if(plotPointOnTerrain(tmp.x, tmp.y, tmp.z))
+	{
+		pos3D = tmp;
+		return true;
 	}
 	return false;
 }

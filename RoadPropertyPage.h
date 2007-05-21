@@ -10,9 +10,12 @@ class RoadPropertyPage : public wxPropertyGridPage
 	DECLARE_CLASS(RoadPropertyPage)
 
 private:
+	wxPGProperty* plotAlgorProp;
 	wxPGProperty* segmentSizeProp;
 	wxPGProperty* roadWidthProp;
 	wxPGProperty* segmentDevianceProp;
+	wxPGProperty* samplesProp;
+	wxPGProperty* plotDebugProp;
 	WorldFrame* mWorldFrame;
 
 

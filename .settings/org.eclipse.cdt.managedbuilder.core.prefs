@@ -1,4 +1,4 @@
-#Wed Apr 25 03:10:15 BST 2007
+#Sat May 19 14:37:50 IST 2007
 cdt.managedbuild.config.gnu.cygwin.exe.debug.1311200916/internalBuilder/enabled=false
 cdt.managedbuild.config.gnu.cygwin.exe.debug.1311200916/internalBuilder/ignoreErr=true
 cdt.managedbuild.config.gnu.cygwin.exe.debug.1867627397/internalBuilder/enabled=false
@@ -24,8 +24,8 @@ environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.cygwin.exe.debug
 environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.cygwin.exe.debug.210259758=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<environment>\n<variable name\="LIBRARY_PATH" operation\="remove"/>\n</environment>\n
 environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment>\r\n<variable name\="LIBRARY_PATH" operation\="remove"/>\r\n</environment>\r\n
 environment/buildEnvironmentLibrary/cdt.managedbuild.config.gnu.cygwin.exe.release.177302170=<?xml version\="1.0" encoding\="UTF-8"?>\r\n<environment>\r\n<variable name\="LIBRARY_PATH" operation\="remove"/>\r\n</environment>\r\n
-environment/project=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\r\n<environment/>\r\n
-environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.1311200916=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\r\n<environment/>\r\n
-environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\r\n<environment/>\r\n
+environment/project=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<environment/>\n
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.1311200916=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<environment/>\n
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<environment/>\n
 environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.210259758=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<environment/>\n
-environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\r\n<environment/>\r\n
+environment/project/cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<environment/>\n

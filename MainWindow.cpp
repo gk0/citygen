@@ -112,7 +112,7 @@ END_EVENT_TABLE()
 
 
 MainWindow::MainWindow(wxWindow* parent)
-	: wxFrame(parent, -1, _("Citygen"),
+	: wxFrame(parent, -1, _("citygen"),
 	  wxDefaultPosition, wxSize(1024,768), wxDEFAULT_FRAME_STYLE)
 {
 	// notify wxAUI which frame to use
@@ -169,7 +169,7 @@ MainWindow::MainWindow(wxWindow* parent)
 	mFileToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
     mFileToolBar->AddTool(wxID_NEW, _("New"), TOOL_BMP(newdoc), _("New file"));
     mFileToolBar->AddTool(wxID_OPEN, _("Open"), TOOL_BMP(open), _("Open file"));
-    mFileToolBar->AddTool(wxID_SAVE, _("Save"), TOOL_BMP(save), _("Toggle button 1"), wxITEM_CHECK);
+    mFileToolBar->AddTool(wxID_SAVE, _("Save"), TOOL_BMP(save), _("Save file"), wxITEM_CHECK);
     mFileToolBar->AddSeparator();
     mFileToolBar->AddTool(wxID_HELP, _("Help"), TOOL_BMP(help), _("Help button"), wxITEM_CHECK);
 	mFileToolBar->Realize();
@@ -261,9 +261,11 @@ void MainWindow::onNew(wxCommandEvent &e)
 	if(!onSaveModified())
         return;
 
+	setFilename(_(""));
 	mWorldFrame->onNewDoc();
 	mViewModeToolBar->Enable(true);
 	mToolsetModeToolBar->Enable(true);
+	modify(true);
 }
 
 void MainWindow::onOpen(wxCommandEvent &e)
@@ -324,11 +326,13 @@ void MainWindow::onClose(wxCommandEvent &e)
 void MainWindow::onSave(wxCommandEvent &e)
 {
 	save();
+	mFileToolBar->ToggleTool(wxID_SAVE, false);
 }
 
 void MainWindow::onSaveAs(wxCommandEvent &e)
 {
 	saveAs();
+	mFileToolBar->ToggleTool(wxID_SAVE, false);
 }
 
 bool MainWindow::save()
@@ -584,7 +588,8 @@ void MainWindow::updateProperties()
 
 void MainWindow::modify(bool m) 
 { 
-	mModified = m; 
+	mModified = m;
+	mFileToolBar->EnableTool(wxID_SAVE, m);
 }
 
 bool MainWindow::isModified() 

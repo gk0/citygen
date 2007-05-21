@@ -124,6 +124,8 @@
 <tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.2137126500" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
 <option id="gnu.cpp.compiler.option.include.paths.340771013" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/home/gk/ogre/include/OGRE"/>
+<listOptionValue builtIn="false" value="../../tinyxml"/>
+<listOptionValue builtIn="false" value="../../wxPropertyGrid"/>
 <listOptionValue builtIn="false" value="/usr/include/atk-1.0"/>
 <listOptionValue builtIn="false" value="/usr/include/cairo"/>
 <listOptionValue builtIn="false" value="/usr/include/pango-1.0"/>
@@ -142,11 +144,15 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.1740266472" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
 <option id="gnu.cpp.link.option.libs.1669905160" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="OgreMain"/>
+<listOptionValue builtIn="false" value="tinyxml"/>
+<listOptionValue builtIn="false" value="wxPropertyGrid"/>
 <listOptionValue builtIn="false" value="X11"/>
 <listOptionValue builtIn="false" value="Xaw"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1200380566" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
 <listOptionValue builtIn="false" value="/home/gk/ogre/lib"/>
+<listOptionValue builtIn="false" value="&quot;../../tinyxml/Debug Ubuntu&quot;"/>
+<listOptionValue builtIn="false" value="../../wxPropertyGrid/Release"/>
 </option>
 <option id="gnu.cpp.link.option.flags.2037415617" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="`wx-config --libs`" valueType="string"/>
 </tool>
@@ -155,12 +161,6 @@
 </toolChain>
 <resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213./citygen/CellPropertyPage.h" name="CellPropertyPage.h" rcbsApplicability="disable" resourcePath="/citygen/CellPropertyPage.h" toolsToInvoke=""/>
 <resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213./citygen/NodePropertyPage.h" name="NodePropertyPage.h" rcbsApplicability="disable" resourcePath="/citygen/NodePropertyPage.h" toolsToInvoke=""/>
-<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213./citygen/CellPropertyPage.cpp" name="CellPropertyPage.cpp" rcbsApplicability="disable" resourcePath="/citygen/CellPropertyPage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629.57544000">
-<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629.57544000" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.2137126500"/>
-</resourceConfiguration>
-<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213./citygen/NodePropertyPage.cpp" name="NodePropertyPage.cpp" rcbsApplicability="disable" resourcePath="/citygen/NodePropertyPage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629.2142948316">
-<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629.2142948316" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.2137126500"/>
-</resourceConfiguration>
 <resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213./citygen/Ogre.log" name="Ogre.log" rcbsApplicability="disable" resourcePath="/citygen/Ogre.log" toolsToInvoke=""/>
 </configuration>
 <configuration artifactExtension="bin" artifactName="citygen" cleanCommand="rm -rf" description="Release on Ubuntu Feisty using gcc" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.210259758" name="Release GCC" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">

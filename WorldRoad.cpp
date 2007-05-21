@@ -13,13 +13,17 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	: mRoadGraph(g),
 	  mSimpleRoadGraph(s)
 {
+	mGenParams.algorithm = EvenElevationDiff;
 	mGenParams.segmentSize = 5; //DEBUG: set to v. big 50 normal is 10
 	mGenParams.roadWidth = 1.0;
 	mGenParams.segmentDeviance= 25;
+	mGenParams.numOfSamples = 5;
+	mGenParams.debug = true;
 
 	mSelected = false;
 	
 	mManualObject = 0;
+	mDebugObject = 0;
 	
 	mSimpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, mSimpleRoadId);
 	mSimpleRoadGraph.setRoad(mSimpleRoadId, this);
@@ -35,179 +39,18 @@ WorldRoad::~WorldRoad()
 	destroyRoadGraph();
 	mSimpleRoadGraph.removeRoad(mSimpleRoadId);
 
+	if(mDebugObject)
+	{
+		mSceneNode->detachObject(mDebugObject);
+		delete mDebugObject;
+		mDebugObject = 0;
+	}
+
 	destroyRoadObject();
 	SceneManager* destroyer = mSceneNode->getCreator();
 	destroyer->destroySceneNode(mSceneNode->getName());
 }
 
-
-//void WorldRoad::setSrcNode(WorldNode* src)
-//{
-//	if(src != mSrcNode)
-//	{
-//		mSrcNode->detach(this);
-//		mSrcNode = src;
-//		mSrcNode->attach(this);
-//		mSrcNode->invalidate();
-//	}
-//}
-//
-//void WorldRoad::setDstNode(WorldNode* dst)
-//{
-//	if(dst != mDstNode)
-//	{
-//		mDstNode->detach(this);
-//		mDstNode = dst;
-//		mDstNode->attach(this);
-//		mDstNode->invalidate();
-//	}
-//}
-
-NodeInterface* WorldRoad::getSrcNode() const
-{
-	return mSimpleRoadGraph.getSrcNode(mSimpleRoadId);
-}
-
-NodeInterface* WorldRoad::getDstNode() const
-{
-	return mSimpleRoadGraph.getDstNode(mSimpleRoadId);
-}
-/*
-//simple
-void WorldRoad::createRoadObject()
-{
-	//omg i should like draw a line from my old node to my new node
-	Vector3 offset(0,3,0);
-	mManualObject = new ManualObject(mName); 
-	mManualObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
-	mManualObject->position(mSrcNode->getPosition()+offset); 
-	mManualObject->position(mDstNode->getPosition()+offset); 
-	mManualObject->end(); 
-
-	mSceneNode->attachObject(mManualObject);
-}
-*/
-
-void WorldRoad::plotRoad()
-{
-	// Carefull Now!
-	// if its valid someone must've plotted the road
-	if(isValid()) return;		
-
-	// always destroy previous
-	mPlotList.clear();
-
-	Ogre::Real segmentSizeSq(mGenParams.segmentSize * mGenParams.segmentSize);
-	Ogre::Vector2 direction;
-	Ogre::Angle devAngle(mGenParams.segmentDeviance);
-	Vector3 groundClearance(0,0.3,0);
-	Vector2 cursor2D(getSrcNode()->getPosition2D());
-	Vector2 dstPoint2D(getDstNode()->getPosition2D());
-	int segCount = 0;
-
-	// set our start node
-	mPlotList.push_back(getSrcNode()->getPosition3D() + groundClearance);
-
-	std::stringstream oss;
-	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
-
-	while(true)
-	{
-		// if outside range of dest point
-		if((cursor2D - dstPoint2D).squaredLength() > segmentSizeSq)
-		{
-			// get target direction
-			direction = dstPoint2D - cursor2D;
-
-			// get the next point
-			Vector3 nextPoint3D = findNextPoint(cursor2D, direction, devAngle);
-			nextPoint3D += groundClearance;
-
-			// add our nodes to the road graph
-			mPlotList.push_back(nextPoint3D);
-			oss << "Point "<<(mPlotList.size() - 1)<<": dist("<< (cursor2D - dstPoint2D).length() <<") seg("
-				<< (mPlotList[mPlotList.size() - 2] - mPlotList[mPlotList.size() - 1]).length() <<") "
-				<< mPlotList[mPlotList.size() - 1] << std::endl;
-			
-			// advance cursor	
-			cursor2D = Vector2(nextPoint3D.x, nextPoint3D.z);
-
-			// increment road segment count
-			segCount++;
-		}
-		else
-			break;
-	}
-	
-
-//	LogManager::getSingleton().logMessage("Plotted "+StringConverter::toString(mPlotList.size())+" segments.", LML_DEBUG);
-
-	mPlotList.push_back(getDstNode()->getPosition3D() + groundClearance);
-
-//	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
-//	LogManager::getSingleton().logMessage(oss.str(), LML_DEBUG);
-	createRoadGraph();
-}
-
-void WorldRoad::createRoadGraph()
-{
-	// always delete the last graph
-	destroyRoadGraph();
-
-	if(mPlotList.size() == 2)
-	{
-		// create first road segment
-		RoadId roadSegId;
-		mRoadGraph.addRoad(getSrcNode()->mNodeId, getDstNode()->mNodeId, this, roadSegId);
-		mRoadSegmentList.push_back(roadSegId);
-	}
-	else
-	{
-		// create first road segment
-		SimpleNode* bn = new SimpleNode(mRoadGraph, mPlotList[1]);
-		NodeId cursorNode = mRoadGraph.addNode(bn);
-		RoadId roadSegId;
-		mRoadGraph.addRoad(getSrcNode()->mNodeId, cursorNode, this, roadSegId);
-		mRoadSegmentList.push_back(roadSegId);
-
-		// create each road segment
-		for(unsigned int i=2; i<(mPlotList.size()-1); i++)
-		{
-			// add our nodes to the road graph
-			SimpleNode* bn = new SimpleNode(mRoadGraph, mPlotList[i]);
-			NodeId nextNodeId = mRoadGraph.addNode(bn);
-			mRoadGraph.addRoad(cursorNode, nextNodeId, this, roadSegId);
-			mRoadSegmentList.push_back(roadSegId);
-
-			// advance cursor
-			cursorNode = nextNodeId;
-		}
-
-		// create last road segment
-		mRoadGraph.addRoad(cursorNode, getDstNode()->mNodeId, this, roadSegId);
-		mRoadSegmentList.push_back(roadSegId);
-	}
-
-	//mSrcNode->invalidate();
-	//mDstNode->invalidate();
-}
-
-void WorldRoad::destroyRoadGraph()
-{
-	// clear previous road segs.
-	if(mRoadSegmentList.size() > 0) 
-		mRoadGraph.removeRoad(mRoadSegmentList[0]);
-	for(unsigned int i=1; i<mRoadSegmentList.size(); i++)
-	{
-		NodeId nd = mRoadGraph.getSrc(mRoadSegmentList[i]);
-		mRoadGraph.removeRoad(mRoadSegmentList[i]);
-		delete mRoadGraph.getNode(nd);
-		mRoadGraph.removeNode(nd);
-	}
-
-	// clear the list
-	mRoadSegmentList.clear();
-}
 
 void WorldRoad::build()
 {
@@ -346,6 +189,370 @@ void WorldRoad::build()
 	mSceneNode->attachObject(mManualObject);
  }
 
+ void WorldRoad::buildDebugSegments(const Vector3 &pos, const std::vector<Vector3> &samples)
+{
+	Vector3 offset(0,3,0);
+	for(size_t i=0; i<samples.size(); i++)
+	{
+		mDebugObject->position(pos + offset);
+		mDebugObject->position(samples[i] + offset);
+	}
+}
+
+void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, std::vector<Vector3> &samples) const
+{
+	samples.clear();
+
+	if(mGenParams.numOfSamples < 2)
+	{
+		// single sample case is a straight forward centre sample
+		if(mGenParams.numOfSamples == 1) {
+			samples.reserve(mGenParams.numOfSamples);
+			Vector2 sample2D = cursor + (direction * mGenParams.segmentSize);
+			Vector3 candidate(sample2D.x, 0, sample2D.y);
+			if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
+				samples.push_back(candidate);
+		}
+	}
+	else
+	{
+		//Radian sampleSz(Degree((2 * mGenParams.segmentDeviance) / (mGenParams.numOfSamples - 1)));
+
+		//for(Radian angle = -mGenParams.segmentDeviance; angle < mGenParams.segmentDeviance; angle += sampleSz)
+		//{
+		//	Real cos = Math::Cos(angle);
+		//	Real sin = Math::Sin(angle);
+		//	Vector2 translation(direction.x * cos + direction.y * sin, direction.y * cos + direction.x * sin);
+
+		//	// i wish I could just normalize it once but that doesn't seem to be acurate
+		//	translation.normalise();
+		//	translation *= mGenParams.segmentSize;
+
+		//	Vector3 candidate(cursor.x + translation.x, 0, cursor.y + translation.y);
+		//	if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
+		//	{
+		//		samples.push_back(candidate);
+		//	}
+		//}
+
+		//direction.normalise();
+		Radian sampleSz(Degree((2 * mGenParams.segmentDeviance) / (mGenParams.numOfSamples - 1)));
+
+		for(Radian angle = -mGenParams.segmentDeviance; angle <= mGenParams.segmentDeviance; angle += sampleSz)
+		{
+			Real cos = Math::Cos(angle);
+			Real sin = Math::Sin(angle);
+			Vector2 translation(direction.x * cos - direction.y * sin, direction.y * cos + direction.x * sin);
+			//Vector2 translation = direction.rotate(angle);
+
+			// i wish I could just normalize it once but that doesn't seem to be acurate
+			translation.normalise();
+			translation *= mGenParams.segmentSize;
+
+			Vector3 candidate(cursor.x + translation.x, 0, cursor.y + translation.y);
+			if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
+			{
+				samples.push_back(candidate);
+			}
+		}
+	}
+}
+
+NodeInterface* WorldRoad::getSrcNode() const
+{
+	return mSimpleRoadGraph.getSrcNode(mSimpleRoadId);
+}
+
+NodeInterface* WorldRoad::getDstNode() const
+{
+	return mSimpleRoadGraph.getDstNode(mSimpleRoadId);
+}
+/*
+//simple
+void WorldRoad::createRoadObject()
+{
+	//omg i should like draw a line from my old node to my new node
+	Vector3 offset(0,3,0);
+	mManualObject = new ManualObject(mName); 
+	mManualObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
+	mManualObject->position(mSrcNode->getPosition()+offset); 
+	mManualObject->position(mDstNode->getPosition()+offset); 
+	mManualObject->end(); 
+
+	mSceneNode->attachObject(mManualObject);
+}
+*/
+
+void WorldRoad::plotRoad()
+{
+	// Carefull Now!
+	// if its valid someone must've plotted the road
+	if(isValid()) return;		
+
+	// always destroy previous
+	mPlotList.clear();
+
+	Ogre::Real segmentSizeSq(Math::Sqr(mGenParams.segmentSize));
+	Ogre::Real segmentSizeSq2(Math::Sqr(mGenParams.segmentSize * 2));
+	Ogre::Vector2 direction;
+	Vector3 groundClearance(0,0.3,0);
+	Vector2 srcCursor2D(getSrcNode()->getPosition2D());
+	Vector2 dstCursor2D(getDstNode()->getPosition2D());
+	Vector3 srcCursor3D(getSrcNode()->getPosition3D());
+	Vector3 dstCursor3D(getDstNode()->getPosition3D());
+	Vector3 nextSrcCursor3D, nextDstCursor3D;
+	Vector2 segVector2D;
+	int segCount = 0;
+
+	// set our start node
+	std::vector<Vector3> plotList2;
+	mPlotList.push_back(getSrcNode()->getPosition3D() + groundClearance);
+	plotList2.push_back(getDstNode()->getPosition3D() + groundClearance);
+
+	std::stringstream oss;
+	std::vector<Vector3> samples;
+	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
+
+	// DEBUG Object
+	if(mDebugObject)
+	{
+		mSceneNode->detachObject(mDebugObject);
+		delete mDebugObject;
+		mDebugObject = 0;
+	}
+	if(mGenParams.debug) 
+	{
+		mDebugObject = new ManualObject(mName+"Debug");
+		mDebugObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
+	}
+
+	while(true)
+	{
+		// if outside range of dest point
+		if((srcCursor2D - dstCursor2D).squaredLength() > segmentSizeSq2)
+		{
+			// src --> dst
+			{
+				// get target direction
+				segVector2D = dstCursor2D - srcCursor2D;
+				segVector2D.normalise();
+
+				// get the samples
+				buildSampleFan(srcCursor2D, segVector2D, samples);	
+				if(mGenParams.debug) buildDebugSegments(srcCursor3D, samples);
+
+
+				// TODO: I could move this code into a function of its own but
+				// then the case must execute then anyway, probably the best idea 
+				// would be to use a function pointer or an array like the tool code 
+				switch(mGenParams.algorithm)
+				{
+				case EvenElevationDiff:
+					nextSrcCursor3D = selectEvenElevationDiff(srcCursor3D, samples, dstCursor3D);
+					break;
+				case MinimumElevationDiff:
+					nextSrcCursor3D = selectMinElevationDiff(srcCursor3D, samples);
+					break;
+				case MinimumElevation:
+					nextSrcCursor3D = selectMinElevation(srcCursor3D, samples);
+					break;
+				}
+
+				nextSrcCursor3D += groundClearance;
+
+				// add our nodes to the road graph
+				mPlotList.push_back(nextSrcCursor3D);
+	//			oss << "Point "<<(mPlotList.size() - 1)<<": dist("<< segVector2D.length() <<") seg("
+	//				<< (mPlotList[mPlotList.size() - 2] - mPlotList[mPlotList.size() - 1]).length() <<") "
+	//				<< mPlotList[mPlotList.size() - 1] << std::endl;
+				
+				// increment road segment count
+				segCount++;
+			}
+
+			// dst --> src
+			{
+				// get target direction
+				segVector2D = -segVector2D;
+
+				// get the samples
+				buildSampleFan(dstCursor2D, segVector2D, samples);
+				if(mGenParams.debug) buildDebugSegments(dstCursor3D, samples);
+
+				switch(mGenParams.algorithm)
+				{
+				case EvenElevationDiff:
+					nextDstCursor3D = selectEvenElevationDiff(dstCursor3D, samples, srcCursor3D);
+					break;
+				case MinimumElevationDiff:
+					nextDstCursor3D = selectMinElevationDiff(dstCursor3D, samples);
+					break;
+				case MinimumElevation:
+					nextDstCursor3D = selectMinElevation(dstCursor3D, samples);
+					break;
+				}
+				
+				nextDstCursor3D += groundClearance;
+
+				// add our nodes to the road graph
+				plotList2.push_back(nextDstCursor3D);
+
+				// increment road segment count
+				segCount++;
+			}
+
+			// advance cursors
+			srcCursor3D = nextSrcCursor3D;
+			dstCursor3D = nextDstCursor3D;
+			srcCursor2D = Vector2(nextSrcCursor3D.x, nextSrcCursor3D.z);
+			dstCursor2D = Vector2(nextDstCursor3D.x, nextDstCursor3D.z);
+		}
+		else
+			break;
+	}
+	if((srcCursor2D - dstCursor2D).squaredLength() < segmentSizeSq)
+	{	
+		//cheap resolution, just join them
+		for(int i=static_cast<int>(plotList2.size()-1); i>=0; i--)
+			mPlotList.push_back(plotList2[i]);
+	}
+	else
+	{
+		// plot a row of points between the src and select the best one
+		
+		// find the mid point between the two cursors
+		Vector2 midPoint = (srcCursor2D + dstCursor2D) / 2;
+
+		// find the direction vector
+		segVector2D = dstCursor2D - srcCursor2D;
+		Vector2 midLineVector = segVector2D.perpendicular();
+		midLineVector.normalise();
+
+		// max distance from the midPoint
+		Real dist = mGenParams.segmentSize * Math::Sin(mGenParams.segmentDeviance);
+
+		// calc step from the distance
+		Real step = (2 * dist) / (mGenParams.numOfSamples - 1);
+		Vector2 stepVector = midLineVector * step;
+
+		// initial sample
+		Vector2 midCursor2D = midPoint - (dist * midLineVector);
+		Vector3 midCursor3D;
+
+		// fill array of sample
+		std::vector<Vector3> samples;
+		if(WorldFrame::getSingleton().plotPointOnTerrain(midCursor2D, midCursor3D))
+			samples.push_back(midCursor3D);
+
+		for(uint16 i=0; i<(mGenParams.numOfSamples - 1); i++)
+		{
+			midCursor2D += stepVector;
+			if(WorldFrame::getSingleton().plotPointOnTerrain(midCursor2D, midCursor3D))
+				samples.push_back(midCursor3D);
+		}
+
+		if(mGenParams.debug) 
+		{
+			buildDebugSegments(srcCursor3D, samples);
+			buildDebugSegments(dstCursor3D, samples);
+		}
+		
+		// select best sample
+		switch(mGenParams.algorithm)
+		{
+		case EvenElevationDiff:
+			nextSrcCursor3D = selectEvenElevationDiff(srcCursor3D, samples, dstCursor3D);
+			break;
+		case MinimumElevationDiff:
+			nextSrcCursor3D = selectMinElevationDiff(srcCursor3D, samples);
+			break;
+		case MinimumElevation:
+			nextSrcCursor3D = selectMinElevation(srcCursor3D, samples);
+			break;
+		}
+
+		// join them
+		for(int i=static_cast<int>(plotList2.size()-1); i>=0; i--)
+			mPlotList.push_back(plotList2[i]);
+
+	}
+	if(mGenParams.debug)
+	{
+		mDebugObject->end(); 
+		mSceneNode->attachObject(mDebugObject);
+	}
+	
+
+//	LogManager::getSingleton().logMessage("Plotted "+StringConverter::toString(mPlotList.size())+" segments.", LML_DEBUG);
+
+	//mPlotList.push_back(getDstNode()->getPosition3D() + groundClearance);
+
+//	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
+//	LogManager::getSingleton().logMessage(oss.str(), LML_DEBUG);
+	createRoadGraph();
+}
+
+void WorldRoad::createRoadGraph()
+{
+	// always delete the last graph
+	destroyRoadGraph();
+
+	if(mPlotList.size() == 2)
+	{
+		// create first road segment
+		RoadId roadSegId;
+		mRoadGraph.addRoad(getSrcNode()->mNodeId, getDstNode()->mNodeId, this, roadSegId);
+		mRoadSegmentList.push_back(roadSegId);
+	}
+	else
+	{
+		// create first road segment
+		SimpleNode* bn = new SimpleNode(mRoadGraph, mPlotList[1]);
+		NodeId cursorNode = mRoadGraph.addNode(bn);
+		RoadId roadSegId;
+		mRoadGraph.addRoad(getSrcNode()->mNodeId, cursorNode, this, roadSegId);
+		mRoadSegmentList.push_back(roadSegId);
+
+		// create each road segment
+		for(unsigned int i=2; i<(mPlotList.size()-1); i++)
+		{
+			// add our nodes to the road graph
+			SimpleNode* bn = new SimpleNode(mRoadGraph, mPlotList[i]);
+			NodeId nextNodeId = mRoadGraph.addNode(bn);
+			mRoadGraph.addRoad(cursorNode, nextNodeId, this, roadSegId);
+			mRoadSegmentList.push_back(roadSegId);
+
+			// advance cursor
+			cursorNode = nextNodeId;
+		}
+
+		// create last road segment
+		mRoadGraph.addRoad(cursorNode, getDstNode()->mNodeId, this, roadSegId);
+		mRoadSegmentList.push_back(roadSegId);
+	}
+
+	//mSrcNode->invalidate();
+	//mDstNode->invalidate();
+}
+
+void WorldRoad::destroyRoadGraph()
+{
+	// clear previous road segs.
+	if(mRoadSegmentList.size() > 0) 
+		mRoadGraph.removeRoad(mRoadSegmentList[0]);
+	for(unsigned int i=1; i<mRoadSegmentList.size(); i++)
+	{
+		NodeId nd = mRoadGraph.getSrc(mRoadSegmentList[i]);
+		mRoadGraph.removeRoad(mRoadSegmentList[i]);
+		delete mRoadGraph.getNode(nd);
+		mRoadGraph.removeNode(nd);
+	}
+
+	// clear the list
+	mRoadSegmentList.clear();
+}
+
+
 
 void WorldRoad::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3 &aNorm,
 			const Vector3 &b1, const Vector3 &b2, const Vector3 &bNorm, Real uMin, Real uMax)
@@ -383,167 +590,9 @@ void WorldRoad::destroyRoadObject()
 	}
 }
 
-Vector3 WorldRoad::findNextPoint(const Vector2& cursor, const Vector2& direction, const Degree& dev) const
-{
-	int sampleIntervals = 5;
-	std::vector<Vector3> pointList(sampleIntervals);
-	Radian sampleSz(Degree((2 * dev) / (sampleIntervals - 1)));
-
-	Radian angle(dev);
-	for(angle = -angle; angle < dev; angle += sampleSz)
-	{
-		Real cos = Math::Cos(angle);
-		Real sin = Math::Sin(angle);
-		Vector2 translation(direction.x * cos + direction.y * sin, direction.y * cos + direction.x * sin);
-
-		// i wish I could just normalize it once but that doesn't seem to be acurate
-		translation.normalise();
-		translation *= mGenParams.segmentSize;
-
-		Vector3 candidate(cursor.x + translation.x, 0, cursor.y + translation.y);
-		if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
-		{
-			pointList.push_back(candidate);
-		}
-	}
-
-	// find lowest point
-	Vector3 lowestDiffPoint;
-	Real lowestDiff(std::numeric_limits<Ogre::Real>::max());
-	std::vector<Vector3>::const_iterator pIt, pEnd;
-	for(pIt = pointList.begin(), pEnd = pointList.end(); pIt != pEnd; pIt++)
-	{
-		// lowest y diff
-		Real currentDiff = std::abs(pIt->y - cursor.y);
-		if(currentDiff <= lowestDiff)
-		{
-			lowestDiffPoint = *pIt;
-			lowestDiff = currentDiff; 
-		}
-		// lowest y
-		//if(pIt->y <= lowestDiff)
-		//	lowestDiffPoint = *pIt;
-	}
-	return lowestDiffPoint;
-}
-
-/*
-WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos)
-{
-	NodeId snappedToNode;
-	bool nodeSnapped = false;
-	NodeInterface* dstNode = getDstNode();
-
-	if(getClosestIntersection(rd, pos))
-	{
-		// intersection!, try and snap to a node on the intersecting road
-		if(mRoadGraph.snapToRoadNode(pos, rd, snapSzSquared, snappedToNode))
-			nodeSnapped = true;
-		else
-		{
-			if(pos != dstNode->getPosition2D())
-			{
-				// position the destination node at the point of intersection 
-				dstNode->setPosition2D(pos.x, pos.y);
-				// Note: we have changed the segment so we must recurse
-				//plotRoad();
-				WorldRoad::RoadIntersectionState recursiveSnap = snap(snapSzSquared, nd, rd, pos);
-				if(recursiveSnap != none) return recursiveSnap;
-				else return road;
-			}
-			else return road;
-		}
-	}
-	else
-	{
-		//HACK
-		mRoadGraph.removeNode(dstNode->mNodeId);
-		// no intersection!, try and snap to a node
-		nodeSnapped = mRoadGraph.snapToNode(dstNode->getPosition2D(), snapSzSquared, snappedToNode);
-
-		dstNode->mNodeId = mRoadGraph.addNode(dstNode);
-	}
-
-	if(nodeSnapped)
-	{
-		// check if the node is different to existing
-		if(snappedToNode != nd)
-		{
-			// a new road section is proposed which must be considered
-			nd = snappedToNode;
-
-			// get the position of the new node & update dst node
-			Vector2 p = mRoadGraph.getNode(nd)->getPosition2D();
-			dstNode->setPosition2D(p.x, p.y);
-			
-			// rebuild the point list
-			//plotRoad();
-
-			// recursively snap
-			return snap(snapSzSquared, nd, rd, pos);
-		}
-		else
-		{
-			nd = snappedToNode;
-			NodeInterface* nb = mRoadGraph.getNode(nd);
-			if(typeid(*nb) == typeid(WorldNode))		
-				return world_node;
-			else
-				return simple_node;
-		}
-	}
-	//LogManager::getSingleton().logMessage("Nadda SAl");
-	return none;
-}
-
-bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
-{
-	// for each road segment in this road
-	if(mPlotList.size() > 2)
-	{
-		// get the src and dst points for this segment
-		const Vector2 srcPos(mPlotList[0].x, mPlotList[0].z);
-		const Vector2 dstPos(mPlotList[1].x, mPlotList[1].z);
-
-		// test the first segment excluding roads connecting to its src node 
-		if(mRoadGraph.findClosestIntersection3(srcPos, dstPos, getSrcNode()->mNodeId, rd, pos))
-		{
-			//LogManager::getSingleton().logMessage("Intersection on seg: 1", LML_CRITICAL);
-			return true;
-		}
-		//else
-		//{
-		//	std::stringstream oss;
-		//	oss << "No int on seg 1: ("<<srcPos<<") ("<<dstPos<<");";
-		//	LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
-		//}
-
-		for(unsigned int i=1; i<mPlotList.size()-1; i++)
-		{
-			// get the src and dst points for this segment
-			const Vector2 srcPos(mPlotList[i].x, mPlotList[i].z);
-			const Vector2 dstPos(mPlotList[i+1].x, mPlotList[i+1].z);
-
-			// test the segment against all roads in the graph 
-			if(mRoadGraph.findClosestIntersection(srcPos, dstPos, rd, pos))
-			{
-				//std::stringstream oss;
-				//oss << "Int on seg "<<(i+1)<<": ("<<srcPos<<") ("<<dstPos<<");";
-				//LogManager::getSingleton().logMessage(oss.str(), LML_CRITICAL);
-				return true;
-			}
-		}
-	}
-	//LogManager::getSingleton().logMessage("No intersection on "+StringConverter::toString(mPlotList.size())+" segments.", LML_CRITICAL);
-	return false;
-}
-*/
-
-
 // Note: should only try to snap to road network, ie those accessible from 
 // the simple road graph. 
 // Simple Node is the same as a road intersection, either way have to split road
-
 WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos)
 {
 
@@ -655,77 +704,6 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 	return false;
 }
 
-/*
-bool WorldRoad::findClosestIntersection(RoadId& rd, Vector2& pos) const
-{
-	bool intersectionFound = false;
-	Real currentDistSq, closestDistSq;
-	Road currentRd;
-	Vector2 currentIntersection;
-
-	for(size_t i=0; i<mRoadSegmentList.size(); i++)
-	{
-		// get segment src & dst
-		Vector2 srcPos = mRoadGraph.getSrcNode(mRoadSegmentList[i])->getPosition2D();
-		Vector2 dstPos = mRoadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
-
-		// for each road
-		RoadIterator rIt, rEnd;
-		boost::tie(rIt, rEnd) = mSimpleRoadGraph.getRoads();
-		for(; rIt != rEnd; rIt++)
-		{
-			RoadInterface* ri = mSimpleRoadGraph.getRoad(*rIt);
-			if(typeid(*ri) == typeid(WorldRoad))
-			{
-				WorldRoad* wr = static_cast<WorldRoad*>(ri);
-				if(wr != this)
-				{
-					if(wr->findClosestIntersection(srcPos, dstPos, currentDistSq, currentRd, currentIntersection))
-					{
-						if(!intersectionFound) intersectionFound = true;
-						else if(currentDistSq < closestDistSq);
-						else continue;  // don't do commands below
-
-						rd = currentRd;
-						closestDistSq = currentDistSq;
-						pos = currentIntersection;
-					}
-				}
-			}
-		}
-		// The segments are from src to dst, hence the first seg is definetaly closer than the next
-		if(intersectionFound) return true;
-	}
-	return false;
-}
-
-bool WorldRoad::findClosestIntersection(const Vector2& src, const Vector2& dst, 
-					Real &closestDistSq, RoadId &rd, Vector2 &pos) const
-{
-	bool intersectionFound = false;
-	Real currentDistSq;
-	Vector2 currentIntersection;
-
-	for(size_t i=0; i<mRoadSegmentList.size(); i++)
-	{
-		Vector2 segSrc = mRoadGraph.getSrcNode(mRoadSegmentList[i])->getPosition2D();
-		Vector2 segDst = mRoadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
-
-		if(Geometry::lineSegmentIntersect(src, dst, segSrc, segDst, currentIntersection))
-		{
-			currentDistSq = (src - currentIntersection).squaredLength();
-			if(!intersectionFound) intersectionFound = true;
-			else if(currentDistSq < closestDistSq);
-			else continue; // don't do commands below
-
-			rd = mRoadSegmentList[i];
-			closestDistSq = currentDistSq;
-			pos = currentIntersection;
-		}
-	}
-	return intersectionFound;
-}
-*/
 bool WorldRoad::hasIntersection()
 {
 	for(unsigned int i=0; i<mRoadSegmentList.size(); i++)
@@ -787,6 +765,7 @@ void WorldRoad::onMoveNode()
 	{
 		(*aIt)->invalidate();
 	}
+	WorldFrame::getSingleton().modify(true);
 }
 
 void WorldRoad::invalidate()
@@ -814,3 +793,138 @@ void WorldRoad::setWidth(const Ogre::Real& w)
 {
 	mGenParams.roadWidth = w;
 }
+
+Vector3 WorldRoad::selectEvenElevationDiff(const Vector3 &lastSample, const std::vector<Vector3> &samples, const Vector3 &target)
+{
+	// find total difference in height
+	Real totalRatio = (target.y - lastSample.y) / ((target - lastSample).length());
+	Real lowestRatioDiff(std::numeric_limits<Ogre::Real>::max());
+
+	Vector3 selectedPoint;
+	std::vector<Vector3>::const_iterator sIt, sEnd;
+	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
+	{
+		// lowest difference in (elevation diff / distance) ratio
+		Real currentRatio = (sIt->y - lastSample.y)/((*sIt - lastSample).length());
+		Real currentRatioDiff = std::abs(totalRatio - currentRatio);
+		if(currentRatioDiff <= lowestRatioDiff)
+		{
+			selectedPoint = *sIt;
+			lowestRatioDiff = currentRatioDiff; 
+		}
+	}
+	return selectedPoint;
+}
+
+Vector3 WorldRoad::selectMinElevationDiff(const Vector3 &lastSample, const std::vector<Vector3> &samples)
+{
+	// find lowest defference in height
+	Vector3 lowestDiffPoint;
+	Real lowestDiff(std::numeric_limits<Ogre::Real>::max());
+	std::vector<Vector3>::const_iterator sIt, sEnd;
+	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
+	{
+		// lowest y diff
+		Real currentDiff = std::abs(sIt->y - lastSample.y);
+		if(currentDiff <= lowestDiff)
+		{
+			lowestDiffPoint = *sIt;
+			lowestDiff = currentDiff; 
+		}
+	}
+	return lowestDiffPoint;
+}
+
+Vector3 WorldRoad::selectMinElevation(const Vector3 &lastSample, const std::vector<Vector3> &samples)
+{
+	// find lowest defference in height
+	Vector3 lowestPoint;
+	Real lowest(std::numeric_limits<Ogre::Real>::max());
+	std::vector<Vector3>::const_iterator sIt, sEnd;
+	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
+	{
+		// lowest y
+		if(sIt->y <= lowest)
+		{
+			lowestPoint = *sIt;
+			lowest = sIt->y;
+		}
+	}
+	return lowestPoint;
+}
+
+TiXmlElement* WorldRoad::saveXML()
+{
+	// GraphML compliant, edge not road
+	TiXmlElement *root = new TiXmlElement("edge"); 
+	root->SetAttribute("source", (int) getSrcNode());
+	root->SetAttribute("target", (int) getDstNode());
+
+	TiXmlElement *genParams = new TiXmlElement("genparams"); 
+	root->LinkEndChild(genParams);
+
+	TiXmlElement *algorithm = new TiXmlElement("algorithm");  
+	algorithm->SetAttribute("value", mGenParams.algorithm);
+	genParams->LinkEndChild(algorithm);
+
+	TiXmlElement *segmentSize = new TiXmlElement("segmentSize");  
+	segmentSize->SetDoubleAttribute("value", mGenParams.segmentSize);
+	genParams->LinkEndChild(segmentSize);
+
+	TiXmlElement *segmentDeviance = new TiXmlElement("segmentDeviance");  
+	segmentDeviance->SetDoubleAttribute("value", mGenParams.segmentDeviance.valueDegrees());
+	genParams->LinkEndChild(segmentDeviance);
+
+	TiXmlElement *roadWidth = new TiXmlElement("roadWidth");  
+	roadWidth->SetAttribute("value", mGenParams.roadWidth);
+	genParams->LinkEndChild(roadWidth);
+
+	TiXmlElement *numOfSamples = new TiXmlElement("numOfSamples");  
+	numOfSamples->SetAttribute("value", mGenParams.numOfSamples);
+	genParams->LinkEndChild(numOfSamples);
+
+	TiXmlElement *debug = new TiXmlElement("debug");  
+	debug->SetAttribute("value", mGenParams.debug);
+	genParams->LinkEndChild(debug);
+
+	return root;
+}
+
+bool WorldRoad::loadXML(const TiXmlHandle& roadRoot)
+{
+	// Load GenParams, not Smart Enough to do our graph, see parent
+	{
+		TiXmlElement *element = roadRoot.FirstChild("genparams").FirstChild().Element();
+
+		for(; element; element=element->NextSiblingElement())
+		{
+			std::string key = element->Value();
+			
+			if(key == "algorithm"){
+				int alg;
+				element->QueryIntAttribute("value", &alg);
+				mGenParams.algorithm = static_cast<RoadPlotAlgorithm>(alg);
+			}else if(key == "segmentSize")
+				element->QueryFloatAttribute("value", &mGenParams.segmentSize);
+			else if(key == "segmentDeviance"){
+				Real sd;
+				element->QueryFloatAttribute("value", &sd);
+				mGenParams.segmentDeviance = Degree(sd);
+			}else if(key == "roadWidth")
+				element->QueryFloatAttribute("value", &mGenParams.roadWidth);
+			else if(key == "numOfSamples") {
+				int nos;
+				element->QueryIntAttribute("value", &nos);
+				mGenParams.numOfSamples = static_cast<uint16>(nos);
+			}else if(key == "debug") {
+				int d;
+				element->QueryIntAttribute("value", &d);
+				mGenParams.debug = static_cast<bool>(d);
+			}
+		}
+	}
+	plotRoad();
+	invalidate();
+	return true;
+}
+
