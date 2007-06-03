@@ -15,6 +15,41 @@ END_EVENT_TABLE()
 
 void CellPropertyPage::Init()
 {
+	Append(wxPropertyCategory(wxT("Presets")));
+	
+
+	wxPGChoices arrPlot;
+	arrPlot.Add(wxT("Manhattan"), 0);
+	arrPlot.Add(wxT("Industrial"), 1);
+	arrPlot.Add(wxT("Suburbia"), 2);
+
+    //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
+	presetProp = Append( wxEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
+
+	/*const wxPGEditor* pdedit = GetGrid()->GetPropertyEditor(presetProp);
+    wxButton* but = (wxButton*) GetGrid()->GenerateEditorButton(wxDefaultPosition, wxDefaultSize);
+	pdedit->InsertItem((wxWindow*)but, "Test", 0);*/
+
+
+
+    SetPropertyEditor(presetProp,wxPG_EDITOR(ChoiceAndButton));
+	//presetProp
+
+/*
+	const wxChar* flags_prop_labels[] = { wxT("wxICONIZE"),
+            wxT("wxCAPTION"), wxT("wxMINIMIZE_BOX"), wxT("wxMAXIMIZE_BOX"), NULL };
+
+        // this value array would be optional if values matched string indexes
+        long flags_prop_values[] = { wxICONIZE, wxCAPTION, wxMINIMIZE_BOX,
+            wxMAXIMIZE_BOX };
+
+        Append( wxFlagsProperty(wxT("Window Style"),
+                                    wxPG_LABEL,
+                                    flags_prop_labels,
+                                    flags_prop_values,
+                                    wxDEFAULT_FRAME_STYLE) );
+*/
+
     Append(wxPropertyCategory(wxT("Generation Parameters")));
 
 	seedProp = Append(wxIntProperty(wxT("Seed"), wxPG_LABEL, 0));
@@ -46,7 +81,49 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
-	if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) 
+	if(eventProp == presetProp)
+	{
+		WorldCell *wc = mWorldFrame->getSelectedCell();
+		if(wc)
+		{
+			GrowthGenParams g;
+			switch(GetPropertyValueAsInt(presetProp))
+			{
+			// Manhattan
+			case 0:
+				g.seed = 0;
+				g.segmentSize = 6;
+				g.segmentDeviance = 0.4;
+				g.degree = 4;
+				g.degreeDeviance = 0.01;
+				g.snapSize = 2.4;
+				g.snapDeviance = 0.1;
+				g.buildingHeight = 2.4;
+				g.buildingDeviance = 0.1;
+				g.roadWidth = 0.4;
+				wc->setGrowthGenParams(g);
+				mWorldFrame->update();
+				break;
+			case 1:
+				g.seed = 0;
+				g.segmentSize = 6;
+				g.segmentDeviance = 2;
+				g.degree = 4;
+				g.degreeDeviance = 0.01;
+				g.snapSize = 2.4;
+				g.snapDeviance = 0.1;
+				g.buildingHeight = 1.8;
+				g.buildingDeviance = 0.3;
+				g.roadWidth = 0.4;
+				wc->setGrowthGenParams(g);
+				mWorldFrame->update();
+				break;
+			case 2:
+				break;
+			}
+		}
+	}
+	else if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) 
 		|| (eventProp == snapSizeProp) || (eventProp == segmentDevianceProp) 
 		|| (eventProp == degreeDevianceProp) || (eventProp == snapDevianceProp)
 		|| (eventProp == buildingHeightProp) || (eventProp == buildingDevianceProp)

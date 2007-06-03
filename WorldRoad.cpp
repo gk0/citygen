@@ -51,7 +51,6 @@ WorldRoad::~WorldRoad()
 	destroyer->destroySceneNode(mSceneNode->getName());
 }
 
-
 void WorldRoad::build()
 {
 	//return;
@@ -313,6 +312,21 @@ void WorldRoad::plotRoad()
 	std::vector<Vector3> samples;
 	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
 
+	// select the algorithm used to select the ideal sample
+	Vector3 (WorldRoad::*pt2SelectSample)(const Vector3&, const std::vector<Vector3>&, const Vector3&) = 0;                // C++
+	switch(mGenParams.algorithm)
+	{
+	case EvenElevationDiff:
+		pt2SelectSample = &WorldRoad::selectEvenElevationDiff;
+		break;
+	case MinimumElevationDiff:
+		pt2SelectSample = &WorldRoad::selectMinElevationDiff;
+		break;
+	case MinimumElevation:
+		pt2SelectSample = &WorldRoad::selectMinElevation;
+		break;
+	}
+
 	// DEBUG Object
 	if(mDebugObject)
 	{
@@ -340,31 +354,11 @@ void WorldRoad::plotRoad()
 				// get the samples
 				buildSampleFan(srcCursor2D, segVector2D, samples);	
 				if(mGenParams.debug) buildDebugSegments(srcCursor3D, samples);
-
-
-				// TODO: I could move this code into a function of its own but
-				// then the case must execute then anyway, probably the best idea 
-				// would be to use a function pointer or an array like the tool code 
-				switch(mGenParams.algorithm)
-				{
-				case EvenElevationDiff:
-					nextSrcCursor3D = selectEvenElevationDiff(srcCursor3D, samples, dstCursor3D);
-					break;
-				case MinimumElevationDiff:
-					nextSrcCursor3D = selectMinElevationDiff(srcCursor3D, samples);
-					break;
-				case MinimumElevation:
-					nextSrcCursor3D = selectMinElevation(srcCursor3D, samples);
-					break;
-				}
-
+				nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
 				nextSrcCursor3D += groundClearance;
 
 				// add our nodes to the road graph
 				mPlotList.push_back(nextSrcCursor3D);
-	//			oss << "Point "<<(mPlotList.size() - 1)<<": dist("<< segVector2D.length() <<") seg("
-	//				<< (mPlotList[mPlotList.size() - 2] - mPlotList[mPlotList.size() - 1]).length() <<") "
-	//				<< mPlotList[mPlotList.size() - 1] << std::endl;
 				
 				// increment road segment count
 				segCount++;
@@ -378,20 +372,7 @@ void WorldRoad::plotRoad()
 				// get the samples
 				buildSampleFan(dstCursor2D, segVector2D, samples);
 				if(mGenParams.debug) buildDebugSegments(dstCursor3D, samples);
-
-				switch(mGenParams.algorithm)
-				{
-				case EvenElevationDiff:
-					nextDstCursor3D = selectEvenElevationDiff(dstCursor3D, samples, srcCursor3D);
-					break;
-				case MinimumElevationDiff:
-					nextDstCursor3D = selectMinElevationDiff(dstCursor3D, samples);
-					break;
-				case MinimumElevation:
-					nextDstCursor3D = selectMinElevation(dstCursor3D, samples);
-					break;
-				}
-				
+				nextDstCursor3D = (*this.*pt2SelectSample)(dstCursor3D, samples, srcCursor3D);
 				nextDstCursor3D += groundClearance;
 
 				// add our nodes to the road graph
@@ -410,16 +391,11 @@ void WorldRoad::plotRoad()
 		else
 			break;
 	}
-	if((srcCursor2D - dstCursor2D).squaredLength() < segmentSizeSq)
+
+	// if distance between src and dst cursors is less than a seg length then 
+	// another point is required
+	if((srcCursor2D - dstCursor2D).squaredLength() > segmentSizeSq)
 	{	
-		//cheap resolution, just join them
-		for(int i=static_cast<int>(plotList2.size()-1); i>=0; i--)
-			mPlotList.push_back(plotList2[i]);
-	}
-	else
-	{
-		// plot a row of points between the src and select the best one
-		
 		// find the mid point between the two cursors
 		Vector2 midPoint = (srcCursor2D + dstCursor2D) / 2;
 
@@ -428,10 +404,8 @@ void WorldRoad::plotRoad()
 		Vector2 midLineVector = segVector2D.perpendicular();
 		midLineVector.normalise();
 
-		// max distance from the midPoint
+		// get max distance from the midPoint, direction & step vector
 		Real dist = mGenParams.segmentSize * Math::Sin(mGenParams.segmentDeviance);
-
-		// calc step from the distance
 		Real step = (2 * dist) / (mGenParams.numOfSamples - 1);
 		Vector2 stepVector = midLineVector * step;
 
@@ -458,37 +432,19 @@ void WorldRoad::plotRoad()
 		}
 		
 		// select best sample
-		switch(mGenParams.algorithm)
-		{
-		case EvenElevationDiff:
-			nextSrcCursor3D = selectEvenElevationDiff(srcCursor3D, samples, dstCursor3D);
-			break;
-		case MinimumElevationDiff:
-			nextSrcCursor3D = selectMinElevationDiff(srcCursor3D, samples);
-			break;
-		case MinimumElevation:
-			nextSrcCursor3D = selectMinElevation(srcCursor3D, samples);
-			break;
-		}
-
-		// join them
-		for(int i=static_cast<int>(plotList2.size()-1); i>=0; i--)
-			mPlotList.push_back(plotList2[i]);
-
+		nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
+		mPlotList.push_back(nextSrcCursor3D + groundClearance);
 	}
+
+	//join src-->dst & dst-->src lists
+	for(int i=static_cast<int>(plotList2.size()-1); i>=0; i--)
+		mPlotList.push_back(plotList2[i]);
+
 	if(mGenParams.debug)
 	{
 		mDebugObject->end(); 
-		mSceneNode->attachObject(mDebugObject);
+		mSceneNode->attachObject(mDebugObject); 
 	}
-	
-
-//	LogManager::getSingleton().logMessage("Plotted "+StringConverter::toString(mPlotList.size())+" segments.", LML_DEBUG);
-
-	//mPlotList.push_back(getDstNode()->getPosition3D() + groundClearance);
-
-//	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
-//	LogManager::getSingleton().logMessage(oss.str(), LML_DEBUG);
 	createRoadGraph();
 }
 
@@ -588,6 +544,243 @@ void WorldRoad::destroyRoadObject()
 		delete mManualObject;
 		mManualObject = 0;
 	}
+}
+
+bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
+{
+	for(size_t i=0; i<mRoadSegmentList.size(); i++)
+	{
+		NodeId srcNd = mRoadGraph.getSrc(mRoadSegmentList[i]);
+		NodeId dstNd = mRoadGraph.getDst(mRoadSegmentList[i]);
+		if(mRoadGraph.findClosestIntersection(srcNd, dstNd, rd, pos))
+			return true;
+	}
+	return false;
+}
+
+bool WorldRoad::hasIntersection()
+{
+	for(unsigned int i=0; i<mRoadSegmentList.size(); i++)
+	{
+		if(mRoadGraph.hasIntersection(mRoadSegmentList[i]))
+			return true;
+	}
+	return false;
+}
+
+bool WorldRoad::isRoadCycle()
+{
+	return mIsRoadCycle;
+}
+
+void WorldRoad::setRoadCycle(bool cycle)
+{
+	mIsRoadCycle = cycle;
+}
+
+bool WorldRoad::rayCross(const Ogre::Vector2& loc)
+{
+	validate();
+	bool rayCross = false;
+	for(unsigned int i=0; i<mPlotList.size()-1; i++)
+	{
+		if(Geometry::rayCross(loc, Vector2(mPlotList[i].x, mPlotList[i].z), Vector2(mPlotList[i+1].x, mPlotList[i+1].z))) 
+			rayCross = !rayCross;
+	}
+	return rayCross;
+}
+
+const RoadGenParams& WorldRoad::getGenParams()
+{
+	return mGenParams;
+}
+
+Ogre::Real WorldRoad::getLengthSquared() const
+{
+	Vector2 src = getSrcNode()->getPosition2D();
+	Vector2 dst = getDstNode()->getPosition2D();
+	return (src - dst).squaredLength();
+}
+
+const std::vector<RoadId>& WorldRoad::getRoadSegmentList()
+{
+	validate();
+	return mRoadSegmentList;
+}
+
+Real WorldRoad::getWidth() const
+{
+	return mGenParams.roadWidth;
+}
+
+
+bool WorldRoad::loadXML(const TiXmlHandle& roadRoot)
+{
+	// Load GenParams, not Smart Enough to do our graph, see parent
+	{
+		TiXmlElement *element = roadRoot.FirstChild("genparams").FirstChild().Element();
+
+		for(; element; element=element->NextSiblingElement())
+		{
+			std::string key = element->Value();
+			
+			if(key == "algorithm"){
+				int alg;
+				element->QueryIntAttribute("value", &alg);
+				mGenParams.algorithm = static_cast<RoadPlotAlgorithm>(alg);
+			}else if(key == "segmentSize")
+				element->QueryFloatAttribute("value", &mGenParams.segmentSize);
+			else if(key == "segmentDeviance"){
+				Real sd;
+				element->QueryFloatAttribute("value", &sd);
+				mGenParams.segmentDeviance = Degree(sd);
+			}else if(key == "roadWidth")
+				element->QueryFloatAttribute("value", &mGenParams.roadWidth);
+			else if(key == "numOfSamples") {
+				int nos;
+				element->QueryIntAttribute("value", &nos);
+				mGenParams.numOfSamples = static_cast<uint16>(nos);
+			}else if(key == "debug") {
+				int d;
+				element->QueryIntAttribute("value", &d);
+				mGenParams.debug = (d == 1);
+			}
+		}
+	}
+	plotRoad();
+	invalidate();
+	return true;
+}
+
+void WorldRoad::onMoveNode()
+{
+	invalidate();
+	// keep the graph up to date
+	plotRoad();
+
+	std::set<WorldObject*>::iterator aIt, aEnd;
+	for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
+	{
+		(*aIt)->invalidate();
+	}
+	WorldFrame::getSingleton().modify(true);
+}
+
+void WorldRoad::invalidate()
+{
+	mValid = false;
+/*	std::set<WorldObject*>::iterator aIt, aEnd;
+	for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
+	{
+		(*aIt)->invalidate();
+	}*/
+}
+
+TiXmlElement* WorldRoad::saveXML()
+{
+	// GraphML compliant, edge not road
+	TiXmlElement *root = new TiXmlElement("edge"); 
+	root->SetAttribute("source", (int) getSrcNode());
+	root->SetAttribute("target", (int) getDstNode());
+
+	TiXmlElement *genParams = new TiXmlElement("genparams"); 
+	root->LinkEndChild(genParams);
+
+	TiXmlElement *algorithm = new TiXmlElement("algorithm");  
+	algorithm->SetAttribute("value", mGenParams.algorithm);
+	genParams->LinkEndChild(algorithm);
+
+	TiXmlElement *segmentSize = new TiXmlElement("segmentSize");  
+	segmentSize->SetDoubleAttribute("value", mGenParams.segmentSize);
+	genParams->LinkEndChild(segmentSize);
+
+	TiXmlElement *segmentDeviance = new TiXmlElement("segmentDeviance");  
+	segmentDeviance->SetDoubleAttribute("value", mGenParams.segmentDeviance.valueDegrees());
+	genParams->LinkEndChild(segmentDeviance);
+
+	TiXmlElement *roadWidth = new TiXmlElement("roadWidth");  
+	roadWidth->SetAttribute("value", mGenParams.roadWidth);
+	genParams->LinkEndChild(roadWidth);
+
+	TiXmlElement *numOfSamples = new TiXmlElement("numOfSamples");  
+	numOfSamples->SetAttribute("value", mGenParams.numOfSamples);
+	genParams->LinkEndChild(numOfSamples);
+
+	TiXmlElement *debug = new TiXmlElement("debug");  
+	debug->SetAttribute("value", mGenParams.debug);
+	genParams->LinkEndChild(debug);
+
+	return root;
+}
+
+Vector3 WorldRoad::selectEvenElevationDiff(const Vector3 &lastSample, const std::vector<Vector3> &samples, const Vector3 &target)
+{
+	// find total difference in height
+	Real totalRatio = (target.y - lastSample.y) / ((target - lastSample).length());
+	Real lowestRatioDiff(std::numeric_limits<Ogre::Real>::max());
+
+	Vector3 selectedPoint;
+	std::vector<Vector3>::const_iterator sIt, sEnd;
+	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
+	{
+		// lowest difference in (elevation diff / distance) ratio
+		Real currentRatio = (sIt->y - lastSample.y)/((*sIt - lastSample).length());
+		Real currentRatioDiff = std::abs(totalRatio - currentRatio);
+		if(currentRatioDiff <= lowestRatioDiff)
+		{
+			selectedPoint = *sIt;
+			lowestRatioDiff = currentRatioDiff; 
+		}
+	}
+	return selectedPoint;
+}
+
+Vector3 WorldRoad::selectMinElevationDiff(const Vector3 &lastSample, const std::vector<Vector3> &samples, const Vector3 &target)
+{
+	// find lowest defference in height
+	Vector3 lowestDiffPoint;
+	Real lowestDiff(std::numeric_limits<Ogre::Real>::max());
+	std::vector<Vector3>::const_iterator sIt, sEnd;
+	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
+	{
+		// lowest y diff
+		Real currentDiff = std::abs(sIt->y - lastSample.y);
+		if(currentDiff <= lowestDiff)
+		{
+			lowestDiffPoint = *sIt;
+			lowestDiff = currentDiff; 
+		}
+	}
+	return lowestDiffPoint;
+}
+
+Vector3 WorldRoad::selectMinElevation(const Vector3 &lastSample, const std::vector<Vector3> &samples, const Vector3 &target)
+{
+	// find lowest defference in height
+	Vector3 lowestPoint;
+	Real lowest(std::numeric_limits<Ogre::Real>::max());
+	std::vector<Vector3>::const_iterator sIt, sEnd;
+	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
+	{
+		// lowest y
+		if(sIt->y <= lowest)
+		{
+			lowestPoint = *sIt;
+			lowest = sIt->y;
+		}
+	}
+	return lowestPoint;
+}
+
+void WorldRoad::setGenParams(const RoadGenParams& g)
+{
+	mGenParams = g;
+	onMoveNode();	// well it isn't but i want to do what it does
+}
+
+void WorldRoad::setWidth(const Ogre::Real& w)
+{
+	mGenParams.roadWidth = w;
 }
 
 // Note: should only try to snap to road network, ie those accessible from 
@@ -690,241 +883,5 @@ WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared
 	}
 	// NO INTERSECTION
 	return none;
-}
-
-bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
-{
-	for(size_t i=0; i<mRoadSegmentList.size(); i++)
-	{
-		NodeId srcNd = mRoadGraph.getSrc(mRoadSegmentList[i]);
-		NodeId dstNd = mRoadGraph.getDst(mRoadSegmentList[i]);
-		if(mRoadGraph.findClosestIntersection(srcNd, dstNd, rd, pos))
-			return true;
-	}
-	return false;
-}
-
-bool WorldRoad::hasIntersection()
-{
-	for(unsigned int i=0; i<mRoadSegmentList.size(); i++)
-	{
-		if(mRoadGraph.hasIntersection(mRoadSegmentList[i]))
-			return true;
-	}
-	return false;
-}
-
-bool WorldRoad::isRoadCycle()
-{
-	return mIsRoadCycle;
-}
-
-void WorldRoad::setRoadCycle(bool cycle)
-{
-	mIsRoadCycle = cycle;
-}
-
-bool WorldRoad::rayCross(const Ogre::Vector2& loc)
-{
-	validate();
-	bool rayCross = false;
-	for(unsigned int i=0; i<mPlotList.size()-1; i++)
-	{
-		if(Geometry::rayCross(loc, Vector2(mPlotList[i].x, mPlotList[i].z), Vector2(mPlotList[i+1].x, mPlotList[i+1].z))) 
-			rayCross = !rayCross;
-	}
-	return rayCross;
-}
-
-Ogre::Real WorldRoad::getLengthSquared() const
-{
-	Vector2 src = getSrcNode()->getPosition2D();
-	Vector2 dst = getDstNode()->getPosition2D();
-	return (src - dst).squaredLength();
-}
-
-const std::vector<RoadId>& WorldRoad::getRoadSegmentList()
-{
-	validate();
-	return mRoadSegmentList;
-}
-
-Real WorldRoad::getWidth() const
-{
-	return mGenParams.roadWidth;
-}
-
-void WorldRoad::onMoveNode()
-{
-	invalidate();
-	// keep the graph up to date
-	plotRoad();
-
-	std::set<WorldObject*>::iterator aIt, aEnd;
-	for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
-	{
-		(*aIt)->invalidate();
-	}
-	WorldFrame::getSingleton().modify(true);
-}
-
-void WorldRoad::invalidate()
-{
-	mValid = false;
-/*	std::set<WorldObject*>::iterator aIt, aEnd;
-	for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
-	{
-		(*aIt)->invalidate();
-	}*/
-}
-
-const RoadGenParams& WorldRoad::getGenParams()
-{
-	return mGenParams;
-}
-
-void WorldRoad::setGenParams(const RoadGenParams& g)
-{
-	mGenParams = g;
-	onMoveNode();	// well it isn't but i want to do what it does
-}
-
-void WorldRoad::setWidth(const Ogre::Real& w)
-{
-	mGenParams.roadWidth = w;
-}
-
-Vector3 WorldRoad::selectEvenElevationDiff(const Vector3 &lastSample, const std::vector<Vector3> &samples, const Vector3 &target)
-{
-	// find total difference in height
-	Real totalRatio = (target.y - lastSample.y) / ((target - lastSample).length());
-	Real lowestRatioDiff(std::numeric_limits<Ogre::Real>::max());
-
-	Vector3 selectedPoint;
-	std::vector<Vector3>::const_iterator sIt, sEnd;
-	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
-	{
-		// lowest difference in (elevation diff / distance) ratio
-		Real currentRatio = (sIt->y - lastSample.y)/((*sIt - lastSample).length());
-		Real currentRatioDiff = std::abs(totalRatio - currentRatio);
-		if(currentRatioDiff <= lowestRatioDiff)
-		{
-			selectedPoint = *sIt;
-			lowestRatioDiff = currentRatioDiff; 
-		}
-	}
-	return selectedPoint;
-}
-
-Vector3 WorldRoad::selectMinElevationDiff(const Vector3 &lastSample, const std::vector<Vector3> &samples)
-{
-	// find lowest defference in height
-	Vector3 lowestDiffPoint;
-	Real lowestDiff(std::numeric_limits<Ogre::Real>::max());
-	std::vector<Vector3>::const_iterator sIt, sEnd;
-	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
-	{
-		// lowest y diff
-		Real currentDiff = std::abs(sIt->y - lastSample.y);
-		if(currentDiff <= lowestDiff)
-		{
-			lowestDiffPoint = *sIt;
-			lowestDiff = currentDiff; 
-		}
-	}
-	return lowestDiffPoint;
-}
-
-Vector3 WorldRoad::selectMinElevation(const Vector3 &lastSample, const std::vector<Vector3> &samples)
-{
-	// find lowest defference in height
-	Vector3 lowestPoint;
-	Real lowest(std::numeric_limits<Ogre::Real>::max());
-	std::vector<Vector3>::const_iterator sIt, sEnd;
-	for(sIt = samples.begin(), sEnd = samples.end(); sIt != sEnd; sIt++)
-	{
-		// lowest y
-		if(sIt->y <= lowest)
-		{
-			lowestPoint = *sIt;
-			lowest = sIt->y;
-		}
-	}
-	return lowestPoint;
-}
-
-TiXmlElement* WorldRoad::saveXML()
-{
-	// GraphML compliant, edge not road
-	TiXmlElement *root = new TiXmlElement("edge"); 
-	root->SetAttribute("source", (int) getSrcNode());
-	root->SetAttribute("target", (int) getDstNode());
-
-	TiXmlElement *genParams = new TiXmlElement("genparams"); 
-	root->LinkEndChild(genParams);
-
-	TiXmlElement *algorithm = new TiXmlElement("algorithm");  
-	algorithm->SetAttribute("value", mGenParams.algorithm);
-	genParams->LinkEndChild(algorithm);
-
-	TiXmlElement *segmentSize = new TiXmlElement("segmentSize");  
-	segmentSize->SetDoubleAttribute("value", mGenParams.segmentSize);
-	genParams->LinkEndChild(segmentSize);
-
-	TiXmlElement *segmentDeviance = new TiXmlElement("segmentDeviance");  
-	segmentDeviance->SetDoubleAttribute("value", mGenParams.segmentDeviance.valueDegrees());
-	genParams->LinkEndChild(segmentDeviance);
-
-	TiXmlElement *roadWidth = new TiXmlElement("roadWidth");  
-	roadWidth->SetAttribute("value", mGenParams.roadWidth);
-	genParams->LinkEndChild(roadWidth);
-
-	TiXmlElement *numOfSamples = new TiXmlElement("numOfSamples");  
-	numOfSamples->SetAttribute("value", mGenParams.numOfSamples);
-	genParams->LinkEndChild(numOfSamples);
-
-	TiXmlElement *debug = new TiXmlElement("debug");  
-	debug->SetAttribute("value", mGenParams.debug);
-	genParams->LinkEndChild(debug);
-
-	return root;
-}
-
-bool WorldRoad::loadXML(const TiXmlHandle& roadRoot)
-{
-	// Load GenParams, not Smart Enough to do our graph, see parent
-	{
-		TiXmlElement *element = roadRoot.FirstChild("genparams").FirstChild().Element();
-
-		for(; element; element=element->NextSiblingElement())
-		{
-			std::string key = element->Value();
-			
-			if(key == "algorithm"){
-				int alg;
-				element->QueryIntAttribute("value", &alg);
-				mGenParams.algorithm = static_cast<RoadPlotAlgorithm>(alg);
-			}else if(key == "segmentSize")
-				element->QueryFloatAttribute("value", &mGenParams.segmentSize);
-			else if(key == "segmentDeviance"){
-				Real sd;
-				element->QueryFloatAttribute("value", &sd);
-				mGenParams.segmentDeviance = Degree(sd);
-			}else if(key == "roadWidth")
-				element->QueryFloatAttribute("value", &mGenParams.roadWidth);
-			else if(key == "numOfSamples") {
-				int nos;
-				element->QueryIntAttribute("value", &nos);
-				mGenParams.numOfSamples = static_cast<uint16>(nos);
-			}else if(key == "debug") {
-				int d;
-				element->QueryIntAttribute("value", &d);
-				mGenParams.debug = static_cast<bool>(d);
-			}
-		}
-	}
-	plotRoad();
-	invalidate();
-	return true;
 }
 

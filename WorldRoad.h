@@ -110,10 +110,10 @@ private:
 		std::vector<Ogre::Vector3> &samples) const;
 
 	Ogre::Vector3 selectMinElevation(const Ogre::Vector3 &lastSample, 
-		const std::vector<Ogre::Vector3> &samples);
+		const std::vector<Ogre::Vector3> &samples, const Ogre::Vector3 &target);
 	
 	Ogre::Vector3 selectMinElevationDiff(const Ogre::Vector3 &lastSample, 
-		const std::vector<Ogre::Vector3> &samples);
+		const std::vector<Ogre::Vector3> &samples, const Ogre::Vector3 &target);
 
 	Ogre::Vector3 selectEvenElevationDiff(const Ogre::Vector3 &lastSample, 
 		const std::vector<Ogre::Vector3> &samples, const Ogre::Vector3 &target);

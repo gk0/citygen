@@ -10,6 +10,7 @@ class CellPropertyPage : public wxPropertyGridPage
 	DECLARE_CLASS(CellPropertyPage)
 
 private:
+	wxPGProperty* presetProp;
 	wxPGProperty* seedProp;
 	wxPGProperty* segmentSizeProp;
 	wxPGProperty* segmentDevianceProp;
@@ -41,5 +42,12 @@ public:
 	virtual void OnPropertyGridChange(wxPropertyGridEvent& event);
 
 };
+
+
+//class PresetProp : public wxEditEnumProperty 
+//{
+//
+//};
+
 
 #endif
