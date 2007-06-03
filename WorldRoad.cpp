@@ -14,9 +14,9 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	  mSimpleRoadGraph(s)
 {
 	mGenParams.algorithm = EvenElevationDiff;
-	mGenParams.segmentSize = 5; //DEBUG: set to v. big 50 normal is 10
+	mGenParams.sampleSize = 5; //DEBUG: set to v. big 50 normal is 10
 	mGenParams.roadWidth = 1.0;
-	mGenParams.segmentDeviance= 25;
+	mGenParams.sampleDeviance= 25;
 	mGenParams.numOfSamples = 5;
 	mGenParams.debug = true;
 
@@ -53,7 +53,25 @@ WorldRoad::~WorldRoad()
 
 void WorldRoad::build()
 {
-	//return;
+	std::vector<Vector3> interpolatedList;
+
+	// build a spline from our plot list
+	SimpleSpline roadSpline;
+	roadSpline.setAutoCalculate(false);
+	for(size_t i=0; i<mPlotList.size(); i++)
+	{
+		roadSpline.addPoint(mPlotList[i]);
+	}
+
+	// TODO: just uses 100 segments
+	roadSpline.recalcTangents();
+	for(Real t=0; t<=1; t += 0.01)
+	{
+		interpolatedList.push_back(roadSpline.interpolate(t));
+	}
+	//interpolatedList = mPlotList;
+
+
 
 	// always destroy previous
 	destroyRoadObject();
@@ -73,9 +91,9 @@ void WorldRoad::build()
 	Vector3 a, a1, a2, aNormal, b, b1, b2, bNormal, c;
 
 	// init
-	if(mPlotList.size() >= 2)
+	if(interpolatedList.size() >= 2)
 	{
-		nextRoadSegVector = mPlotList[1] - mPlotList[0];
+		nextRoadSegVector = interpolatedList[1] - interpolatedList[0];
 		nextRoadSegVector2D.x = nextRoadSegVector.x;
 		nextRoadSegVector2D.y = nextRoadSegVector.z;
 
@@ -94,15 +112,15 @@ void WorldRoad::build()
 
 
 //get the first b from the node
-		b = mPlotList[0];
+		b = interpolatedList[0];
 		boost::tie(b1, b2) = getSrcNode()->getRoadJunction(mRoadSegmentList[0]);
 	}
 
-	for(size_t i=0; i<(mPlotList.size()-2); i++)
+	for(size_t i=0; i<(interpolatedList.size()-2); i++)
 	{
 		// for a road segment pointA -> pointB
 		a = b;
-		b = mPlotList[i+1], c = mPlotList[i+2];
+		b = interpolatedList[i+1], c = interpolatedList[i+2];
 
 		// get current from last runs next vars
 		currRoadSegVector = nextRoadSegVector;
@@ -151,12 +169,12 @@ void WorldRoad::build()
 	}
 
 	// finish end
-	if(mPlotList.size() >= 2)
+	if(interpolatedList.size() >= 2)
 	{
-		size_t i = mPlotList.size() - 2;
+		size_t i = interpolatedList.size() - 2;
 
 		// for a road segment pointA -> pointB
-		a = mPlotList[i], b = mPlotList[i+1];
+		a = interpolatedList[i], b = interpolatedList[i+1];
 
 		// get current from last runs next vars
 		currRoadSegVector = nextRoadSegVector;
@@ -207,7 +225,7 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 		// single sample case is a straight forward centre sample
 		if(mGenParams.numOfSamples == 1) {
 			samples.reserve(mGenParams.numOfSamples);
-			Vector2 sample2D = cursor + (direction * mGenParams.segmentSize);
+			Vector2 sample2D = cursor + (direction * mGenParams.sampleSize);
 			Vector3 candidate(sample2D.x, 0, sample2D.y);
 			if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
 				samples.push_back(candidate);
@@ -215,9 +233,9 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 	}
 	else
 	{
-		//Radian sampleSz(Degree((2 * mGenParams.segmentDeviance) / (mGenParams.numOfSamples - 1)));
+		//Radian sampleSz(Degree((2 * mGenParams.sampleDeviance) / (mGenParams.numOfSamples - 1)));
 
-		//for(Radian angle = -mGenParams.segmentDeviance; angle < mGenParams.segmentDeviance; angle += sampleSz)
+		//for(Radian angle = -mGenParams.sampleDeviance; angle < mGenParams.sampleDeviance; angle += sampleSz)
 		//{
 		//	Real cos = Math::Cos(angle);
 		//	Real sin = Math::Sin(angle);
@@ -225,7 +243,7 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 
 		//	// i wish I could just normalize it once but that doesn't seem to be acurate
 		//	translation.normalise();
-		//	translation *= mGenParams.segmentSize;
+		//	translation *= mGenParams.sampleSize;
 
 		//	Vector3 candidate(cursor.x + translation.x, 0, cursor.y + translation.y);
 		//	if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
@@ -235,9 +253,9 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 		//}
 
 		//direction.normalise();
-		Radian sampleSz(Degree((2 * mGenParams.segmentDeviance) / (mGenParams.numOfSamples - 1)));
+		Radian sampleSz(Degree((2 * mGenParams.sampleDeviance) / (mGenParams.numOfSamples - 1)));
 
-		for(Radian angle = -mGenParams.segmentDeviance; angle <= mGenParams.segmentDeviance; angle += sampleSz)
+		for(Radian angle = -mGenParams.sampleDeviance; angle <= mGenParams.sampleDeviance; angle += sampleSz)
 		{
 			Real cos = Math::Cos(angle);
 			Real sin = Math::Sin(angle);
@@ -246,7 +264,7 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 
 			// i wish I could just normalize it once but that doesn't seem to be acurate
 			translation.normalise();
-			translation *= mGenParams.segmentSize;
+			translation *= mGenParams.sampleSize;
 
 			Vector3 candidate(cursor.x + translation.x, 0, cursor.y + translation.y);
 			if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
@@ -291,8 +309,8 @@ void WorldRoad::plotRoad()
 	// always destroy previous
 	mPlotList.clear();
 
-	Ogre::Real segmentSizeSq(Math::Sqr(mGenParams.segmentSize));
-	Ogre::Real segmentSizeSq2(Math::Sqr(mGenParams.segmentSize * 2));
+	Ogre::Real sampleSizeSq(Math::Sqr(mGenParams.sampleSize));
+	Ogre::Real sampleSizeSq2(Math::Sqr(mGenParams.sampleSize * 2));
 	Ogre::Vector2 direction;
 	Vector3 groundClearance(0,0.3,0);
 	Vector2 srcCursor2D(getSrcNode()->getPosition2D());
@@ -343,7 +361,7 @@ void WorldRoad::plotRoad()
 	while(true)
 	{
 		// if outside range of dest point
-		if((srcCursor2D - dstCursor2D).squaredLength() > segmentSizeSq2)
+		if((srcCursor2D - dstCursor2D).squaredLength() > sampleSizeSq2)
 		{
 			// src --> dst
 			{
@@ -394,7 +412,7 @@ void WorldRoad::plotRoad()
 
 	// if distance between src and dst cursors is less than a seg length then 
 	// another point is required
-	if((srcCursor2D - dstCursor2D).squaredLength() > segmentSizeSq)
+	if((srcCursor2D - dstCursor2D).squaredLength() > sampleSizeSq)
 	{	
 		// find the mid point between the two cursors
 		Vector2 midPoint = (srcCursor2D + dstCursor2D) / 2;
@@ -405,7 +423,7 @@ void WorldRoad::plotRoad()
 		midLineVector.normalise();
 
 		// get max distance from the midPoint, direction & step vector
-		Real dist = mGenParams.segmentSize * Math::Sin(mGenParams.segmentDeviance);
+		Real dist = mGenParams.sampleSize * Math::Sin(mGenParams.sampleDeviance);
 		Real step = (2 * dist) / (mGenParams.numOfSamples - 1);
 		Vector2 stepVector = midLineVector * step;
 
@@ -628,12 +646,12 @@ bool WorldRoad::loadXML(const TiXmlHandle& roadRoot)
 				int alg;
 				element->QueryIntAttribute("value", &alg);
 				mGenParams.algorithm = static_cast<RoadPlotAlgorithm>(alg);
-			}else if(key == "segmentSize")
-				element->QueryFloatAttribute("value", &mGenParams.segmentSize);
-			else if(key == "segmentDeviance"){
+			}else if(key == "sampleSize")
+				element->QueryFloatAttribute("value", &mGenParams.sampleSize);
+			else if(key == "sampleDeviance"){
 				Real sd;
 				element->QueryFloatAttribute("value", &sd);
-				mGenParams.segmentDeviance = Degree(sd);
+				mGenParams.sampleDeviance = Degree(sd);
 			}else if(key == "roadWidth")
 				element->QueryFloatAttribute("value", &mGenParams.roadWidth);
 			else if(key == "numOfSamples") {
@@ -690,13 +708,13 @@ TiXmlElement* WorldRoad::saveXML()
 	algorithm->SetAttribute("value", mGenParams.algorithm);
 	genParams->LinkEndChild(algorithm);
 
-	TiXmlElement *segmentSize = new TiXmlElement("segmentSize");  
-	segmentSize->SetDoubleAttribute("value", mGenParams.segmentSize);
-	genParams->LinkEndChild(segmentSize);
+	TiXmlElement *sampleSize = new TiXmlElement("sampleSize");  
+	sampleSize->SetDoubleAttribute("value", mGenParams.sampleSize);
+	genParams->LinkEndChild(sampleSize);
 
-	TiXmlElement *segmentDeviance = new TiXmlElement("segmentDeviance");  
-	segmentDeviance->SetDoubleAttribute("value", mGenParams.segmentDeviance.valueDegrees());
-	genParams->LinkEndChild(segmentDeviance);
+	TiXmlElement *sampleDeviance = new TiXmlElement("sampleDeviance");  
+	sampleDeviance->SetDoubleAttribute("value", mGenParams.sampleDeviance.valueDegrees());
+	genParams->LinkEndChild(sampleDeviance);
 
 	TiXmlElement *roadWidth = new TiXmlElement("roadWidth");  
 	roadWidth->SetAttribute("value", mGenParams.roadWidth);

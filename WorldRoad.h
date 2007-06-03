@@ -19,8 +19,8 @@ enum RoadPlotAlgorithm
 
 typedef struct {
 	RoadPlotAlgorithm algorithm;
-	Ogre::Real segmentSize;
-	Ogre::Degree segmentDeviance;
+	Ogre::Real sampleSize;
+	Ogre::Degree sampleDeviance;
 	Ogre::Real roadWidth;
 	Ogre::uint16 numOfSamples;
 	bool debug;

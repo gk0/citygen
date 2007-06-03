@@ -11,9 +11,9 @@ class RoadPropertyPage : public wxPropertyGridPage
 
 private:
 	wxPGProperty* plotAlgorProp;
-	wxPGProperty* segmentSizeProp;
+	wxPGProperty* sampleSizeProp;
 	wxPGProperty* roadWidthProp;
-	wxPGProperty* segmentDevianceProp;
+	wxPGProperty* sampleDevianceProp;
 	wxPGProperty* samplesProp;
 	wxPGProperty* plotDebugProp;
 	WorldFrame* mWorldFrame;

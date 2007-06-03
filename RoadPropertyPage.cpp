@@ -25,9 +25,9 @@ void RoadPropertyPage::Init()
     plotAlgorProp = Append( wxEnumProperty(wxT("Algorithm"), wxPG_LABEL, arrPlot) );
 
 	// Add float property (value type is actually double)
-	segmentSizeProp = Append(wxFloatProperty(wxT("Segment Size"), wxPG_LABEL, 0));
+	sampleSizeProp = Append(wxFloatProperty(wxT("Sample Size"), wxPG_LABEL, 0));
     roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0));
-	segmentDevianceProp = Append(wxFloatProperty(wxT("Road Deviance Angle"), wxPG_LABEL,0));
+	sampleDevianceProp = Append(wxFloatProperty(wxT("Road Deviance Angle"), wxPG_LABEL,0));
 	samplesProp = Append(wxIntProperty(wxT("Number of Samples"), wxPG_LABEL,0));
 
 	Append(wxPropertyCategory(wxT("Display Options")));
@@ -43,8 +43,8 @@ void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
-	if( (eventProp == segmentSizeProp) || (eventProp == roadWidthProp) || 
-		(eventProp == segmentDevianceProp) || (eventProp == samplesProp) || 
+	if( (eventProp == sampleSizeProp) || (eventProp == roadWidthProp) || 
+		(eventProp == sampleDevianceProp) || (eventProp == samplesProp) || 
 		(eventProp == plotDebugProp) || (eventProp == plotAlgorProp) )
 	{
 		WorldRoad* wr = mWorldFrame->getSelectedRoad();
@@ -52,17 +52,17 @@ void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		{
 			RoadGenParams g;
 			g.algorithm = static_cast<RoadPlotAlgorithm>(GetPropertyValueAsInt(plotAlgorProp));
-			g.segmentSize = GetPropertyValueAsDouble(segmentSizeProp);
-			g.segmentDeviance = GetPropertyValueAsDouble(segmentDevianceProp);
+			g.sampleSize = GetPropertyValueAsDouble(sampleSizeProp);
+			g.sampleDeviance = GetPropertyValueAsDouble(sampleDevianceProp);
 			g.roadWidth = GetPropertyValueAsDouble(roadWidthProp);
 			g.debug = GetPropertyValueAsBool(plotDebugProp);
 			int samples = GetPropertyValueAsInt(samplesProp);
 
 			//TODO: check params within limits
-			if(g.segmentDeviance < Ogre::Degree(0) || g.segmentDeviance > Ogre::Degree(44))
+			if(g.sampleDeviance < Ogre::Degree(0) || g.sampleDeviance > Ogre::Degree(44))
 			{
 				//alert user
-				wxMessageBox(_T("Invalid 'segment deviance' value entered, a value between 0-44 is required."),
+				wxMessageBox(_T("Invalid 'sample deviance' value entered, a value between 0-44 is required."),
 						_("Validation Failed"), wxICON_EXCLAMATION);
 
 				//restore value
@@ -102,22 +102,22 @@ void RoadPropertyPage::update()
 		rp = wr->getGenParams();
 		/*
 		typedef struct {
-			Ogre::Real segmentSize;
-			Ogre::Real segmentDeviance;
+			Ogre::Real sampleSize;
+			Ogre::Real sampleDeviance;
 			Ogre::Real roadWidth;
 		} RoadGenParams;
 		*/
 		SetPropertyValue(plotAlgorProp, rp.algorithm);
-		SetPropertyValue(segmentSizeProp, rp.segmentSize);
-		SetPropertyValue(segmentDevianceProp, rp.segmentDeviance.valueDegrees());
+		SetPropertyValue(sampleSizeProp, rp.sampleSize);
+		SetPropertyValue(sampleDevianceProp, rp.sampleDeviance.valueDegrees());
 		SetPropertyValue(roadWidthProp, rp.roadWidth);
 		SetPropertyValue(samplesProp, static_cast<int>(rp.numOfSamples));
 		SetPropertyValue(plotDebugProp, rp.debug);
 	}
 
 	RefreshProperty(plotAlgorProp);
-	RefreshProperty(segmentSizeProp);
-	RefreshProperty(segmentDevianceProp);
+	RefreshProperty(sampleSizeProp);
+	RefreshProperty(sampleDevianceProp);
 	RefreshProperty(roadWidthProp);
 	RefreshProperty(samplesProp);
 	RefreshProperty(plotDebugProp);
