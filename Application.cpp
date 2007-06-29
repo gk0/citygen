@@ -36,6 +36,7 @@ bool Application::OnInit()
 	// we create it, but don't show to user to avoid flickness
 	SetTopWindow(mWindow); // set our MainWindow the main application window
 	mWindow->Show(true);
+	mWindow->init();
 	mWindow->updateOgre();
 
 	// Resources and resource initialization
@@ -65,7 +66,7 @@ bool Application::InitializeOgre()
 
 	try
 	{
-		if (!mRoot->restoreConfig())
+		if(!mRoot->restoreConfig())
 		{
 			mRoot->showConfigDialog();
 		}

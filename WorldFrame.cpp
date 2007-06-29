@@ -14,6 +14,14 @@
 #include "ToolRoadSelect.h"
 #include "ToolCellSelect.h"
 
+#ifdef __WXGTK__
+#include <gdk/gdk.h>
+#include <gtk/gtk.h> 
+#include <gdk/gdkx.h>
+#include <wx/gtk/win_gtk.h>
+#include <GL/glx.h> 
+#endif
+
 
 // Namespace 
 using namespace Ogre;
@@ -51,6 +59,16 @@ WorldFrame::WorldFrame(wxFrame* parent)
 	mSceneManager = 0;
 	mViewport = 0;
 
+	mSelectedNode = 0;
+	mSelectedRoad = 0;
+	mSelectedCell = 0;
+
+	//init();
+	//toggleTimerRendering(); // only really to test fps
+}
+
+void WorldFrame::init()
+{
 	// --------------------
 	// Create a new parameters list according to compiled OS
 	NameValuePairList params;
@@ -58,20 +76,37 @@ WorldFrame::WorldFrame(wxFrame* parent)
 #ifdef __WXMSW__
 	handle = StringConverter::toString((size_t)((HWND)GetHandle()));
 #elif defined(__WXGTK__)
-	// TODO: Someone test this. you might to use "parentWindowHandle" if this
-	// does not work.  Ogre 1.2 + Linux + GLX platform wants a string of the
-	// format display:screen:window, which has variable types ulong:uint:ulong.
-	GtkWidget* widget = GetHandle();
-	gtk_widget_realize(widget);	// Mandatory. Otherwise, a segfault happens.
-	stringstream handleStream;
-	Display* display = GDK_WINDOW_XDISPLAY(widget->window);
-	Window wid = GDK_WINDOW_XWINDOW(widget->window);	// Window is a typedef for XID, which is a typedef for unsigned int
-	/* Get the right display (DisplayString() returns ":display.screen") */
-	string displayStr = DisplayString(display);
-	displayStr = displayStr.substr(1, (displayStr.find(".", 0) - 1));
-	/* Put all together */
-	handleStream << displayStr << ':' << DefaultScreen(display) << ':' << wid;
-	handle = handleStream.str();
+
+	SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+
+	GtkWidget* privHandle = m_wxwindow;
+	// prevents flickering
+	gtk_widget_set_double_buffered(privHandle, FALSE);
+	// grab the window object
+	GdkWindow* gdkWin = GTK_PIZZA(privHandle)->bin_window;
+	Display* display = GDK_WINDOW_XDISPLAY(gdkWin);
+	Window wid = GDK_WINDOW_XWINDOW(gdkWin);
+	
+	std::stringstream str;
+	
+	// display
+	str << (unsigned long)display << ':';
+	
+	// screen (returns "display.screen")
+	std::string screenStr = DisplayString(display);
+	std::string::size_type dotPos = screenStr.find(".");
+	screenStr = screenStr.substr(dotPos+1, screenStr.size());
+	str << screenStr << ':';
+	
+	// XID
+	str << wid << ':';
+	
+	// retrieve XVisualInfo
+	int attrlist[] = { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 16, GLX_STENCIL_SIZE, 8, None };
+	XVisualInfo* vi = glXChooseVisual(display, DefaultScreen(display), attrlist);
+	str << (unsigned long)vi;
+	
+	handle = str.str();
 #else
 	#error Not supported on this platform.
 #endif
@@ -83,6 +118,7 @@ WorldFrame::WorldFrame(wxFrame* parent)
 
 	// Create the render window
 	mRenderWindow = Root::getSingleton().createRenderWindow("OgreRenderWindow", width, height, false, &params);
+	mRenderWindow->setActive(true);
 
 	// Create the SceneManager, in this case the terrainscenemanager
     mSceneManager = Root::getSingleton().createSceneManager("TerrainSceneManager");
@@ -108,11 +144,6 @@ WorldFrame::WorldFrame(wxFrame* parent)
 	mTools.push_back(new ToolRoadSelect(this));
 	mTools.push_back(new ToolCellSelect(this));
 	mActiveTool = MainWindow::viewTool;
-
-	mSelectedNode = 0;
-	mSelectedRoad = 0;
-	mSelectedCell = 0;
-	//toggleTimerRendering(); // only really to test fps
 }
 
 
@@ -200,6 +231,8 @@ void WorldFrame::createScene(void)
         terrain_cfg = mResourcePath + terrain_cfg;
 #endif
     mSceneManager -> setWorldGeometry(terrain_cfg);
+
+	//mWorldTerrain.load();
 
     // Infinite far plane?
     if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
@@ -358,11 +391,12 @@ void WorldFrame::OnPaint(wxPaintEvent &WXUNUSED(e))
 
 void WorldFrame::OnSize(wxSizeEvent &e)
 {
+	if(!mRenderWindow) return;
+	
 	// Setting new size;
 	int width;
 	int height;
 	GetSize(&width, &height);
-	if(!mRenderWindow) return;
 	mRenderWindow->resize(width, height);
 	// Letting Ogre know the window has been resized;
 	mRenderWindow->windowMovedOrResized();
@@ -905,7 +939,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 					// NOTE: maybe a copy constructor could be tidier
 
 					// get old cell params
-					GrowthGenParams g = alteredCell->getGrowthGenParams();
+					GrowthGenParams g = alteredCell->getGenParams();
 					// delete old cell
 					mCells.erase(alteredCell);
 					mSceneCellMap.erase(alteredCell->getSceneNode());
@@ -918,8 +952,8 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 					WorldCell* wc1 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[1], roadCycles[1]);
 					mSceneCellMap[wc1->getSceneNode()] = wc1;
 
-					wc0->setGrowthGenParams(g);
-					wc1->setGrowthGenParams(g);
+					wc0->setGenParams(g);
+					wc1->setGenParams(g);
 					mCells.insert(wc0);
 					mCells.insert(wc1);
 				}
@@ -957,7 +991,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 	modify(true);
 
 	// get cells attached to this road
-	vector<WorldCell*> attachedCells;
+	vector<WorldCell*> aCells;
 	set<WorldObject*> attachments(wr->getAllAttachments());
 	set<WorldObject*>::iterator aIt, aEnd;
 	for(aIt = attachments.begin(), aEnd = attachments.end(); aIt != aEnd; aIt++)
@@ -965,92 +999,96 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 		// if attachment is a cell
 		if(typeid(*(*aIt)) == typeid(WorldCell))
 		{
-			attachedCells.push_back(static_cast<WorldCell*>(*aIt));
+			aCells.push_back(static_cast<WorldCell*>(*aIt));
 		}
 	}
 
-	switch(attachedCells.size())
+	switch(aCells.size())
 	{
 	case 0:
+		mSceneRoadMap.erase(wr->getSceneNode());
+		delete wr;
 		break;
 	case 1:
 		{
 			// could be a boundary edge or a filament
-			const vector<RoadInterface*> &boundary(attachedCells[0]->getBoundaryRoads());
+			const vector<RoadInterface*> &boundary(aCells[0]->getBoundaryRoads());
 			size_t i;
 			for(i=0; i<boundary.size(); i++)
 				if(boundary[i] == wr) break;
 
+			// if found on the boundary cycle
 			if(i<boundary.size())
 			{
-				mSceneCellMap.erase(attachedCells[0]->getSceneNode());
-				mCells.erase(attachedCells[0]);
-				delete attachedCells[0];
+				mSceneCellMap.erase(aCells[0]->getSceneNode());
+				mCells.erase(aCells[0]);
+				delete aCells[0];
 			}
 			else
 			{
-				attachedCells[0]->removeFilament(wr);
+				aCells[0]->removeFilament(wr);
 			}
+
+			// delete road
+			mSceneRoadMap.erase(wr->getSceneNode());
+			delete wr;
 		}
 		break;
 	case 2:
 		{
 			// should favour one - can do a vector swap to set preference
-			// maybe prefer the cell with largest area
 
-			// get common road
-			RoadInterface* ri = 0;
-			vector<RoadInterface*> roads0 = attachedCells[0]->getBoundaryRoads();
-			vector<RoadInterface*> roads1 = attachedCells[1]->getBoundaryRoads();
-			vector<RoadInterface*>::iterator rIt0, rIt1, rEnd0, rEnd1;
-			for(rIt0 = roads0.begin(), rEnd0 = roads0.end(); rIt0 != rEnd0; rIt0++)
+			// save params from the biggest attached cell by area
+			GrowthGenParams gp = aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? 
+								aCells[0]->getGenParams() : aCells[1]->getGenParams();
+
+			// delete cells
+			BOOST_FOREACH(WorldCell* c, aCells)
 			{
-				//rIt1 = roads1.find(*rIt0);
-				for(rIt1 = roads1.begin(), rEnd1 = roads1.end(); rIt1 != rEnd1; rIt1++)
+				mSceneCellMap.erase(c->getSceneNode());
+				mCells.erase(c);
+				delete c;
+			}
+
+			// delete road
+			mSceneRoadMap.erase(wr->getSceneNode());
+			delete wr;
+
+			// run cell decomposition
+			vector< vector<NodeInterface*> > nodeCycles;
+			vector< vector<RoadInterface*> > roadCycles;
+			vector<RoadInterface*> filaments;
+			mSimpleRoadGraph.extractPrimitives(filaments, nodeCycles, roadCycles);
+
+			// find the new cell if there is one
+			bool newCell = true;
+			for(size_t i = 0; i < roadCycles.size(); i++)
+			{
+				BOOST_FOREACH(WorldCell* c, mCells)
 				{
-					if((*rIt1) == (*rIt0)) 
+					if(c->compareBoundary(roadCycles[i]))
+					{
+						newCell = false;
 						break;
+					}
 				}
-				//if(rIt1 != roads1.end())
-				if(rIt1 != rEnd1)
+				// create the new cell and break
+				if(newCell)
 				{
-					ri = (*rIt1);
+					WorldCell* wc = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[i], roadCycles[i]);
+					mSceneCellMap[wc->getSceneNode()] = wc;
+					mCells.insert(wc);
+					wc->setGenParams(gp);
 					break;
 				}
 			}
-
-			// check common road is wr
-			assert(static_cast<WorldRoad*>(ri) == wr);
-
-			//union boundaries
-			{
-			
-			}
-
-			// remove wr from boundary 1
-			roads1.erase(rIt1);
-
-			// union bounary and filaments
-			roads0.insert(rIt0, roads1.begin(), roads1.end());
-
-			// remove wr from boundary 0
-			roads0.erase(rIt0);
-			
-			// delete extraneous cell
-			mSceneCellMap.erase(attachedCells[1]->getSceneNode());
-			mCells.erase(attachedCells[1]);
-			delete attachedCells[1];
-
-			// update cell
-//			attachedCells[0]->setBoundary(roads0);
 		}
 		break;
 	default:
 		new Exception(Exception::ERR_INTERNAL_ERROR, "What how many new cells have you got", "deleteRoad");
 		break;
 	}
-	mSceneRoadMap.erase(wr->getSceneNode());
-	delete wr;
+
 }
 
 void WorldFrame::onNewDoc()

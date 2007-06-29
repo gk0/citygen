@@ -57,6 +57,8 @@ void WorldCell::init()
 	mRoadNetwork = 0;
 	mRoadJunctions = 0;
 	mBuildings = 0;
+	mOverlay = 0;
+	mOverlay2 = 0;
 
 	mName = "cell"+StringConverter::toString(mInstanceCount++);
 	mSceneNode = WorldFrame::getSingleton().getSceneManager()->getRootSceneNode()->createChildSceneNode(mName);
@@ -67,7 +69,11 @@ WorldCell::~WorldCell()
 	clearBoundary();
 	clearFilaments();
 	clearRoadGraph();
+	if(mOverlay)
+		delete mOverlay;
+
 	destroySceneObject();
+	mSceneNode->detachAllObjects();
 	mSceneNode->getCreator()->destroySceneNode(mSceneNode->getName());
 }
 
@@ -159,6 +165,92 @@ void WorldCell::build()
 		mCentre = Geometry::centerOfMass(pointList);
 	}
 
+/*
+	// Create the Road Network
+	mRoadNetwork = new ManualObject(mName+"Road");
+	mRoadNetwork->begin("gk/Hilite/Red2", Ogre::RenderOperation::OT_LINE_LIST);
+
+	Vector3 clearance(0,2,0);
+
+	// get size
+	size_t i, j, k, N = mBoundaryCycle.size();
+
+	// check cycle
+	if(N < 3 || N != mBoundaryRoads.size())
+		throw Exception(Exception::ERR_INVALIDPARAMS, 
+		"Invalid number of nodes/roads in cycle", "WorldCell::extractFootprint");
+
+	// prepare footprint data structures
+	vector<Vector2> originalFootprint, newFootprint(N);
+	originalFootprint.reserve(N);
+	for(i = 0; i < N; i++) originalFootprint.push_back(mBoundaryCycle[i]->getPosition2D()); 
+
+
+	vector<Vector2> normalizedSides;
+	normalizedSides.reserve(N);
+
+	//normalizedSides[i] = point[i] -> point[i+1]
+	for(i = 0; i < N; i++)
+	{
+		j = (i + 1) % N;
+		Vector2 side(originalFootprint[j] - originalFootprint[i]);
+		side.normalise();
+		normalizedSides.push_back(side);
+	}
+
+	//angleBisectors[i] = bisector @ point[i]
+	vector<Vector2> angleBisectors(N);
+	for(i = 0; i < N; i++)
+	{
+		j = (i + 1) % N;
+		angleBisectors[j] = (normalizedSides[j] - normalizedSides[i]) / 2;
+		angleBisectors[j].normalise();
+
+		Vector3 tmpA, tmpB;
+		WorldFrame::getSingleton().plotPointOnTerrain(originalFootprint[j], tmpA);
+		WorldFrame::getSingleton().plotPointOnTerrain(originalFootprint[j]+(angleBisectors[j]*12), tmpB);
+		mRoadNetwork->position(tmpA + clearance);
+		mRoadNetwork->position(tmpB + clearance);
+	}
+
+	// get footprint edge vectors
+	for(i = 0; i< N; i++)
+	{
+		j = (i + 1) % N;
+		k = (i + 2) % N;
+		Vector2 dir = normalizedSides[j].perpendicular();
+		dir.normalise();
+		dir *= (mBoundaryRoads[j]->getWidth() * 4);
+
+		// get edge intersection point
+		if(!Geometry::lineIntersect(originalFootprint[j] + dir, originalFootprint[k] + dir, originalFootprint[j], 
+			originalFootprint[j] + angleBisectors[j], newFootprint[j]))
+			return;
+
+		// require point to be inside original footprint
+//		if(!Geometry::isInside(newFootprint[i], originalFootprint))
+//			return false;
+
+
+	}
+
+	for(i=0; i<N; i++)
+	{
+		j = (i + 1) % N;
+		Vector3 tmpA, tmpB;
+		WorldFrame::getSingleton().plotPointOnTerrain(newFootprint[i], tmpA);
+		WorldFrame::getSingleton().plotPointOnTerrain(newFootprint[j], tmpB);
+		mRoadNetwork->position(tmpA + clearance);
+		mRoadNetwork->position(tmpB + clearance);
+	}
+
+
+
+	mRoadNetwork->end();
+	mSceneNode->attachObject(mRoadNetwork);
+
+	busy = false;
+ */ 
 	if(!isInside(mCentre)) 
 		return;
 
@@ -332,6 +424,8 @@ void WorldCell::build()
 	Real buildingDeviance = mGrowthGenParams.buildingHeight * mGrowthGenParams.buildingDeviance;
 	Real buildingHeight = mGrowthGenParams.buildingHeight - (buildingDeviance / 2);
 
+	int z =0;
+
 	// create lot of little boxes with our cycles
 	vector< vector<NodeInterface*> >::const_iterator ncIt, ncEnd;
 	vector< vector<RoadInterface*> >::const_iterator rcIt, rcEnd;
@@ -339,6 +433,12 @@ void WorldCell::build()
 		rcIt = roadCycles.begin(), rcEnd = roadCycles.end(); 
 		ncIt != ncEnd, rcIt != rcEnd; ncIt++, rcIt++)
 	{
+		if(z == 25) 
+		{
+			// get the node positions
+			z = 25;
+		}
+		z++;
 		// get the foot print
 		vector<Vector2> footprint, result;
 		if(!extractFootprint(*ncIt, *rcIt, footprint))
@@ -532,6 +632,7 @@ void WorldCell::removeFilament(WorldRoad* f)
 		{
 			wr->detach(this);
 			mFilamentRoads.erase(rIt);
+			break;
 		}
 	}
 	invalidate();
@@ -539,11 +640,10 @@ void WorldCell::removeFilament(WorldRoad* f)
 
 void WorldCell::clearBoundary()
 {
-	vector<RoadInterface*>::iterator rIt, rEnd;
-	for(rIt = mBoundaryRoads.begin(), rEnd = mBoundaryRoads.end(); rIt != rEnd; rIt++)
+	BOOST_FOREACH(RoadInterface* ri, mBoundaryRoads)
 	{
-		if(typeid(*(*rIt)) == typeid(WorldRoad))
-			static_cast<WorldRoad*>(*rIt)->detach(this);
+		if(typeid(*ri) == typeid(WorldRoad))
+			static_cast<WorldRoad*>(ri)->detach(this);
 	}
 	mBoundaryRoads.clear();
 	invalidate();
@@ -561,11 +661,11 @@ void WorldCell::clearFilaments()
 	invalidate();
 }
 
-GrowthGenParams WorldCell::getGrowthGenParams() const
+GrowthGenParams WorldCell::getGenParams() const
 {
 	return mGrowthGenParams;
 }
-void WorldCell::setGrowthGenParams(const GrowthGenParams &g)
+void WorldCell::setGenParams(const GrowthGenParams &g)
 {
 	mGrowthGenParams = g;
 	invalidate();
@@ -679,45 +779,45 @@ bool WorldCell::extractFootprint(const vector<NodeInterface*> &nodeCycle,
 	originalFootprint.reserve(N);
 	for(i = 0; i < N; i++) originalFootprint.push_back(nodeCycle[i]->getPosition2D()); 
 
-	// create footprint edge structure
-	vector< pair<Vector2, Vector2> > edges;
-	edges.reserve(N);
 
-	// get footprint edge vectors
-	Vector2 prevPoint = originalFootprint[(N-1)];
-	for(i = 0; i < N; i++)
-	{
-		Vector2 dir(originalFootprint[i] - prevPoint);
-		dir = dir.perpendicular();
-		dir.normalise();
-		dir *= roadCycle[i]->getWidth();
-		edges.push_back(make_pair(prevPoint + dir, originalFootprint[i] + dir));
-		prevPoint = originalFootprint[i];
-	}
-	//for(i = 0; i < N; i++)
-	//{
-	//	j = (i + 1) % N;
-	//	Vector2 dir(originalFootprint[j] - originalFootprint[i]);
-	//	dir = dir.perpendicular();
-	//	dir.normalise();
-	//	dir *= roadCycle[j]->getWidth();
-	//	edges.push_back(make_pair(originalFootprint[i] + dir, originalFootprint[j] + dir));
-	//}
+	vector<Vector2> normalizedSides;
+	normalizedSides.reserve(N);
 
-	// calculate footprint points from edges
+	//normalizedSides[i] = point[i] -> point[i+1]
 	for(i = 0; i < N; i++)
 	{
 		j = (i + 1) % N;
+		Vector2 side(originalFootprint[j] - originalFootprint[i]);
+		side.normalise();
+		normalizedSides.push_back(side);
+	}
+
+	//angleBisectors[i] = bisector @ point[i]
+	vector<Vector2> angleBisectors(N);
+	for(i = 0; i < N; i++)
+	{
+		j = (i + 1) % N;
+		angleBisectors[j] = (normalizedSides[j] - normalizedSides[i]) / 2;
+	}
+
+	// get footprint edge vectors
+	for(i = 0; i< N; i++)
+	{
+		j = (i + 1) % N;
+		Vector2 dir = normalizedSides[i].perpendicular();
+		dir.normalise();
+		dir *= roadCycle[i]->getWidth();
 
 		// get edge intersection point
-		if(!Geometry::lineIntersect(edges[i].first, edges[i].second, edges[j].first, 
-			edges[j].second, newFootprint[i]))
+		if(!Geometry::lineIntersect(originalFootprint[i] + dir, originalFootprint[j] + dir, originalFootprint[i], 
+			originalFootprint[i] + angleBisectors[i], newFootprint[i]))
 			return false;
 
 		// require point to be inside original footprint
 		if(!Geometry::isInside(newFootprint[i], originalFootprint))
 			return false;
 	}
+
 	footprint = newFootprint;
 	return true;
 }
@@ -923,4 +1023,200 @@ void WorldCell::showBuildings(bool show)
 {
 	mShowBuildings = show;
 	if(mBuildings) mBuildings->setVisible(mShowBuildings);
+}
+
+
+void WorldCell::beginGraphicalCellDecomposition()
+{
+	// take a copy of the graph
+	mGCDRoadGraph = mRoadGraph;
+
+	//init roads
+	RoadIterator rIt, rEnd;
+	for(tie(rIt, rEnd) = mGCDRoadGraph.getRoads(); rIt != rEnd; rIt++)
+		mGCDRoadGraph.getRoad(*rIt)->setRoadCycle(false);
+
+	//set<NodeId> mGCDHeap = vertices; 
+	//gk: at the moment I'm using a vertex to store vertices so they are already sorted
+	NodeIterator nIt, nEnd;
+	boost::tie(nIt, nEnd) = mGCDRoadGraph.getNodes();
+	//set<NodeId> mGCDHeap(i, end);
+	
+	//SET needs sort
+	//sort(mGCDHeap.begin(), mGCDHeap.end(), comp());
+	//it would be neater o use a comparator but our comparision isn't standalone
+
+
+	//insert one
+	mGCDHeap.clear();
+	mGCDHeap.push_back(*nIt++);
+
+	for(; nIt != nEnd; ++nIt)
+	{
+		for(std::list<NodeId>::iterator tit = mGCDHeap.begin(); true; tit++)
+		{
+			if(tit == mGCDHeap.end()) {
+				mGCDHeap.push_back(*nIt);
+				break;
+			}
+			else if(mGCDRoadGraph.getNode(*nIt)->getPosition2D().x < mGCDRoadGraph.getNode(*tit)->getPosition2D().x)
+			{
+				mGCDHeap.insert(tit, *nIt);
+				break;
+			}
+		}
+	}
+
+	drawGraphicalCellDecomposition();
+}
+
+void WorldCell::drawGraphicalCellDecomposition()
+{	
+	// 
+	if(mOverlay)
+	{
+		mSceneNode->detachObject(mOverlay);
+		delete mOverlay;
+	}
+
+	if(mOverlay2)
+	{
+		mSceneNode->detachObject(mOverlay2);
+		delete mOverlay2;
+	}
+
+	// Specify clearance
+	Vector3 extraClearance(0, 2, 0);
+
+	// begin manual object
+	mOverlay = new ManualObject(mName+"o");
+	mOverlay->begin("gk/Hilite/Red2", Ogre::RenderOperation::OT_LINE_LIST);
+
+	// for each edge
+	RoadIterator rIt, rEnd;
+	for(tie(rIt, rEnd) = mGCDRoadGraph.getRoads(); rIt != rEnd; rIt++) 
+	{
+		NodeInterface* srcNode = mGCDRoadGraph.getSrcNode((*rIt));
+		NodeInterface* dstNode = mGCDRoadGraph.getDstNode((*rIt));
+		mOverlay->position(srcNode->getPosition3D() + extraClearance);
+		mOverlay->position(dstNode->getPosition3D() + extraClearance);
+	}
+
+	// end manual object
+	mOverlay->end();
+	mSceneNode->attachObject(mOverlay);
+
+
+	// begin manual object
+	mOverlay2 = new ManualObject(mName+"o2");
+	mOverlay2->begin("gk/Hilite/Yellow", Ogre::RenderOperation::OT_LINE_LIST);
+
+	// for each cell
+	for(size_t i=0; i<mGCDNodeCycles.size(); i++)
+	{
+		std::vector<Vector2> polypoints;
+		polypoints.reserve(mGCDNodeCycles[i].size());
+
+		for(size_t j=0; j<mGCDNodeCycles[i].size(); j++)
+		{
+			polypoints.push_back(mGCDNodeCycles[i][j]->getPosition2D());
+		}
+		Geometry::polygonInset(0.2f, polypoints);
+
+		for(size_t j=0; j<(mGCDNodeCycles[i].size() - 1); j++)
+		{
+			Vector3 src(polypoints[j].x, mGCDNodeCycles[i][j]->getPosition3D().y + 2, polypoints[j].y);
+			mOverlay2->position(src);
+
+			Vector3 dst(polypoints[j+1].x, mGCDNodeCycles[i][j+1]->getPosition3D().y + 2, polypoints[j+1].y);
+			mOverlay2->position(dst);
+		}
+
+		Vector3 src(polypoints[mGCDNodeCycles[i].size() - 1].x, 
+			mGCDNodeCycles[i][mGCDNodeCycles[i].size() - 1]->getPosition3D().y + 2, 
+			polypoints[mGCDNodeCycles[i].size() - 1].y);
+		mOverlay2->position(src);
+
+		Vector3 dst(polypoints[0].x, 
+			mGCDNodeCycles[i][0]->getPosition3D().y + 2, polypoints[0].y);
+		mOverlay2->position(dst);
+
+	}
+
+	// end manual object
+	mOverlay2->end();
+	mSceneNode->attachObject(mOverlay2);
+
+
+}
+
+void WorldCell::stepGraphicalCellDecomposition()
+{	
+	
+	try {
+	
+	//while (mGCDHeap is not empty) do
+	if(mGCDHeap.size() != 0)
+	{
+		//Vertex v0 = mGCDHeap.GetMin();
+		NodeId v0 = *(mGCDHeap.begin());
+
+		switch(out_degree(v0, mGCDRoadGraph.mGraph))
+		{
+		case 0:
+			remove_vertex(v0, mGCDRoadGraph.mGraph);
+			RoadGraph::removeFromHeap(v0, mGCDHeap);
+			break;
+		case 1:
+			RoadGraph::extractFilament(v0, RoadGraph::getFirstAdjacent(v0, mGCDRoadGraph.mGraph), mGCDRoadGraph.mGraph, mGCDHeap, mGCDFilaments);
+			//oss<<"Filament: "<<graph[v0].getName()<<endl;
+
+			//DEBUG
+			//mGCDHeap.erase(v0);
+			break;
+		default:
+			RoadGraph::extractPrimitive(v0, mGCDRoadGraph.mGraph, mGCDHeap, mGCDFilaments, mGCDNodeCycles, mGCDRoadCycles); // filament or minimal cycle
+			//oss<<"Cycle or Filament: "<<mGraph[v0].getName()<<endl;
+
+			//DEBUG
+			//mGCDHeap.erase(v0);
+			break;
+		}
+		//mGCDHeap.erase(v0);
+	}
+
+	}
+	catch(Exception e)
+	{
+		LogManager::getSingleton().logMessage(e.getDescription());
+
+		//DANGER - setting partially decomposed graph to real graph
+		//mGraph = g;
+	}
+	
+
+	drawGraphicalCellDecomposition();
+}
+
+vector<Vector3> WorldCell::getBoundaryPoints3D()
+{
+	vector<Vector3> pointList;
+	pointList.reserve(mBoundaryCycle.size());
+	BOOST_FOREACH(NodeInterface* ni, mBoundaryCycle)
+		pointList.push_back(ni->getPosition3D());
+	return pointList;
+}
+
+vector<Vector2> WorldCell::getBoundaryPoints2D()
+{
+	vector<Vector2> pointList;
+	pointList.reserve(mBoundaryCycle.size());
+	BOOST_FOREACH(NodeInterface* ni, mBoundaryCycle)
+		pointList.push_back(ni->getPosition2D());
+	return pointList;
+}
+
+Real WorldCell::calcArea2D()
+{
+	return Geometry::polygonArea(getBoundaryPoints2D());
 }

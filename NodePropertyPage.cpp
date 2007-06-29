@@ -29,8 +29,6 @@ NodePropertyPage::NodePropertyPage(WorldFrame* wf)
 
 void NodePropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 {
-    // Get name of changed property
-    const wxString& name = event.GetPropertyName();
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 

@@ -4,11 +4,13 @@
 #include "stdafx.h"
 #include "RoadGraph.h"
 #include "MainWindow.h"
+#include "WorldTerrain.h"
 #include "Tool.h"
 
 class WorldNode;
 class WorldRoad;
 class WorldCell;
+
 
 
 class WorldFrame : public wxControl, public Ogre::Singleton<WorldFrame>
@@ -38,6 +40,7 @@ private:
 	RoadGraph mRoadGraph;
 	RoadGraph mSimpleRoadGraph;
 
+	WorldTerrain mWorldTerrain;
 	std::map< Ogre::SceneNode*, WorldNode* > mSceneNodeMap;
 	std::map< Ogre::SceneNode*, WorldRoad* > mSceneRoadMap;
 	std::map< Ogre::SceneNode*, WorldCell* > mSceneCellMap;
@@ -98,6 +101,7 @@ public:
 
 	void cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
 	void cameraRotate(Ogre::Real yaw, Ogre::Real pitch);
+	void init();
 	void toggleTimerRendering();
 	void update();
 	bool loadXML(const TiXmlHandle& worldRoot);

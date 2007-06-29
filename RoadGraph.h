@@ -37,7 +37,8 @@ typedef boost::graph_traits<Graph>::out_edge_iterator RoadIterator2;
 class RoadGraph
 {
 
-private:
+//private:
+public:
 	Graph mGraph;
 
 public:
@@ -198,7 +199,8 @@ public:
 	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
 
 
-private:
+//private:
+public:
 
 	static bool getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g);
 	static bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext, const Graph &g);

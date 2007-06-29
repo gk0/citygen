@@ -97,6 +97,7 @@ public:
 	MainWindow(wxWindow* parent);
 	~MainWindow();
 
+	void init();
 	void updateOgre();
 	void modify(bool m);
 	bool isModified();

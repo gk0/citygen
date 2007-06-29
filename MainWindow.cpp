@@ -244,6 +244,11 @@ MainWindow::MainWindow(wxWindow* parent)
 	//this->onNew(wxCommandEvent());
 }
 
+void MainWindow::init()
+{
+	mWorldFrame->init();
+}
+
 MainWindow::~MainWindow()
 {
 	// deinitialize the frame manager
@@ -526,7 +531,7 @@ void MainWindow::initNodeEdit()
 {
 	// create a toolbar and add them to it
 	mNodeEditToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mNodeEditToolBar->AddTool(IDM_NODE_SELECT, _("Select Node"), TOOL_BMP(select), _("Select node"), wxITEM_RADIO);
+	mNodeEditToolBar->AddTool(IDM_NODE_SELECT, _("Select Node"), TOOL_BMP(selnode), _("Select node"), wxITEM_RADIO);
 	mNodeEditToolBar->AddTool(IDM_NODE_ADD, _("Add Node"), TOOL_BMP(addnode), _("Add node"), wxITEM_RADIO);
 	mNodeEditToolBar->AddTool(IDM_NODE_DELETE, _("Delete Node"), TOOL_BMP(delnode), _("Delete node"), wxITEM_RADIO);
 	mNodeEditToolBar->Realize();
@@ -542,7 +547,7 @@ void MainWindow::initRoadEdit()
 {
 	// create a toolbar and add them to it
 	mRoadEditToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mRoadEditToolBar->AddTool(IDM_GRAPH_SELEDGE, _("Select Road"), TOOL_BMP(select), _("Select road"), wxITEM_RADIO);
+	mRoadEditToolBar->AddTool(IDM_GRAPH_SELEDGE, _("Select Road"), TOOL_BMP(selnode), _("Select road"), wxITEM_RADIO);
 	mRoadEditToolBar->AddTool(IDM_GRAPH_ADDEDGE, _("Add Road"), TOOL_BMP(addedge), _("Add road"), wxITEM_RADIO);
 	mRoadEditToolBar->AddTool(IDM_GRAPH_DELEDGE, _("Delete Road"), TOOL_BMP(deledge), _("Delete road"), wxITEM_RADIO);
 	mRoadEditToolBar->Realize();

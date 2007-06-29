@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm196"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\boost RC_1_34_0&quot;;&quot;..\wxWidgets-2.8.3\include&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswud\wx\msw&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswud&quot;;&quot;..\wxWidgets-2.8.3\contrib\include&quot;;..\tinyxml;..\OgreSDK_VS80\include"
+				AdditionalIncludeDirectories="..\boost_1_34_0;&quot;..\wxWidgets-2.8.3\include&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswud\wx\msw&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswud&quot;;&quot;..\wxWidgets-2.8.3\contrib\include&quot;;..\tinyxml;..\OgreSDK_VS80\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -281,6 +281,10 @@
 				RelativePath=".\WorldRoad.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\WorldTerrain.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -397,6 +401,10 @@
 			</File>
 			<File
 				RelativePath=".\WorldRoad.h"
+				>
+			</File>
+			<File
+				RelativePath=".\WorldTerrain.h"
 				>
 			</File>
 		</Filter>

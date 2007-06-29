@@ -68,6 +68,7 @@
 #include <list>
 
 //BOOST Includes
+#include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/visitors.hpp>
@@ -93,14 +94,6 @@
 #include <wx/propgrid/manager.h>
 #include <wx/propgrid/advprops.h>
 #include <wx/aui/aui.h>
-
-
-// wxGTK (Linux & Others)
-#ifdef __WXGTK__
-#include <gdk/gdk.h>
-#include <gdk/gdkx.h>
-#include <gtk/gtk.h> // just this should suffice as it should include gdk.h itself
-#endif
 
 //TinyXML Includes
 #include <tinyxml.h>

@@ -76,8 +76,6 @@ void CellPropertyPage::Init()
 
 void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 {
-    // Get name of changed property
-    const wxString& name = event.GetPropertyName();
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
@@ -101,7 +99,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 				g.buildingHeight = 2.4;
 				g.buildingDeviance = 0.1;
 				g.roadWidth = 0.4;
-				wc->setGrowthGenParams(g);
+				wc->setGenParams(g);
 				mWorldFrame->update();
 				break;
 			case 1:
@@ -115,7 +113,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 				g.buildingHeight = 1.8;
 				g.buildingDeviance = 0.3;
 				g.roadWidth = 0.4;
-				wc->setGrowthGenParams(g);
+				wc->setGenParams(g);
 				mWorldFrame->update();
 				break;
 			case 2:
@@ -144,7 +142,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			g.buildingHeight = GetPropertyValueAsDouble(buildingHeightProp);
 			g.buildingDeviance = GetPropertyValueAsDouble(buildingDevianceProp);
 			
-			wc->setGrowthGenParams(g);
+			wc->setGenParams(g);
 			mWorldFrame->update();
 		}
 	}
@@ -159,7 +157,7 @@ void CellPropertyPage::update()
 	WorldCell *wc = mWorldFrame->getSelectedCell();
 	if(wc)
 	{
-		g = wc->getGrowthGenParams();
+		g = wc->getGenParams();
 		/*
 		typedef struct {
 			int seed;

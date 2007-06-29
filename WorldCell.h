@@ -45,14 +45,23 @@ private:
 
 	bool mShowRoads, mShowBuildings;
 
+	// gcd crap
+	RoadGraph mGCDRoadGraph;
+	Ogre::ManualObject* mOverlay;
+	Ogre::ManualObject* mOverlay2;
+	std::list<NodeId> mGCDHeap;
+	std::vector<RoadInterface*> mGCDFilaments;
+	std::vector< std::vector<NodeInterface*> > mGCDNodeCycles;
+	std::vector< std::vector<RoadInterface*> > mGCDRoadCycles;
+
 public:
 	WorldCell(RoadGraph &p, RoadGraph &s);
 	WorldCell(RoadGraph &p, RoadGraph &s, std::vector<NodeInterface*> &n);
 	WorldCell(RoadGraph &p, RoadGraph &s, std::vector<NodeInterface*> &n, std::vector<RoadInterface*> &b);
 	virtual ~WorldCell();
 
-	GrowthGenParams getGrowthGenParams() const;
-	void setGrowthGenParams(const GrowthGenParams &g);
+	GrowthGenParams getGenParams() const;
+	void setGenParams(const GrowthGenParams &g);
 
 	const std::vector<RoadInterface*>& getBoundaryRoads() const;
 	const std::vector<NodeInterface*>& getBoundaryCycle() const;
@@ -80,6 +89,15 @@ public:
 
 	bool loadXML(const TiXmlHandle& worldRoot);
 	TiXmlElement* saveXML();
+
+	// for graphical DEBUG
+	void beginGraphicalCellDecomposition();
+	void stepGraphicalCellDecomposition();
+	void drawGraphicalCellDecomposition();
+
+	std::vector<Ogre::Vector3> getBoundaryPoints3D();
+	std::vector<Ogre::Vector2> getBoundaryPoints2D();
+	Ogre::Real calcArea2D();
 
 private:
 	void clearRoadGraph();
