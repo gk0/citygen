@@ -202,13 +202,9 @@ bool Geometry::lineInset(Ogre::Real inset, std::vector<Ogre::Vector2> &linePoint
 		// get edge intersection point
 		Ogre::Real r,s;
 		if(!Geometry::lineIntersect(edges[i].first, edges[i].second, edges[i+1].first, 
-			edges[i+1].second, insetLinePoints[i+1], r, s))
+			edges[i+1].second, insetLinePoints[i+1], r, s) && r >= 0 && s <= 1)
 		{
-			// if parallel
-			if(r==s)
-				 insetLinePoints[i+1] = edges[i].second;
-			else
-				return false;
+			insetLinePoints[i+1] = (edges[i].second + edges[i+1].first) / 2;
 		}
 	}
 
@@ -233,12 +229,8 @@ bool Geometry::unionPolyAndLine(std::vector<Ogre::Vector2> &polyPoints, std::vec
 		for(j=0; j<polyN; j++)
 		{
 			k = (j+1)%polyN;
-			bool intersects = Geometry::lineIntersect(linePoints[i], linePoints[i+1], polyPoints[j], 
-				polyPoints[k], intscn, r, s);  // must be on poly segment and be on extension of ba
-			
-			if(r==s) 
-				intscn = linePoints[i];
-			if(intersects && s > 0 && s < 1 && r <= 1)
+			if(Geometry::lineIntersect(linePoints[i], linePoints[i+1], polyPoints[j], 
+				polyPoints[k], intscn, r, s) && s > 0 && s < 1 && r <= 1)  // must be on poly segment and be on extension of ba
 			{
 				if(!intscnFound)
 				{
