@@ -60,30 +60,19 @@ public:
 	static inline bool lineSegmentIntersect(const Ogre::Vector2& a, const Ogre::Vector2& b, 
 		const Ogre::Vector2& c, const Ogre::Vector2& d, Ogre::Vector2& intersection)
 	{
-		Ogre::Vector2 BminusA(b - a);
-		Ogre::Vector2 DminusC(d - c);
-		Ogre::Real denom = (BminusA.x * DminusC.y) - (BminusA.y * DminusC.x);
+		Ogre::Real r, s;
+		bool intersects = lineIntersect(a, b, c, d, intersection, r, s);
 
-		// line are parallel
-		if(denom == 0) return false;
-
-		Ogre::Vector2  AminusC(a - c);
-		
-		Ogre::Real r = ((AminusC.y * DminusC.x) - (AminusC.x * DminusC.y)) / denom;
-		if(r < 0 || r > 1) return false;
-
-		Ogre::Real s = ((AminusC.y * BminusA.x) - (AminusC.x * BminusA.y)) / denom;
-		if(s < 0 || s > 1) return false;
-
-		//if r and s are 0 then the line are coincident (on top of one another)
-	        
-		// Px=Ax+r(Bx-Ax)
-		// Py=Ay+r(By-Ay)
-		intersection.x = a.x + r * (BminusA.x);
-		intersection.y = a.y + r * (BminusA.y);
-
-		return true;
+		if(intersects)
+		{
+			// intersection must occur of segment no extension
+			if(r < 0 || r > 1) return false;
+			if(s < 0 || s > 1) return false;
+			return true;
+		}
+		else return false;
 	}
+
 
 	/** Checks if the two lines with points a,b & c,d intersect
 		@remarks
@@ -108,6 +97,45 @@ public:
 	static inline bool lineIntersect(const Ogre::Vector2& a, const Ogre::Vector2& b, 
 		const Ogre::Vector2& c, const Ogre::Vector2& d, Ogre::Vector2& intersection)
 	{
+		Ogre::Real r, s;
+		return lineIntersect(a, b, c, d, intersection, r, s);
+	}
+
+
+	/** Checks if the two lines with points a,b & c,d intersect
+		@remarks
+			Algorithm defined at 
+			http://www.faqs.org/faqs/graphics/algorithms-faq/
+			OR
+			Computational Geometry in C, Joeseph O'Rourke Pg.221 
+        @param
+            a, a Vector2 defines the start point of segment 1
+        @param
+            b, a Vector2 defines the end point of segment 1
+        @param
+            c, a Vector2 defines the start point of segment 2
+        @param
+            d, a Vector2 defines the end point of segment 2
+		@param
+			intersection a Vector2 reference store the resulting
+			point of intersection if it occurs.
+		@param
+			r, a Ogre::Real reference stores the type of 
+			intersection for line a-->b
+			 - if r>1, P is located on extension of ab
+			 - if r<0, P is located on extension of ba
+		@param
+			s, a Ogre::Real reference stores the type of 
+			intersection for line c-->d
+			 - if s>1, P is located on extension of cd
+			 - if s<0, P is located on extension of dc
+        @returns
+            A bool indicating if the line segments intersect. 
+    */
+	static inline bool lineIntersect(const Ogre::Vector2& a, const Ogre::Vector2& b, 
+		const Ogre::Vector2& c, const Ogre::Vector2& d, Ogre::Vector2& intersection, 
+		Ogre::Real& r, Ogre::Real &s)
+	{
 		Ogre::Vector2 BminusA(b - a);
 		Ogre::Vector2 DminusC(d - c);
 		Ogre::Real denom = (BminusA.x * DminusC.y) - (BminusA.y * DminusC.x);
@@ -117,8 +145,8 @@ public:
 
 		Ogre::Vector2  AminusC(a - c);
 		
-		Ogre::Real r = ((AminusC.y * DminusC.x) - (AminusC.x * DminusC.y)) / denom;
-		Ogre::Real s = ((AminusC.y * BminusA.x) - (AminusC.x * BminusA.y)) / denom;
+		r = ((AminusC.y * DminusC.x) - (AminusC.x * DminusC.y)) / denom;
+		s = ((AminusC.y * BminusA.x) - (AminusC.x * BminusA.y)) / denom;
 
 		//if r and s are 0 then the line are coincident (on top of one another)
 		if(r == 0 && s == 0) return false;
@@ -192,6 +220,22 @@ public:
 	static bool polygonInset(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints);
 
 
+	/** Insets a line
+		@remarks
+			This function returns a line that is inset
+        @param 
+			inset a Ogre::Real that specifies the amount to inset the poly
+        @param
+            linePoints a std::vector that defines the polygon in the
+			form of ordered points.
+
+        @returns
+			true if the inset is successfull, false if it is not successful for
+			example in the event that the poly is too small to be inset
+	*/
+	static bool lineInset(Ogre::Real inset, std::vector<Ogre::Vector2> &linePoints);
+
+	static bool unionPolyAndLine(std::vector<Ogre::Vector2> &polyPoints, std::vector<Ogre::Vector2> &linePoints);
 
 	static bool isInside(const Ogre::Vector2 &loc, const std::vector<Ogre::Vector2> &polyPoints);
 

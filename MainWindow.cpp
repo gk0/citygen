@@ -355,7 +355,7 @@ bool MainWindow::saveAs()
 {
 	//TODO: file save as
 	wxString filename = wxFileSelector(_("Choose a file to save"), _(""), _(""),  
-		_(""), _("Citygen XML files (*.cgx)|*.cgx|GIF files (*.gif)|*.gif"));
+		_(""), _("Citygen XML files (*.cgx)|*.cgx|GIF files (*.gif)|*.gif"), wxSAVE);
 	if(!filename.empty())
 	{
 		return doSave(filename);

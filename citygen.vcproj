@@ -214,6 +214,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\prim.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RoadGraph.cpp"
 				>
 			</File>
@@ -227,6 +231,10 @@
 			</File>
 			<File
 				RelativePath=".\SimpleRoad.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\skeleton.cpp"
 				>
 			</File>
 			<File
@@ -324,6 +332,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\prim.h"
+				>
+			</File>
+			<File
 				RelativePath=".\RoadGraph.h"
 				>
 			</File>
@@ -341,6 +353,10 @@
 			</File>
 			<File
 				RelativePath=".\SimpleRoad.h"
+				>
+			</File>
+			<File
+				RelativePath=".\skeleton.h"
 				>
 			</File>
 			<File

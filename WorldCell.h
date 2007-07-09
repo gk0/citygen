@@ -113,7 +113,7 @@ private:
 	void installRoad(RoadInterface* r, std::map<NodeInterface*, NodeInterface*> &nodeMap);
 	RoadInterface* getLongestBoundaryRoad() const;
 
-	static bool extractFootprint(const std::vector<NodeInterface*> &nodeCycle, 
+	bool extractFootprint(const std::vector<NodeInterface*> &nodeCycle, 
 						 const std::vector<RoadInterface*> &roadCycle, 
 						 std::vector<Ogre::Vector2> &footprint); 
 

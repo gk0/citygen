@@ -775,51 +775,138 @@ bool WorldCell::extractFootprint(const vector<NodeInterface*> &nodeCycle,
 		"Invalid number of nodes/roads in cycle", "WorldCell::extractFootprint");
 
 	// prepare footprint data structures
-	vector<Vector2> originalFootprint, newFootprint(N);
+	vector<Vector2> originalFootprint;
 	originalFootprint.reserve(N);
-	for(i = 0; i < N; i++) originalFootprint.push_back(nodeCycle[i]->getPosition2D()); 
+	for(i=0; i<N; i++) originalFootprint.push_back(nodeCycle[i]->getPosition2D()); 
 
-
-	vector<Vector2> normalizedSides;
-	normalizedSides.reserve(N);
-
-	//normalizedSides[i] = point[i] -> point[i+1]
-	for(i = 0; i < N; i++)
+	Real width = roadCycle[0]->getWidth();
+	for(i=1; i<N && roadCycle[i]->getWidth() == width; i++);
+	if(i==N)
 	{
-		j = (i + 1) % N;
-		Vector2 side(originalFootprint[j] - originalFootprint[i]);
-		side.normalise();
-		normalizedSides.push_back(side);
+		if(Geometry::polygonInset(width, originalFootprint))
+		{
+			footprint = originalFootprint;
+			return true;
+		}
+		else return false;
 	}
-
-	//angleBisectors[i] = bisector @ point[i]
-	vector<Vector2> angleBisectors(N);
-	for(i = 0; i < N; i++)
+	else
 	{
-		j = (i + 1) % N;
-		angleBisectors[j] = (normalizedSides[j] - normalizedSides[i]) / 2;
-	}
+/*
+		// I'm affraid its a little more complicated for this case
+		// The sk code provides a skeleton for uniform insetting but 
+		// cells primary road network join onto larger roads that require 
+		// a non uniform inset, ideally a weighted straight skeleton should
+		// but for the meantime, a manual inset for the larger roads is used
 
-	// get footprint edge vectors
-	for(i = 0; i< N; i++)
-	{
-		j = (i + 1) % N;
-		Vector2 dir = normalizedSides[i].perpendicular();
-		dir.normalise();
-		dir *= roadCycle[i]->getWidth();
+		// calculate the minimum road width
+		for(i=1; i<N; i++) 
+			if(roadCycle[i]->getWidth() < width) 
+				width = roadCycle[i]->getWidth();
 
-		// get edge intersection point
-		if(!Geometry::lineIntersect(originalFootprint[i] + dir, originalFootprint[j] + dir, originalFootprint[i], 
-			originalFootprint[i] + angleBisectors[i], newFootprint[i]))
+		// store a list of larger road sections
+		vector< vector<Vector2> > roadSections;
+		vector< Real > roadSectionWidths;
+
+		vector<RoadInterface*> rds;
+		for(i=0; i<N; i++) 
+		{
+			NodeId n1 = nodeCycle[i]->mNodeId;
+			NodeId n2 = nodeCycle[(i+1)%N]->mNodeId;
+			RoadId rd = mRoadGraph.getRoad(n1, n2);
+			RoadInterface* ri = mRoadGraph.getRoad(rd);
+			assert(roadCycle[(i+1)%N] == ri);
+			rds.push_back(ri);
+		}
+
+		for(i=0; i<N; i++) 
+		{
+			if(roadCycle[i]->getWidth() != width)
+			{
+				// store width
+				Real roadSectionWidth = roadCycle[i]->getWidth();
+
+				NodeId n1 = nodeCycle[i]->mNodeId;
+				NodeId n2 = nodeCycle[(i+1)%N]->mNodeId;
+				RoadId rd = mRoadGraph.getRoad(n1, n2);
+				RoadInterface* ri = mRoadGraph.getRoad(rd);
+				//assert(roadCycle[i] == ri);
+
+				// store points in section
+				vector<Vector2> roadSection;
+				roadSection.push_back(originalFootprint[(i-1)%N]);
+				roadSection.push_back(originalFootprint[i++]);
+				for(; i<N && roadCycle[i]->getWidth() == roadSectionWidth; i++)
+					roadSection.push_back(originalFootprint[i]);
+
+				i--;  // don't advance too far
+
+				// add to list
+				roadSectionWidths.push_back(roadSectionWidth);
+				roadSections.push_back(roadSection);
+			}
+		}
+
+		// get a minimal inset footprint
+		if(!Geometry::polygonInset(width, originalFootprint))
 			return false;
 
-		// require point to be inside original footprint
-		if(!Geometry::isInside(newFootprint[i], originalFootprint))
-			return false;
-	}
+		size_t numOfSections = roadSections.size();
+		for(i=0; i<numOfSections; i++)
+		{
+			// inset road section
+			if(!Geometry::lineInset(roadSectionWidths[i], roadSections[i]))
+				return false;
 
-	footprint = newFootprint;
-	return true;
+			// add to footprint
+			//for(size_t j=0; j<roadSections[i].size(); j++) newFootprint.push_back(roadSections[i][j]);
+			if(!Geometry::unionPolyAndLine(originalFootprint, roadSections[i]))
+				return false;
+		}
+		footprint = originalFootprint;
+		return true;
+*/
+		// try it old school see if it works any better
+
+		// create footprint edge structure
+		vector< pair<Vector2, Vector2> > edges;
+		edges.reserve(N);
+		vector<Vector2> newFootprint;
+		newFootprint.reserve(N);
+
+		// get footprint edge vectors
+		for(i=0; i<N; i++)
+		{
+			j = (i+1)%N;
+			Vector2 dir(originalFootprint[i] - originalFootprint[j]);
+			dir = dir.perpendicular();
+			dir.normalise();
+			dir *= -roadCycle[j]->getWidth();
+			edges.push_back(make_pair(originalFootprint[i] + dir, originalFootprint[j] + dir));
+		}
+
+		// calculate footprint points from edges
+		for(i=0; i<N; i++)
+		{
+			j = (i+1)%N;
+			// get edge intersection point
+			Ogre::Real r,s;
+			Vector2 intscn;
+			if(Geometry::lineIntersect(edges[i].first, edges[i].second, 
+				edges[j].first, edges[j].second, intscn, r, s) && r >= 0 && s <= 1)
+			{
+				newFootprint.push_back(intscn);
+			}
+			else
+			{
+				// no intersection, couldbe parallel could be mad lets average the pair
+				newFootprint.push_back((edges[i].second + edges[j].first)/2);
+			}
+		}
+		footprint.clear();
+		footprint.insert(footprint.begin(), newFootprint.rbegin(), newFootprint.rend());
+		return true;
+	}
 }
 
 void WorldCell::createBuilding(ManualObject* m, const vector<Vector2> &footprint,
@@ -840,15 +927,14 @@ void WorldCell::createBuilding(ManualObject* m, const vector<Vector2> &footprint
 			normal.normalise();
 			m->position(Vector3(footprint[i].x, height, footprint[i].y));
 			m->normal(normal);
-			m->position(Vector3(footprint[j].x, foundation, footprint[j].y));
-			m->normal(normal);
 			m->position(Vector3(footprint[i].x, foundation, footprint[i].y));
 			m->normal(normal);
-
-
-			m->position(Vector3(footprint[i].x, height, footprint[i].y));
+			m->position(Vector3(footprint[j].x, foundation, footprint[j].y));
 			m->normal(normal);
+
 			m->position(Vector3(footprint[j].x, height, footprint[j].y));
+			m->normal(normal);
+			m->position(Vector3(footprint[i].x, height, footprint[i].y));
 			m->normal(normal);
 			m->position(Vector3(footprint[j].x, foundation, footprint[j].y));
 			m->normal(normal);
