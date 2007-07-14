@@ -14,11 +14,12 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	  mSimpleRoadGraph(s)
 {
 	mGenParams.algorithm = EvenElevationDiff;
-	mGenParams.sampleSize = 5; //DEBUG: set to v. big 50 normal is 10
+	mGenParams.sampleSize = 12; //DEBUG: set to v. big 50 normal is 10
 	mGenParams.roadWidth = 1.0;
 	mGenParams.sampleDeviance= 25;
 	mGenParams.numOfSamples = 5;
-	mGenParams.debug = true;
+	mGenParams.debug = false;
+	mGenParams.segmentDrawSize = 2;
 
 	mSelected = false;
 	
@@ -63,15 +64,17 @@ void WorldRoad::build()
 		roadSpline.addPoint(mPlotList[i]);
 	}
 
-	// TODO: just uses 100 segments
+	// calculate approximate number of points to get desired segment size 
+	Real interpolateStep = 1;
+	if(mRoadSegmentList.size() > 0)
+		interpolateStep = 1/((mRoadSegmentList.size() * mGenParams.sampleSize) / mGenParams.segmentDrawSize);
+
+	// extract point list from spline
 	roadSpline.recalcTangents();
-	for(Real t=0; t<=1; t += 0.01)
+	for(Real t=0; t<=1; t += interpolateStep)
 	{
 		interpolatedList.push_back(roadSpline.interpolate(t));
 	}
-	//interpolatedList = mPlotList;
-
-
 
 	// always destroy previous
 	destroyRoadObject();
@@ -309,8 +312,8 @@ void WorldRoad::plotRoad()
 	// always destroy previous
 	mPlotList.clear();
 
-	Ogre::Real sampleSizeSq(Math::Sqr(mGenParams.sampleSize));
-	Ogre::Real sampleSizeSq2(Math::Sqr(mGenParams.sampleSize * 2));
+	Ogre::Real distanceToJoin, sampleSize(mGenParams.sampleSize);
+	Ogre::Real sampleSize2(mGenParams.sampleSize * 2);
 	Ogre::Vector2 direction;
 	Vector3 groundClearance(0,0.3,0);
 	Vector2 srcCursor2D(getSrcNode()->getPosition2D());
@@ -360,8 +363,9 @@ void WorldRoad::plotRoad()
 
 	while(true)
 	{
+		distanceToJoin = (srcCursor2D - dstCursor2D).length(); 
 		// if outside range of dest point
-		if((srcCursor2D - dstCursor2D).squaredLength() > sampleSizeSq2)
+		if(distanceToJoin > sampleSize2)
 		{
 			// src --> dst
 			{
@@ -409,11 +413,31 @@ void WorldRoad::plotRoad()
 		else
 			break;
 	}
-
+	
 	// if distance between src and dst cursors is less than a seg length then 
 	// another point is required
-	if((srcCursor2D - dstCursor2D).squaredLength() > sampleSizeSq)
+	distanceToJoin = (srcCursor2D - dstCursor2D).length(); 
+	if(distanceToJoin > sampleSize)
 	{	
+		if(mPlotList.size() >= 2 && plotList2.size() >= 2)
+		{
+			// even out segment size a bit
+			Vector3 srcDst = mPlotList[(mPlotList.size()-2)] - mPlotList[(mPlotList.size()-1)];
+			Vector3 dstSrc = plotList2[plotList2.size()-2] - plotList2[plotList2.size()-1];
+			Real srcDstL(srcDst.length()), dstSrcL(dstSrc.length());
+			Real avgL = (srcDstL + dstSrcL + distanceToJoin) / 4;
+			srcDst.normalise();
+			dstSrc.normalise();
+			mPlotList[mPlotList.size()-1] = mPlotList[mPlotList.size()-2] - (srcDst*avgL);
+			plotList2[plotList2.size()-1] = plotList2[plotList2.size()-2] - (dstSrc*avgL);
+
+			// update the cursors
+			srcCursor3D = mPlotList[mPlotList.size()-1];
+			dstCursor3D = plotList2[plotList2.size()-1];
+			srcCursor2D = Vector2(srcCursor3D.x, srcCursor3D.z);
+			dstCursor2D = Vector2(dstCursor3D.x, dstCursor3D.z);
+		}
+
 		// find the mid point between the two cursors
 		Vector2 midPoint = (srcCursor2D + dstCursor2D) / 2;
 
@@ -453,6 +477,28 @@ void WorldRoad::plotRoad()
 		nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
 		mPlotList.push_back(nextSrcCursor3D + groundClearance);
 	}
+	else
+	{
+		if(mPlotList.size() >= 2 && plotList2.size() >= 2)
+		{
+			// even out segment size a bit
+			Vector3 srcDst = mPlotList[(mPlotList.size()-2)] - mPlotList[(mPlotList.size()-1)];
+			Vector3 dstSrc = plotList2[plotList2.size()-2] - plotList2[plotList2.size()-1];
+			Real srcDstL(srcDst.length()), dstSrcL(dstSrc.length());
+			Real avgL = (srcDstL + dstSrcL + distanceToJoin) / 3;
+			srcDst.normalise();
+			dstSrc.normalise();
+			mPlotList[mPlotList.size()-1] = mPlotList[mPlotList.size()-2] - (srcDst*avgL);
+			plotList2[plotList2.size()-1] = plotList2[plotList2.size()-2] - (dstSrc*avgL);
+
+			// update the cursors
+			srcCursor3D = mPlotList[mPlotList.size()-1];
+			dstCursor3D = plotList2[plotList2.size()-1];
+			srcCursor2D = Vector2(srcCursor3D.x, srcCursor3D.z);
+			dstCursor2D = Vector2(dstCursor3D.x, dstCursor3D.z);
+		}
+	}
+	
 
 	//join src-->dst & dst-->src lists
 	for(int i=static_cast<int>(plotList2.size()-1); i>=0; i--)
@@ -563,7 +609,7 @@ void WorldRoad::destroyRoadObject()
 		mManualObject = 0;
 	}
 }
-
+/*
 bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 {
 	for(size_t i=0; i<mRoadSegmentList.size(); i++)
@@ -575,7 +621,7 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 	}
 	return false;
 }
-
+*/
 bool WorldRoad::hasIntersection()
 {
 	for(unsigned int i=0; i<mRoadSegmentList.size(); i++)
@@ -804,102 +850,64 @@ void WorldRoad::setWidth(const Ogre::Real& w)
 // Note: should only try to snap to road network, ie those accessible from 
 // the simple road graph. 
 // Simple Node is the same as a road intersection, either way have to split road
-WorldRoad::RoadIntersectionState WorldRoad::snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos)
+int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRoad*& wr)
 {
+	size_t i;
+	RoadId rd;
+	bool intersection=false;
 
-
-	NodeId snappedToNode;
-	bool nodeSnapped = false;
-
-	// Find Closest Intersection
-	if(getClosestIntersection(rd, pos))
+	// calculate the minimum segment size, i know its a bit of work and its not 
+	// ideal but its not that bad and is only a tiny percentage of the work
+	Real len = std::numeric_limits<Real>::max();
+	for(i=0; i<(mRoadSegmentList.size()-1); i++) 
 	{
-		// Intersection!
-		// Snap to Road Node
-		if(mRoadGraph.snapToRoadNode(pos, rd, snapSzSquared, snappedToNode))
-		{
-			nodeSnapped = true;
-		}
-		else
-		{
-			// INTERSECTION
-			return road;
-		}
+		Vector2 src = mRoadGraph.getSrcNode(mRoadSegmentList[i])->getPosition2D();
+		Vector2 dst = mRoadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
+		Real l = (src-dst).length();
+		if(l<len) len = l;
 	}
-	else
-	{
-		// create a set of nodes to ignore (all simple nodes in road and dest)
-		std::set<NodeId> ignoreNodeSet;
-		for(size_t i=0; i<mRoadSegmentList.size(); i++) 
-			ignoreNodeSet.insert(mRoadGraph.getDst(mRoadSegmentList[i]));
+	snapSz = std::min((len-0.01f), snapSz);
+	Real snapSzSq(Math::Sqr(snapSz));
 
-		// No intersection!
-		// Snap To Node
-		nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->getPosition2D(), 
-										ignoreNodeSet, snapSzSquared, snappedToNode);
+	for(i=0; i<(mRoadSegmentList.size()-1); i++) 
+	{
+		NodeId srcNd = mRoadGraph.getSrc(mRoadSegmentList[i]);
+		NodeId dstNd = mRoadGraph.getDst(mRoadSegmentList[i]);
+		intersection = mRoadGraph.findClosestIntscnConnected(srcNd, dstNd, snapSz, pos, rd);
+		if(intersection) break;
+	}
+	if(!intersection)
+	{
+		NodeId srcNd = mRoadGraph.getSrc(mRoadSegmentList[i]);
+		Vector2 dstPos = mRoadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
+		intersection = mRoadGraph.findClosestIntscn(srcNd, dstPos, snapSz, pos, rd);
 	}
 
-	// if node snapped we alter the direction of our proposed road and must retest it
-	while(nodeSnapped)
+	if(!intersection) pos = getDstNode()->getPosition2D();
+
+	Real closestDistanceSq = std::numeric_limits<Real>::max();
+	NodeIterator nIt, nEnd;
+	for(boost::tie(nIt, nEnd) = mSimpleRoadGraph.getNodes();  nIt != nEnd; nIt++)
 	{
-		// DANGER
-		if(snappedToNode != getSrcNode()->mNodeId)
+		NodeInterface* ni = mSimpleRoadGraph.getNode(*nIt);
+		assert(typeid(*ni) == typeid(WorldNode));
+		Vector2 nPos = ni->getPosition2D();
+		if(nPos == getDstNode()->getPosition2D()) continue;
+			
+		Real currentDistanceSq = (pos - nPos).squaredLength();
+		if(currentDistanceSq < snapSzSq && currentDistanceSq < closestDistanceSq)
 		{
-			Vector2 snapPos = mRoadGraph.getNode(snappedToNode)->getPosition2D();
-			getDstNode()->setPosition2D(snapPos.x, snapPos.y);
-
-			//DOH have to reget the snappedToNode since any set position recreated the road segs
-			// create a set of nodes to ignore (all simple nodes in road and dest)
-			std::set<NodeId> ignoreNodeSet;
-			for(size_t i=0; i<mRoadSegmentList.size(); i++) 
-				ignoreNodeSet.insert(mRoadGraph.getDst(mRoadSegmentList[i]));
-
-			nodeSnapped = mRoadGraph.snapToOtherNode(getDstNode()->getPosition2D(), 
-										ignoreNodeSet, snapSzSquared, snappedToNode);
-		}
-
-		// Find Closest Intersection
-		if(getClosestIntersection(rd, pos))
-		{
-			// Snap to Road Node
-			NodeId tmp; 
-			if(mRoadGraph.snapToRoadNode(pos, rd, snapSzSquared, tmp))
-			{
-				if(snappedToNode != tmp) {
-					snappedToNode = tmp;
-					continue;
-				}
-			}
-			else
-			{
-				// INTERSECTION
-				return road;
-			}
-		}
-		if(!nodeSnapped) break;
-
-		// NODE SNAP
-		nd = snappedToNode;
-		NodeInterface* nb = mRoadGraph.getNode(nd);
-		if(typeid(*nb) == typeid(WorldNode))		
-			return world_node;
-		else
-		{
-			// A simple node intersection is the same as a road intersection,
-			// since simple nodes are only plot points in a WorldRoad
-			RoadIterator2 rIt, rEnd;
-			boost::tie(rIt, rEnd) = mRoadGraph.getRoadsFromNode(nd);
-			if(rIt != rEnd)
-			{
-				rd = *rIt;
-				return road;
-			}
-			else
-				throw new Exception(Exception::ERR_ITEM_NOT_FOUND, "Snapped to an Isolated SimpleNode", 
-				"WorldRoad::snap");
+			wn = static_cast<WorldNode*>(ni);
+			pos = nPos;
+			closestDistanceSq = currentDistanceSq;
 		}
 	}
-	// NO INTERSECTION
-	return none;
+	if(closestDistanceSq < std::numeric_limits<Real>::max())
+		return 2;
+	else if(intersection == true)
+	{
+		//TODO: interpolate point on spline
+		return 1;
+	}
+	else return 0;
 }
-

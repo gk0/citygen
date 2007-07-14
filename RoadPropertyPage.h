@@ -16,6 +16,7 @@ private:
 	wxPGProperty* sampleDevianceProp;
 	wxPGProperty* samplesProp;
 	wxPGProperty* plotDebugProp;
+	wxPGProperty* segmentDrawSizeProp;
 	WorldFrame* mWorldFrame;
 
 

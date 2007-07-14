@@ -21,6 +21,7 @@ private:
 	wxPGProperty* buildingHeightProp;
 	wxPGProperty* buildingDevianceProp;
 	wxPGProperty* roadWidthProp;
+	wxPGProperty* roadLimitProp;
 	WorldFrame* mWorldFrame;
 
 

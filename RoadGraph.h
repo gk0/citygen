@@ -2,8 +2,6 @@
 #define ROADGRAPH_H
 
 #include "stdafx.h"
-//#include "Geometry.h"
-//#include "NodeInterface.h"
 
 class NodeInterface;
 class RoadInterface;
@@ -137,33 +135,8 @@ public:
 	bool roadIntersection(const Ogre::Vector2& a, const Ogre::Vector2& b, 
 		const RoadId rd, Ogre::Vector2& intersection) const;
 
-	bool findClosestIntersection(const Ogre::Vector2& a, 
-		const Ogre::Vector2& b, RoadId& rd, Ogre::Vector2& intersection) const;
-	bool findClosestIntersection3(const Ogre::Vector2& a, const Ogre::Vector2& b, 
-					const NodeId& ignoreNode, RoadId& rd, Ogre::Vector2& intersection) const;
-
 	bool getNodeClosest(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Real &distance) const;
 	bool getNodeClosestSq(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Real &distance) const;
-
-	//bool testValidRoad(const NodeId &nd1, const Ogre::Vector2 &nd2Loc);
-
-	/**
-	 * Find the closest intersection or resulting intersection from snap to node
-	 *
-	 * @param sourcePos the position of the source node of the proposed road.
-	 * @param destPos the proposed destination of the road.
-	 * @param snapSzSquared the snap size value squared, used to snap the 
-	 *  proposed destination on to an existing node or road
-	 * @param nd a node descriptor reference to store a node match
-	 * @param pos a Ogre::Vector2 position variable to store a placed position
-	 * @return a int value indicate whether an intersection was not found, was found or snapped to node
-	 */
-	int findClosestSnappedIntersection(const Ogre::Vector2& srcPos, const Ogre::Vector2& dstPos, 
-											const Ogre::Real& snapSzSquared, NodeId& nd,
-											RoadId& rd, Ogre::Vector2& intersection) const;
-
-	bool findClosestIntersection2(const std::vector<RoadId>& roadSegments, 
-		RoadId& rd, Ogre::Vector2& intersection) const;
 
 	bool snapToRoadNode(const Ogre::Vector2& pos, const RoadId& rd, const Ogre::Real& snapSzSq, NodeId& nd) const;
 	bool snapToNode(const Ogre::Vector2& pos, const Ogre::Real& snapSzSq, NodeId& nd) const;
@@ -172,8 +145,7 @@ public:
 	bool hasIntersection(const RoadId rd);
 
 	void extractPrimitives(std::vector<RoadInterface*> &filaments, 
-		std::vector< std::vector<NodeInterface*> > &nodeCycles, 
-		std::vector< std::vector<RoadInterface*> > &roadCycles);
+		std::vector< std::vector<NodeInterface*> > &nodeCycles);
 
 	int snapInfo(NodeId srcNd, const Ogre::Vector2 &dstPoint, Ogre::Real snapSzSquared,
 						NodeId& nd, RoadId& rd, Ogre::Vector2& pos) const;
@@ -190,18 +162,28 @@ public:
 		return getCounterClockwiseMostFromPrev(prev, vcurr, vnext, mGraph);
 	}
 
-	bool findClosestIntersection(const NodeId srcNd, const NodeId dstNd,
-		RoadId& rd, Ogre::Vector2& pos) const;
-
-	bool snapToOtherNode(const Ogre::Vector2 pos, const std::set<NodeId> ignoreSet, 
-		const Ogre::Real& snapSzSq, NodeId& otherNd) const;
-
 	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
 
 
+	int findClosestIntscnOrNode(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
+		Ogre::Vector2& pos, NodeId &nd, RoadId& rd) const;
+
+	inline bool findClosestIntscn(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
+		Ogre::Vector2& pos, RoadId& rd) const
+	{
+		std::vector<NodeId> ignore(1);
+		ignore[0] = aNode;
+		return findClosestIntersection(ignore, b, snapSz, pos, rd);
+	}
+
+	bool findClosestIntscnConnected(const NodeId aNode, const NodeId bNode, const Ogre::Real snapSz, 
+		Ogre::Vector2& pos, RoadId& rd) const;
+
+	bool findClosestRoad(const NodeId aNode, const Ogre::Real snapSz, 
+							  Ogre::Vector2& pos, RoadId& rd) const;
+
 //private:
 public:
-
 	static bool getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g);
 	static bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext, const Graph &g);
 
@@ -210,8 +192,7 @@ public:
 
 	static void extractPrimitive(NodeId v0, Graph &g, std::list<NodeId>& heap, 
 		std::vector<RoadInterface*>& filaments, 
-		std::vector< std::vector<NodeInterface*> > &nodeCycles, 
-		std::vector< std::vector<RoadInterface*> > &roadCycles);
+		std::vector< std::vector<NodeInterface*> > &nodeCycles);
 
 	static void removeFromHeap(NodeId v0, std::list<NodeId>& heap);
 	static NodeId getFirstAdjacent(NodeId nd, const Graph &g);
@@ -222,59 +203,12 @@ public:
 
 	bool sortVertex(const NodeId& v0, const NodeId& v1);
 
-	inline bool findClosestIntersection(NodeId srcNd, const Ogre::Vector2 &srcPos,
-							 const Ogre::Vector2 &dstPos, RoadId& rd, Ogre::Vector2& pos) const;
-/*
-	inline bool findClosestIntersection(NodeId srcNd, 
-							 const Ogre::Vector2 &srcPos,
-							 const Ogre::Vector2 &dstPos,
-							 RoadId& rd, Ogre::Vector2& pos) const
-	{
-		bool hasIntersection = false;
-		Ogre::Real currentDistance, closestDistance;
-		Ogre::Vector2 currentIntersection;
-		RoadIterator rIt, rEnd;
-		for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
-		{
-			// test for an intersection
-			if(Geometry::lineSegmentIntersect(srcPos, dstPos, getNode(getSrc(*rIt))->getPosition2D(), 
-				getNode(getDst(*rIt))->getPosition2D(), currentIntersection))
-			{
-				// exclude roads connected to the srcNode
-				if(getSrc(*rIt) == srcNd || getDst(*rIt) == srcNd)
-					continue;
-
-				// if no previous intersection
-				if(!hasIntersection)
-				{
-					// set the initial closest distance and params
-					hasIntersection = true;
-					closestDistance = (srcPos - currentIntersection).squaredLength();
-					pos = currentIntersection;
-					rd = *rIt;
-				}
-				else
-				{				
-					// test is it the closest
-					currentDistance = (srcPos - currentIntersection).squaredLength();
-					if(currentDistance < closestDistance)
-					{
-						// set the new closest distance and params
-						closestDistance = currentDistance;
-						pos = currentIntersection;
-						rd = *rIt;
-					}
-				}
-			}
-		}
-		return hasIntersection;	
-	}
-*/
-
-
 
 private:
 	std::string NodeIdToString(NodeId nd);
+
+	bool findClosestIntersection(const std::vector<NodeId>& ignore, const Ogre::Vector2& b, const Ogre::Real snapSz, 
+		Ogre::Vector2& pos, RoadId& rd) const;
 };
 
 #endif

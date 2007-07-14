@@ -87,7 +87,7 @@ bool Geometry::polygonInset(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPo
 		{
 			// get vertex pointer
 			vPtr = &(*vi);
-			Felkel::SkeletonLine *sl;
+			Felkel::SkeletonLine *sl=0;
 
 			//
 			if(prevvPtr)
@@ -116,7 +116,7 @@ bool Geometry::polygonInset(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPo
 				//if(vPtr->advancingSkeletonLine == 0) return false;
 
 				// check if intersection occured on first skeleton line
-				if(sl != (*vi).advancingSkeletonLine)
+				if(sl && sl != (*vi).advancingSkeletonLine)
 				{
 					// advance to right most child vertex
 					for(; vPtr->rightSkeletonLine != 0; vPtr = vPtr->rightSkeletonLine->lower.vertex);

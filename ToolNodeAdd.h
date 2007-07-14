@@ -3,8 +3,9 @@
 
 #include "stdafx.h"
 #include "ToolView.h"
-#include "WorldRoad.h"
 
+class WorldNode;
+class WorldRoad;
 
 class ToolNodeAdd : public ToolView
 {
@@ -16,9 +17,9 @@ private:
 	WorldNode *mProposedNode;
 	WorldRoad *mProposedRoad;
 
-	WorldRoad::RoadIntersectionState mSnapState;
-	RoadId mIntersectingRoad;
-	NodeId mSnapNode;
+	int mSnapState;
+	WorldRoad *mIntersectingRoad;
+	WorldNode *mSnapNode;
 
 
 public:

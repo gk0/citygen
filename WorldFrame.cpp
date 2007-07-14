@@ -871,6 +871,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 {
 	modify(true);
 
+	// if road is not present in graph
 	if(!mSimpleRoadGraph.testRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId))
 	{
 		// create the road in the scene
@@ -879,35 +880,28 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 
 		// check the road graph to get a count of the number of cycles
 		vector< vector<NodeInterface*> > nodeCycles;
-		vector< vector<RoadInterface*> > roadCycles;
 		vector<RoadInterface*> filaments;
-		mSimpleRoadGraph.extractPrimitives(filaments, nodeCycles, roadCycles);
-		//mRoadGraph.extractPrimitives(filaments, nodeCycles, roadCycles);
+		mSimpleRoadGraph.extractPrimitives(filaments, nodeCycles);
 
 		// if the number of cycles is greater than the number of cells
 		// then we have most definitely made a new cell
-		if(roadCycles.size() > mCells.size())
+		if(nodeCycles.size() > mCells.size())
 		{
-			// find the new roadCycles
+			// find the new cycles
 			WorldCell* alteredCell = 0;
 			set<WorldCell*>::iterator cellIt, cellEnd;
 			for(cellIt = mCells.begin(), cellEnd = mCells.end(); cellIt != cellEnd; cellIt++)
 			{
 				bool cellFound = false;
 
-				// These should be the same size
-				assert(nodeCycles.size() == roadCycles.size());
 
-				vector< vector<NodeInterface*> >::iterator ncIt = nodeCycles.begin();
-				vector< vector<RoadInterface*> >::iterator rcIt, rcEnd;
-
-				for(rcIt = roadCycles.begin(), rcEnd = roadCycles.end(); rcIt != rcEnd; rcIt++, ncIt++)
+				vector< vector<NodeInterface*> >::iterator ncIt, ncEnd;
+				for(ncIt = nodeCycles.begin(), ncEnd = nodeCycles.end(); ncIt != ncEnd; ncIt++)
 				{
 					// if cell has boundary of cycle
-					if((*cellIt)->compareBoundary(*rcIt))
+					if((*cellIt)->compareBoundary(*ncIt))
 					{
 						// remove cycle, as its not new
-						roadCycles.erase(rcIt);
 						nodeCycles.erase(ncIt);
 						cellFound = true;
 						break;
@@ -923,12 +917,12 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 			}
 
 			// two options are possible:
-			switch(roadCycles.size()) 
+			switch(nodeCycles.size()) 
 			{
 			// 1: created a new cell
 			case 1:
 				{
-					WorldCell* wc = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0], roadCycles[0]);
+					WorldCell* wc = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0]);
 					mSceneCellMap[wc->getSceneNode()] = wc;
 					mCells.insert(wc);
 				}
@@ -947,9 +941,9 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 
 
 					// create 2 new cells in place of old cell with old cell params
-					WorldCell* wc0 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0], roadCycles[0]); 
+					WorldCell* wc0 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[0]); 
 					mSceneCellMap[wc0->getSceneNode()] = wc0;
-					WorldCell* wc1 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[1], roadCycles[1]);
+					WorldCell* wc1 = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[1]);
 					mSceneCellMap[wc1->getSceneNode()] = wc1;
 
 					wc0->setGenParams(g);
@@ -959,7 +953,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 				}
 				break;
 			default:
-				new Exception(Exception::ERR_INTERNAL_ERROR, "What how many new roadCycles was that", "createRoad");
+				new Exception(Exception::ERR_INTERNAL_ERROR, "What how many new cycles was that", "createRoad");
 				break;
 			}
 		}
@@ -1056,17 +1050,16 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 
 			// run cell decomposition
 			vector< vector<NodeInterface*> > nodeCycles;
-			vector< vector<RoadInterface*> > roadCycles;
 			vector<RoadInterface*> filaments;
-			mSimpleRoadGraph.extractPrimitives(filaments, nodeCycles, roadCycles);
+			mSimpleRoadGraph.extractPrimitives(filaments, nodeCycles);
 
 			// find the new cell if there is one
 			bool newCell = true;
-			for(size_t i = 0; i < roadCycles.size(); i++)
+			for(size_t i = 0; i < nodeCycles.size(); i++)
 			{
 				BOOST_FOREACH(WorldCell* c, mCells)
 				{
-					if(c->compareBoundary(roadCycles[i]))
+					if(c->compareBoundary(nodeCycles[i]))
 					{
 						newCell = false;
 						break;
@@ -1075,7 +1068,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 				// create the new cell and break
 				if(newCell)
 				{
-					WorldCell* wc = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[i], roadCycles[i]);
+					WorldCell* wc = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycles[i]);
 					mSceneCellMap[wc->getSceneNode()] = wc;
 					mCells.insert(wc);
 					wc->setGenParams(gp);

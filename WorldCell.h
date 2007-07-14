@@ -20,6 +20,7 @@ typedef struct {
 	Ogre::Real buildingHeight;
 	Ogre::Real buildingDeviance;
 	Ogre::Real roadWidth;
+	size_t roadLimit;
 } GrowthGenParams;
 
 class WorldCell : public WorldObject
@@ -44,6 +45,7 @@ private:
 	std::vector<RoadInterface*> mFilamentRoads;
 
 	bool mShowRoads, mShowBuildings;
+	size_t mRoadLimit;
 
 	// gcd crap
 	RoadGraph mGCDRoadGraph;
@@ -57,7 +59,6 @@ private:
 public:
 	WorldCell(RoadGraph &p, RoadGraph &s);
 	WorldCell(RoadGraph &p, RoadGraph &s, std::vector<NodeInterface*> &n);
-	WorldCell(RoadGraph &p, RoadGraph &s, std::vector<NodeInterface*> &n, std::vector<RoadInterface*> &b);
 	virtual ~WorldCell();
 
 	GrowthGenParams getGenParams() const;
@@ -65,7 +66,6 @@ public:
 
 	const std::vector<RoadInterface*>& getBoundaryRoads() const;
 	const std::vector<NodeInterface*>& getBoundaryCycle() const;
-	void setBoundary(const std::vector<NodeInterface*> &nodeCycle, const std::vector<RoadInterface*> &b);
 	void setBoundary(const std::vector<NodeInterface*> &nodeCycle);
 
 	const std::vector<RoadInterface*>& getFilaments() const;
@@ -79,7 +79,7 @@ public:
 	void build();
 	bool isInside(const Ogre::Vector2 &loc) const;
 	bool isOnBoundary(NodeInterface *ni);
-	bool compareBoundary(const std::vector<RoadInterface*>& roadCycle) const;
+	bool compareBoundary(const std::vector<NodeInterface*>& nodeCycle) const;
 	void clearBoundary();
 	void clear();
 
@@ -113,11 +113,10 @@ private:
 	void installRoad(RoadInterface* r, std::map<NodeInterface*, NodeInterface*> &nodeMap);
 	RoadInterface* getLongestBoundaryRoad() const;
 
-	bool extractFootprint(const std::vector<NodeInterface*> &nodeCycle, 
-						 const std::vector<RoadInterface*> &roadCycle, 
+	bool extractFootprint(const std::vector<NodeInterface*> &nodeCycle,  
 						 std::vector<Ogre::Vector2> &footprint); 
 
-	void createBuilding(Ogre::ManualObject* m, const std::vector<Ogre::Vector2> &footprint,
+	bool createBuilding(Ogre::ManualObject* m, const std::vector<Ogre::Vector2> &footprint,
 							   const Ogre::Real foundation, const Ogre::Real height);
 
 	void buildSegment(const Ogre::Vector3 &a1, const Ogre::Vector3 &a2, const Ogre::Vector3 &aNorm,
@@ -127,6 +126,12 @@ private:
 	bool createJunction(const NodeId nd, Ogre::ManualObject *m);
 	void createRoad(const RoadId rd, Ogre::ManualObject *m);
 	bool getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR, Ogre::Vector2 &pos);
+
+	//hack
+	RoadInterface* getRoad(NodeInterface* n1, NodeInterface* n2);
+
+	void generateRoadNetwork();
+	void buildRoadNetwork();
 };
 
 #endif

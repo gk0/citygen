@@ -90,6 +90,8 @@ public:
 		}
 	}
 
+	int snapInfo(const Ogre::Real snapSz, Ogre::Vector2& pos, WorldNode*& wn, WorldRoad*& wr) const;
+
 }; 
 
 #endif

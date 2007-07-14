@@ -160,6 +160,108 @@ public:
 	}
 
 
+	/** Find the distance from a point, p to a line ab
+		@remarks
+			Algorithm defined at 
+			http://www.faqs.org/faqs/graphics/algorithms-faq/
+			1.02: How do I find the distance from a point to a line?
+        @param
+            a, a Vector2 defines the start point of segment
+        @param
+            b, a Vector2 defines the end point of segment
+		@param
+            c, a Vector2 defines the point
+		@param
+            p, a Vector2 defines the point on ab that forms a
+			perpendicular to c
+		@param
+			r, a Ogre::Real reference that indicates the pos
+			of point p along line ab
+			 - r=0      p = a
+			 - r=1      p = b
+			 - r<0      p is on the backward extension of ab
+			 - r>1      p is on the forward extension of ab
+			 - 0<r<1    p is interior to ab
+		@param
+			s, a Ogre::Real reference that indicates the pos
+			of point p along line cp
+			 - s<0      c is left of ab
+			 - s>0      c is right of ab
+			 - s=0      c is on ab
+		 @returns
+			dist, a Ogre::Real value for the distance 
+			from c to the line ab
+    */
+	static inline Ogre::Real distanceToLine(const Ogre::Vector2& a, const Ogre::Vector2& b, 
+		const Ogre::Vector2& c, Ogre::Vector2& p, Ogre::Real& r, Ogre::Real& s)
+	{
+		Ogre::Vector2 ab(b - a);
+		Ogre::Real Lsq = ab.squaredLength();
+
+
+		//     (Cx-Ax)(Bx-Ax) + (Cy-Ay)(By-Ay)
+        // r = -------------------------------
+        //                   L^2
+		Ogre::Real bxMinusAx(b.x-a.x);
+		Ogre::Real byMinusAy(b.y-a.y);
+		Ogre::Real cxMinusAx(c.x-a.x);
+		Ogre::Real cyMinusAy(c.y-a.y);
+		r = (cxMinusAx*bxMinusAx + cyMinusAy*byMinusAy) / Lsq;
+
+		// set p
+		p.x = a.x + r*bxMinusAx;
+        p.y = a.y + r*byMinusAy;
+
+		//     (Ay-Cy)(Bx-Ax)-(Ax-Cx)(By-Ay)
+        // s = -----------------------------
+        //                  L^2
+		s = (-cyMinusAy*bxMinusAx+cxMinusAx*byMinusAy) / Lsq;
+
+		// distance from c to p = |s|*L
+		return Ogre::Math::Abs(s) * Ogre::Math::Sqrt(Lsq);
+	}
+
+
+	/** Find the distance from a point, p to a line segment ab
+		@remarks
+			this function uses the Geometry::distanceToLine but
+			excludes points outside the line segment and instead
+			uses the distance to the end points
+        @param
+            a, a Vector2 defines the start point of segment
+        @param
+            b, a Vector2 defines the end point of segment
+		@param
+            c, a Vector2 defines the point
+		@param
+            p, a Vector2 defines the closest point on segment ab
+			to c
+		@param
+			dist, a Ogre::Real reference stores the distance 
+			to from c to the line segment ab
+    */
+	static inline Ogre::Real distanceToLineSegment(const Ogre::Vector2& a, const Ogre::Vector2& b, 
+		const Ogre::Vector2& c, Ogre::Vector2& p)
+	{
+		Ogre::Real dist, r, s;
+		dist = distanceToLine(a, b, c, p, r, s);
+
+		// if p is outside of the line segment, find the distance 
+		// from the end points and set p to the nearest end point
+		if(r<0)
+		{
+			dist = (c-a).length();
+			p = a;
+		}
+		else if(r>1)
+		{
+			dist = (c-b).length();
+			p = b;
+		}
+		return dist;
+	}
+
+
     /** Rotates a vector around the origin
         @param
             vec provides a reference to the vector in question to be rotated

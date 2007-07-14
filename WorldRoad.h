@@ -24,18 +24,11 @@ typedef struct {
 	Ogre::Real roadWidth;
 	Ogre::uint16 numOfSamples;
 	bool debug;
+	Ogre::Real segmentDrawSize;
 } RoadGenParams;
 
 class WorldRoad : public WorldObject, public RoadInterface
 {
-public:
-	enum RoadIntersectionState {
-		none,
-		road,
-		simple_node,
-		world_node
-	};
-
 private:
 	static int mRoadCount;
 
@@ -69,8 +62,6 @@ public:
 	NodeInterface* getSrcNode() const;
 	NodeInterface* getDstNode() const;
 
-	RoadIntersectionState snap(const Ogre::Real& snapSzSquared, NodeId& nd, RoadId& rd, Ogre::Vector2& intersection);
-
 	bool hasIntersection();
 
 	bool isRoadCycle();
@@ -97,6 +88,8 @@ public:
 	bool loadXML(const TiXmlHandle& roadRoot);
 	TiXmlElement* saveXML();
 
+	int snapInfo(Ogre::Real snapSz, Ogre::Vector2& pos, WorldNode*& wn, WorldRoad*& wr);
+
 private:
 	void build();
 	void destroyRoadObject();
@@ -118,10 +111,7 @@ private:
 	Ogre::Vector3 selectEvenElevationDiff(const Ogre::Vector3 &lastSample, 
 		const std::vector<Ogre::Vector3> &samples, const Ogre::Vector3 &target);
 
-
 	void buildDebugSegments(const Ogre::Vector3 &pos, const std::vector<Ogre::Vector3> &samples);
-
-	bool getClosestIntersection(RoadId& rd, Ogre::Vector2& pos) const;
 
 };
 

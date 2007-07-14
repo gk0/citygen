@@ -472,3 +472,38 @@ bool WorldNode::createTJunction()
 	}
 	return true;
 }
+
+int WorldNode::snapInfo(const Real snapSz, Vector2& pos, WorldNode*& wn, WorldRoad*& wr) const
+{
+	Real snapSzSq(Math::Sqr(snapSz));
+	Vector2 nodePos = getPosition2D();
+	Real closestDistanceSq = std::numeric_limits<Real>::max();
+	NodeIterator nIt, nEnd;
+	for(boost::tie(nIt, nEnd) = mSimpleRoadGraph.getNodes();  nIt != nEnd; nIt++)
+	{
+		if((*nIt)==mSimpleNodeId) continue;
+		NodeInterface* ni = mSimpleRoadGraph.getNode(*nIt);
+		assert(typeid(*ni) == typeid(WorldNode));
+			
+		Real currentDistanceSq = (nodePos - ni->getPosition2D()).squaredLength();
+		if(currentDistanceSq < snapSzSq && currentDistanceSq < closestDistanceSq)
+		{
+			wn = static_cast<WorldNode*>(ni);
+			pos = ni->getPosition2D();
+			closestDistanceSq = currentDistanceSq;
+		}
+	}
+	if(closestDistanceSq < std::numeric_limits<Real>::max())
+		return 2;
+
+	RoadId rd;
+	if(mRoadGraph.findClosestRoad(mNodeId, snapSz, pos, rd))
+	{
+		assert(typeid(*mRoadGraph.getRoad(rd)) == typeid(WorldRoad));
+		wr = static_cast<WorldRoad*>(mRoadGraph.getRoad(rd));
+		return 1;
+	}
+	else
+		return 0;
+
+}

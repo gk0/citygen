@@ -71,6 +71,8 @@ void CellPropertyPage::Init()
 	buildingHeightProp = Append(wxFloatProperty(wxT("Building Height"), wxPG_LABEL, 0.));
 	buildingDevianceProp = Append(wxFloatProperty(wxT("Building Deviance"), wxPG_LABEL, 0.));
 
+	roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 4));
+
 }
 
 
@@ -125,7 +127,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		|| (eventProp == snapSizeProp) || (eventProp == segmentDevianceProp) 
 		|| (eventProp == degreeDevianceProp) || (eventProp == snapDevianceProp)
 		|| (eventProp == buildingHeightProp) || (eventProp == buildingDevianceProp)
-		|| (eventProp == roadWidthProp))
+		|| (eventProp == roadWidthProp) || (eventProp == roadLimitProp))
 	{
 		WorldCell *wc = mWorldFrame->getSelectedCell();
 		if(wc)
@@ -141,6 +143,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			g.roadWidth = GetPropertyValueAsDouble(roadWidthProp);
 			g.buildingHeight = GetPropertyValueAsDouble(buildingHeightProp);
 			g.buildingDeviance = GetPropertyValueAsDouble(buildingDevianceProp);
+			g.roadLimit = GetPropertyValueAsInt(roadLimitProp);
 			
 			wc->setGenParams(g);
 			mWorldFrame->update();
@@ -179,6 +182,7 @@ void CellPropertyPage::update()
 		SetPropertyValue(roadWidthProp, g.roadWidth);
 		SetPropertyValue(buildingHeightProp, g.buildingHeight);
 		SetPropertyValue(buildingDevianceProp, g.buildingDeviance);
+		SetPropertyValue(roadLimitProp, (int) g.roadLimit);
 	}
 	RefreshProperty(seedProp);
 	RefreshProperty(segmentSizeProp);
@@ -190,6 +194,7 @@ void CellPropertyPage::update()
 	RefreshProperty(roadWidthProp);
 	RefreshProperty(buildingHeightProp);
 	RefreshProperty(buildingDevianceProp);
+	RefreshProperty(roadLimitProp);
 }
 
 void CellPropertyPage::setWorldFrame(WorldFrame* wf)
