@@ -274,6 +274,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorldBlock.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\WorldCell.cpp"
 				>
 			</File>
@@ -329,6 +333,10 @@
 			</File>
 			<File
 				RelativePath=".\NodePropertyPage.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PerformanceTimer.h"
 				>
 			</File>
 			<File
@@ -400,11 +408,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorldBlock.h"
+				>
+			</File>
+			<File
 				RelativePath=".\WorldCell.h"
 				>
 			</File>
 			<File
 				RelativePath=".\WorldFrame.h"
+				>
+			</File>
+			<File
+				RelativePath=".\WorldLot.h"
 				>
 			</File>
 			<File

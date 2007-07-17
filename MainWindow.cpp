@@ -280,6 +280,12 @@ void MainWindow::onOpen(wxCommandEvent &e)
 
 	wxString filename = wxFileSelector(_("Choose a file to open"), _(""), _(""),  
 		_(""), _("Citygen XML files (*.cgx)|*.cgx|GIF files (*.gif)|*.gif"));
+
+	doOpen(filename);
+}
+
+void MainWindow::doOpen(const wxString& filename)
+{
 	if(!filename.empty())
 	{
 		// TODO

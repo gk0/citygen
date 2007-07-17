@@ -63,6 +63,7 @@ private:
 	void setFilename(const wxString &file);
 	bool save();
 	bool saveAs();
+	void doOpen(const wxString &file);
 	bool doSave(const wxString &file);
 	bool onSaveModified();
 	void initToolsetModeToolBar();
@@ -102,6 +103,7 @@ public:
 	void modify(bool m);
 	bool isModified();
 	void updateProperties();
+	void openFile(const wxString& filename) { doOpen(filename); }
 
 };
 

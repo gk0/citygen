@@ -42,6 +42,8 @@ bool Application::OnInit()
 	// Resources and resource initialization
 	
 	loadResources();
+
+	//mWindow->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test.cgx"));
 	
 	// All clear!
 	return true;

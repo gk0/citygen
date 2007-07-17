@@ -21,6 +21,8 @@ typedef struct {
 	Ogre::Real buildingDeviance;
 	Ogre::Real roadWidth;
 	size_t roadLimit;
+	Ogre::Real lotSize;
+	Ogre::Real lotDeviance;
 } GrowthGenParams;
 
 class WorldCell : public WorldObject

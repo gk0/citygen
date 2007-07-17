@@ -73,6 +73,9 @@ void CellPropertyPage::Init()
 
 	roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 4));
 
+	lotSizeProp = Append(wxFloatProperty(wxT("Lot Size"), wxPG_LABEL, 2));
+	lotDevianceProp = Append(wxFloatProperty(wxT("Lot Deviance"), wxPG_LABEL, 0.2));
+
 }
 
 
@@ -123,11 +126,11 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			}
 		}
 	}
-	else if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) 
+	else /*if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) 
 		|| (eventProp == snapSizeProp) || (eventProp == segmentDevianceProp) 
 		|| (eventProp == degreeDevianceProp) || (eventProp == snapDevianceProp)
 		|| (eventProp == buildingHeightProp) || (eventProp == buildingDevianceProp)
-		|| (eventProp == roadWidthProp) || (eventProp == roadLimitProp))
+		|| (eventProp == roadWidthProp) || (eventProp == roadLimitProp))*/
 	{
 		WorldCell *wc = mWorldFrame->getSelectedCell();
 		if(wc)
@@ -144,6 +147,8 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			g.buildingHeight = GetPropertyValueAsDouble(buildingHeightProp);
 			g.buildingDeviance = GetPropertyValueAsDouble(buildingDevianceProp);
 			g.roadLimit = GetPropertyValueAsInt(roadLimitProp);
+			g.lotSize = GetPropertyValueAsDouble(lotSizeProp);
+			g.lotDeviance = GetPropertyValueAsDouble(lotDevianceProp);
 			
 			wc->setGenParams(g);
 			mWorldFrame->update();
@@ -183,6 +188,8 @@ void CellPropertyPage::update()
 		SetPropertyValue(buildingHeightProp, g.buildingHeight);
 		SetPropertyValue(buildingDevianceProp, g.buildingDeviance);
 		SetPropertyValue(roadLimitProp, (int) g.roadLimit);
+		SetPropertyValue(lotSizeProp, g.lotSize);
+		SetPropertyValue(lotDevianceProp, g.lotDeviance);
 	}
 	RefreshProperty(seedProp);
 	RefreshProperty(segmentSizeProp);
@@ -195,6 +202,8 @@ void CellPropertyPage::update()
 	RefreshProperty(buildingHeightProp);
 	RefreshProperty(buildingDevianceProp);
 	RefreshProperty(roadLimitProp);
+	RefreshProperty(lotSizeProp);
+	RefreshProperty(lotDevianceProp);
 }
 
 void CellPropertyPage::setWorldFrame(WorldFrame* wf)

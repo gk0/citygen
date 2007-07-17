@@ -10,6 +10,7 @@
 #include "SimpleRoad.h"
 #include "Triangulate.h"
 #include "PerformanceTimer.h"
+#include "WorldBlock.h"
 
 using namespace Ogre;
 using namespace std;
@@ -47,6 +48,8 @@ void WorldCell::init()
 	mGrowthGenParams.buildingDeviance = 0.1;
 	mGrowthGenParams.roadWidth = 0.4;
 	mGrowthGenParams.roadLimit = 0;
+	mGrowthGenParams.lotSize = 2;
+	mGrowthGenParams.lotDeviance = 0.2;
 
 	mRoadNetwork = 0;
 	mRoadJunctions = 0;
@@ -316,6 +319,8 @@ void WorldCell::build()
 	busy = true;
 
 
+
+
 	PerformanceTimer buildPT("Cell build"), roadPT("Road build");
 
 	//1. Clear Road Graph and destroy scene object
@@ -323,12 +328,29 @@ void WorldCell::build()
 	clearRoadGraph();
 	installGraph();
 
+	//std::vector<Ogre::Vector2> bd;
+	//bd.push_back(Vector2(1000, 1000));
+	//bd.push_back(Vector2(1000, 975));
+	//bd.push_back(Vector2(975, 975));
+	//bd.push_back(Vector2(975, 1000));
+
+
+	//// declare the manual object
+	//mBuildings = new ManualObject(mName+"b");
+	//mBuildings->begin("gk/Building", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	//WorldBlock::build(bd, 0, 10, mBuildings);
+
+	//mBuildings->end();
+	//mSceneNode->attachObject(mBuildings);
+	//busy = false;
+	//return;
+
 	generateRoadNetwork();
 	buildRoadNetwork();
 	
 
 
-	roadPT.stop();
+	//roadPT.stop();
 	PerformanceTimer buildingPT("Buildings");
 
 	// build boxes
@@ -355,10 +377,11 @@ void WorldCell::build()
 
 		// get base foundation height
 		Real foundation = (*(nodeCycle.begin()))->getPosition3D().y - 1;
-		Real height = foundation + buildingHeight + (buildingDeviance * ((float)rand()/(float)RAND_MAX));
+		//Real height = foundation + buildingHeight + (buildingDeviance * ((float)rand()/(float)RAND_MAX));
 
 		//
-		if(!createBuilding(mBuildings, footprint, foundation, height)) buildFail++;
+		//if(!createBuilding(mBuildings, footprint, foundation, height)) buildFail++;
+		WorldBlock::build(footprint, foundation, mGrowthGenParams, mBuildings);
 	}
 	mBuildings->end();
 	mSceneNode->attachObject(mBuildings);
@@ -800,52 +823,6 @@ bool WorldCell::extractFootprint(const vector<NodeInterface*> &nodeCycle, vector
 		footprint.insert(footprint.begin(), newFootprint.rbegin(), newFootprint.rend());
 		return true;
 	}
-}
-
-bool WorldCell::createBuilding(ManualObject* m, const vector<Vector2> &footprint,
-							   const Real foundation, const Real height)
-{
-	vector<Vector2> result;
-
-	// roof
-	if(Triangulate::Process(footprint, result))
-	{
-		// sides
-		size_t i, j, N = footprint.size();
-		for(i = 0; i < N; i++)
-		{
-			j = (i + 1) % N;
-			Vector2 perp((footprint[i] - footprint[j]).perpendicular());
-			Vector3 normal(perp.x, 0, perp.y);
-			normal.normalise();
-			m->position(Vector3(footprint[i].x, height, footprint[i].y));
-			m->normal(normal);
-			m->position(Vector3(footprint[i].x, foundation, footprint[i].y));
-			m->normal(normal);
-			m->position(Vector3(footprint[j].x, foundation, footprint[j].y));
-			m->normal(normal);
-
-			m->position(Vector3(footprint[j].x, height, footprint[j].y));
-			m->normal(normal);
-			m->position(Vector3(footprint[i].x, height, footprint[i].y));
-			m->normal(normal);
-			m->position(Vector3(footprint[j].x, foundation, footprint[j].y));
-			m->normal(normal);
-		}
-
-		for(size_t i=0; i<result.size(); i+=3)
-		{
-			m->position(Vector3(result[i+2].x, height, result[i+2].y));
-			m->normal(Vector3::UNIT_Y);
-			m->position(Vector3(result[i+1].x, height, result[i+1].y));
-			m->normal(Vector3::UNIT_Y);
-			m->position(Vector3(result[i].x, height, result[i].y));
-			m->normal(Vector3::UNIT_Y);
-		}
-		return true;
-	}
-	else
-		return false;
 }
 
 void WorldCell::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3 &aNorm,
