@@ -144,7 +144,7 @@ public:
 	bool hasIntersection(const Ogre::Vector2& a, const Ogre::Vector2& b, Ogre::Vector2& pos) const;
 	bool hasIntersection(const RoadId rd);
 
-	void extractPrimitives(std::vector<RoadInterface*> &filaments, 
+	void extractPrimitives(std::vector< std::vector<NodeInterface*> > &filaments, 
 		std::vector< std::vector<NodeInterface*> > &nodeCycles);
 
 	int snapInfo(NodeId srcNd, const Ogre::Vector2 &dstPoint, Ogre::Real snapSzSquared,
@@ -188,10 +188,10 @@ public:
 	static bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext, const Graph &g);
 
 	static void extractFilament(NodeId v0, NodeId v1, Graph &g, std::list<NodeId>& heap, 
-		std::vector<RoadInterface*>& filaments);
+		std::vector< std::vector<NodeInterface*> > &filaments);
 
 	static void extractPrimitive(NodeId v0, Graph &g, std::list<NodeId>& heap, 
-		std::vector<RoadInterface*>& filaments, 
+		std::vector< std::vector<NodeInterface*> > &filaments, 
 		std::vector< std::vector<NodeInterface*> > &nodeCycles);
 
 	static void removeFromHeap(NodeId v0, std::list<NodeId>& heap);
@@ -201,8 +201,18 @@ public:
 	static NodeId getSecondAdjacent(NodeId nd, const Graph &g);
 	static RoadId getSecondRoad(NodeId nd, const Graph &g);
 
-	bool sortVertex(const NodeId& v0, const NodeId& v1);
+	bool sortVertex(const NodeId& v0, const NodeId& v1) const;
 
+	void extractFootprints(std::vector< std::vector<Ogre::Vector2> > &polys, Ogre::Real num, Ogre::ManualObject* dob=0);
+
+	static void extractFilamentF(NodeId v0, NodeId v1, Graph &g, std::list<NodeId>& heap);
+
+	static void extractPrimitiveF(NodeId v0, Graph &g, std::list<NodeId>& heap, 
+		std::vector< std::vector<Ogre::Vector2> > &polys);
+
+	static Ogre::Vector2 getSuperIntscn(NodeId a, NodeId b, NodeId c, Graph& g);
+
+	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector2> &poly);
 
 private:
 	std::string NodeIdToString(NodeId nd);

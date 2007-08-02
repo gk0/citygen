@@ -538,8 +538,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 	pElem=worldRoot.FirstChild("cells").FirstChild().Element();
 	for(; pElem; pElem=pElem->NextSiblingElement())
 	{
-		string key = pElem->Value();
-		if(key=="cell")
+		if(string(pElem->Value())=="cell")
 		{
 			vector<NodeInterface*> nodeCycle;
 
@@ -547,11 +546,31 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 			TiXmlElement* pElem2=pElem->FirstChild("cycle")->FirstChildElement();
 			for(; pElem2; pElem2=pElem2->NextSiblingElement())
 			{
-				key = pElem2->Value();
-				if(key=="node")
+				if(string(pElem2->Value())=="node")
 				{
 					string strId = pElem2->Attribute("id");
 					nodeCycle.push_back(nodeIdTranslation[strId]);
+				}
+			}
+
+			//load the filaments
+			vector<WorldRoad*> filaments;
+			TiXmlNode* f = pElem->FirstChild("filaments");
+			if(f) pElem2 = f->FirstChildElement();
+			for(; pElem2; pElem2=pElem2->NextSiblingElement())
+			{
+				if(string(pElem2->Value())=="filament")
+				{
+					string srcId, dstId;
+					TiXmlElement* pElem3=pElem2->FirstChildElement();
+
+					if(string(pElem3->Value()) == "node") 
+						srcId = pElem3->Attribute("id");
+					pElem3 = pElem3->NextSiblingElement();
+					if(string(pElem3->Value()) == "node") 
+						dstId = pElem3->Attribute("id");
+					
+					filaments.push_back(getWorldRoad(nodeIdTranslation[srcId], nodeIdTranslation[dstId]));
 				}
 			}
 
@@ -560,6 +579,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 				WorldCell* wc = new WorldCell(mRoadGraph, mSimpleRoadGraph, nodeCycle);
 				mSceneCellMap[wc->getSceneNode()] = wc;
 				mCells.insert(wc);
+				BOOST_FOREACH(WorldRoad* wr, filaments) wc->addFilament(wr);
 				const TiXmlHandle cellRoot(pElem);
 				wc->loadXML(pElem);
 			}
@@ -615,6 +635,7 @@ TiXmlElement* WorldFrame::saveXML()
 		node->SetAttribute("id", (int) ni);
 		node->SetDoubleAttribute("x", loc.x);
 		node->SetDoubleAttribute("y", loc.y);
+		node->SetAttribute("label", static_cast<WorldNode*>(ni)->getLabel().c_str());
 		roadNetwork->LinkEndChild(node);
 	}
 
@@ -789,15 +810,12 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 	// get cells attached to this road
 	vector<WorldCell*> attachedCells;
 	vector< vector<NodeInterface*> > boundaries;
-
-	set<WorldObject*> attachments(wr->getAllAttachments());
-	set<WorldObject*>::iterator aIt, aEnd;
-	for(aIt = attachments.begin(), aEnd = attachments.end(); aIt != aEnd; aIt++)
+	BOOST_FOREACH(WorldObject* wo, wr->getAllAttachments())
 	{
 		// if attachment is a cell
-		if(typeid(*(*aIt)) == typeid(WorldCell))
+		if(typeid(*wo) == typeid(WorldCell))
 		{
-			WorldCell* wc = static_cast<WorldCell*>(*aIt);
+			WorldCell* wc = static_cast<WorldCell*>(wo);
 
 			// get cell ptr
 			attachedCells.push_back(wc);
@@ -880,8 +898,21 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 
 		// check the road graph to get a count of the number of cycles
 		vector< vector<NodeInterface*> > nodeCycles;
-		vector<RoadInterface*> filaments;
+		vector< vector<NodeInterface*> > filaments;
 		mSimpleRoadGraph.extractPrimitives(filaments, nodeCycles);
+
+		// DEBUG
+		stringstream os;
+		size_t f = 0;
+		os << "Filaments:\n";
+		BOOST_FOREACH(vector<NodeInterface*> &filament, filaments)
+		{
+			os << "F" << f++ << ":";
+			BOOST_FOREACH(NodeInterface* fn, filament) os << *fn;
+			os << "\n";
+		}
+
+		LogManager::getSingleton().logMessage(os.str());
 
 		// if the number of cycles is greater than the number of cells
 		// then we have most definitely made a new cell
@@ -889,17 +920,15 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 		{
 			// find the new cycles
 			WorldCell* alteredCell = 0;
-			set<WorldCell*>::iterator cellIt, cellEnd;
-			for(cellIt = mCells.begin(), cellEnd = mCells.end(); cellIt != cellEnd; cellIt++)
+			BOOST_FOREACH(WorldCell* wc, mCells)
 			{
 				bool cellFound = false;
-
 
 				vector< vector<NodeInterface*> >::iterator ncIt, ncEnd;
 				for(ncIt = nodeCycles.begin(), ncEnd = nodeCycles.end(); ncIt != ncEnd; ncIt++)
 				{
 					// if cell has boundary of cycle
-					if((*cellIt)->compareBoundary(*ncIt))
+					if(wc->compareBoundary(*ncIt))
 					{
 						// remove cycle, as its not new
 						nodeCycles.erase(ncIt);
@@ -912,7 +941,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 				if(!cellFound)
 				{
 					assert(alteredCell == 0);	// there should only ever be one changed cell
-					alteredCell = *cellIt;
+					alteredCell = wc;
 				}
 			}
 
@@ -959,19 +988,55 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 		}
 		else
 		{
-			// road is probably a filament
-			set<WorldCell*>::iterator cellIt, cellEnd;
-			for(cellIt = mCells.begin(), cellEnd = mCells.end(); cellIt != cellEnd; cellIt++)
+			//TODO: sort out filaments
+/*
+			// find out which filament wr is part of
+			vector<NodeInterface*> *wrFilament = 0;
+			BOOST_FOREACH(vector<NodeInterface*> &filament, filaments)
 			{
-				if((*cellIt)->isInside(wr->getSrcNode()->getPosition2D())) 
+				WorldRoad* wrF = 0;
+				for(size_t i=0; i<(filament.size()-1) && wr != wrF; i++)
+					wrF = getWorldRoad(static_cast<WorldNode*>(filament[i]), 
+										static_cast<WorldNode*>(filament[i+1]));
+
+				// if wr found in filament, store filament
+				if(wr == wrF) 
 				{
-					if((*cellIt)->isInside(wr->getDstNode()->getPosition2D()) || (*cellIt)->isOnBoundary(wr->getDstNode()))
-						(*cellIt)->addFilament(wr);
+					wrFilament = &filament;
+					break;
 				}
-				else if((*cellIt)->isInside(wr->getDstNode()->getPosition2D())) 
+			}
+			// better find it!
+			assert(wrFilament != 0);
+
+			// get the set of cells the filament could belong to.
+			set<WorldCell*> possibleCells;
+			BOOST_FOREACH(WorldRoad* w, static_cast<WorldNode*>((*wrFilament)[0])->getWorldRoads())
+			{
+			
+			}
+*/
+
+			// road is probably a filament, if its in a cell add it
+			BOOST_FOREACH(WorldCell* wc, mCells)
+			{
+				if(wc->isInside(wr->getSrcNode()->getPosition2D())) 
 				{
-					if((*cellIt)->isInside(wr->getSrcNode()->getPosition2D()) || (*cellIt)->isOnBoundary(wr->getSrcNode()))
-						(*cellIt)->addFilament(wr);
+					if(wc->isInside(wr->getDstNode()->getPosition2D()) 
+						|| wc->isBoundaryNode(wr->getDstNode()))
+					{
+						wc->addFilament(wr);
+						break;
+					}
+				}
+				else if(wc->isInside(wr->getDstNode()->getPosition2D())) 
+				{
+					if(wc->isInside(wr->getSrcNode()->getPosition2D())
+						|| wc->isBoundaryNode(wr->getSrcNode()))
+					{
+						wc->addFilament(wr);
+						break;
+					}
 				}
 			}
 		}
@@ -1050,7 +1115,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 
 			// run cell decomposition
 			vector< vector<NodeInterface*> > nodeCycles;
-			vector<RoadInterface*> filaments;
+			vector< vector<NodeInterface*> >  filaments;
 			mSimpleRoadGraph.extractPrimitives(filaments, nodeCycles);
 
 			// find the new cell if there is one

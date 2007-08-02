@@ -24,6 +24,11 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 		if(mWorldFrame->pickTerrainIntersection(e, pos))
 			mWorldFrame->moveSelectedNode(pos);
 	}
+	else if(e.m_rightDown)
+	{
+		mWorldFrame->cameraMove((Ogre::Real)(-mMouseDeltaX) * (mMoveSpeed / 4), (Ogre::Real)mMouseDeltaY * (mMoveSpeed / 4), 0.0f);
+		mWorldFrame->update();
+	}
 	else if(mWorldFrame->pickNode(e, HIGHLIGHTNODESNAPSQ, wn))
 		mWorldFrame->highlightNode(wn);
 

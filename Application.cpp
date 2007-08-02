@@ -9,7 +9,8 @@ IMPLEMENT_APP(Application);
 
 
 Application::Application()
-: mRoot(0),
+: wxApp(),
+  mRoot(0),
   mWindow(0)
 {
 }
@@ -43,7 +44,7 @@ bool Application::OnInit()
 	
 	loadResources();
 
-	//mWindow->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test.cgx"));
+	//mWindow->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test5.cgx"));
 	
 	// All clear!
 	return true;

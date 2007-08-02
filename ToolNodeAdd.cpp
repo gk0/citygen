@@ -176,7 +176,7 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 			case 1:		// road intersection
 				dstNode = mWorldFrame->createNode();
 				dstNode->setPosition2D(mProposedNode->getPosition2D());
-				mWorldFrame->insertNodeOnRoad(dstNode, mIntersectingRoad);
+				mWorldFrame->insertNodeOnRoad(dstNode, mIntersectingRoad);			// TODO: this can be a simpleroad for some reason
 				break;
 			case 2:		// node snapped
 				dstNode = mSnapNode;
@@ -217,10 +217,17 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 	}
 	catch(Exception &e)
 	{
-		int z = 0;
+		LogManager::getSingleton().logMessage(
+			"ToolNodeAdd::OnLeftPressed() "+e.getFullDescription());
 	}
 	catch(std::exception &e)
 	{
-		int z = 0;
+		LogManager::getSingleton().logMessage(
+			"ToolNodeAdd::OnLeftPressed() "+String(e.what()));
+	}
+	catch(...)
+	{
+		LogManager::getSingleton().logMessage(
+			"ToolNodeAdd::OnLeftPressed() unkown exception");
 	}
 }

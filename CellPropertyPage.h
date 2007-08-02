@@ -11,6 +11,7 @@ class CellPropertyPage : public wxPropertyGridPage
 
 private:
 	wxPGProperty* presetProp;
+	wxPGProperty* typeProp;
 	wxPGProperty* seedProp;
 	wxPGProperty* segmentSizeProp;
 	wxPGProperty* segmentDevianceProp;
@@ -22,6 +23,7 @@ private:
 	wxPGProperty* buildingDevianceProp;
 	wxPGProperty* roadWidthProp;
 	wxPGProperty* roadLimitProp;
+	wxPGProperty* connectivityProp;
 	wxPGProperty* lotSizeProp;
 	wxPGProperty* lotDevianceProp;
 	WorldFrame* mWorldFrame;

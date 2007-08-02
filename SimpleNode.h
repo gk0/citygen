@@ -8,7 +8,6 @@ class SimpleNode : public NodeInterface
 {
 private:
 	Ogre::Vector3 mPosition;
-	RoadGraph& mRoadGraph;
 	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > mRoadJunction;
 
 

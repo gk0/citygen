@@ -5,6 +5,10 @@
 #include "SimpleNode.h"
 #include "Geometry.h"
 
+
+#define GROUNDCLEARANCE Ogre::Vector3(0,0.4,0)
+
+
 int WorldRoad::mRoadCount = 0;
 using namespace Ogre;
 
@@ -14,7 +18,7 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	  mSimpleRoadGraph(s)
 {
 	mGenParams.algorithm = EvenElevationDiff;
-	mGenParams.sampleSize = 12; //DEBUG: set to v. big 50 normal is 10
+	mGenParams.sampleSize = 8; //DEBUG: set to v. big 50 normal is 10
 	mGenParams.roadWidth = 1.0;
 	mGenParams.sampleDeviance= 25;
 	mGenParams.numOfSamples = 5;
@@ -22,6 +26,7 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	mGenParams.segmentDrawSize = 2;
 
 	mSelected = false;
+	mLength = 0;
 	
 	mManualObject = 0;
 	mDebugObject = 0;
@@ -56,24 +61,15 @@ void WorldRoad::build()
 {
 	std::vector<Vector3> interpolatedList;
 
-	// build a spline from our plot list
-	SimpleSpline roadSpline;
-	roadSpline.setAutoCalculate(false);
-	for(size_t i=0; i<mPlotList.size(); i++)
-	{
-		roadSpline.addPoint(mPlotList[i]);
-	}
-
 	// calculate approximate number of points to get desired segment size 
 	Real interpolateStep = 1;
 	if(mRoadSegmentList.size() > 0)
 		interpolateStep = 1/((mRoadSegmentList.size() * mGenParams.sampleSize) / mGenParams.segmentDrawSize);
 
 	// extract point list from spline
-	roadSpline.recalcTangents();
 	for(Real t=0; t<=1; t += interpolateStep)
 	{
-		interpolatedList.push_back(roadSpline.interpolate(t));
+		interpolatedList.push_back(mSpline.interpolate(t));
 	}
 
 	// always destroy previous
@@ -315,7 +311,6 @@ void WorldRoad::plotRoad()
 	Ogre::Real distanceToJoin, sampleSize(mGenParams.sampleSize);
 	Ogre::Real sampleSize2(mGenParams.sampleSize * 2);
 	Ogre::Vector2 direction;
-	Vector3 groundClearance(0,0.3,0);
 	Vector2 srcCursor2D(getSrcNode()->getPosition2D());
 	Vector2 dstCursor2D(getDstNode()->getPosition2D());
 	Vector3 srcCursor3D(getSrcNode()->getPosition3D());
@@ -326,8 +321,8 @@ void WorldRoad::plotRoad()
 
 	// set our start node
 	std::vector<Vector3> plotList2;
-	mPlotList.push_back(getSrcNode()->getPosition3D() + groundClearance);
-	plotList2.push_back(getDstNode()->getPosition3D() + groundClearance);
+	mPlotList.push_back(getSrcNode()->getPosition3D() + GROUNDCLEARANCE);
+	plotList2.push_back(getDstNode()->getPosition3D() + GROUNDCLEARANCE);
 
 	std::stringstream oss;
 	std::vector<Vector3> samples;
@@ -377,7 +372,7 @@ void WorldRoad::plotRoad()
 				buildSampleFan(srcCursor2D, segVector2D, samples);	
 				if(mGenParams.debug) buildDebugSegments(srcCursor3D, samples);
 				nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
-				nextSrcCursor3D += groundClearance;
+				nextSrcCursor3D += GROUNDCLEARANCE;
 
 				// add our nodes to the road graph
 				mPlotList.push_back(nextSrcCursor3D);
@@ -395,7 +390,7 @@ void WorldRoad::plotRoad()
 				buildSampleFan(dstCursor2D, segVector2D, samples);
 				if(mGenParams.debug) buildDebugSegments(dstCursor3D, samples);
 				nextDstCursor3D = (*this.*pt2SelectSample)(dstCursor3D, samples, srcCursor3D);
-				nextDstCursor3D += groundClearance;
+				nextDstCursor3D += GROUNDCLEARANCE;
 
 				// add our nodes to the road graph
 				plotList2.push_back(nextDstCursor3D);
@@ -417,6 +412,8 @@ void WorldRoad::plotRoad()
 	// if distance between src and dst cursors is less than a seg length then 
 	// another point is required
 	distanceToJoin = (srcCursor2D - dstCursor2D).length(); 
+	mLength = (segCount * sampleSize) + distanceToJoin;
+
 	if(distanceToJoin > sampleSize)
 	{	
 		if(mPlotList.size() >= 2 && plotList2.size() >= 2)
@@ -475,7 +472,7 @@ void WorldRoad::plotRoad()
 		
 		// select best sample
 		nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
-		mPlotList.push_back(nextSrcCursor3D + groundClearance);
+		mPlotList.push_back(nextSrcCursor3D + GROUNDCLEARANCE);
 	}
 	else
 	{
@@ -509,6 +506,14 @@ void WorldRoad::plotRoad()
 		mDebugObject->end(); 
 		mSceneNode->attachObject(mDebugObject); 
 	}
+
+	// build a spline from our plot list
+	mSpline.clear();
+	mSpline.setAutoCalculate(false);
+	BOOST_FOREACH(Vector3& v, mPlotList) mSpline.addPoint(v);
+	mSpline.recalcTangents();
+
+	// make the graph
 	createRoadGraph();
 }
 
@@ -550,7 +555,6 @@ void WorldRoad::createRoadGraph()
 		mRoadGraph.addRoad(cursorNode, getDstNode()->mNodeId, this, roadSegId);
 		mRoadSegmentList.push_back(roadSegId);
 	}
-
 	//mSrcNode->invalidate();
 	//mDstNode->invalidate();
 }
@@ -763,7 +767,7 @@ TiXmlElement* WorldRoad::saveXML()
 	genParams->LinkEndChild(sampleDeviance);
 
 	TiXmlElement *roadWidth = new TiXmlElement("roadWidth");  
-	roadWidth->SetAttribute("value", mGenParams.roadWidth);
+	roadWidth->SetDoubleAttribute("value", mGenParams.roadWidth);
 	genParams->LinkEndChild(roadWidth);
 
 	TiXmlElement *numOfSamples = new TiXmlElement("numOfSamples");  
@@ -910,4 +914,29 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 		return 1;
 	}
 	else return 0;
+}
+
+
+void WorldRoad::getMidPointAndDirection(Ogre::Vector2 &pos, Ogre::Vector2 &dir) const
+{
+	size_t N = mRoadSegmentList.size();
+	assert(N>0);
+	RoadInterface* ri;
+	
+	if(N%2==0)	// if even
+	{	
+		ri = mRoadGraph.getRoad(mRoadSegmentList[N/2]);
+		pos = ri->getSrcNode()->getPosition2D();
+	}
+	else		// else odd
+	{
+		ri = mRoadGraph.getRoad(mRoadSegmentList[(N/2)-1]);
+		pos = (ri->getSrcNode()->getPosition2D() + ri->getDstNode()->getPosition2D())/2;
+	}
+	dir = ri->getDstNode()->getPosition2D() - ri->getSrcNode()->getPosition2D();
+}
+
+Ogre::Vector3 WorldRoad::getMidPoint()
+{
+	return mSpline.interpolate(0.5f);
 }

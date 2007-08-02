@@ -39,6 +39,7 @@ private:
 	Ogre::MovableText *mLabel;
 	Ogre::String mName;
 	bool mSelected;
+	Ogre::Real mLength;
 
 	bool mIsRoadCycle;
 //	WorldNode *mSrcNode, *mDstNode;
@@ -49,6 +50,7 @@ private:
 	RoadGenParams mGenParams;
 
 	std::vector<RoadId> mRoadSegmentList;
+	Ogre::SimpleSpline mSpline;
 	std::vector<Ogre::Vector3> mPlotList;
 	void buildSegment(const Ogre::Vector3 &a1, const Ogre::Vector3 &a2, const Ogre::Vector3 &aNorm,
 		const Ogre::Vector3 &b1, const Ogre::Vector3 &b2, const Ogre::Vector3 &bNorm, Ogre::Real uMin, Ogre::Real uMax);
@@ -89,6 +91,22 @@ public:
 	TiXmlElement* saveXML();
 
 	int snapInfo(Ogre::Real snapSz, Ogre::Vector2& pos, WorldNode*& wn, WorldRoad*& wr);
+
+	void getMidPointAndDirection(Ogre::Vector2 &pos, Ogre::Vector2 &dir) const;
+
+	Ogre::Real getLength() const { return mLength; }
+	Ogre::Vector3 getMidPoint();
+
+	// compare by length
+	bool operator>(const WorldRoad& right)
+	{
+		return this->getLength() < right.getLength();
+	}
+
+	friend int operator>(const WorldRoad& left, const WorldRoad& right)
+	{
+		return left.getLength() < right.getLength();
+	}
 
 private:
 	void build();

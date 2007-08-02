@@ -40,6 +40,7 @@ void NodePropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		{
 			//wn->setLabel(GetPropertyValueAsString(labelProp));
 			wn->setPosition2D(GetPropertyValueAsDouble(xProp), GetPropertyValueAsDouble(zProp));
+			wn->setLabel(static_cast<const char*>(GetPropertyValueAsString(labelProp).mb_str()));
 			update();
 			mWorldFrame->update();
 		}

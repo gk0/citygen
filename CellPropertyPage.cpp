@@ -19,12 +19,20 @@ void CellPropertyPage::Init()
 	
 
 	wxPGChoices arrPlot;
-	arrPlot.Add(wxT("Manhattan"), 0);
-	arrPlot.Add(wxT("Industrial"), 1);
-	arrPlot.Add(wxT("Suburbia"), 2);
+	arrPlot.Add(wxT("Select Preset ..."), 0);
+	arrPlot.Add(wxT("Manhattan"), 1);
+	arrPlot.Add(wxT("Industrial"), 2);
+	arrPlot.Add(wxT("Suburbia"), 3);
 
     //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
 	presetProp = Append( wxEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
+
+
+	wxPGChoices arrPlot2;
+	arrPlot2.Add(wxT("Downtown"), 0);
+	arrPlot2.Add(wxT("Industrial"), 1);
+	arrPlot2.Add(wxT("Suburbia"), 2);
+	typeProp = Append( wxEnumProperty(wxT("Building Hint"), wxPG_LABEL, arrPlot2) );
 
 	/*const wxPGEditor* pdedit = GetGrid()->GetPropertyEditor(presetProp);
     wxButton* but = (wxButton*) GetGrid()->GenerateEditorButton(wxDefaultPosition, wxDefaultSize);
@@ -73,6 +81,8 @@ void CellPropertyPage::Init()
 
 	roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 4));
 
+	connectivityProp = Append(wxFloatProperty(wxT("Connectivity"), wxPG_LABEL, 0));
+
 	lotSizeProp = Append(wxFloatProperty(wxT("Lot Size"), wxPG_LABEL, 2));
 	lotDevianceProp = Append(wxFloatProperty(wxT("Lot Deviance"), wxPG_LABEL, 0.2));
 
@@ -93,35 +103,57 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			switch(GetPropertyValueAsInt(presetProp))
 			{
 			// Manhattan
-			case 0:
-				g.seed = 0;
-				g.segmentSize = 6;
-				g.segmentDeviance = 0.4;
-				g.degree = 4;
-				g.degreeDeviance = 0.01;
-				g.snapSize = 2.4;
-				g.snapDeviance = 0.1;
-				g.buildingHeight = 2.4;
-				g.buildingDeviance = 0.1;
-				g.roadWidth = 0.4;
-				wc->setGenParams(g);
-				mWorldFrame->update();
-				break;
 			case 1:
 				g.seed = 0;
-				g.segmentSize = 6;
-				g.segmentDeviance = 2;
+				g.type = 0;
+				g.segmentSize = 5;
+				g.segmentDeviance = 0.2;
 				g.degree = 4;
 				g.degreeDeviance = 0.01;
 				g.snapSize = 2.4;
 				g.snapDeviance = 0.1;
-				g.buildingHeight = 1.8;
-				g.buildingDeviance = 0.3;
-				g.roadWidth = 0.4;
+				g.buildingHeight = 1.4;
+				g.buildingDeviance = 0.7;
+				g.roadWidth = 0.45;
+				g.lotSize = 0.7;
+				g.lotDeviance = 0.4;
 				wc->setGenParams(g);
 				mWorldFrame->update();
 				break;
 			case 2:
+				g.seed = 0;
+				g.type = 1;
+				g.segmentSize = 4;
+				g.segmentDeviance = 0.2;
+				g.degree = 4;
+				g.degreeDeviance = 0.01;
+				g.snapSize = 2.4;
+				g.snapDeviance = 0.1;
+				g.buildingHeight = 0.7;
+				g.buildingDeviance = 0.3;
+				g.roadWidth = 0.40;
+				g.lotSize = 2.0;
+				g.lotDeviance = 0.7;
+				wc->setGenParams(g);
+				mWorldFrame->update();
+				break;
+			case 3:
+				g.seed = 0;
+				g.type = 2;
+				g.segmentSize = 3;
+				g.segmentDeviance = 0.6;
+				g.degree = 4;
+				g.degreeDeviance = 0.6;
+				g.snapSize = 2.4;
+				g.snapDeviance = 0.1;
+				g.buildingHeight = 0.4;
+				g.buildingDeviance = 0.1;
+				g.connectivity = 0.0;
+				g.roadWidth = 0.3;
+				g.lotSize = 0.6;
+				g.lotDeviance = 0.2;
+				wc->setGenParams(g);
+				mWorldFrame->update();
 				break;
 			}
 		}
@@ -137,6 +169,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		{
 			GrowthGenParams g;
 			g.seed = GetPropertyValueAsLong(seedProp);
+			g.type = GetPropertyValueAsInt(typeProp);
 			g.segmentSize = GetPropertyValueAsDouble(segmentSizeProp);
 			g.segmentDeviance = GetPropertyValueAsDouble(segmentDevianceProp);
 			g.degree = GetPropertyValueAsInt(degreeProp);
@@ -147,6 +180,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			g.buildingHeight = GetPropertyValueAsDouble(buildingHeightProp);
 			g.buildingDeviance = GetPropertyValueAsDouble(buildingDevianceProp);
 			g.roadLimit = GetPropertyValueAsInt(roadLimitProp);
+			g.connectivity = GetPropertyValueAsDouble(connectivityProp);
 			g.lotSize = GetPropertyValueAsDouble(lotSizeProp);
 			g.lotDeviance = GetPropertyValueAsDouble(lotDevianceProp);
 			
@@ -177,7 +211,9 @@ void CellPropertyPage::update()
 			Ogre::Real snapDeviance;
 		} GrowthGenParams;
 		*/
+		SetPropertyValue(presetProp, 0);
 		SetPropertyValue(seedProp, g.seed);
+		SetPropertyValue(typeProp, (int) g.type);
 		SetPropertyValue(segmentSizeProp, g.segmentSize);
 		SetPropertyValue(segmentDevianceProp, g.segmentDeviance);
 		SetPropertyValue(degreeProp, (int) g.degree);
@@ -188,9 +224,11 @@ void CellPropertyPage::update()
 		SetPropertyValue(buildingHeightProp, g.buildingHeight);
 		SetPropertyValue(buildingDevianceProp, g.buildingDeviance);
 		SetPropertyValue(roadLimitProp, (int) g.roadLimit);
+		SetPropertyValue(connectivityProp, g.connectivity);
 		SetPropertyValue(lotSizeProp, g.lotSize);
 		SetPropertyValue(lotDevianceProp, g.lotDeviance);
 	}
+	RefreshProperty(presetProp);
 	RefreshProperty(seedProp);
 	RefreshProperty(segmentSizeProp);
 	RefreshProperty(degreeProp);
@@ -202,6 +240,7 @@ void CellPropertyPage::update()
 	RefreshProperty(buildingHeightProp);
 	RefreshProperty(buildingDevianceProp);
 	RefreshProperty(roadLimitProp);
+	RefreshProperty(connectivityProp);
 	RefreshProperty(lotSizeProp);
 	RefreshProperty(lotDevianceProp);
 }

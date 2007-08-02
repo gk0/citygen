@@ -10,6 +10,7 @@ class NodeInterface;
 class RoadInterface;
 
 typedef struct {
+	unsigned int type;
 	int seed;
 	Ogre::Real segmentSize;
 	Ogre::Real segmentDeviance;
@@ -21,6 +22,7 @@ typedef struct {
 	Ogre::Real buildingDeviance;
 	Ogre::Real roadWidth;
 	size_t roadLimit;
+	Ogre::Real connectivity;
 	Ogre::Real lotSize;
 	Ogre::Real lotDeviance;
 } GrowthGenParams;
@@ -36,6 +38,7 @@ private:
 	Ogre::ManualObject* mRoadNetwork;
 	Ogre::ManualObject* mRoadJunctions;
 	Ogre::ManualObject* mBuildings;
+	Ogre::ManualObject* mDebug;
 
 	RoadGraph mRoadGraph;
 	RoadGraph &mParentRoadGraph;
@@ -54,7 +57,7 @@ private:
 	Ogre::ManualObject* mOverlay;
 	Ogre::ManualObject* mOverlay2;
 	std::list<NodeId> mGCDHeap;
-	std::vector<RoadInterface*> mGCDFilaments;
+	std::vector< std::vector<NodeInterface*> > mGCDFilaments;
 	std::vector< std::vector<NodeInterface*> > mGCDNodeCycles;
 	std::vector< std::vector<RoadInterface*> > mGCDRoadCycles;
 
@@ -80,7 +83,7 @@ public:
 
 	void build();
 	bool isInside(const Ogre::Vector2 &loc) const;
-	bool isOnBoundary(NodeInterface *ni);
+	bool isBoundaryNode(const NodeInterface *ni) const;
 	bool compareBoundary(const std::vector<NodeInterface*>& nodeCycle) const;
 	void clearBoundary();
 	void clear();

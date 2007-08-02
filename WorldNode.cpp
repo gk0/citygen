@@ -12,7 +12,7 @@ int WorldNode::mInstanceCount = 0;
 
 
 WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
-  : mRoadGraph(g),
+  : NodeInterface(g),
     mSimpleRoadGraph(s)
 {
 	mCreator = creator;
@@ -143,6 +143,10 @@ bool WorldNode::loadXML(const TiXmlHandle& nodeRoot)
 	nodeRoot.Element()->QueryFloatAttribute("x", &x);
 	nodeRoot.Element()->QueryFloatAttribute("y", &z);
 	setPosition2D(x, z);
+
+	String s;
+	s = nodeRoot.Element()->Attribute("label");
+	setLabel(s);
 	
 	return true;
 }
@@ -396,7 +400,6 @@ void WorldNode::invalidate()
 	}
 }
 
-
 bool WorldNode::createTJunction()
 {
 	mRoadJunction.clear();
@@ -505,5 +508,18 @@ int WorldNode::snapInfo(const Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 	}
 	else
 		return 0;
+}
 
+std::vector<WorldRoad*> WorldNode::getWorldRoads() const
+{
+	std::vector<WorldRoad*> wrList;
+	RoadIterator2 rIt, rEnd;
+	boost::tie(rIt, rEnd) = mSimpleRoadGraph.getRoadsFromNode(mSimpleNodeId);
+	for(;rIt != rEnd; rIt++)
+	{
+		RoadInterface* ri = mSimpleRoadGraph.getRoad(*rIt);
+		assert(typeid(*ri) == typeid(WorldRoad));
+		wrList.push_back(static_cast<WorldRoad*>(ri));
+	}
+	return wrList;
 }

@@ -8,23 +8,23 @@
 using namespace Ogre;
 
 SimpleNode::SimpleNode(RoadGraph &g)
- : mRoadGraph(g)
+ : NodeInterface(g)
 { }
 
 SimpleNode::SimpleNode(RoadGraph &g, Ogre::Real x, Ogre::Real z)
- : mRoadGraph(g)
+ : NodeInterface(g)
 {
 	setPosition2D(x, z);
 }
 
 SimpleNode::SimpleNode(RoadGraph &g, const Ogre::Vector2 &pos)
- : mRoadGraph(g)
+ : NodeInterface(g)
 {
 	setPosition2D(pos.x, pos.y);
 }
 
 SimpleNode::SimpleNode(RoadGraph &g, const Ogre::Vector3 &pos)
- : mRoadGraph(g)
+ : NodeInterface(g)
 {
 	setPosition3D(pos.x, pos.y, pos.z);
 }

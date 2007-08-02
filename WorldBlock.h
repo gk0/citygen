@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "WorldCell.h"
+#include "WorldLot.h"
 
 //#ifndef GrowthGenParams
 //#define GrowthGenParams
@@ -15,12 +16,18 @@ private:
 
 public:
 	static void build(const std::vector<Ogre::Vector2> &boundary, 
-		Ogre::Real f, const GrowthGenParams &gp, Ogre::ManualObject* mObject);
+		Ogre::Real f, const GrowthGenParams &gp, Ogre::ManualObject* mObject, Ogre::ManualObject* dob = 0);
 
-	static bool getLongestSideAboveLimit(const std::vector<std::pair<bool, Ogre::Vector2>>& b, 
+	static bool getLongestSideAboveLimit(const LotBoundary &b, 
 		const Ogre::Real limitSq, size_t &index);
 
-	static bool splitBoundary(const size_t &index,  const Ogre::Real &deviance, std::vector<std::vector<std::pair<bool, Ogre::Vector2>>> &b);
+	static bool getLongestRoadSideAboveLimit(const LotBoundary &b, 
+		const Ogre::Real limitSq, size_t &index);
+
+	static bool getLongestSideIndex(const LotBoundary &b, 
+		const Ogre::Real limitSq, size_t &index);
+
+	static bool splitBoundary(const size_t &index, const Ogre::Real &deviance, const LotBoundary &input, std::vector<LotBoundary> &output);
 
 };
 

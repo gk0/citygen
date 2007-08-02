@@ -6,16 +6,13 @@
 #include "NodeInterface.h"
 #include "MovableText.h"
 #include "RoadGraph.h"
-
-class WorldRoad;
+#include "WorldRoad.h"
 
 class WorldNode : public WorldObject, public NodeInterface
 {
 
 private:
 	size_t mDegree;
-
-	RoadGraph& mRoadGraph;
 	RoadGraph& mSimpleRoadGraph;
 	static int mInstanceCount;
 	Ogre::ManualObject* mJunctionPlate;
@@ -91,6 +88,16 @@ public:
 	}
 
 	int snapInfo(const Ogre::Real snapSz, Ogre::Vector2& pos, WorldNode*& wn, WorldRoad*& wr) const;
+
+	friend WorldRoad* getWorldRoad(const WorldNode* wn1, const WorldNode* wn2)
+	{
+		RoadGraph& g(wn1->mSimpleRoadGraph);
+		RoadInterface* ri = g.getRoad(g.getRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId));
+		assert(typeid(*ri) == typeid(WorldRoad));
+		return static_cast<WorldRoad*>(ri);
+	}
+
+	std::vector<WorldRoad*> getWorldRoads() const;
 
 }; 
 
