@@ -114,6 +114,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 				g.snapDeviance = 0.1;
 				g.buildingHeight = 1.4;
 				g.buildingDeviance = 0.7;
+				g.connectivity = 1.0;
 				g.roadWidth = 0.45;
 				g.lotSize = 0.7;
 				g.lotDeviance = 0.4;
@@ -131,11 +132,13 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 				g.snapDeviance = 0.1;
 				g.buildingHeight = 0.7;
 				g.buildingDeviance = 0.3;
+				g.connectivity = 0.3;
 				g.roadWidth = 0.40;
 				g.lotSize = 2.0;
 				g.lotDeviance = 0.7;
 				wc->setGenParams(g);
 				mWorldFrame->update();
+				update();
 				break;
 			case 3:
 				g.seed = 0;
@@ -154,6 +157,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 				g.lotDeviance = 0.2;
 				wc->setGenParams(g);
 				mWorldFrame->update();
+				update();
 				break;
 			}
 		}
@@ -186,6 +190,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			
 			wc->setGenParams(g);
 			mWorldFrame->update();
+			update();
 		}
 	}
 
