@@ -1,16 +1,15 @@
 #include "stdafx.h"
 #include "WorldBlock.h"
 #include "Geometry.h"
-#include "WorldCell.h" 
+#include "CellGenParams.h" 
 #include "WorldFrame.h"
 
 using namespace Ogre;
 using namespace std;
 
-
-void WorldBlock::build(const vector<Vector2> &boundary, Real f, const GrowthGenParams &gp, ManualObject* mObject,  ManualObject* dob)
+WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp)
 {
-	// Do something to extract lots
+		// Do something to extract lots
 	queue< LotBoundary > q;
 
 	// the bool stores is the side is adjacent a road
@@ -55,32 +54,12 @@ void WorldBlock::build(const vector<Vector2> &boundary, Real f, const GrowthGenP
 				}
 			}
 			//LogManager::getSingleton().logMessage("Road border: "+StringConverter::toString(k));
-		}else
-			LogManager::getSingleton().logMessage("WorldBlock::splitLotBoundary() failed.");
-
-
-		// draw debug lines so
-		if(dob)
-		{
-			for(size_t i=0; i<splitBoundaries.size(); i++)
-			{
-				for(size_t k,j=0; j<splitBoundaries[i].size(); j++)
-				{	
-					k = (j+1)%splitBoundaries[i].size();
-
-					Vector3 a,b;
-					WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, a);
-					WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][k]._pos, b);
-					dob->position(a+Vector3(0,1.3,0));
-					dob->position(b+Vector3(0,1.3,0));
-				}
-			}
 		}
+		//else
+		//	LogManager::getSingleton().logMessage("WorldBlock::splitLotBoundary() failed.");
 	}
 
-
-	// build lots
-	//LogManager::getSingleton().logMessage("Lots: "+StringConverter::toString(lotBoundaries.size()));
+	//_lots = lotBoundaries;
 	Real buildingDeviance = gp.buildingHeight * gp.buildingDeviance;
 
 	size_t fail = 0;
@@ -90,12 +69,58 @@ void WorldBlock::build(const vector<Vector2> &boundary, Real f, const GrowthGenP
 		WorldFrame::getSingleton().plotPointOnTerrain(b[0]._pos, p);
 		Real foundation = p.y;
 		Real buildingHeight = foundation + gp.buildingHeight - (buildingDeviance / 2);
-		if(!WorldLot::build(b, gp, foundation, buildingHeight + (buildingDeviance * ((float)rand()/(float)RAND_MAX)), mObject))
+
+		WorldLot lot(b, gp, foundation, buildingHeight + (buildingDeviance * ((float)rand()/(float)RAND_MAX)));
+		if(lot.hasError())
 			fail++;
+		else
+			_lots.push_back(lot);
+
 	}
+}
+
+
+void WorldBlock::build(ManualObject* mObject,  ManualObject* dob)
+{
+	BOOST_FOREACH(WorldLot& lot, _lots)
+		lot.build(mObject);
+	//	// draw debug lines so
+	//	if(dob)
+	//	{
+	//		for(size_t i=0; i<splitBoundaries.size(); i++)
+	//		{
+	//			for(size_t k,j=0; j<splitBoundaries[i].size(); j++)
+	//			{	
+	//				k = (j+1)%splitBoundaries[i].size();
+
+	//				Vector3 a,b;
+	//				WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, a);
+	//				WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][k]._pos, b);
+	//				dob->position(a+Vector3(0,1.3,0));
+	//				dob->position(b+Vector3(0,1.3,0));
+	//			}
+	//		}
+	//	}
+	//}
+
+
+	// build lots
+	//LogManager::getSingleton().logMessage("Lots: "+StringConverter::toString(lotBoundaries.size()));
+	//Real buildingDeviance = gp.buildingHeight * gp.buildingDeviance;
+
+	//size_t fail = 0;
+	//BOOST_FOREACH(LotBoundary &b, _lots)
+	//{
+	//	Vector3 p;
+	//	WorldFrame::getSingleton().plotPointOnTerrain(b[0]._pos, p);
+	//	Real foundation = p.y;
+	//	Real buildingHeight = foundation + gp.buildingHeight - (buildingDeviance / 2);
+	//	if(!WorldLot::build(b, gp, foundation, buildingHeight + (buildingDeviance * ((float)rand()/(float)RAND_MAX)), mObject))
+	//		fail++;
+	//}
 
 	//DEBUG
-	LogManager::getSingleton().logMessage("WorldBlock::build() "+StringConverter::toString(count)+" ops "+StringConverter::toString(fail)+" failed.");
+	//LogManager::getSingleton().logMessage("WorldBlock::build() "+StringConverter::toString(count)+" ops "+StringConverter::toString(fail)+" failed.");
 }
 
 

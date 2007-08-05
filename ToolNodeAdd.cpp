@@ -11,8 +11,8 @@ using namespace Ogre;
 
 ToolNodeAdd::ToolNodeAdd(WorldFrame* wf, SceneManager* sm, RoadGraph &g, RoadGraph &s)
 : ToolView(wf),
-  mRoadGraph(g),
-  mSimpleRoadGraph(s)
+  _roadGraph(g),
+  _simpleRoadGraph(s)
 {
 	mSceneManager = sm;
 }
@@ -83,7 +83,7 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 			//// we have a selected node so we are creating a road here
 			if(!mProposedRoad) 
 				mProposedRoad = new WorldRoad(mWorldFrame->getSelected(), 
-						mProposedNode, mRoadGraph, mSimpleRoadGraph, mSceneManager);
+						mProposedNode, _roadGraph, _simpleRoadGraph, mSceneManager);
 			
 			mSnapState = mProposedRoad->snapInfo(SNAP_SZ, newPos, mSnapNode, mIntersectingRoad);
 			//LogManager::getSingleton().logMessage("State: "+StringConverter::toString(mSnapState));

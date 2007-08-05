@@ -1188,7 +1188,7 @@ void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vecto
 		if(out_degree(v1, g) == 1) //TODO: causes error sometimes
 		{
 			// Remove the filament rooted at v1.
-			extractFilamentF(v1,  getFirstAdjacent(v1, g), g, heap);
+			extractFilamentF(v1,  getFirstAdjacent(v1, g), g, heap);		// error
 		}
 	}
 }

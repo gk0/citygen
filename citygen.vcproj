@@ -64,7 +64,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain_d.lib wxbase28ud.lib wxmsw28ud_core.lib wxmsw28ud_aui.lib wxmsw29ud_propgrid.lib tinyxmld.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\wxWidgets-2.8.3\lib\vc_lib&quot;;..\OgreSDK_VS80\lib;..\tinyxml\Debug"
+				AdditionalLibraryDirectories="../boost_1_34_0/lib;&quot;..\wxWidgets-2.8.3\lib\vc_lib&quot;;..\OgreSDK_VS80\lib;..\tinyxml\Debug"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -144,7 +144,7 @@
 				AdditionalOptions="/verbose:lib"
 				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain.lib wxbase28u.lib wxmsw28u_core.lib wxmsw28u_aui.lib wxmsw29u_propgrid.lib tinyxml.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\wxWidgets-2.8.3\lib\vc_lib&quot;;..\OgreSDK_VS80\lib;..\tinyxml\Release"
+				AdditionalLibraryDirectories="&quot;..\wxWidgets-2.8.3\lib\vc_lib&quot;;..\OgreSDK_VS80\lib;..\boost_1_34_0\lib;..\tinyxml\Release"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -309,6 +309,10 @@
 			>
 			<File
 				RelativePath=".\Application.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CellGenParams.h"
 				>
 			</File>
 			<File

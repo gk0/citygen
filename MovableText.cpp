@@ -19,7 +19,7 @@ MovableText::MovableText(const String &name, const String &caption, const String
 : mpCam(NULL)
 , mpWin(NULL)
 , mpFont(NULL)
-, mName(name)
+, _name(name)
 , mCaption(caption)
 , mFontName(fontName)
 , mCharHeight(charHeight)
@@ -52,9 +52,9 @@ MovableText::~MovableText()
 
 void MovableText::setFontName(const String &fontName)
 {
-    if((Ogre::MaterialManager::getSingletonPtr()->resourceExists(mName + "Material"))) 
+    if((Ogre::MaterialManager::getSingletonPtr()->resourceExists(_name + "Material"))) 
     { 
-        Ogre::MaterialManager::getSingleton().remove(mName + "Material"); 
+        Ogre::MaterialManager::getSingleton().remove(_name + "Material"); 
     }
 
     if (mFontName != fontName || mpMaterial.isNull() || !mpFont)
@@ -71,7 +71,7 @@ void MovableText::setFontName(const String &fontName)
             mpMaterial.setNull();
         }
 
-        mpMaterial = mpFont->getMaterial()->clone(mName + "Material");
+        mpMaterial = mpFont->getMaterial()->clone(_name + "Material");
         if (!mpMaterial->isLoaded())
             mpMaterial->load();
 

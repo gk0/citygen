@@ -2,21 +2,18 @@
 #define WORLDBLOCK_H
 
 #include "stdafx.h"
-#include "WorldCell.h"
 #include "WorldLot.h"
-
-//#ifndef GrowthGenParams
-//#define GrowthGenParams
-//class GrowthGenParams;
-//#endif
 
 class WorldBlock
 {
 private:
+	std::vector<WorldLot> _lots;
+	//std::vector<LotBoundary> _lots;
 
 public:
-	static void build(const std::vector<Ogre::Vector2> &boundary, 
-		Ogre::Real f, const GrowthGenParams &gp, Ogre::ManualObject* mObject, Ogre::ManualObject* dob = 0);
+	WorldBlock(const std::vector<Ogre::Vector2> &boundary, const CellGenParams &gp);
+
+	void build(Ogre::ManualObject* mObject, Ogre::ManualObject* dob = 0);
 
 	static bool getLongestSideAboveLimit(const LotBoundary &b, 
 		const Ogre::Real limitSq, size_t &index);

@@ -16,6 +16,7 @@ public:
 	enum ViewMode {
 		view_primary,
 		view_cell,
+		view_box,
 		view_building
 	};
 
@@ -81,6 +82,7 @@ protected:
 
 	void onSelectViewPrimary(wxCommandEvent &e);
 	void onSelectViewCell(wxCommandEvent &e);
+	void onSelectViewBox(wxCommandEvent &e);
 	void onSelectViewBuilding(wxCommandEvent &e);
 
 	void onSelectToolsetView(wxCommandEvent &e);

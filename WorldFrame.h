@@ -37,8 +37,8 @@ private:
 	MainWindow::ToolsetMode mToolsetMode;
 	MainWindow::ActiveTool mActiveTool;
 
-	RoadGraph mRoadGraph;
-	RoadGraph mSimpleRoadGraph;
+	RoadGraph _roadGraph;
+	RoadGraph _simpleRoadGraph;
 
 	WorldTerrain mWorldTerrain;
 	std::map< Ogre::SceneNode*, WorldNode* > mSceneNodeMap;

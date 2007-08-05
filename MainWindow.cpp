@@ -50,7 +50,9 @@ enum
 
 	IDM_VIEW_PRIMARY,
 	IDM_VIEW_CELL,
+	IDM_VIEW_BOX,
 	IDM_VIEW_BUILDING,
+
 
     IDM_OTHER_1,
     IDM_OTHER_2,
@@ -97,7 +99,9 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 
 	EVT_MENU(IDM_VIEW_PRIMARY, MainWindow::onSelectViewPrimary)
 	EVT_MENU(IDM_VIEW_CELL, MainWindow::onSelectViewCell)
+	EVT_MENU(IDM_VIEW_BOX, MainWindow::onSelectViewBox)
 	EVT_MENU(IDM_VIEW_BUILDING, MainWindow::onSelectViewBuilding)
+
 
 	EVT_MENU(IDM_TOOLSET_VIEW, MainWindow::onSelectToolsetView)
 	EVT_MENU(IDM_TOOLSET_NODE, MainWindow::onSelectToolsetNode)
@@ -179,7 +183,8 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	// create a view mode toolbar
 	mViewModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mViewModeToolBar->AddTool(IDM_VIEW_BUILDING, _("View All"), TOOL_BMP(all), _("View buildings and all roads"), wxITEM_RADIO);
+	mViewModeToolBar->AddTool(IDM_VIEW_BUILDING, _("View Buildings"), TOOL_BMP(building), _("View detailed buildings"), wxITEM_RADIO);
+	mViewModeToolBar->AddTool(IDM_VIEW_BOX, _("View All"), TOOL_BMP(all), _("View buildings and all roads"), wxITEM_RADIO);
 	mViewModeToolBar->AddTool(IDM_VIEW_CELL, _("View Cells"), TOOL_BMP(roads), _("View cell roads"), wxITEM_RADIO);
 	mViewModeToolBar->AddTool(IDM_VIEW_PRIMARY, _("View Primary"), TOOL_BMP(graph), _("View primary roads only"), wxITEM_RADIO);
 	mViewModeToolBar->Realize();
@@ -442,6 +447,11 @@ void MainWindow::onSelectViewPrimary(wxCommandEvent &e)
 void MainWindow::onSelectViewCell(wxCommandEvent &e)
 {
 	mWorldFrame->setViewMode(view_cell);
+}
+
+void MainWindow::onSelectViewBox(wxCommandEvent &e)
+{
+	mWorldFrame->setViewMode(view_box);
 }
 
 void MainWindow::onSelectViewBuilding(wxCommandEvent &e)

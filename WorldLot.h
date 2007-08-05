@@ -1,8 +1,9 @@
-//#ifdef WORLDLOT_H
-//#define WORLDLOT_H
+#ifndef WORLDLOT_H
+#define WORLDLOT_H
 
 #include "stdafx.h"
-#include "WorldCell.h"
+#include "CellGenParams.h"
+#include "Triangulate.h"
 
 struct LotBoundaryPoint
 {
@@ -13,12 +14,21 @@ struct LotBoundaryPoint
 };
 typedef std::vector<LotBoundaryPoint> LotBoundary;
 
+
 class WorldLot
 {
 private:
+	bool _error;
+	std::vector<Ogre::Vector3> _vertices;
+	std::vector<size_t> _polys;
 
 public:
-	static bool build(const LotBoundary &footprint, const GrowthGenParams &gp,
+	//WorldLot(const LotBoundary &footprint, const CellGenParams &gp);
+	WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const Ogre::Real fnd, const Ogre::Real ht);
+
+	bool hasError() { return _error; }
+
+	static bool build(const LotBoundary &footprint, const CellGenParams &gp,
 		const Ogre::Real fnd, const Ogre::Real ht, Ogre::ManualObject* m);
 
 	static bool buildHousey(const std::vector<Ogre::Vector2> &footprint, 
@@ -29,6 +39,8 @@ public:
 
 	static LotBoundary insetBoundary(const LotBoundary &b, const Ogre::Real &roadInset, 
 		const Ogre::Real &standardInset);
+
+	bool build(Ogre::ManualObject* m);
 };
 
-//#endif
+#endif

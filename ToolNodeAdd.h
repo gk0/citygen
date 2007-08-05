@@ -11,8 +11,8 @@ class ToolNodeAdd : public ToolView
 {
 private:
 	Ogre::SceneManager* mSceneManager;
-	RoadGraph& mRoadGraph;
-	RoadGraph& mSimpleRoadGraph;
+	RoadGraph& _roadGraph;
+	RoadGraph& _simpleRoadGraph;
 
 	WorldNode *mProposedNode;
 	WorldRoad *mProposedRoad;

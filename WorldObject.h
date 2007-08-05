@@ -10,7 +10,7 @@ protected:
 	std::set<WorldObject*> mAttachments;
 
 protected:
-	bool isValid() const { return mValid; }
+	
 	Ogre::SceneNode* mSceneNode;
 	bool mVisible;
 
@@ -26,6 +26,8 @@ public:
 	virtual ~WorldObject()
 	{
 	}
+
+	bool isValid() const { return mValid; }
 
 	void setPosition(const Ogre::Vector3& pos)
 	{ 

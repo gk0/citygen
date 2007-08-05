@@ -22,7 +22,7 @@ public:
 protected:
 	String			mFontName;
 	String			mType;
-	String			mName;
+	String			_name;
 	String			mCaption;
 	HorizontalAlignment	mHorizontalAlignment;
 	VerticalAlignment	mVerticalAlignment;
@@ -89,7 +89,7 @@ protected:
     const   Quaternion        &getWorldOrientation(void) const;
     const   Vector3           &getWorldPosition(void) const;
 	const   AxisAlignedBox    &getBoundingBox(void) const {return mAABB;};
-	const   String            &getName(void) const {return mName;};
+	const   String            &getName(void) const {return _name;};
 	const   String            &getMovableType(void) const {static Ogre::String movType = "MovableText"; return movType;};
 
     void    _notifyCurrentCamera(Camera *cam);

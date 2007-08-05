@@ -7,11 +7,11 @@
 class NodeInterface
 {
 protected:
-	RoadGraph& mRoadGraph;
+	RoadGraph& _roadGraph;
 
 public:
 	NodeId mNodeId;
-	NodeInterface(RoadGraph& g) : mRoadGraph(g)
+	NodeInterface(RoadGraph& g) : _roadGraph(g)
 	{
 	}
 	virtual ~NodeInterface() {}
@@ -31,7 +31,7 @@ public:
 
 	friend RoadInterface* getRoad(NodeInterface* n1, NodeInterface* n2)
 	{
-		RoadGraph& g(n1->mRoadGraph);
+		RoadGraph& g(n1->_roadGraph);
 		return g.getRoad(g.getRoad(n1->mNodeId, n2->mNodeId));
 	}
 

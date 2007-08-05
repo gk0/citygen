@@ -35,17 +35,17 @@ private:
 	RoadId mSimpleRoadId;
 
 	Ogre::ManualObject *mManualObject;
-	Ogre::ManualObject *mDebugObject;
+	Ogre::ManualObject *_debugMOObject;
 	Ogre::MovableText *mLabel;
-	Ogre::String mName;
+	Ogre::String _name;
 	bool mSelected;
 	Ogre::Real mLength;
 
 	bool mIsRoadCycle;
 //	WorldNode *mSrcNode, *mDstNode;
 
-	RoadGraph &mRoadGraph;
-	RoadGraph &mSimpleRoadGraph;
+	RoadGraph &_roadGraph;
+	RoadGraph &_simpleRoadGraph;
 
 	RoadGenParams mGenParams;
 

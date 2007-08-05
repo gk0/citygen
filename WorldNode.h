@@ -13,7 +13,7 @@ class WorldNode : public WorldObject, public NodeInterface
 
 private:
 	size_t mDegree;
-	RoadGraph& mSimpleRoadGraph;
+	RoadGraph& _simpleRoadGraph;
 	static int mInstanceCount;
 	Ogre::ManualObject* mJunctionPlate;
 	Ogre::Entity* mMesh;
@@ -21,7 +21,7 @@ private:
 	Ogre::Entity* mSelected;
 	Ogre::MovableText* mLabel;
 	Ogre::SceneManager* mCreator;
-	Ogre::String mName;
+	Ogre::String _name;
 	//std::vector<WorldRoad*> mRoads;
 	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > mRoadJunction;
 
@@ -91,7 +91,7 @@ public:
 
 	friend WorldRoad* getWorldRoad(const WorldNode* wn1, const WorldNode* wn2)
 	{
-		RoadGraph& g(wn1->mSimpleRoadGraph);
+		RoadGraph& g(wn1->_simpleRoadGraph);
 		RoadInterface* ri = g.getRoad(g.getRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId));
 		assert(typeid(*ri) == typeid(WorldRoad));
 		return static_cast<WorldRoad*>(ri);

@@ -36,7 +36,6 @@
 
 #include "stdafx.h"
 
-
 class Triangulate
 {
 public:
@@ -45,6 +44,9 @@ public:
   // as series of triangles.
   static bool Process(const std::vector<Ogre::Vector2> &contour,
                       std::vector<Ogre::Vector2> &result);
+
+  static bool Process(const std::vector<Ogre::Vector2> &contour,
+						std::vector<size_t> &result);
 
   // compute area of a contour/polygon
   static float Area(const std::vector<Ogre::Vector2> &contour);

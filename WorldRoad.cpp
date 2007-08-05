@@ -14,8 +14,8 @@ using namespace Ogre;
 
 WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
 					 RoadGraph& s, Ogre::SceneManager *creator, bool bind)
-	: mRoadGraph(g),
-	  mSimpleRoadGraph(s)
+	: _roadGraph(g),
+	  _simpleRoadGraph(s)
 {
 	mGenParams.algorithm = EvenElevationDiff;
 	mGenParams.sampleSize = 8; //DEBUG: set to v. big 50 normal is 10
@@ -29,27 +29,27 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	mLength = 0;
 	
 	mManualObject = 0;
-	mDebugObject = 0;
+	_debugMOObject = 0;
 	
-	mSimpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, mSimpleRoadId);
-	mSimpleRoadGraph.setRoad(mSimpleRoadId, this);
+	_simpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, mSimpleRoadId);
+	_simpleRoadGraph.setRoad(mSimpleRoadId, this);
 
-	mName = "road" + StringConverter::toString(mRoadCount++);
+	_name = "road" + StringConverter::toString(mRoadCount++);
 	// create our scene node
-	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(mName);
+	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(_name);
 	plotRoad();
 }
 
 WorldRoad::~WorldRoad()
 {
 	destroyRoadGraph();
-	mSimpleRoadGraph.removeRoad(mSimpleRoadId);
+	_simpleRoadGraph.removeRoad(mSimpleRoadId);
 
-	if(mDebugObject)
+	if(_debugMOObject)
 	{
-		mSceneNode->detachObject(mDebugObject);
-		delete mDebugObject;
-		mDebugObject = 0;
+		mSceneNode->detachObject(_debugMOObject);
+		delete _debugMOObject;
+		_debugMOObject = 0;
 	}
 
 	destroyRoadObject();
@@ -76,7 +76,7 @@ void WorldRoad::build()
 	destroyRoadObject();
 
 	// declare the manual object
-	mManualObject = new ManualObject(mName); 
+	mManualObject = new ManualObject(_name); 
 	if(mSelected) mManualObject->begin("gk/YellowBrickRoad", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 	else mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
@@ -210,8 +210,8 @@ void WorldRoad::build()
 	Vector3 offset(0,3,0);
 	for(size_t i=0; i<samples.size(); i++)
 	{
-		mDebugObject->position(pos + offset);
-		mDebugObject->position(samples[i] + offset);
+		_debugMOObject->position(pos + offset);
+		_debugMOObject->position(samples[i] + offset);
 	}
 }
 
@@ -276,12 +276,12 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 
 NodeInterface* WorldRoad::getSrcNode() const
 {
-	return mSimpleRoadGraph.getSrcNode(mSimpleRoadId);
+	return _simpleRoadGraph.getSrcNode(mSimpleRoadId);
 }
 
 NodeInterface* WorldRoad::getDstNode() const
 {
-	return mSimpleRoadGraph.getDstNode(mSimpleRoadId);
+	return _simpleRoadGraph.getDstNode(mSimpleRoadId);
 }
 /*
 //simple
@@ -289,7 +289,7 @@ void WorldRoad::createRoadObject()
 {
 	//omg i should like draw a line from my old node to my new node
 	Vector3 offset(0,3,0);
-	mManualObject = new ManualObject(mName); 
+	mManualObject = new ManualObject(_name); 
 	mManualObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
 	mManualObject->position(mSrcNode->getPosition()+offset); 
 	mManualObject->position(mDstNode->getPosition()+offset); 
@@ -344,16 +344,16 @@ void WorldRoad::plotRoad()
 	}
 
 	// DEBUG Object
-	if(mDebugObject)
+	if(_debugMOObject)
 	{
-		mSceneNode->detachObject(mDebugObject);
-		delete mDebugObject;
-		mDebugObject = 0;
+		mSceneNode->detachObject(_debugMOObject);
+		delete _debugMOObject;
+		_debugMOObject = 0;
 	}
 	if(mGenParams.debug) 
 	{
-		mDebugObject = new ManualObject(mName+"Debug");
-		mDebugObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
+		_debugMOObject = new ManualObject(_name+"Debug");
+		_debugMOObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
 	}
 
 	while(true)
@@ -503,8 +503,8 @@ void WorldRoad::plotRoad()
 
 	if(mGenParams.debug)
 	{
-		mDebugObject->end(); 
-		mSceneNode->attachObject(mDebugObject); 
+		_debugMOObject->end(); 
+		mSceneNode->attachObject(_debugMOObject); 
 	}
 
 	// build a spline from our plot list
@@ -526,25 +526,25 @@ void WorldRoad::createRoadGraph()
 	{
 		// create first road segment
 		RoadId roadSegId;
-		mRoadGraph.addRoad(getSrcNode()->mNodeId, getDstNode()->mNodeId, this, roadSegId);
+		_roadGraph.addRoad(getSrcNode()->mNodeId, getDstNode()->mNodeId, this, roadSegId);
 		mRoadSegmentList.push_back(roadSegId);
 	}
 	else
 	{
 		// create first road segment
-		SimpleNode* bn = new SimpleNode(mRoadGraph, mPlotList[1]);
-		NodeId cursorNode = mRoadGraph.addNode(bn);
+		SimpleNode* bn = new SimpleNode(_roadGraph, mPlotList[1]);
+		NodeId cursorNode = _roadGraph.addNode(bn);
 		RoadId roadSegId;
-		mRoadGraph.addRoad(getSrcNode()->mNodeId, cursorNode, this, roadSegId);
+		_roadGraph.addRoad(getSrcNode()->mNodeId, cursorNode, this, roadSegId);
 		mRoadSegmentList.push_back(roadSegId);
 
 		// create each road segment
 		for(unsigned int i=2; i<(mPlotList.size()-1); i++)
 		{
 			// add our nodes to the road graph
-			SimpleNode* bn = new SimpleNode(mRoadGraph, mPlotList[i]);
-			NodeId nextNodeId = mRoadGraph.addNode(bn);
-			mRoadGraph.addRoad(cursorNode, nextNodeId, this, roadSegId);
+			SimpleNode* bn = new SimpleNode(_roadGraph, mPlotList[i]);
+			NodeId nextNodeId = _roadGraph.addNode(bn);
+			_roadGraph.addRoad(cursorNode, nextNodeId, this, roadSegId);
 			mRoadSegmentList.push_back(roadSegId);
 
 			// advance cursor
@@ -552,7 +552,7 @@ void WorldRoad::createRoadGraph()
 		}
 
 		// create last road segment
-		mRoadGraph.addRoad(cursorNode, getDstNode()->mNodeId, this, roadSegId);
+		_roadGraph.addRoad(cursorNode, getDstNode()->mNodeId, this, roadSegId);
 		mRoadSegmentList.push_back(roadSegId);
 	}
 	//mSrcNode->invalidate();
@@ -563,13 +563,13 @@ void WorldRoad::destroyRoadGraph()
 {
 	// clear previous road segs.
 	if(mRoadSegmentList.size() > 0) 
-		mRoadGraph.removeRoad(mRoadSegmentList[0]);
+		_roadGraph.removeRoad(mRoadSegmentList[0]);
 	for(unsigned int i=1; i<mRoadSegmentList.size(); i++)
 	{
-		NodeId nd = mRoadGraph.getSrc(mRoadSegmentList[i]);
-		mRoadGraph.removeRoad(mRoadSegmentList[i]);
-		delete mRoadGraph.getNode(nd);
-		mRoadGraph.removeNode(nd);
+		NodeId nd = _roadGraph.getSrc(mRoadSegmentList[i]);
+		_roadGraph.removeRoad(mRoadSegmentList[i]);
+		delete _roadGraph.getNode(nd);
+		_roadGraph.removeNode(nd);
 	}
 
 	// clear the list
@@ -618,9 +618,9 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 {
 	for(size_t i=0; i<mRoadSegmentList.size(); i++)
 	{
-		NodeId srcNd = mRoadGraph.getSrc(mRoadSegmentList[i]);
-		NodeId dstNd = mRoadGraph.getDst(mRoadSegmentList[i]);
-		if(mRoadGraph.findClosestIntersection(srcNd, dstNd, rd, pos))
+		NodeId srcNd = _roadGraph.getSrc(mRoadSegmentList[i]);
+		NodeId dstNd = _roadGraph.getDst(mRoadSegmentList[i]);
+		if(_roadGraph.findClosestIntersection(srcNd, dstNd, rd, pos))
 			return true;
 	}
 	return false;
@@ -630,7 +630,7 @@ bool WorldRoad::hasIntersection()
 {
 	for(unsigned int i=0; i<mRoadSegmentList.size(); i++)
 	{
-		if(mRoadGraph.hasIntersection(mRoadSegmentList[i]))
+		if(_roadGraph.hasIntersection(mRoadSegmentList[i]))
 			return true;
 	}
 	return false;
@@ -865,8 +865,8 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 	Real len = std::numeric_limits<Real>::max();
 	for(i=0; i<(mRoadSegmentList.size()-1); i++) 
 	{
-		Vector2 src = mRoadGraph.getSrcNode(mRoadSegmentList[i])->getPosition2D();
-		Vector2 dst = mRoadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
+		Vector2 src = _roadGraph.getSrcNode(mRoadSegmentList[i])->getPosition2D();
+		Vector2 dst = _roadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
 		Real l = (src-dst).length();
 		if(l<len) len = l;
 	}
@@ -875,25 +875,25 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 
 	for(i=0; i<(mRoadSegmentList.size()-1); i++) 
 	{
-		NodeId srcNd = mRoadGraph.getSrc(mRoadSegmentList[i]);
-		NodeId dstNd = mRoadGraph.getDst(mRoadSegmentList[i]);
-		intersection = mRoadGraph.findClosestIntscnConnected(srcNd, dstNd, snapSz, pos, rd);
+		NodeId srcNd = _roadGraph.getSrc(mRoadSegmentList[i]);
+		NodeId dstNd = _roadGraph.getDst(mRoadSegmentList[i]);
+		intersection = _roadGraph.findClosestIntscnConnected(srcNd, dstNd, snapSz, pos, rd);
 		if(intersection) break;
 	}
 	if(!intersection)
 	{
-		NodeId srcNd = mRoadGraph.getSrc(mRoadSegmentList[i]);
-		Vector2 dstPos = mRoadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
-		intersection = mRoadGraph.findClosestIntscn(srcNd, dstPos, snapSz, pos, rd);
+		NodeId srcNd = _roadGraph.getSrc(mRoadSegmentList[i]);
+		Vector2 dstPos = _roadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
+		intersection = _roadGraph.findClosestIntscn(srcNd, dstPos, snapSz, pos, rd);
 	}
 
 	if(!intersection) pos = getDstNode()->getPosition2D();
 
 	Real closestDistanceSq = std::numeric_limits<Real>::max();
 	NodeIterator nIt, nEnd;
-	for(boost::tie(nIt, nEnd) = mSimpleRoadGraph.getNodes();  nIt != nEnd; nIt++)
+	for(boost::tie(nIt, nEnd) = _simpleRoadGraph.getNodes();  nIt != nEnd; nIt++)
 	{
-		NodeInterface* ni = mSimpleRoadGraph.getNode(*nIt);
+		NodeInterface* ni = _simpleRoadGraph.getNode(*nIt);
 		assert(typeid(*ni) == typeid(WorldNode));
 		Vector2 nPos = ni->getPosition2D();
 		if(nPos == getDstNode()->getPosition2D()) continue;
@@ -925,12 +925,12 @@ void WorldRoad::getMidPointAndDirection(Ogre::Vector2 &pos, Ogre::Vector2 &dir) 
 	
 	if(N%2==0)	// if even
 	{	
-		ri = mRoadGraph.getRoad(mRoadSegmentList[N/2]);
+		ri = _roadGraph.getRoad(mRoadSegmentList[N/2]);
 		pos = ri->getSrcNode()->getPosition2D();
 	}
 	else		// else odd
 	{
-		ri = mRoadGraph.getRoad(mRoadSegmentList[(N/2)-1]);
+		ri = _roadGraph.getRoad(mRoadSegmentList[(N/2)-1]);
 		pos = (ri->getSrcNode()->getPosition2D() + ri->getDstNode()->getPosition2D())/2;
 	}
 	dir = ri->getDstNode()->getPosition2D() - ri->getSrcNode()->getPosition2D();

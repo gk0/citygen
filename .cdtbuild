@@ -9,7 +9,7 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1192952860" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
 <tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
 <option id="gnu.cpp.compiler.option.include.paths.653474482" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;../../boost RC_1_34_0&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../boost_1_34_0&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../OgreSDK_mingw/include&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/include&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswud/wx/msw&quot;"/>

@@ -3,54 +3,43 @@
 
 #include "stdafx.h"
 #include "WorldObject.h"
+#include "WorldBlock.h"
 #include "RoadGraph.h"
+#include "CellGenParams.h"
 
 class WorldRoad;
 class NodeInterface;
 class RoadInterface;
 
-typedef struct {
-	unsigned int type;
-	int seed;
-	Ogre::Real segmentSize;
-	Ogre::Real segmentDeviance;
-	unsigned int degree;
-	Ogre::Real degreeDeviance;
-	Ogre::Real snapSize;
-	Ogre::Real snapDeviance;
-	Ogre::Real buildingHeight;
-	Ogre::Real buildingDeviance;
-	Ogre::Real roadWidth;
-	size_t roadLimit;
-	Ogre::Real connectivity;
-	Ogre::Real lotSize;
-	Ogre::Real lotDeviance;
-} GrowthGenParams;
 
 class WorldCell : public WorldObject
 {
 
 private:
+	bool _busy;
+
 	static int mInstanceCount;
 
-	Ogre::String mName;
-	Ogre::Vector2 mCentre;
-	Ogre::ManualObject* mRoadNetwork;
-	Ogre::ManualObject* mRoadJunctions;
-	Ogre::ManualObject* mBuildings;
-	Ogre::ManualObject* mDebug;
+	Ogre::String		_name;
+	Ogre::Vector2		_centre;
+	Ogre::ManualObject* _roadNetworkMO;
+	Ogre::ManualObject* _roadJunctionsMO;
+	Ogre::ManualObject* _buildingsMO;
+	Ogre::ManualObject* _debugMO;
+	bool				_showRoads;			
+	bool				_showBuildings;
+	size_t				_roadLimit;
 
-	RoadGraph mRoadGraph;
-	RoadGraph &mParentRoadGraph;
-	RoadGraph &mSimpleRoadGraph;
-	GrowthGenParams mGrowthGenParams;
+	RoadGraph			_roadGraph;
+	const RoadGraph&	_parentRoadGraph;
+	const RoadGraph&	_simpleRoadGraph;
+	CellGenParams		_growthGenParams;
 
-	std::vector<RoadInterface*> mBoundaryRoads;
-	std::vector<NodeInterface*> mBoundaryCycle;
-	std::vector<RoadInterface*> mFilamentRoads;
+	std::vector<RoadInterface*> _boundaryRoads;
+	std::vector<NodeInterface*> _boundaryCycle;
+	std::vector<RoadInterface*> _filamentRoads;
 
-	bool mShowRoads, mShowBuildings;
-	size_t mRoadLimit;
+	std::vector<WorldBlock>		_blocks;
 
 	// gcd crap
 	RoadGraph mGCDRoadGraph;
@@ -62,12 +51,12 @@ private:
 	std::vector< std::vector<RoadInterface*> > mGCDRoadCycles;
 
 public:
-	WorldCell(RoadGraph &p, RoadGraph &s);
-	WorldCell(RoadGraph &p, RoadGraph &s, std::vector<NodeInterface*> &n);
+	WorldCell(const RoadGraph &p, const RoadGraph &s);
+	WorldCell(const RoadGraph &p, const RoadGraph &s, std::vector<NodeInterface*> &n);
 	virtual ~WorldCell();
 
-	GrowthGenParams getGenParams() const;
-	void setGenParams(const GrowthGenParams &g);
+	CellGenParams getGenParams() const;
+	void setGenParams(const CellGenParams &g);
 
 	const std::vector<RoadInterface*>& getBoundaryRoads() const;
 	const std::vector<NodeInterface*>& getBoundaryCycle() const;
@@ -82,6 +71,7 @@ public:
 	//void destroyCell();
 
 	void build();
+	void prebuild();
 	bool isInside(const Ogre::Vector2 &loc) const;
 	bool isBoundaryNode(const NodeInterface *ni) const;
 	bool compareBoundary(const std::vector<NodeInterface*>& nodeCycle) const;

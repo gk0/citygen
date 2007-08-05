@@ -99,7 +99,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		WorldCell *wc = mWorldFrame->getSelectedCell();
 		if(wc)
 		{
-			GrowthGenParams g;
+			CellGenParams g;
 			switch(GetPropertyValueAsInt(presetProp))
 			{
 			// Manhattan
@@ -120,6 +120,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 				g.lotDeviance = 0.4;
 				wc->setGenParams(g);
 				mWorldFrame->update();
+				update();
 				break;
 			case 2:
 				g.seed = 0;
@@ -171,7 +172,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		WorldCell *wc = mWorldFrame->getSelectedCell();
 		if(wc)
 		{
-			GrowthGenParams g;
+			CellGenParams g;
 			g.seed = GetPropertyValueAsLong(seedProp);
 			g.type = GetPropertyValueAsInt(typeProp);
 			g.segmentSize = GetPropertyValueAsDouble(segmentSizeProp);
@@ -200,7 +201,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 
 void CellPropertyPage::update()
 {
-	GrowthGenParams g;
+	CellGenParams g;
 	WorldCell *wc = mWorldFrame->getSelectedCell();
 	if(wc)
 	{
@@ -214,7 +215,7 @@ void CellPropertyPage::update()
 			Ogre::Real degreeDeviance;
 			Ogre::Real snapSize;
 			Ogre::Real snapDeviance;
-		} GrowthGenParams;
+		} CellGenParams;
 		*/
 		SetPropertyValue(presetProp, 0);
 		SetPropertyValue(seedProp, g.seed);
