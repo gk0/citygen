@@ -6,48 +6,48 @@ using namespace Ogre;
 
 
 SimpleRoad::SimpleRoad(NodeInterface *src, NodeInterface *dst)
- : mRoadWidth(0.4)
+ : _roadWidth(0.4)
 {
-	mSrcNode = src;
-	mDstNode = dst;
+	_srcNode = src;
+	_dstNode = dst;
 }
 
 NodeInterface* SimpleRoad::getSrcNode() const
 {
-	return mSrcNode;
+	return _srcNode;
 }
 
 NodeInterface* SimpleRoad::getDstNode() const
 {
-	return mDstNode;
+	return _dstNode;
 }
 
 bool SimpleRoad::isRoadCycle()
 {
-	return mIsRoadCycle;
+	return _isRoadCycle;
 }
 
 void SimpleRoad::setRoadCycle(bool cycle)
 {
-	mIsRoadCycle = cycle;
+	_isRoadCycle = cycle;
 }
 
 bool SimpleRoad::rayCross(const Ogre::Vector2& loc)
 {
-	return Geometry::rayCross(loc, mSrcNode->getPosition2D(), mDstNode->getPosition2D());
+	return Geometry::rayCross(loc, _srcNode->getPosition2D(), _dstNode->getPosition2D());
 }
 
 Ogre::Real SimpleRoad::getLengthSquared() const
 {
-	return (mSrcNode->getPosition2D() - mDstNode->getPosition2D()).squaredLength();
+	return (_srcNode->getPosition2D() - _dstNode->getPosition2D()).squaredLength();
 }
 
 Ogre::Real SimpleRoad::getWidth() const
 {
-	return mRoadWidth;
+	return _roadWidth;
 }
 
 void SimpleRoad::setWidth(const Ogre::Real& w)
 {
-	mRoadWidth = w;
+	_roadWidth = w;
 }

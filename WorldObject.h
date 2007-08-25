@@ -6,75 +6,75 @@
 class WorldObject
 {
 protected:
-	bool mValid;
-	std::set<WorldObject*> mAttachments;
+	bool					_valid;
+	std::set<WorldObject*>	_attachments;
 
 protected:
 	
-	Ogre::SceneNode* mSceneNode;
-	bool mVisible;
+	Ogre::SceneNode*		_sceneNode;
+	bool					_visible;
 
 public:
 
 	WorldObject()
 	{
-		mValid = false;
-		mVisible = true;
-		mSceneNode = 0;
+		_valid = false;
+		_visible = true;
+		_sceneNode = 0;
 	}
 
 	virtual ~WorldObject()
 	{
 	}
 
-	bool isValid() const { return mValid; }
+	bool isValid() const { return _valid; }
 
 	void setPosition(const Ogre::Vector3& pos)
 	{ 
-		mSceneNode->setPosition(pos); 
+		_sceneNode->setPosition(pos); 
 	}
 
 	void setPosition(Ogre::Real x, Ogre::Real y, Ogre::Real z) 
 	{ 
-		mSceneNode->setPosition(x, y, z); 
+		_sceneNode->setPosition(x, y, z); 
 	}
 
 	void setVisible(const bool vis)
 	{
-		mSceneNode->setVisible(vis);
-		mVisible = vis;
+		_sceneNode->setVisible(vis);
+		_visible = vis;
 	}
 
 	const Ogre::Vector3& getPosition() const 
 	{ 
-		return mSceneNode->getPosition(); 
+		return _sceneNode->getPosition(); 
 	}
 
 	Ogre::SceneNode* getSceneNode() const 
 	{ 
-		return mSceneNode; 
+		return _sceneNode; 
 	}
 
 	const Ogre::String& getName() 
 	{ 
-		return mSceneNode->getName(); 
+		return _sceneNode->getName(); 
 	}
 
 	const bool getVisible() 
 	{ 
-		return mVisible; 
+		return _visible; 
 	}
 	 
 	void showBoundingBox(bool show) 
 	{ 
-		mSceneNode->showBoundingBox(show); 
+		_sceneNode->showBoundingBox(show); 
 	}
 
 	virtual void invalidate()
 	{
-		mValid = false;
+		_valid = false;
 		std::set<WorldObject*>::iterator aIt, aEnd;
-		for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
+		for(aIt = _attachments.begin(), aEnd = _attachments.end(); aIt != aEnd; aIt++)
 		{
 			(*aIt)->invalidate();
 		}
@@ -82,22 +82,22 @@ public:
 
 	void attach(WorldObject* wo)
 	{
-		mAttachments.insert(wo);
+		_attachments.insert(wo);
 	}
 
 	void detach(WorldObject* wo)
 	{
-		mAttachments.erase(wo);
+		_attachments.erase(wo);
 	}
 
 	std::set<WorldObject*> getAllAttachments()
 	{
 		// add own attachments
-		std::set<WorldObject*> allAttachments(mAttachments);
+		std::set<WorldObject*> allAttachments(_attachments);
 
 		// add attachments' attachments
 		std::set<WorldObject*>::iterator aIt, aEnd;
-		for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
+		for(aIt = _attachments.begin(), aEnd = _attachments.end(); aIt != aEnd; aIt++)
 		{
 			std::set<WorldObject*> a((*aIt)->getAllAttachments());
 			allAttachments.insert(a.begin(), a.end());
@@ -107,10 +107,10 @@ public:
 
 	void validate()
 	{
-		if(!mValid)
+		if(!_valid)
 		{
 			build();
-			mValid = true;
+			_valid = true;
 		}
 	}
 

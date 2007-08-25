@@ -10,7 +10,7 @@ protected:
 	RoadGraph& _roadGraph;
 
 public:
-	NodeId mNodeId;
+	NodeId _nodeId;
 	NodeInterface(RoadGraph& g) : _roadGraph(g)
 	{
 	}
@@ -32,7 +32,7 @@ public:
 	friend RoadInterface* getRoad(NodeInterface* n1, NodeInterface* n2)
 	{
 		RoadGraph& g(n1->_roadGraph);
-		return g.getRoad(g.getRoad(n1->mNodeId, n2->mNodeId));
+		return g.getRoad(g.getRoad(n1->_nodeId, n2->_nodeId));
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const NodeInterface& n)

@@ -4,52 +4,63 @@
 #include "Geometry.h"
 #include "skeleton.h"
 
+
 using namespace Ogre;
 using namespace std;
 
 WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const Real fnd, const Real ht)
 {
-	// Note: gp.lotSize is desired lot size not actual
+	// Note: gp._lotSize is desired lot size not actual
 	LotBoundary b;
 	
 	//LotBoundary b(footprint);
-	switch(gp.type)
+	switch(gp._type)
 	{
 	case 0: //downtown
 		b = footprint;
 		break;
 	case 1:
-		b = insetBoundary(footprint, 0.1*gp.lotSize, 0.1*gp.lotSize);
+		b = insetBoundary(footprint, 0.1*gp._lotSize, 0.1*gp._lotSize);
 		break;
 	case 2:
-		b = insetBoundary(footprint, 0.4*gp.lotSize, 0.1*gp.lotSize);
+		b = insetBoundary(footprint, 0.2*gp._lotSize, 0.1*gp._lotSize);
 		break;
 	default:
 		b = footprint;
 	}
 
-	std::vector<Ogre::Vector2> tmp;
-	tmp.reserve(b.size());
-	BOOST_FOREACH(const LotBoundaryPoint &p, b) tmp.push_back(p._pos);
+	_height = ht;
+	_foundation = fnd;
+	
+	_footprint.reserve(b.size());
+	BOOST_FOREACH(const LotBoundaryPoint &p, b) _footprint.push_back(p._pos);
 
 	// build cube
 	//_error = buildCube(tmp, fnd, ht, m);
-	_vertices.reserve(footprint.size()*3);
+	_vertices.reserve(footprint.size()*2);
 
-	vector<size_t> result;
+	//Vector2 bottomLeft(0,0), bottomRight(1,0), topLeft(0,1), topRight(1,1);
+	//_texCoords.push_back(bottomLeft);
+	//_texCoords.push_back(bottomRight);
+	//_texCoords.push_back(topLeft);
+	//_texCoords.push_back(topRight);
+
 
 	//// roof
-	if(Triangulate::Process(tmp, result))
+	if(Triangulate::Process(_footprint, _roofPolys))
 	{
 		//ok life might be ok
 
 		//load in the roof footprint into vertices
-		BOOST_FOREACH(Vector2 &fp, tmp)
+		BOOST_FOREACH(Vector2 &fp, _footprint)
 			_vertices.push_back(Vector3(fp.x, ht, fp.y));
 	
 		//load in the base footprint into vertices
-		BOOST_FOREACH(Vector2 &fp, tmp)
+		BOOST_FOREACH(Vector2 &fp, _footprint)
 			_vertices.push_back(Vector3(fp.x, fnd, fp.y));
+
+		// add zero texCoord
+		_texCoords.push_back(Vector2(0,0));
 
 		// sides
 		size_t i, j, N = footprint.size();
@@ -57,106 +68,134 @@ WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const 
 		{
 			j = (i + 1) % N;
 
+			// calc texCoords
+			Real uMax =	Math::Floor((_footprint[i] - _footprint[j]).length() * 4) / 5;		//horiz
+			Real vMax =	Math::Floor((ht - fnd) * 4) / 4;		//vert
+			_texCoords.push_back(Vector2(0,vMax));
+			_texCoords.push_back(Vector2(uMax,vMax));
+			_texCoords.push_back(Vector2(0,0));
+			_texCoords.push_back(Vector2(uMax,0));
+			size_t texIndex = _texCoords.size() - 4;
+
 			//calc normal
-			Ogre::Vector2 perp((tmp[i] - tmp[j]).perpendicular());
+			Ogre::Vector2 perp((_footprint[i] - _footprint[j]).perpendicular());
 			Ogre::Vector3 normal(perp.x, 0, perp.y);
 			normal.normalise();
 			_vertices.push_back(normal);
 
-			_polys.push_back(N+j);
-			_polys.push_back(N+i);
-			_polys.push_back(i);
-			_polys.push_back(_vertices.size()-1);
+			_sidePolys.push_back(N+j);			//pos
+			_sidePolys.push_back(texIndex+1);	//tex
+			_sidePolys.push_back(N+i);
+			_sidePolys.push_back(texIndex);
+			_sidePolys.push_back(i);
+			_sidePolys.push_back(texIndex+2);
+			_sidePolys.push_back(_vertices.size()-1);	//norm
 			
-			_polys.push_back(N+j);
-			_polys.push_back(i);
-			_polys.push_back(j);
-			_polys.push_back(_vertices.size()-1);
+			_sidePolys.push_back(N+j);
+			_sidePolys.push_back(texIndex+1);
+			_sidePolys.push_back(i);
+			_sidePolys.push_back(texIndex+2);
+			_sidePolys.push_back(j);
+			_sidePolys.push_back(texIndex+3);
+			_sidePolys.push_back(_vertices.size()-1);
 		}
 
+		//// add normal for all roof polys
+		//_vertices.push_back(Vector3::UNIT_Y);
 
-		// add normal for all roof polys
-		_vertices.push_back(Vector3::UNIT_Y);
-
-		// copy in the roof polys	
-		for(size_t i=0; i<result.size(); i+=3)
-		{
-			_polys.push_back(result[i]);
-			_polys.push_back(result[i+1]);
-			_polys.push_back(result[i+2]);
-			_polys.push_back(_vertices.size()-1);
-		}
+		//// copy in the roof polys	
+		//for(size_t i=0; i<result.size(); i+=3)
+		//{
+		//	_sidePolys.push_back(result[i]);
+		//	_sidePolys.push_back(0);
+		//	_sidePolys.push_back(result[i+1]);
+		//	_sidePolys.push_back(0);
+		//	_sidePolys.push_back(result[i+2]);
+		//	_sidePolys.push_back(0);
+		//	_sidePolys.push_back(_vertices.size()-1);
+		//}
 
 		_error = false;
 	}
 	else
 	{
-		_polys.clear();
+		_sidePolys.clear();
 		_error = true;
 	}
 }
 
+#define RAND_MAX_HALF RAND_MAX/2
+
+#define RAND_1QT RAND_MAX/4
+#define RAND_2QT RAND_MAX/2
+#define RAND_3QT RAND_2QT+RAND_1QT
+
+#define RAND_MAX_THRD RAND_MAX/3
+#define RAND_MAX_2THRD RAND_MAX_THRD*2
 
 bool WorldLot::build(ManualObject* m)
 {
-	//Old Build
-	size_t i,N=_polys.size();
-	for(i=0; i<N; i+=4)
+	// WARNING: don't do m->begin m->end too much it makes it *very* slow to render
+
+	size_t i,N=_sidePolys.size();
+	for(i=0; i<N; i+=7)
 	{
-		m->position(_vertices[_polys[i]]);
-		m->normal(_vertices[_polys[i+3]]);
-		m->position(_vertices[_polys[i+1]]);
-		m->normal(_vertices[_polys[i+3]]);
-		m->position(_vertices[_polys[i+2]]);
-		m->normal(_vertices[_polys[i+3]]);
+		m->position(_vertices[_sidePolys[i]]);
+		m->textureCoord(_texCoords[_sidePolys[i+1]]);
+		m->normal(_vertices[_sidePolys[i+6]]);
+		m->position(_vertices[_sidePolys[i+2]]);
+		m->textureCoord(_texCoords[_sidePolys[i+3]]);
+		m->normal(_vertices[_sidePolys[i+6]]);
+		m->position(_vertices[_sidePolys[i+4]]);
+		m->textureCoord(_texCoords[_sidePolys[i+5]]);
+		m->normal(_vertices[_sidePolys[i+6]]);
 	}
 
+	//roof
+	N=_roofPolys.size();
+	for(i=0; i<N; i+=3)
+	{
+		m->position(_vertices[_roofPolys[i]]);
+		m->textureCoord(Vector2::ZERO);
+		m->normal(Vector3::UNIT_Y);
+		m->position(_vertices[_roofPolys[i+1]]);
+		m->textureCoord(Vector2::ZERO);
+		m->normal(Vector3::UNIT_Y);
+		m->position(_vertices[_roofPolys[i+2]]);
+		m->textureCoord(Vector2::ZERO);
+		m->normal(Vector3::UNIT_Y);
+	}
 
-	//New Build
-	//m->begin("gk/Building", Ogre::RenderOperation::OT_POINT_LIST);
-	//BOOST_FOREACH(Vector3 &v, _vertices)
-	//	m->position(v);
-
-	//size_t i,N=_polys.size();
-	//for(i=0; i<N; i+=3)
-	//{
-	//	m->triangle(_polys[i], _polys[i+1], _polys[i+2]);
-	//}
-	//m->end();
 	return true;
 }
 
-
-//bool WorldLot::build(const LotBoundary &footprint, const CellGenParams &gp,
-//	const Real fnd, const Real ht, ManualObject* m)
-//{
-//	// Note: gp.lotSize is desired lot size not actual
-//	LotBoundary b;
-//	
-//	//LotBoundary b(footprint);
-//	switch(gp.type)
-//	{
-//	case 0: //downtown
-//		b = footprint;
-//		break;
-//	case 1:
-//		b = insetBoundary(footprint, 0.1*gp.lotSize, 0.1*gp.lotSize);
-//		break;
-//	case 2:
-//		b = insetBoundary(footprint, 0.4*gp.lotSize, 0.1*gp.lotSize);
-//		break;
-//	default:
-//		b = footprint;
-//	}
-//
-//	std::vector<Ogre::Vector2> tmp;
-//	tmp.reserve(b.size());
-//	BOOST_FOREACH(const LotBoundaryPoint &p, b) tmp.push_back(p._pos);
-//
-//	// build cube
-//	return buildCube(tmp, fnd, ht, m);
-//}
-
+void WorldLot::build2(ManualObject* m)
+{
+	//// the library expects the footprint to be in the xy-plane, but we are
+	//// drawing them in the xz-plane so we need to transform the footprint and
+	//// rotate the building into position
+	//vector<Vector2> lot;
+	//int N = _footprint.size();
+	//// invert the footprint through the x-axis and reverse the vertex order 
+	//// to maintain anti-clockwise ordering
+	//for(int i = (N-1); i >= 0; --i)
+	//	lot.push_back(Vector2(_footprint[i].x, -_footprint[i].y));
+	//Quaternion orient;
+	//// rotate the building into the xz-plane
+	//orient.FromAngleAxis(Radian(-0.5 * ProArc::PI), Vector3::UNIT_X);
+	//// set the buildings y-position
+	//Vector3 pos(0.0, (_foundation + (0.5 * _height)), 0.0);
+	//// create the building and specify the material to use
+	//ProArc::Building b(lot, _height, pos, orient);
+	//b.wallMaterial() = "gk/WhiteTile";
+	//b.altWallMaterial() = "gk/Brick";
+	//b.windowMaterial() = "gk/Window";
+	//b.ledgeMaterial() = "gk/Brick2";
+	//b.doorMaterial() = "gk/Window";
+	//// add the building to the ManualObject
+	//b.addTo(m);
+	//return;
+}
 
 void outFace(Felkel::Vertex &v, vector<Vector3> &poly, Real h)
 {
@@ -317,57 +356,6 @@ bool WorldLot::buildHousey(const std::vector<Ogre::Vector2> &footprint,
 		return false;
 	}
 }
-
-
-//bool WorldLot::buildCube(const std::vector<Ogre::Vector2> &footprint, 
-//	const Ogre::Real foundation, const Ogre::Real height, Ogre::ManualObject* m)
-//{
-//	std::vector<Ogre::Vector2> result;
-//
-//	// roof
-//	if(Triangulate::Process(footprint, result))
-//	{
-//		// sides
-//		size_t i, j, N = footprint.size();
-//		for(i = 0; i < N; i++)
-//		{
-//			j = (i + 1) % N;
-//			Ogre::Vector2 perp((footprint[i] - footprint[j]).perpendicular());
-//			Ogre::Vector3 normal(perp.x, 0, perp.y);
-//			normal.normalise();
-//			m->position(Ogre::Vector3(footprint[j].x, foundation, footprint[j].y));
-//			m->normal(normal);
-//			m->position(Ogre::Vector3(footprint[i].x, foundation, footprint[i].y));
-//			m->normal(normal);
-//			m->position(Ogre::Vector3(footprint[i].x, height, footprint[i].y));
-//			m->normal(normal);
-//
-//			m->position(Ogre::Vector3(footprint[j].x, foundation, footprint[j].y));
-//			m->normal(normal);
-//			m->position(Ogre::Vector3(footprint[i].x, height, footprint[i].y));
-//			m->normal(normal);
-//			m->position(Ogre::Vector3(footprint[j].x, height, footprint[j].y));
-//			m->normal(normal);
-//		}
-//
-//		for(size_t i=0; i<result.size(); i+=3)
-//		{
-//			m->position(Ogre::Vector3(result[i+2].x, height, result[i+2].y));
-//			m->normal(Ogre::Vector3::UNIT_Y);
-//			m->position(Ogre::Vector3(result[i+1].x, height, result[i+1].y));
-//			m->normal(Ogre::Vector3::UNIT_Y);
-//			m->position(Ogre::Vector3(result[i].x, height, result[i].y));
-//			m->normal(Ogre::Vector3::UNIT_Y);
-//		}
-//		return true;
-//	}
-//	else
-//	{
-//		//Ogre::LogManager::getSingleton().logMessage("WorldLot::build() failed.");
-//		return false;
-//	}
-//}
-
 
 LotBoundary WorldLot::insetBoundary(const LotBoundary &b, const Real &roadInset, const Real &standardInset)
 {

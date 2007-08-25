@@ -15,8 +15,8 @@ class Application : public wxApp
 {
 	
 private:
-	Ogre::Root *mRoot;
-	MainWindow *mWindow;
+	Ogre::Root*		_root;
+	MainWindow*		_window;
 
 public:
 	Application();

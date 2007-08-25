@@ -12,18 +12,18 @@ class WorldNode : public WorldObject, public NodeInterface
 {
 
 private:
-	size_t mDegree;
-	RoadGraph& _simpleRoadGraph;
-	static int mInstanceCount;
-	Ogre::ManualObject* mJunctionPlate;
-	Ogre::Entity* mMesh;
-	Ogre::Entity* mHighlight;
-	Ogre::Entity* mSelected;
-	Ogre::MovableText* mLabel;
-	Ogre::SceneManager* mCreator;
-	Ogre::String _name;
+	size_t				_degree;
+	RoadGraph&			_simpleRoadGraph;
+	static int			_instanceCount;
+	Ogre::ManualObject* _junctionPlate;
+	Ogre::Entity*		_mesh;
+	Ogre::Entity*		_highlight;
+	Ogre::Entity*		_selected;
+	Ogre::MovableText*	_label;
+	Ogre::SceneManager* _creator;
+	Ogre::String		_name;
 	//std::vector<WorldRoad*> mRoads;
-	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > mRoadJunction;
+	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > _roadJunction;
 
 	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
 	void onMove();

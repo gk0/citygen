@@ -120,7 +120,7 @@ MainWindow::MainWindow(wxWindow* parent)
 	  wxDefaultPosition, wxSize(1024,768), wxDEFAULT_FRAME_STYLE)
 {
 	// notify wxAUI which frame to use
-	mFrameManager.SetManagedWindow(this);
+	_frameManager.SetManagedWindow(this);
 
 
 	// MENU
@@ -170,75 +170,75 @@ MainWindow::MainWindow(wxWindow* parent)
 	// TOOLBARS
 
 	// create the file toolbar
-	mFileToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-    mFileToolBar->AddTool(wxID_NEW, _("New"), TOOL_BMP(newdoc), _("New file"));
-    mFileToolBar->AddTool(wxID_OPEN, _("Open"), TOOL_BMP(open), _("Open file"));
-    mFileToolBar->AddTool(wxID_SAVE, _("Save"), TOOL_BMP(save), _("Save file"), wxITEM_CHECK);
-    mFileToolBar->AddSeparator();
-    mFileToolBar->AddTool(wxID_HELP, _("Help"), TOOL_BMP(help), _("Help button"), wxITEM_CHECK);
-	mFileToolBar->Realize();
-	mFrameManager.AddPane(mFileToolBar,  wxAuiPaneInfo().Name(_("FileTb")).
+	_fileToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
+    _fileToolBar->AddTool(wxID_NEW, _("New"), TOOL_BMP(newdoc), _("New file"));
+    _fileToolBar->AddTool(wxID_OPEN, _("Open"), TOOL_BMP(open), _("Open file"));
+    _fileToolBar->AddTool(wxID_SAVE, _("Save"), TOOL_BMP(save), _("Save file"), wxITEM_CHECK);
+    _fileToolBar->AddSeparator();
+    _fileToolBar->AddTool(wxID_HELP, _("Help"), TOOL_BMP(help), _("Help button"), wxITEM_CHECK);
+	_fileToolBar->Realize();
+	_frameManager.AddPane(_fileToolBar,  wxAuiPaneInfo().Name(_("FileTb")).
 		Caption(_("File ToolBar")).ToolbarPane().Top().Row(0).Position(0).LeftDockable(false).
 		RightDockable(false).Resizable(false)); 
 
 	// create a view mode toolbar
-	mViewModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mViewModeToolBar->AddTool(IDM_VIEW_BUILDING, _("View Buildings"), TOOL_BMP(building), _("View detailed buildings"), wxITEM_RADIO);
-	mViewModeToolBar->AddTool(IDM_VIEW_BOX, _("View All"), TOOL_BMP(all), _("View buildings and all roads"), wxITEM_RADIO);
-	mViewModeToolBar->AddTool(IDM_VIEW_CELL, _("View Cells"), TOOL_BMP(roads), _("View cell roads"), wxITEM_RADIO);
-	mViewModeToolBar->AddTool(IDM_VIEW_PRIMARY, _("View Primary"), TOOL_BMP(graph), _("View primary roads only"), wxITEM_RADIO);
-	mViewModeToolBar->Realize();
-	mViewModeToolBar->Enable(false);
+	_viewModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
+	_viewModeToolBar->AddTool(IDM_VIEW_BUILDING, _("View Buildings"), TOOL_BMP(building), _("View detailed buildings"), wxITEM_RADIO);
+	_viewModeToolBar->AddTool(IDM_VIEW_BOX, _("View All"), TOOL_BMP(all), _("View buildings and all roads"), wxITEM_RADIO);
+	_viewModeToolBar->AddTool(IDM_VIEW_CELL, _("View Cells"), TOOL_BMP(roads), _("View cell roads"), wxITEM_RADIO);
+	_viewModeToolBar->AddTool(IDM_VIEW_PRIMARY, _("View Primary"), TOOL_BMP(graph), _("View primary roads only"), wxITEM_RADIO);
+	_viewModeToolBar->Realize();
+	_viewModeToolBar->Enable(false);
 
-	mFrameManager.AddPane(mViewModeToolBar,  wxAuiPaneInfo().Name(_("ViewTb")).
+	_frameManager.AddPane(_viewModeToolBar,  wxAuiPaneInfo().Name(_("ViewTb")).
 		Caption(_("View Mode ToolBar")).ToolbarPane().Top().Row(0).Position(1).LeftDockable(false).
 		RightDockable(false).Resizable(false)); 
 
 	// create an edit mode toolbar
-	mToolsetModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mToolsetModeToolBar->AddTool(IDM_TOOLSET_VIEW, _("View"), TOOL_BMP(view), _("Select view only mode"), wxITEM_RADIO);
-	mToolsetModeToolBar->AddTool(IDM_TOOLSET_NODE, _("Node Edit"), TOOL_BMP(node), _("Select node edit mode"), wxITEM_RADIO);
-	mToolsetModeToolBar->AddTool(IDM_TOOLSET_EDGE, _("Road Edit"), TOOL_BMP(edge), _("Select road edit mode"), wxITEM_RADIO);
-	mToolsetModeToolBar->AddTool(IDM_TOOLSET_CELL, _("Cell Edit"), TOOL_BMP(cell), _("Select cell edit mode"), wxITEM_RADIO);
-	mToolsetModeToolBar->Realize();
-	mToolsetModeToolBar->Enable(false);
+	_toolsetModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
+	_toolsetModeToolBar->AddTool(IDM_TOOLSET_VIEW, _("View"), TOOL_BMP(view), _("Select view only mode"), wxITEM_RADIO);
+	_toolsetModeToolBar->AddTool(IDM_TOOLSET_NODE, _("Node Edit"), TOOL_BMP(node), _("Select node edit mode"), wxITEM_RADIO);
+	_toolsetModeToolBar->AddTool(IDM_TOOLSET_EDGE, _("Road Edit"), TOOL_BMP(edge), _("Select road edit mode"), wxITEM_RADIO);
+	_toolsetModeToolBar->AddTool(IDM_TOOLSET_CELL, _("Cell Edit"), TOOL_BMP(cell), _("Select cell edit mode"), wxITEM_RADIO);
+	_toolsetModeToolBar->Realize();
+	_toolsetModeToolBar->Enable(false);
 
-	mFrameManager.AddPane(mToolsetModeToolBar,  wxAuiPaneInfo().Name(_("ToolsetModeTb")).
+	_frameManager.AddPane(_toolsetModeToolBar,  wxAuiPaneInfo().Name(_("ToolsetModeTb")).
 		Caption(_("Edit Mode ToolBar")).ToolbarPane().Top().Row(0).Position(1).LeftDockable(false).
 		RightDockable(false).Resizable(false)); 
 
-	mNodeEditToolBar = 0;
-	mRoadEditToolBar = 0;
-	mToolsetMode = view;
+	_nodeEditToolBar = 0;
+	_roadEditToolBar = 0;
+	_toolsetMode = view;
 
 	// WINDOW PANES
 
 	// world frame
-	mWorldFrame = new WorldFrame(this);
-	mFrameManager.AddPane(mWorldFrame, wxCENTER, _("Ogre Pane"));
+	_worldFrame = new WorldFrame(this);
+	_frameManager.AddPane(_worldFrame, wxCENTER, _("Ogre Pane"));
 
 	// property manager
-	mPropertyGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxSize(260,200));
-	mFrameManager.AddPane(mPropertyGridManager, wxRIGHT, wxT("Property Inspector"));
+	_propertyGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxSize(260,200));
+	_frameManager.AddPane(_propertyGridManager, wxRIGHT, wxT("Property Inspector"));
 
 	// create pages
-	mViewPropertyPage = new ViewPropertyPage(mWorldFrame);
-	mNodePropertyPage =  new NodePropertyPage(mWorldFrame);
-	mRoadPropertyPage = new RoadPropertyPage(mWorldFrame);
-	mCellPropertyPage = new CellPropertyPage(mWorldFrame);
+	_viewPropertyPage = new ViewPropertyPage(_worldFrame);
+	_nodePropertyPage =  new NodePropertyPage(_worldFrame);
+	_roadPropertyPage = new RoadPropertyPage(_worldFrame);
+	_cellPropertyPage = new CellPropertyPage(_worldFrame);
 
 	// Add pages to property inspector
-	mPropertyGridManager->AddPage(wxT("View Properties"), wxNullBitmap, mViewPropertyPage);
-	mPropertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, mNodePropertyPage);
-	mPropertyGridManager->AddPage(wxT("Road Properties"), wxNullBitmap, mRoadPropertyPage);
-	mPropertyGridManager->AddPage(wxT("Cell Properties"), wxNullBitmap, mCellPropertyPage);
+	_propertyGridManager->AddPage(wxT("View Properties"), wxNullBitmap, _viewPropertyPage);
+	_propertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, _nodePropertyPage);
+	_propertyGridManager->AddPage(wxT("Road Properties"), wxNullBitmap, _roadPropertyPage);
+	_propertyGridManager->AddPage(wxT("Cell Properties"), wxNullBitmap, _cellPropertyPage);
 
 	// log frame
-	mLogFrame = new LogFrame(this, wxSize(1000, 100));
-	mFrameManager.AddPane(mLogFrame, wxBOTTOM, _("Log"));
+	_logFrame = new LogFrame(this, wxSize(1000, 100));
+	_frameManager.AddPane(_logFrame, wxBOTTOM, _("Log"));
 
 	// tell the manager to "commit" all the changes just made
-	mFrameManager.Update();
+	_frameManager.Update();
 
 	// set the frame icon
 	SetIcon(wxICON(mondrian));
@@ -251,19 +251,19 @@ MainWindow::MainWindow(wxWindow* parent)
 
 void MainWindow::init()
 {
-	mWorldFrame->init();
+	_worldFrame->init();
 }
 
 MainWindow::~MainWindow()
 {
 	// deinitialize the frame manager
-	mFrameManager.UnInit();
-	delete mWorldFrame;
+	_frameManager.UnInit();
+	delete _worldFrame;
 }
 
 void MainWindow::updateOgre()
 {
-	mWorldFrame->update();
+	_worldFrame->update();
 }
 
 void MainWindow::onNew(wxCommandEvent &e)
@@ -272,9 +272,9 @@ void MainWindow::onNew(wxCommandEvent &e)
         return;
 
 	setFilename(_(""));
-	mWorldFrame->onNewDoc();
-	mViewModeToolBar->Enable(true);
-	mToolsetModeToolBar->Enable(true);
+	_worldFrame->onNewDoc();
+	_viewModeToolBar->Enable(true);
+	_toolsetModeToolBar->Enable(true);
 	modify(true);
 }
 
@@ -310,14 +310,14 @@ void MainWindow::doOpen(const wxString& filename)
 
 			// load data
 			const TiXmlHandle worldRoot(pElem);
-			mWorldFrame->loadXML(worldRoot);
+			_worldFrame->loadXML(worldRoot);
 
 			//
 			setFilename(filename);
-			mSavedYet = true;
+			_savedYet = true;
 			modify(false);
-			mViewModeToolBar->Enable(true);
-			mToolsetModeToolBar->Enable(true);
+			_viewModeToolBar->Enable(true);
+			_toolsetModeToolBar->Enable(true);
 		}
 		else
 		{
@@ -334,32 +334,32 @@ void MainWindow::onClose(wxCommandEvent &e)
 
 	setFilename(_(""));
 
-	mViewModeToolBar->Enable(false);
-	mToolsetModeToolBar->Enable(false);
-	mWorldFrame->onCloseDoc();
+	_viewModeToolBar->Enable(false);
+	_toolsetModeToolBar->Enable(false);
+	_worldFrame->onCloseDoc();
 }
 
 void MainWindow::onSave(wxCommandEvent &e)
 {
 	save();
-	mFileToolBar->ToggleTool(wxID_SAVE, false);
+	_fileToolBar->ToggleTool(wxID_SAVE, false);
 }
 
 void MainWindow::onSaveAs(wxCommandEvent &e)
 {
 	saveAs();
-	mFileToolBar->ToggleTool(wxID_SAVE, false);
+	_fileToolBar->ToggleTool(wxID_SAVE, false);
 }
 
 bool MainWindow::save()
 {
-    if (!isModified() && mSavedYet)
+    if (!isModified() && _savedYet)
         return true;
 
-    if (mDocFile.empty() || !mSavedYet)
+    if (_docFile.empty() || !_savedYet)
         return saveAs();
 
-    return doSave(mDocFile);
+    return doSave(_docFile);
 }
 
 bool MainWindow::saveAs()
@@ -380,13 +380,13 @@ bool MainWindow::doSave(const wxString &file)
 	TiXmlDocument doc;  
  	TiXmlDeclaration* decl = new TiXmlDeclaration("1.0", "", "yes");  
 	doc.LinkEndChild(decl);  
-	doc.LinkEndChild(mWorldFrame->saveXML());
+	doc.LinkEndChild(_worldFrame->saveXML());
  
 	if(doc.SaveFile(file.mb_str(wxCSConv(wxLocale::GetSystemEncoding()))))
 	{
 		setFilename(file);
 		modify(false);
-		mSavedYet = true;
+		_savedYet = true;
 		return true;
 	}
 	else
@@ -403,7 +403,7 @@ bool MainWindow::onSaveModified()
 	//TODO: save modified
     if(isModified())
     {
-        wxString title(wxFileNameFromPath(mDocFile));
+        wxString title(wxFileNameFromPath(_docFile));
 
         wxString msgTitle;
         if (!wxTheApp->GetAppName().empty())
@@ -431,189 +431,189 @@ bool MainWindow::onSaveModified()
 
 void MainWindow::setFilename(const wxString &file)
 {
-	mDocFile = file;
+	_docFile = file;
 
 	if(file.empty())
 		SetTitle(wxTheApp->GetAppName());
 	else
-		SetTitle(wxFileNameFromPath(mDocFile) + _(" - ") + wxTheApp->GetAppName());
+		SetTitle(wxFileNameFromPath(_docFile) + _(" - ") + wxTheApp->GetAppName());
 }
 
 void MainWindow::onSelectViewPrimary(wxCommandEvent &e)
 {
-	mWorldFrame->setViewMode(view_primary);
+	_worldFrame->setViewMode(view_primary);
 }
 
 void MainWindow::onSelectViewCell(wxCommandEvent &e)
 {
-	mWorldFrame->setViewMode(view_cell);
+	_worldFrame->setViewMode(view_cell);
 }
 
 void MainWindow::onSelectViewBox(wxCommandEvent &e)
 {
-	mWorldFrame->setViewMode(view_box);
+	_worldFrame->setViewMode(view_box);
 }
 
 void MainWindow::onSelectViewBuilding(wxCommandEvent &e)
 {
-	mWorldFrame->setViewMode(view_building);
+	_worldFrame->setViewMode(view_building);
 }
 
 void MainWindow::onSelectToolsetView(wxCommandEvent &e)
 {
-	mToolsetMode = view;
+	_toolsetMode = view;
 	onChangeToolsetMode();
 }
 
 void MainWindow::onSelectToolsetNode(wxCommandEvent &e)
 {
-	mToolsetMode = node;
+	_toolsetMode = node;
 	onChangeToolsetMode();
 }
 
 void MainWindow::onSelectToolsetRoad(wxCommandEvent &e)
 {
-	mToolsetMode = road;
+	_toolsetMode = road;
 	onChangeToolsetMode();
 }
 
 void MainWindow::onSelectToolsetCell(wxCommandEvent &e)
 {
-	mToolsetMode = cell;
+	_toolsetMode = cell;
 	onChangeToolsetMode();
 }
 
 void MainWindow::onChangeToolsetMode()
 {
 	// change world frame edit mode
-	mWorldFrame->setToolsetMode(mToolsetMode);
+	_worldFrame->setToolsetMode(_toolsetMode);
 
 	// create toolbars if not created and detach if created
-	mFrameManager.DetachPane(mFileToolBar);
-	mFrameManager.DetachPane(mViewModeToolBar);
-	mFrameManager.DetachPane(mToolsetModeToolBar);
+	_frameManager.DetachPane(_fileToolBar);
+	_frameManager.DetachPane(_viewModeToolBar);
+	_frameManager.DetachPane(_toolsetModeToolBar);
 
 	// attach required toolbars
 	wxAuiPaneInfo toolbarSettings = wxAuiPaneInfo().ToolbarPane().Top().Row(0).
 					LeftDockable(false).RightDockable(false).Resizable(false);
-	mFrameManager.AddPane(mFileToolBar,  toolbarSettings.Name(_("FileToolBar")).
+	_frameManager.AddPane(_fileToolBar,  toolbarSettings.Name(_("FileToolBar")).
 							Caption(_("File ToolBar")).Position(0)); 
-	mFrameManager.AddPane(mViewModeToolBar, toolbarSettings.Name(_("ViewModeTb")).
+	_frameManager.AddPane(_viewModeToolBar, toolbarSettings.Name(_("ViewModeTb")).
 							Caption(_("View Mode ToolBar")).Position(1)); 
-	mFrameManager.AddPane(mToolsetModeToolBar, toolbarSettings.Name(_("ToolsetModeTb")).
+	_frameManager.AddPane(_toolsetModeToolBar, toolbarSettings.Name(_("ToolsetModeTb")).
 							Caption(_("Edit Mode ToolBar")).Position(2));
 
 	// destroy all special mode toolbars
-	if(mNodeEditToolBar)
+	if(_nodeEditToolBar)
 	{
-		mFrameManager.DetachPane(mNodeEditToolBar);
-		delete mNodeEditToolBar;
-		mNodeEditToolBar = 0;
+		_frameManager.DetachPane(_nodeEditToolBar);
+		delete _nodeEditToolBar;
+		_nodeEditToolBar = 0;
 	}
-	if(mRoadEditToolBar)
+	if(_roadEditToolBar)
 	{
-		mFrameManager.DetachPane(mRoadEditToolBar);
-		delete mRoadEditToolBar;
-		mRoadEditToolBar = 0;
+		_frameManager.DetachPane(_roadEditToolBar);
+		delete _roadEditToolBar;
+		_roadEditToolBar = 0;
 	}
 
 	// create the right edit mode toolbar
-	switch(mToolsetMode)
+	switch(_toolsetMode)
 	{
 	case view:
 		// no custom view toolbar
-		mWorldFrame->setActiveTool(viewTool);
+		_worldFrame->setActiveTool(viewTool);
 		break;
 	case node:
 		initNodeEdit();
 		break;
 	case road:
 		//initRoadEdit();
-		mWorldFrame->setActiveTool(selRoad);
+		_worldFrame->setActiveTool(selRoad);
 		break;
 	case cell:
-		mWorldFrame->setActiveTool(selCell);
+		_worldFrame->setActiveTool(selCell);
 		break;
 	}
 
-	mPropertyGridManager->SelectPage(mToolsetMode);
+	_propertyGridManager->SelectPage(_toolsetMode);
 
 
 	// update frame manager
-	mFrameManager.Update();
+	_frameManager.Update();
 }
 
 void MainWindow::initNodeEdit()
 {
 	// create a toolbar and add them to it
-	mNodeEditToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mNodeEditToolBar->AddTool(IDM_NODE_SELECT, _("Select Node"), TOOL_BMP(selnode), _("Select node"), wxITEM_RADIO);
-	mNodeEditToolBar->AddTool(IDM_NODE_ADD, _("Add Node"), TOOL_BMP(addnode), _("Add node"), wxITEM_RADIO);
-	mNodeEditToolBar->AddTool(IDM_NODE_DELETE, _("Delete Node"), TOOL_BMP(delnode), _("Delete node"), wxITEM_RADIO);
-	mNodeEditToolBar->Realize();
+	_nodeEditToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
+	_nodeEditToolBar->AddTool(IDM_NODE_SELECT, _("Select Node"), TOOL_BMP(selnode), _("Select node"), wxITEM_RADIO);
+	_nodeEditToolBar->AddTool(IDM_NODE_ADD, _("Add Node"), TOOL_BMP(addnode), _("Add node"), wxITEM_RADIO);
+	_nodeEditToolBar->AddTool(IDM_NODE_DELETE, _("Delete Node"), TOOL_BMP(delnode), _("Delete node"), wxITEM_RADIO);
+	_nodeEditToolBar->Realize();
 
-	mFrameManager.AddPane(mNodeEditToolBar,  wxAuiPaneInfo().Name(_("NodeEditTb")).
+	_frameManager.AddPane(_nodeEditToolBar,  wxAuiPaneInfo().Name(_("NodeEditTb")).
 		Caption(_("Node Edit ToolBar")).ToolbarPane().Top().Row(0).Position(3).LeftDockable(false).
 		RightDockable(false).Resizable(false)); 
 
-	mWorldFrame->setActiveTool(selNode);
+	_worldFrame->setActiveTool(selNode);
 }
 
 void MainWindow::initRoadEdit()
 {
 	// create a toolbar and add them to it
-	mRoadEditToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	mRoadEditToolBar->AddTool(IDM_GRAPH_SELEDGE, _("Select Road"), TOOL_BMP(selnode), _("Select road"), wxITEM_RADIO);
-	mRoadEditToolBar->AddTool(IDM_GRAPH_ADDEDGE, _("Add Road"), TOOL_BMP(addedge), _("Add road"), wxITEM_RADIO);
-	mRoadEditToolBar->AddTool(IDM_GRAPH_DELEDGE, _("Delete Road"), TOOL_BMP(deledge), _("Delete road"), wxITEM_RADIO);
-	mRoadEditToolBar->Realize();
+	_roadEditToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
+	_roadEditToolBar->AddTool(IDM_GRAPH_SELEDGE, _("Select Road"), TOOL_BMP(selnode), _("Select road"), wxITEM_RADIO);
+	_roadEditToolBar->AddTool(IDM_GRAPH_ADDEDGE, _("Add Road"), TOOL_BMP(addedge), _("Add road"), wxITEM_RADIO);
+	_roadEditToolBar->AddTool(IDM_GRAPH_DELEDGE, _("Delete Road"), TOOL_BMP(deledge), _("Delete road"), wxITEM_RADIO);
+	_roadEditToolBar->Realize();
 
-	mFrameManager.AddPane(mRoadEditToolBar,  wxAuiPaneInfo().Name(_("RoadEditTb")).
+	_frameManager.AddPane(_roadEditToolBar,  wxAuiPaneInfo().Name(_("RoadEditTb")).
 		Caption(_("Road Edit ToolBar")).ToolbarPane().Top().Row(0).Position(4).LeftDockable(false).
 		RightDockable(false).Resizable(false)); 
 }
 
 void MainWindow::onSelectNode(wxCommandEvent &e)
 {
-	mWorldFrame->setActiveTool(selNode);
+	_worldFrame->setActiveTool(selNode);
 }
 
 void MainWindow::onSelectNodeAdd(wxCommandEvent &e)
 {
-	mWorldFrame->setActiveTool(addNode);
+	_worldFrame->setActiveTool(addNode);
 }
 
 void MainWindow::onSelectNodeDel(wxCommandEvent &e)
 {
-	mWorldFrame->setActiveTool(delNode);
+	_worldFrame->setActiveTool(delNode);
 }
 
 void MainWindow::updateProperties()
 {
-	switch(mToolsetMode)
+	switch(_toolsetMode)
 	{
 	case view:
-		mViewPropertyPage->update();
+		_viewPropertyPage->update();
 		break;
 	case node:
-		mNodePropertyPage->update();
+		_nodePropertyPage->update();
 		break;
 	case road:
-		mRoadPropertyPage->update();
+		_roadPropertyPage->update();
 		break;
 	case cell:
-		mCellPropertyPage->update();
+		_cellPropertyPage->update();
 		break;
 	}
 }
 
 void MainWindow::modify(bool m) 
 { 
-	mModified = m;
-	mFileToolBar->EnableTool(wxID_SAVE, m);
+	_modified = m;
+	_fileToolBar->EnableTool(wxID_SAVE, m);
 }
 
 bool MainWindow::isModified() 
 { 
-	return mModified;
+	return _modified;
 }

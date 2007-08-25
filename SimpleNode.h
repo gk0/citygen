@@ -7,8 +7,8 @@
 class SimpleNode : public NodeInterface
 {
 private:
-	Ogre::Vector3 mPosition;
-	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > mRoadJunction;
+	Ogre::Vector3 _position;
+	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > _roadJunction;
 
 
 public:
@@ -19,13 +19,13 @@ public:
 
 	inline Ogre::Vector2 getPosition2D() const
 	{
-		return Ogre::Vector2(mPosition.x, mPosition.z);
+		return Ogre::Vector2(_position.x, _position.z);
 	}
 
 
 	Ogre::Vector3 getPosition3D() const
 	{
-		return mPosition;
+		return _position;
 	}
 
 	bool setPosition2D(Ogre::Real x, Ogre::Real y);
@@ -44,9 +44,9 @@ private:
 
 	void setPosition3D(Ogre::Real x, Ogre::Real y, Ogre::Real z)
 	{
-		mPosition.x = x;
-		mPosition.y = y;
-		mPosition.z = z;
+		_position.x = x;
+		_position.y = y;
+		_position.z = z;
 	}
 
 	void createTerminus();

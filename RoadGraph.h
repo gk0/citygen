@@ -37,31 +37,31 @@ class RoadGraph
 
 //private:
 public:
-	Graph mGraph;
+	Graph _graph;
 
 public:
 	RoadGraph();
 
 	inline NodeId addNode(NodeInterface* n)
 	{
-		return add_vertex(n, mGraph);
+		return add_vertex(n, _graph);
 	}
 
 	inline void removeNode(NodeId nd)
 	{
-		remove_vertex(nd, mGraph);
+		remove_vertex(nd, _graph);
 	}
 
 	inline RoadInterface* getRoad(const RoadId rd) const
 	{
-		return mGraph[rd];
+		return _graph[rd];
 	}
 
 	inline RoadId getRoad(const NodeId src, const NodeId dst) const
 	{
 		bool success;
 		RoadId rd;
-		tie(rd, success) = edge(src, dst, mGraph);
+		tie(rd, success) = edge(src, dst, _graph);
 		if(!success) 
 			throw new Ogre::Exception(Ogre::Exception::ERR_ITEM_NOT_FOUND, "Edge not found", "RoadGraph::getRoad");
 		return rd;
@@ -72,58 +72,58 @@ public:
 
 	inline void clear()
 	{
-		mGraph.clear();
+		_graph.clear();
 	}
 
 	inline NodeInterface* getNode(const NodeId nd) const
 	{
-		return mGraph[nd];
+		return _graph[nd];
 	}
 
 	inline size_t getDegree(const NodeId nd) const
 	{
-		return out_degree(nd, mGraph);
+		return out_degree(nd, _graph);
 	}
 
 	inline std::pair<const NodeIterator, const NodeIterator> getNodes() const
 	{
-		return vertices(mGraph);
+		return vertices(_graph);
 	}
 
 	inline std::pair<const RoadIterator, const RoadIterator> getRoads() const
 	{
-		return edges(mGraph);
+		return edges(_graph);
 	}
 
 	inline std::pair<const RoadIterator2, const RoadIterator2> 
 		getRoadsFromNode(const NodeId& nd) const
 	{
-		return out_edges(nd, mGraph);
+		return out_edges(nd, _graph);
 	}
 
 	inline NodeId getSrc(const RoadId rd) const
 	{
-		return source(rd, mGraph);
+		return source(rd, _graph);
 	}
 
 	inline NodeInterface* getSrcNode(const RoadId rd) const
 	{
-		return mGraph[source(rd, mGraph)];
+		return _graph[source(rd, _graph)];
 	}
 
 	inline NodeId getDst(const RoadId rd) const
 	{
-		return target(rd, mGraph);
+		return target(rd, _graph);
 	}
 
 	inline NodeInterface* getDstNode(const RoadId rd) const
 	{
-		return mGraph[target(rd, mGraph)];
+		return _graph[target(rd, _graph)];
 	}
 
 	inline void setRoad(const RoadId &rd, RoadInterface* r)
 	{
-		mGraph[rd] = r;
+		_graph[rd] = r;
 	}
 
 	bool addRoad(const NodeId nd1, const NodeId nd2, RoadId& rd);
@@ -154,12 +154,12 @@ public:
 		
 	bool getClockwiseMost(NodeId vcurr, NodeId& vnext)
 	{
-		 return getClockwiseMost(vcurr, vnext, mGraph);
+		 return getClockwiseMost(vcurr, vnext, _graph);
 	}
 
 	bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext)
 	{
-		return getCounterClockwiseMostFromPrev(prev, vcurr, vnext, mGraph);
+		return getCounterClockwiseMostFromPrev(prev, vcurr, vnext, _graph);
 	}
 
 	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
@@ -213,6 +213,16 @@ public:
 	static Ogre::Vector2 getSuperIntscn(NodeId a, NodeId b, NodeId c, Graph& g);
 
 	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector2> &poly);
+
+	//Vector3 version
+	void extractFootprints(std::vector< std::vector<Ogre::Vector3> > &polys, Ogre::Real num, Ogre::ManualObject* dob=0);
+
+	static void extractPrimitiveF(NodeId v0, Graph &g, std::list<NodeId>& heap, 
+		std::vector< std::vector<Ogre::Vector3> > &polys);
+
+	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector3> &poly);
+
+	static Ogre::Vector3 getSuperIntscn2(NodeId a, NodeId b, NodeId c, Graph& g);
 
 private:
 	std::string NodeIdToString(NodeId nd);

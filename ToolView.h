@@ -7,11 +7,11 @@
 class ToolView : public Tool
 {
 protected:
-	WorldFrame* mWorldFrame;
-	Ogre::Real mMoveSpeed;
+	WorldFrame* _worldFrame;
+	Ogre::Real _moveSpeed;
 
-	long mMouseX, mMouseY;
-	long mMouseDeltaX, mMouseDeltaY;
+	long _mouseX, _mouseY;
+	long _mouseDeltaX, _mouseDeltaY;
 
 public:
 	ToolView(WorldFrame* wf);

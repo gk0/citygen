@@ -14,30 +14,30 @@ ToolNodeAdd::ToolNodeAdd(WorldFrame* wf, SceneManager* sm, RoadGraph &g, RoadGra
   _roadGraph(g),
   _simpleRoadGraph(s)
 {
-	mSceneManager = sm;
+	_sceneManager = sm;
 }
 
 void ToolNodeAdd::activate()
 {
 	//
 	//mProposedNode = new WorldNode(mWorldFrame->getSceneManager(), "proposedNode");
-	mProposedNode = mWorldFrame->createNode();
-	mProposedNode->setLabel("?");   
-	mProposedNode->setVisible(false);
-	mProposedRoad = 0;
-	mSnapState = 0;
+	_proposedNode = _worldFrame->createNode();
+	_proposedNode->setLabel("?");   
+	_proposedNode->setVisible(false);
+	_proposedRoad = 0;
+	_snapState = 0;
 }
 
 
 void ToolNodeAdd::deactivate()
 {
-	if(mProposedRoad)
+	if(_proposedRoad)
 	{
-		delete mProposedRoad;
-		mProposedRoad = 0;
+		delete _proposedRoad;
+		_proposedRoad = 0;
 	}
-	mWorldFrame->deleteNode(mProposedNode);
-	mWorldFrame->update();
+	_worldFrame->deleteNode(_proposedNode);
+	_worldFrame->update();
 }
 
 
@@ -47,13 +47,13 @@ void ToolNodeAdd::OnChar(wxKeyEvent& e)
 	switch(key)
 	{
 	case WXK_ESCAPE:
-		mWorldFrame->selectNode(0);
-		if(mProposedRoad)
+		_worldFrame->selectNode(0);
+		if(_proposedRoad)
 		{
-			delete mProposedRoad;
-			mProposedRoad = 0;
+			delete _proposedRoad;
+			_proposedRoad = 0;
 		}
-		mWorldFrame->update();
+		_worldFrame->update();
 		break;
 	default:
 		ToolView::OnChar(e);
@@ -65,74 +65,74 @@ void ToolNodeAdd::OnChar(wxKeyEvent& e)
 void ToolNodeAdd::OnMouseMove(wxMouseEvent &e)
 {
 	updateState(e);
-	mWorldFrame->update();
+	_worldFrame->update();
 }
 
 
 void ToolNodeAdd::updateState(wxMouseEvent &e)
 {
 	Vector3 intersection;
-	if(mWorldFrame->pickTerrainIntersection(e, intersection)) 
+	if(_worldFrame->pickTerrainIntersection(e, intersection)) 
 	{
 		Vector2 newPos;
-		mProposedNode->setPosition(intersection);
+		_proposedNode->setPosition(intersection);
 
 		// if a node is selected, then we're moving a road too
-		if(mWorldFrame->getSelected())
+		if(_worldFrame->getSelected())
 		{
 			//// we have a selected node so we are creating a road here
-			if(!mProposedRoad) 
-				mProposedRoad = new WorldRoad(mWorldFrame->getSelected(), 
-						mProposedNode, _roadGraph, _simpleRoadGraph, mSceneManager);
+			if(!_proposedRoad) 
+				_proposedRoad = new WorldRoad(_worldFrame->getSelected(), 
+						_proposedNode, _roadGraph, _simpleRoadGraph, _sceneManager);
 			
-			mSnapState = mProposedRoad->snapInfo(SNAP_SZ, newPos, mSnapNode, mIntersectingRoad);
+			_snapState = _proposedRoad->snapInfo(SNAP_SZ, newPos, _snapNode, _intersectingRoad);
 			//LogManager::getSingleton().logMessage("State: "+StringConverter::toString(mSnapState));
 			//mSnapState = 0;
 		}
 		// only a proposed node
 		else
 		{
-			if(mProposedRoad){
-				delete mProposedRoad;
-				mProposedRoad = 0;
+			if(_proposedRoad){
+				delete _proposedRoad;
+				_proposedRoad = 0;
 			}
-			mSnapState = mProposedNode->snapInfo(SNAP_SZ, newPos, mSnapNode, mIntersectingRoad);
+			_snapState = _proposedNode->snapInfo(SNAP_SZ, newPos, _snapNode, _intersectingRoad);
 			//LogManager::getSingleton().logMessage("State: "+StringConverter::toString(mSnapState));
 		}
 		// defaults
-		mProposedNode->setLabel("?");
-		mProposedNode->setVisible(true);
-		mWorldFrame->highlightNode(mProposedNode);
+		_proposedNode->setLabel("?");
+		_proposedNode->setVisible(true);
+		_worldFrame->highlightNode(_proposedNode);
 
-		switch(mSnapState)
+		switch(_snapState)
 		{
 		case 1:
-			mProposedNode->setPosition2D(newPos);
+			_proposedNode->setPosition2D(newPos);
 			break;
 		case 2:
-			mProposedNode->setPosition2D(newPos);
-			mWorldFrame->highlightNode(mSnapNode);
-			mProposedNode->setVisible(false);
-			mProposedNode->setLabel(" ");	// HACK: setVisible doesn't work when a road is connected,
+			_proposedNode->setPosition2D(newPos);
+			_worldFrame->highlightNode(_snapNode);
+			_proposedNode->setVisible(false);
+			_proposedNode->setLabel(" ");	// HACK: setVisible doesn't work when a road is connected,
 											// it maybe to do with the building of junctions.
 		}
 	}
 	else
 	{
 		// hide proposed node and road as we are not pointing over terrain
-		mProposedNode->setVisible(false);
-		if(!mProposedRoad){
-			delete mProposedRoad;
-			mProposedRoad = 0;
+		_proposedNode->setVisible(false);
+		if(!_proposedRoad){
+			delete _proposedRoad;
+			_proposedRoad = 0;
 		}
 	}
 	//NOTE: must validate nodes before roads
 	// proposed road won't be validate as part of the WorldFrame
-	if(mProposedRoad) 
+	if(_proposedRoad) 
 	{
-		mWorldFrame->getSelected()->validate();
-		mProposedNode->validate();
-		mProposedRoad->validate();
+		_worldFrame->getSelected()->validate();
+		_proposedNode->validate();
+		_proposedRoad->validate();
 	}
 }
 
@@ -144,42 +144,42 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 		updateState(e);
 
 		// if node is selected and the current node is it
-		if(mWorldFrame->getSelected() && 
-			mWorldFrame->getSelected() == mWorldFrame->getHighlighted())
+		if(_worldFrame->getSelected() && 
+			_worldFrame->getSelected() == _worldFrame->getHighlighted())
 		{
 			// deselect node
-			mWorldFrame->selectNode(0);
-			if(mProposedRoad)
+			_worldFrame->selectNode(0);
+			if(_proposedRoad)
 			{
-				delete mProposedRoad;
-				mProposedRoad = 0;
+				delete _proposedRoad;
+				_proposedRoad = 0;
 			}
-			mProposedNode->setVisible(false);
+			_proposedNode->setVisible(false);
 		}
 		// create proposed road
-		else if(mProposedRoad)
+		else if(_proposedRoad)
 		{
 			// delete the proposal
-			delete mProposedRoad;
-			mProposedRoad = 0;
+			delete _proposedRoad;
+			_proposedRoad = 0;
 
 			// declare the src & dst for the new road
-			WorldNode *srcNode = mWorldFrame->getSelected();
+			WorldNode *srcNode = _worldFrame->getSelected();
 			WorldNode *dstNode;
 
-			switch(mSnapState)
+			switch(_snapState)
 			{
 			case 0:		// no intersection 
-				dstNode = mWorldFrame->createNode();
-				dstNode->setPosition2D(mProposedNode->getPosition2D());
+				dstNode = _worldFrame->createNode();
+				dstNode->setPosition2D(_proposedNode->getPosition2D());
 				break;
 			case 1:		// road intersection
-				dstNode = mWorldFrame->createNode();
-				dstNode->setPosition2D(mProposedNode->getPosition2D());
-				mWorldFrame->insertNodeOnRoad(dstNode, mIntersectingRoad);			// TODO: this can be a simpleroad for some reason
+				dstNode = _worldFrame->createNode();
+				dstNode->setPosition2D(_proposedNode->getPosition2D());
+				_worldFrame->insertNodeOnRoad(dstNode, _intersectingRoad);			// TODO: this can be a simpleroad for some reason
 				break;
 			case 2:		// node snapped
-				dstNode = mSnapNode;
+				dstNode = _snapNode;
 				break;
 			default:
 				throw new Exception(Exception::ERR_INVALID_STATE, "Invalid snap state", "ToolNodeAdd::OnLeftPressed");
@@ -188,7 +188,7 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 
 			// Create Road
 			WorldRoad* wr = 0;
-			wr = mWorldFrame->createRoad(srcNode, dstNode);
+			wr = _worldFrame->createRoad(srcNode, dstNode);
 
 			//NOTE: in the event that we try to double link two nodes
 			// ie. a->b and then b->a a road will not be created and
@@ -198,22 +198,22 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 			//TODO: exception and catch to present error message
 
 			// advance selected
-			mWorldFrame->selectNode(dstNode);
+			_worldFrame->selectNode(dstNode);
 		}
 		// create proposed node
-		else if(mProposedNode->getVisible())
+		else if(_proposedNode->getVisible())
 		{
-			WorldNode* wn = mWorldFrame->createNode();
-			wn->move(mProposedNode->getPosition2D());
-			if(mSnapState == 1) mWorldFrame->insertNodeOnRoad(wn, mIntersectingRoad);
+			WorldNode* wn = _worldFrame->createNode();
+			wn->move(_proposedNode->getPosition2D());
+			if(_snapState == 1) _worldFrame->insertNodeOnRoad(wn, _intersectingRoad);
 		}
 		else
 		{
 			// change selection
-			mWorldFrame->selectNode(mWorldFrame->getHighlighted());
+			_worldFrame->selectNode(_worldFrame->getHighlighted());
 		}
 		updateState(e);
-		mWorldFrame->update();
+		_worldFrame->update();
 	}
 	catch(Exception &e)
 	{

@@ -6,10 +6,10 @@
 #include "Geometry.h"
 
 
-#define GROUNDCLEARANCE Ogre::Vector3(0,0.4,0)
+#define GROUNDCLEARANCE Ogre::Vector3(0,0.2,0)
 
 
-int WorldRoad::mRoadCount = 0;
+unsigned int WorldRoad::_instanceCount = 0;
 using namespace Ogre;
 
 WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
@@ -17,44 +17,44 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	: _roadGraph(g),
 	  _simpleRoadGraph(s)
 {
-	mGenParams.algorithm = EvenElevationDiff;
-	mGenParams.sampleSize = 8; //DEBUG: set to v. big 50 normal is 10
-	mGenParams.roadWidth = 1.0;
-	mGenParams.sampleDeviance= 25;
-	mGenParams.numOfSamples = 5;
-	mGenParams.debug = false;
-	mGenParams.segmentDrawSize = 2;
+	_genParams._algorithm = EvenElevationDiff;
+	_genParams._sampleSize = 8; //DEBUG: set to v. big 50 normal is 10
+	_genParams._roadWidth = 1.0;
+	_genParams._sampleDeviance= 25;
+	_genParams._numOfSamples = 5;
+	_genParams._debug = false;
+	_genParams._segmentDrawSize = 2;
 
-	mSelected = false;
-	mLength = 0;
+	_selected = false;
+	_length = 0;
 	
-	mManualObject = 0;
+	_manualObject = 0;
 	_debugMOObject = 0;
 	
-	_simpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, mSimpleRoadId);
-	_simpleRoadGraph.setRoad(mSimpleRoadId, this);
+	_simpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, _simpleRoadId);
+	_simpleRoadGraph.setRoad(_simpleRoadId, this);
 
-	_name = "road" + StringConverter::toString(mRoadCount++);
+	_name = "road" + StringConverter::toString(_instanceCount++);
 	// create our scene node
-	mSceneNode = creator->getRootSceneNode()->createChildSceneNode(_name);
+	_sceneNode = creator->getRootSceneNode()->createChildSceneNode(_name);
 	plotRoad();
 }
 
 WorldRoad::~WorldRoad()
 {
 	destroyRoadGraph();
-	_simpleRoadGraph.removeRoad(mSimpleRoadId);
+	_simpleRoadGraph.removeRoad(_simpleRoadId);
 
 	if(_debugMOObject)
 	{
-		mSceneNode->detachObject(_debugMOObject);
+		_sceneNode->detachObject(_debugMOObject);
 		delete _debugMOObject;
 		_debugMOObject = 0;
 	}
 
 	destroyRoadObject();
-	SceneManager* destroyer = mSceneNode->getCreator();
-	destroyer->destroySceneNode(mSceneNode->getName());
+	SceneManager* destroyer = _sceneNode->getCreator();
+	destroyer->destroySceneNode(_sceneNode->getName());
 }
 
 void WorldRoad::build()
@@ -63,22 +63,22 @@ void WorldRoad::build()
 
 	// calculate approximate number of points to get desired segment size 
 	Real interpolateStep = 1;
-	if(mRoadSegmentList.size() > 0)
-		interpolateStep = 1/((mRoadSegmentList.size() * mGenParams.sampleSize) / mGenParams.segmentDrawSize);
+	if(_roadSegmentList.size() > 0)
+		interpolateStep = 1/((_roadSegmentList.size() * _genParams._sampleSize) / _genParams._segmentDrawSize);
 
 	// extract point list from spline
 	for(Real t=0; t<=1; t += interpolateStep)
 	{
-		interpolatedList.push_back(mSpline.interpolate(t));
+		interpolatedList.push_back(_spline.interpolate(t));
 	}
 
 	// always destroy previous
 	destroyRoadObject();
 
 	// declare the manual object
-	mManualObject = new ManualObject(_name); 
-	if(mSelected) mManualObject->begin("gk/YellowBrickRoad", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-	else mManualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	_manualObject = new ManualObject(_name); 
+	if(_selected) _manualObject->begin("gk/YellowBrickRoad", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	else _manualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 	// vars
 	Vector3 currRoadSegNormal, nextRoadSegNormal;
@@ -102,7 +102,7 @@ void WorldRoad::build()
 		// calculate the offset of length roadWidth
 		nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
 		nextRoadSegOffset.normalise();
-		nextRoadSegOffset *= mGenParams.roadWidth;
+		nextRoadSegOffset *= _genParams._roadWidth;
 
 		// calculate normal
 		nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
@@ -112,7 +112,7 @@ void WorldRoad::build()
 
 //get the first b from the node
 		b = interpolatedList[0];
-		boost::tie(b1, b2) = getSrcNode()->getRoadJunction(mRoadSegmentList[0]);
+		boost::tie(b1, b2) = getSrcNode()->getRoadJunction(_roadSegmentList[0]);
 	}
 
 	for(size_t i=0; i<(interpolatedList.size()-2); i++)
@@ -152,7 +152,7 @@ void WorldRoad::build()
 		// calculate the offset of length roadWidth
 		nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
 		nextRoadSegOffset.normalise();
-		nextRoadSegOffset *= mGenParams.roadWidth;
+		nextRoadSegOffset *= _genParams._roadWidth;
 
 		// calculate normal
 		Vector3 nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
@@ -189,8 +189,8 @@ void WorldRoad::build()
 
 		//mDstNode->invalidate();
 		//getDstNode()->validate();
-		size_t lastSeg = mRoadSegmentList.size()-1;
-		boost::tie(b2, b1) = getDstNode()->getRoadJunction(mRoadSegmentList[lastSeg]);
+		size_t lastSeg = _roadSegmentList.size()-1;
+		boost::tie(b2, b1) = getDstNode()->getRoadJunction(_roadSegmentList[lastSeg]);
 
 		// calculate b normal 
 		bNormal = (currRoadSegNormal + Vector3::UNIT_Y) / 2;
@@ -201,8 +201,8 @@ void WorldRoad::build()
 		uMin += currRoadSegLength;
 	}
 
-	mManualObject->end();
-	mSceneNode->attachObject(mManualObject);
+	_manualObject->end();
+	_sceneNode->attachObject(_manualObject);
  }
 
  void WorldRoad::buildDebugSegments(const Vector3 &pos, const std::vector<Vector3> &samples)
@@ -219,12 +219,12 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 {
 	samples.clear();
 
-	if(mGenParams.numOfSamples < 2)
+	if(_genParams._numOfSamples < 2)
 	{
 		// single sample case is a straight forward centre sample
-		if(mGenParams.numOfSamples == 1) {
-			samples.reserve(mGenParams.numOfSamples);
-			Vector2 sample2D = cursor + (direction * mGenParams.sampleSize);
+		if(_genParams._numOfSamples == 1) {
+			samples.reserve(_genParams._numOfSamples);
+			Vector2 sample2D = cursor + (direction * _genParams._sampleSize);
 			Vector3 candidate(sample2D.x, 0, sample2D.y);
 			if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
 				samples.push_back(candidate);
@@ -252,9 +252,9 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 		//}
 
 		//direction.normalise();
-		Radian sampleSz(Degree((2 * mGenParams.sampleDeviance) / (mGenParams.numOfSamples - 1)));
+		Radian sampleSz(Degree((2 * _genParams._sampleDeviance) / (_genParams._numOfSamples - 1)));
 
-		for(Radian angle = -mGenParams.sampleDeviance; angle <= mGenParams.sampleDeviance; angle += sampleSz)
+		for(Radian angle = -_genParams._sampleDeviance; angle <= _genParams._sampleDeviance; angle += sampleSz)
 		{
 			Real cos = Math::Cos(angle);
 			Real sin = Math::Sin(angle);
@@ -263,7 +263,7 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 
 			// i wish I could just normalize it once but that doesn't seem to be acurate
 			translation.normalise();
-			translation *= mGenParams.sampleSize;
+			translation *= _genParams._sampleSize;
 
 			Vector3 candidate(cursor.x + translation.x, 0, cursor.y + translation.y);
 			if(WorldFrame::getSingleton().plotPointOnTerrain(candidate.x, candidate.y, candidate.z))
@@ -276,12 +276,12 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 
 NodeInterface* WorldRoad::getSrcNode() const
 {
-	return _simpleRoadGraph.getSrcNode(mSimpleRoadId);
+	return _simpleRoadGraph.getSrcNode(_simpleRoadId);
 }
 
 NodeInterface* WorldRoad::getDstNode() const
 {
-	return _simpleRoadGraph.getDstNode(mSimpleRoadId);
+	return _simpleRoadGraph.getDstNode(_simpleRoadId);
 }
 /*
 //simple
@@ -306,10 +306,10 @@ void WorldRoad::plotRoad()
 	if(isValid()) return;		
 
 	// always destroy previous
-	mPlotList.clear();
+	_plotList.clear();
 
-	Ogre::Real distanceToJoin, sampleSize(mGenParams.sampleSize);
-	Ogre::Real sampleSize2(mGenParams.sampleSize * 2);
+	Ogre::Real distanceToJoin, sampleSize(_genParams._sampleSize);
+	Ogre::Real sampleSize2(_genParams._sampleSize * 2);
 	Ogre::Vector2 direction;
 	Vector2 srcCursor2D(getSrcNode()->getPosition2D());
 	Vector2 dstCursor2D(getDstNode()->getPosition2D());
@@ -321,16 +321,16 @@ void WorldRoad::plotRoad()
 
 	// set our start node
 	std::vector<Vector3> plotList2;
-	mPlotList.push_back(getSrcNode()->getPosition3D() + GROUNDCLEARANCE);
+	_plotList.push_back(getSrcNode()->getPosition3D() + GROUNDCLEARANCE);
 	plotList2.push_back(getDstNode()->getPosition3D() + GROUNDCLEARANCE);
 
 	std::stringstream oss;
 	std::vector<Vector3> samples;
-	oss << "Point "<<(mPlotList.size() - 1)<<": " << mPlotList[mPlotList.size() - 1] << std::endl;
+	oss << "Point "<<(_plotList.size() - 1)<<": " << _plotList[_plotList.size() - 1] << std::endl;
 
 	// select the algorithm used to select the ideal sample
 	Vector3 (WorldRoad::*pt2SelectSample)(const Vector3&, const std::vector<Vector3>&, const Vector3&) = 0;                // C++
-	switch(mGenParams.algorithm)
+	switch(_genParams._algorithm)
 	{
 	case EvenElevationDiff:
 		pt2SelectSample = &WorldRoad::selectEvenElevationDiff;
@@ -346,11 +346,11 @@ void WorldRoad::plotRoad()
 	// DEBUG Object
 	if(_debugMOObject)
 	{
-		mSceneNode->detachObject(_debugMOObject);
+		_sceneNode->detachObject(_debugMOObject);
 		delete _debugMOObject;
 		_debugMOObject = 0;
 	}
-	if(mGenParams.debug) 
+	if(_genParams._debug) 
 	{
 		_debugMOObject = new ManualObject(_name+"Debug");
 		_debugMOObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
@@ -370,12 +370,12 @@ void WorldRoad::plotRoad()
 
 				// get the samples
 				buildSampleFan(srcCursor2D, segVector2D, samples);	
-				if(mGenParams.debug) buildDebugSegments(srcCursor3D, samples);
+				if(_genParams._debug) buildDebugSegments(srcCursor3D, samples);
 				nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
 				nextSrcCursor3D += GROUNDCLEARANCE;
 
 				// add our nodes to the road graph
-				mPlotList.push_back(nextSrcCursor3D);
+				_plotList.push_back(nextSrcCursor3D);
 				
 				// increment road segment count
 				segCount++;
@@ -388,7 +388,7 @@ void WorldRoad::plotRoad()
 
 				// get the samples
 				buildSampleFan(dstCursor2D, segVector2D, samples);
-				if(mGenParams.debug) buildDebugSegments(dstCursor3D, samples);
+				if(_genParams._debug) buildDebugSegments(dstCursor3D, samples);
 				nextDstCursor3D = (*this.*pt2SelectSample)(dstCursor3D, samples, srcCursor3D);
 				nextDstCursor3D += GROUNDCLEARANCE;
 
@@ -412,24 +412,24 @@ void WorldRoad::plotRoad()
 	// if distance between src and dst cursors is less than a seg length then 
 	// another point is required
 	distanceToJoin = (srcCursor2D - dstCursor2D).length(); 
-	mLength = (segCount * sampleSize) + distanceToJoin;
+	_length = (segCount * sampleSize) + distanceToJoin;
 
 	if(distanceToJoin > sampleSize)
 	{	
-		if(mPlotList.size() >= 2 && plotList2.size() >= 2)
+		if(_plotList.size() >= 2 && plotList2.size() >= 2)
 		{
 			// even out segment size a bit
-			Vector3 srcDst = mPlotList[(mPlotList.size()-2)] - mPlotList[(mPlotList.size()-1)];
+			Vector3 srcDst = _plotList[(_plotList.size()-2)] - _plotList[(_plotList.size()-1)];
 			Vector3 dstSrc = plotList2[plotList2.size()-2] - plotList2[plotList2.size()-1];
 			Real srcDstL(srcDst.length()), dstSrcL(dstSrc.length());
 			Real avgL = (srcDstL + dstSrcL + distanceToJoin) / 4;
 			srcDst.normalise();
 			dstSrc.normalise();
-			mPlotList[mPlotList.size()-1] = mPlotList[mPlotList.size()-2] - (srcDst*avgL);
+			_plotList[_plotList.size()-1] = _plotList[_plotList.size()-2] - (srcDst*avgL);
 			plotList2[plotList2.size()-1] = plotList2[plotList2.size()-2] - (dstSrc*avgL);
 
 			// update the cursors
-			srcCursor3D = mPlotList[mPlotList.size()-1];
+			srcCursor3D = _plotList[_plotList.size()-1];
 			dstCursor3D = plotList2[plotList2.size()-1];
 			srcCursor2D = Vector2(srcCursor3D.x, srcCursor3D.z);
 			dstCursor2D = Vector2(dstCursor3D.x, dstCursor3D.z);
@@ -444,8 +444,8 @@ void WorldRoad::plotRoad()
 		midLineVector.normalise();
 
 		// get max distance from the midPoint, direction & step vector
-		Real dist = mGenParams.sampleSize * Math::Sin(mGenParams.sampleDeviance);
-		Real step = (2 * dist) / (mGenParams.numOfSamples - 1);
+		Real dist = _genParams._sampleSize * Math::Sin(_genParams._sampleDeviance);
+		Real step = (2 * dist) / (_genParams._numOfSamples - 1);
 		Vector2 stepVector = midLineVector * step;
 
 		// initial sample
@@ -457,14 +457,14 @@ void WorldRoad::plotRoad()
 		if(WorldFrame::getSingleton().plotPointOnTerrain(midCursor2D, midCursor3D))
 			samples.push_back(midCursor3D);
 
-		for(uint16 i=0; i<(mGenParams.numOfSamples - 1); i++)
+		for(uint16 i=0; i<(_genParams._numOfSamples - 1); i++)
 		{
 			midCursor2D += stepVector;
 			if(WorldFrame::getSingleton().plotPointOnTerrain(midCursor2D, midCursor3D))
 				samples.push_back(midCursor3D);
 		}
 
-		if(mGenParams.debug) 
+		if(_genParams._debug) 
 		{
 			buildDebugSegments(srcCursor3D, samples);
 			buildDebugSegments(dstCursor3D, samples);
@@ -472,24 +472,24 @@ void WorldRoad::plotRoad()
 		
 		// select best sample
 		nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
-		mPlotList.push_back(nextSrcCursor3D + GROUNDCLEARANCE);
+		_plotList.push_back(nextSrcCursor3D + GROUNDCLEARANCE);
 	}
 	else
 	{
-		if(mPlotList.size() >= 2 && plotList2.size() >= 2)
+		if(_plotList.size() >= 2 && plotList2.size() >= 2)
 		{
 			// even out segment size a bit
-			Vector3 srcDst = mPlotList[(mPlotList.size()-2)] - mPlotList[(mPlotList.size()-1)];
+			Vector3 srcDst = _plotList[(_plotList.size()-2)] - _plotList[(_plotList.size()-1)];
 			Vector3 dstSrc = plotList2[plotList2.size()-2] - plotList2[plotList2.size()-1];
 			Real srcDstL(srcDst.length()), dstSrcL(dstSrc.length());
 			Real avgL = (srcDstL + dstSrcL + distanceToJoin) / 3;
 			srcDst.normalise();
 			dstSrc.normalise();
-			mPlotList[mPlotList.size()-1] = mPlotList[mPlotList.size()-2] - (srcDst*avgL);
+			_plotList[_plotList.size()-1] = _plotList[_plotList.size()-2] - (srcDst*avgL);
 			plotList2[plotList2.size()-1] = plotList2[plotList2.size()-2] - (dstSrc*avgL);
 
 			// update the cursors
-			srcCursor3D = mPlotList[mPlotList.size()-1];
+			srcCursor3D = _plotList[_plotList.size()-1];
 			dstCursor3D = plotList2[plotList2.size()-1];
 			srcCursor2D = Vector2(srcCursor3D.x, srcCursor3D.z);
 			dstCursor2D = Vector2(dstCursor3D.x, dstCursor3D.z);
@@ -499,19 +499,19 @@ void WorldRoad::plotRoad()
 
 	//join src-->dst & dst-->src lists
 	for(int i=static_cast<int>(plotList2.size()-1); i>=0; i--)
-		mPlotList.push_back(plotList2[i]);
+		_plotList.push_back(plotList2[i]);
 
-	if(mGenParams.debug)
+	if(_genParams._debug)
 	{
 		_debugMOObject->end(); 
-		mSceneNode->attachObject(_debugMOObject); 
+		_sceneNode->attachObject(_debugMOObject); 
 	}
 
 	// build a spline from our plot list
-	mSpline.clear();
-	mSpline.setAutoCalculate(false);
-	BOOST_FOREACH(Vector3& v, mPlotList) mSpline.addPoint(v);
-	mSpline.recalcTangents();
+	_spline.clear();
+	_spline.setAutoCalculate(false);
+	BOOST_FOREACH(Vector3& v, _plotList) _spline.addPoint(v);
+	_spline.recalcTangents();
 
 	// make the graph
 	createRoadGraph();
@@ -522,38 +522,38 @@ void WorldRoad::createRoadGraph()
 	// always delete the last graph
 	destroyRoadGraph();
 
-	if(mPlotList.size() == 2)
+	if(_plotList.size() == 2)
 	{
 		// create first road segment
 		RoadId roadSegId;
-		_roadGraph.addRoad(getSrcNode()->mNodeId, getDstNode()->mNodeId, this, roadSegId);
-		mRoadSegmentList.push_back(roadSegId);
+		_roadGraph.addRoad(getSrcNode()->_nodeId, getDstNode()->_nodeId, this, roadSegId);
+		_roadSegmentList.push_back(roadSegId);
 	}
 	else
 	{
 		// create first road segment
-		SimpleNode* bn = new SimpleNode(_roadGraph, mPlotList[1]);
+		SimpleNode* bn = new SimpleNode(_roadGraph, _plotList[1]);
 		NodeId cursorNode = _roadGraph.addNode(bn);
 		RoadId roadSegId;
-		_roadGraph.addRoad(getSrcNode()->mNodeId, cursorNode, this, roadSegId);
-		mRoadSegmentList.push_back(roadSegId);
+		_roadGraph.addRoad(getSrcNode()->_nodeId, cursorNode, this, roadSegId);
+		_roadSegmentList.push_back(roadSegId);
 
 		// create each road segment
-		for(unsigned int i=2; i<(mPlotList.size()-1); i++)
+		for(unsigned int i=2; i<(_plotList.size()-1); i++)
 		{
 			// add our nodes to the road graph
-			SimpleNode* bn = new SimpleNode(_roadGraph, mPlotList[i]);
+			SimpleNode* bn = new SimpleNode(_roadGraph, _plotList[i]);
 			NodeId nextNodeId = _roadGraph.addNode(bn);
 			_roadGraph.addRoad(cursorNode, nextNodeId, this, roadSegId);
-			mRoadSegmentList.push_back(roadSegId);
+			_roadSegmentList.push_back(roadSegId);
 
 			// advance cursor
 			cursorNode = nextNodeId;
 		}
 
 		// create last road segment
-		_roadGraph.addRoad(cursorNode, getDstNode()->mNodeId, this, roadSegId);
-		mRoadSegmentList.push_back(roadSegId);
+		_roadGraph.addRoad(cursorNode, getDstNode()->_nodeId, this, roadSegId);
+		_roadSegmentList.push_back(roadSegId);
 	}
 	//mSrcNode->invalidate();
 	//mDstNode->invalidate();
@@ -562,18 +562,18 @@ void WorldRoad::createRoadGraph()
 void WorldRoad::destroyRoadGraph()
 {
 	// clear previous road segs.
-	if(mRoadSegmentList.size() > 0) 
-		_roadGraph.removeRoad(mRoadSegmentList[0]);
-	for(unsigned int i=1; i<mRoadSegmentList.size(); i++)
+	if(_roadSegmentList.size() > 0) 
+		_roadGraph.removeRoad(_roadSegmentList[0]);
+	for(unsigned int i=1; i<_roadSegmentList.size(); i++)
 	{
-		NodeId nd = _roadGraph.getSrc(mRoadSegmentList[i]);
-		_roadGraph.removeRoad(mRoadSegmentList[i]);
+		NodeId nd = _roadGraph.getSrc(_roadSegmentList[i]);
+		_roadGraph.removeRoad(_roadSegmentList[i]);
 		delete _roadGraph.getNode(nd);
 		_roadGraph.removeNode(nd);
 	}
 
 	// clear the list
-	mRoadSegmentList.clear();
+	_roadSegmentList.clear();
 }
 
 
@@ -582,35 +582,35 @@ void WorldRoad::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3
 			const Vector3 &b1, const Vector3 &b2, const Vector3 &bNorm, Real uMin, Real uMax)
 {
 	// create road segment
-	mManualObject->position(a1);
-	mManualObject->normal(aNorm);
-	mManualObject->textureCoord(uMin, 0);
-	mManualObject->position(a2);
-	mManualObject->normal(aNorm);
-	mManualObject->textureCoord(uMin, 1);
-	mManualObject->position(b1);
-	mManualObject->normal(bNorm);
-	mManualObject->textureCoord(uMax, 0);
+	_manualObject->position(a1);
+	_manualObject->normal(aNorm);
+	_manualObject->textureCoord(uMin, 0);
+	_manualObject->position(a2);
+	_manualObject->normal(aNorm);
+	_manualObject->textureCoord(uMin, 1);
+	_manualObject->position(b1);
+	_manualObject->normal(bNorm);
+	_manualObject->textureCoord(uMax, 0);
 
-	mManualObject->position(a2);
-	mManualObject->normal(aNorm);
-	mManualObject->textureCoord(uMin, 1);
-	mManualObject->position(b2);
-	mManualObject->normal(bNorm);
-	mManualObject->textureCoord(uMax, 1);
-	mManualObject->position(b1);
-	mManualObject->normal(bNorm);
-	mManualObject->textureCoord(uMax, 0);
+	_manualObject->position(a2);
+	_manualObject->normal(aNorm);
+	_manualObject->textureCoord(uMin, 1);
+	_manualObject->position(b2);
+	_manualObject->normal(bNorm);
+	_manualObject->textureCoord(uMax, 1);
+	_manualObject->position(b1);
+	_manualObject->normal(bNorm);
+	_manualObject->textureCoord(uMax, 0);
 }
 
 void WorldRoad::destroyRoadObject()
 {
 	// delete our manual object
-	if(mManualObject) {
-		mSceneNode->detachObject(mManualObject->getName());
-		mSceneNode->getCreator()->destroyManualObject(mManualObject);
-		delete mManualObject;
-		mManualObject = 0;
+	if(_manualObject) {
+		_sceneNode->detachObject(_manualObject->getName());
+		_sceneNode->getCreator()->destroyManualObject(_manualObject);
+		delete _manualObject;
+		_manualObject = 0;
 	}
 }
 /*
@@ -628,9 +628,9 @@ bool WorldRoad::getClosestIntersection(RoadId& rd, Vector2& pos) const
 */
 bool WorldRoad::hasIntersection()
 {
-	for(unsigned int i=0; i<mRoadSegmentList.size(); i++)
+	for(unsigned int i=0; i<_roadSegmentList.size(); i++)
 	{
-		if(_roadGraph.hasIntersection(mRoadSegmentList[i]))
+		if(_roadGraph.hasIntersection(_roadSegmentList[i]))
 			return true;
 	}
 	return false;
@@ -638,21 +638,21 @@ bool WorldRoad::hasIntersection()
 
 bool WorldRoad::isRoadCycle()
 {
-	return mIsRoadCycle;
+	return _isRoadCycle;
 }
 
 void WorldRoad::setRoadCycle(bool cycle)
 {
-	mIsRoadCycle = cycle;
+	_isRoadCycle = cycle;
 }
 
 bool WorldRoad::rayCross(const Ogre::Vector2& loc)
 {
 	validate();
 	bool rayCross = false;
-	for(unsigned int i=0; i<mPlotList.size()-1; i++)
+	for(unsigned int i=0; i<_plotList.size()-1; i++)
 	{
-		if(Geometry::rayCross(loc, Vector2(mPlotList[i].x, mPlotList[i].z), Vector2(mPlotList[i+1].x, mPlotList[i+1].z))) 
+		if(Geometry::rayCross(loc, Vector2(_plotList[i].x, _plotList[i].z), Vector2(_plotList[i+1].x, _plotList[i+1].z))) 
 			rayCross = !rayCross;
 	}
 	return rayCross;
@@ -660,7 +660,7 @@ bool WorldRoad::rayCross(const Ogre::Vector2& loc)
 
 const RoadGenParams& WorldRoad::getGenParams()
 {
-	return mGenParams;
+	return _genParams;
 }
 
 Ogre::Real WorldRoad::getLengthSquared() const
@@ -673,12 +673,12 @@ Ogre::Real WorldRoad::getLengthSquared() const
 const std::vector<RoadId>& WorldRoad::getRoadSegmentList()
 {
 	validate();
-	return mRoadSegmentList;
+	return _roadSegmentList;
 }
 
 Real WorldRoad::getWidth() const
 {
-	return mGenParams.roadWidth;
+	return _genParams._roadWidth;
 }
 
 
@@ -695,23 +695,23 @@ bool WorldRoad::loadXML(const TiXmlHandle& roadRoot)
 			if(key == "algorithm"){
 				int alg;
 				element->QueryIntAttribute("value", &alg);
-				mGenParams.algorithm = static_cast<RoadPlotAlgorithm>(alg);
+				_genParams._algorithm = static_cast<RoadPlotAlgorithm>(alg);
 			}else if(key == "sampleSize")
-				element->QueryFloatAttribute("value", &mGenParams.sampleSize);
+				element->QueryFloatAttribute("value", &_genParams._sampleSize);
 			else if(key == "sampleDeviance"){
 				Real sd;
 				element->QueryFloatAttribute("value", &sd);
-				mGenParams.sampleDeviance = Degree(sd);
+				_genParams._sampleDeviance = Degree(sd);
 			}else if(key == "roadWidth")
-				element->QueryFloatAttribute("value", &mGenParams.roadWidth);
+				element->QueryFloatAttribute("value", &_genParams._roadWidth);
 			else if(key == "numOfSamples") {
 				int nos;
 				element->QueryIntAttribute("value", &nos);
-				mGenParams.numOfSamples = static_cast<uint16>(nos);
+				_genParams._numOfSamples = static_cast<uint16>(nos);
 			}else if(key == "debug") {
 				int d;
 				element->QueryIntAttribute("value", &d);
-				mGenParams.debug = (d == 1);
+				_genParams._debug = (d == 1);
 			}
 		}
 	}
@@ -727,7 +727,7 @@ void WorldRoad::onMoveNode()
 	plotRoad();
 
 	std::set<WorldObject*>::iterator aIt, aEnd;
-	for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
+	for(aIt = _attachments.begin(), aEnd = _attachments.end(); aIt != aEnd; aIt++)
 	{
 		(*aIt)->invalidate();
 	}
@@ -736,7 +736,7 @@ void WorldRoad::onMoveNode()
 
 void WorldRoad::invalidate()
 {
-	mValid = false;
+	_valid = false;
 /*	std::set<WorldObject*>::iterator aIt, aEnd;
 	for(aIt = mAttachments.begin(), aEnd = mAttachments.end(); aIt != aEnd; aIt++)
 	{
@@ -755,27 +755,27 @@ TiXmlElement* WorldRoad::saveXML()
 	root->LinkEndChild(genParams);
 
 	TiXmlElement *algorithm = new TiXmlElement("algorithm");  
-	algorithm->SetAttribute("value", mGenParams.algorithm);
+	algorithm->SetAttribute("value", _genParams._algorithm);
 	genParams->LinkEndChild(algorithm);
 
 	TiXmlElement *sampleSize = new TiXmlElement("sampleSize");  
-	sampleSize->SetDoubleAttribute("value", mGenParams.sampleSize);
+	sampleSize->SetDoubleAttribute("value", _genParams._sampleSize);
 	genParams->LinkEndChild(sampleSize);
 
 	TiXmlElement *sampleDeviance = new TiXmlElement("sampleDeviance");  
-	sampleDeviance->SetDoubleAttribute("value", mGenParams.sampleDeviance.valueDegrees());
+	sampleDeviance->SetDoubleAttribute("value", _genParams._sampleDeviance.valueDegrees());
 	genParams->LinkEndChild(sampleDeviance);
 
 	TiXmlElement *roadWidth = new TiXmlElement("roadWidth");  
-	roadWidth->SetDoubleAttribute("value", mGenParams.roadWidth);
+	roadWidth->SetDoubleAttribute("value", _genParams._roadWidth);
 	genParams->LinkEndChild(roadWidth);
 
 	TiXmlElement *numOfSamples = new TiXmlElement("numOfSamples");  
-	numOfSamples->SetAttribute("value", mGenParams.numOfSamples);
+	numOfSamples->SetAttribute("value", _genParams._numOfSamples);
 	genParams->LinkEndChild(numOfSamples);
 
 	TiXmlElement *debug = new TiXmlElement("debug");  
-	debug->SetAttribute("value", mGenParams.debug);
+	debug->SetAttribute("value", _genParams._debug);
 	genParams->LinkEndChild(debug);
 
 	return root;
@@ -842,13 +842,13 @@ Vector3 WorldRoad::selectMinElevation(const Vector3 &lastSample, const std::vect
 
 void WorldRoad::setGenParams(const RoadGenParams& g)
 {
-	mGenParams = g;
+	_genParams = g;
 	onMoveNode();	// well it isn't but i want to do what it does
 }
 
 void WorldRoad::setWidth(const Ogre::Real& w)
 {
-	mGenParams.roadWidth = w;
+	_genParams._roadWidth = w;
 }
 
 // Note: should only try to snap to road network, ie those accessible from 
@@ -863,27 +863,27 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 	// calculate the minimum segment size, i know its a bit of work and its not 
 	// ideal but its not that bad and is only a tiny percentage of the work
 	Real len = std::numeric_limits<Real>::max();
-	for(i=0; i<(mRoadSegmentList.size()-1); i++) 
+	for(i=0; i<(_roadSegmentList.size()-1); i++) 
 	{
-		Vector2 src = _roadGraph.getSrcNode(mRoadSegmentList[i])->getPosition2D();
-		Vector2 dst = _roadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
+		Vector2 src = _roadGraph.getSrcNode(_roadSegmentList[i])->getPosition2D();
+		Vector2 dst = _roadGraph.getDstNode(_roadSegmentList[i])->getPosition2D();
 		Real l = (src-dst).length();
 		if(l<len) len = l;
 	}
 	snapSz = std::min((len-0.01f), snapSz);
 	Real snapSzSq(Math::Sqr(snapSz));
 
-	for(i=0; i<(mRoadSegmentList.size()-1); i++) 
+	for(i=0; i<(_roadSegmentList.size()-1); i++) 
 	{
-		NodeId srcNd = _roadGraph.getSrc(mRoadSegmentList[i]);
-		NodeId dstNd = _roadGraph.getDst(mRoadSegmentList[i]);
+		NodeId srcNd = _roadGraph.getSrc(_roadSegmentList[i]);
+		NodeId dstNd = _roadGraph.getDst(_roadSegmentList[i]);
 		intersection = _roadGraph.findClosestIntscnConnected(srcNd, dstNd, snapSz, pos, rd);
 		if(intersection) break;
 	}
 	if(!intersection)
 	{
-		NodeId srcNd = _roadGraph.getSrc(mRoadSegmentList[i]);
-		Vector2 dstPos = _roadGraph.getDstNode(mRoadSegmentList[i])->getPosition2D();
+		NodeId srcNd = _roadGraph.getSrc(_roadSegmentList[i]);
+		Vector2 dstPos = _roadGraph.getDstNode(_roadSegmentList[i])->getPosition2D();
 		intersection = _roadGraph.findClosestIntscn(srcNd, dstPos, snapSz, pos, rd);
 	}
 
@@ -919,18 +919,18 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 
 void WorldRoad::getMidPointAndDirection(Ogre::Vector2 &pos, Ogre::Vector2 &dir) const
 {
-	size_t N = mRoadSegmentList.size();
+	size_t N = _roadSegmentList.size();
 	assert(N>0);
 	RoadInterface* ri;
 	
 	if(N%2==0)	// if even
 	{	
-		ri = _roadGraph.getRoad(mRoadSegmentList[N/2]);
+		ri = _roadGraph.getRoad(_roadSegmentList[N/2]);
 		pos = ri->getSrcNode()->getPosition2D();
 	}
 	else		// else odd
 	{
-		ri = _roadGraph.getRoad(mRoadSegmentList[(N/2)-1]);
+		ri = _roadGraph.getRoad(_roadSegmentList[(N/2)-1]);
 		pos = (ri->getSrcNode()->getPosition2D() + ri->getDstNode()->getPosition2D())/2;
 	}
 	dir = ri->getDstNode()->getPosition2D() - ri->getSrcNode()->getPosition2D();
@@ -938,5 +938,5 @@ void WorldRoad::getMidPointAndDirection(Ogre::Vector2 &pos, Ogre::Vector2 &dir) 
 
 Ogre::Vector3 WorldRoad::getMidPoint()
 {
-	return mSpline.interpolate(0.5f);
+	return _spline.interpolate(0.5f);
 }

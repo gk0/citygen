@@ -23,7 +23,7 @@ END_EVENT_TABLE()
 NodePropertyPage::NodePropertyPage(WorldFrame* wf) 
  : wxPropertyGridPage()
 {
-	mWorldFrame = wf;
+	_worldFrame = wf;
 }
 
 
@@ -32,17 +32,17 @@ void NodePropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
-	if((eventProp == xProp) || (eventProp == yProp) || (eventProp == zProp)
-		|| (eventProp == labelProp))
+	if((eventProp == _xProp) || (eventProp == _yProp) || (eventProp == _zProp)
+		|| (eventProp == _labelProp))
 	{
-		WorldNode* wn = mWorldFrame->getSelected();
+		WorldNode* wn = _worldFrame->getSelected();
 		if(wn)
 		{
 			//wn->setLabel(GetPropertyValueAsString(labelProp));
-			wn->setPosition2D(GetPropertyValueAsDouble(xProp), GetPropertyValueAsDouble(zProp));
-			wn->setLabel(static_cast<const char*>(GetPropertyValueAsString(labelProp).mb_str()));
+			wn->setPosition2D(GetPropertyValueAsDouble(_xProp), GetPropertyValueAsDouble(_zProp));
+			wn->setLabel(static_cast<const char*>(GetPropertyValueAsString(_labelProp).mb_str()));
 			update();
-			mWorldFrame->update();
+			_worldFrame->update();
 		}
 	}
 
@@ -55,7 +55,7 @@ void NodePropertyPage::Init()
 	Append(wxPropertyCategory(wxT("Main")));
 
 	//Add some properties just to test this out
-	labelProp = Append(wxStringProperty(wxT("Label"),wxT("Name"),wxT("Node x")));
+	_labelProp = Append(wxStringProperty(wxT("Label"),wxT("Name"),wxT("Node x")));
 
 	// Add a bool property
 	Append(wxBoolProperty(wxT("Selected"), wxPG_LABEL, true));
@@ -68,9 +68,9 @@ void NodePropertyPage::Init()
 	Append(wxPropertyCategory(wxT("Position")));
 
 	// Add float property (value type is actually double)
-	xProp = Append(wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0));
-	yProp = Append(wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0));
-	zProp = Append(wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
+	_xProp = Append(wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0));
+	_yProp = Append(wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0));
+	_zProp = Append(wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
 
 	Append(wxPropertyCategory(wxT("Extra")));
 }
@@ -80,20 +80,20 @@ void NodePropertyPage::update()
 	//get data from worldframe
 	Ogre::Vector3 nodePos;
 	Ogre::String label;
-	WorldNode* wn = mWorldFrame->getSelected();
+	WorldNode* wn = _worldFrame->getSelected();
 	if(wn != 0)
 	{
 		nodePos = wn->getPosition3D();
 		label = wn->getLabel();
 	}
 
-	SetPropertyValue(labelProp, wxString(label.c_str(), wxConvUTF8));
-	SetPropertyValue(xProp, nodePos.x);
-	SetPropertyValue(yProp, nodePos.y);
-	SetPropertyValue(zProp, nodePos.z);
+	SetPropertyValue(_labelProp, wxString(label.c_str(), wxConvUTF8));
+	SetPropertyValue(_xProp, nodePos.x);
+	SetPropertyValue(_yProp, nodePos.y);
+	SetPropertyValue(_zProp, nodePos.z);
 
-	RefreshProperty(labelProp);
-	RefreshProperty(xProp);
-	RefreshProperty(yProp);
-	RefreshProperty(zProp);
+	RefreshProperty(_labelProp);
+	RefreshProperty(_xProp);
+	RefreshProperty(_yProp);
+	RefreshProperty(_zProp);
 }

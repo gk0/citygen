@@ -8,94 +8,94 @@
 
 using namespace Ogre;
 
-int WorldNode::mInstanceCount = 0;
+int WorldNode::_instanceCount = 0;
 
 
 WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
   : NodeInterface(g),
     _simpleRoadGraph(s)
 {
-	mCreator = creator;
+	_creator = creator;
 
 	mSimpleNodeId = _simpleRoadGraph.addNode(this);
-	mNodeId = _roadGraph.addNode(this);
+	_nodeId = _roadGraph.addNode(this);
 
 	// set the name
-	Ogre::String nodeCount(StringConverter::toString(mInstanceCount++));
+	Ogre::String nodeCount(StringConverter::toString(_instanceCount++));
 	_name = "node"+nodeCount;
 
 	// create our scene node
-	mSceneNode = mCreator->getRootSceneNode()->createChildSceneNode(_name);
+	_sceneNode = _creator->getRootSceneNode()->createChildSceneNode(_name);
 
-	mJunctionPlate = 0;
-	mDegree = 0;
+	_junctionPlate = 0;
+	_degree = 0;
 
 	// create mesh
-	mMesh = mCreator->createEntity(_name+"Mesh", "node.mesh");
+	_mesh = _creator->createEntity(_name+"Mesh", "node.mesh");
 //	MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().getByName("gk/Hilite/Red2");
 	//MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().create("gk/Hilite/Red2");
 //	mat->getTechnique(0)->getPass(0)->setAmbient(0.1, 0.1, 0.1);
 //	mat->getTechnique(0)->getPass(0)->setDiffuse(0.5, 0, 0, 1.0);
 //	mat->getTechnique(0)->getPass(0)->setSpecular(0.7, 0.7, 0.7, 0.5);
-	mMesh->setMaterialName("gk/Hilite/Red2");
+	_mesh->setMaterialName("gk/Hilite/Red2");
 
 	// create highlight mesh
-	mHighlight = mCreator->createEntity(_name+"Highlight", "flange.mesh");
-	mHighlight->setMaterialName("gk/Hilite/Yellow");
-	mHighlight->setVisible(false);
+	_highlight = _creator->createEntity(_name+"Highlight", "flange.mesh");
+	_highlight->setMaterialName("gk/Hilite/Yellow");
+	_highlight->setVisible(false);
 
 	// create select mesh
-	mSelected = mCreator->createEntity(_name+"Selected", "node.mesh");
-	mSelected->setMaterialName("gk/Hilite/Yellow");
-	mSelected->setVisible(false);
+	_selected = _creator->createEntity(_name+"Selected", "node.mesh");
+	_selected->setMaterialName("gk/Hilite/Yellow");
+	_selected->setVisible(false);
 
 	// create moveable text label
-	mLabel = new MovableText("Label"+_name, nodeCount);
-	mLabel->setCharacterHeight(5);
-	mLabel->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE); // Center horizontally and display above the node
-	mLabel->setAdditionalHeight(4.0f);
+	_label = new MovableText("Label"+_name, nodeCount);
+	_label->setCharacterHeight(5);
+	_label->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE); // Center horizontally and display above the node
+	_label->setAdditionalHeight(4.0f);
 
 	// attach objects
-	mSceneNode->attachObject(mMesh);
-	mSceneNode->attachObject(mHighlight);
-	mSceneNode->attachObject(mSelected);
-	mSceneNode->attachObject(mLabel);
+	_sceneNode->attachObject(_mesh);
+	_sceneNode->attachObject(_highlight);
+	_sceneNode->attachObject(_selected);
+	_sceneNode->attachObject(_label);
 }
 
 WorldNode::~WorldNode()
 {
-	mCreator->destroyEntity(mMesh);
-	mCreator->destroyEntity(mHighlight);
-	mCreator->destroyEntity(mSelected);
-	delete mLabel;
-	if(mJunctionPlate)
+	_creator->destroyEntity(_mesh);
+	_creator->destroyEntity(_highlight);
+	_creator->destroyEntity(_selected);
+	delete _label;
+	if(_junctionPlate)
 	{
-		delete mJunctionPlate;
-		mJunctionPlate = 0;
+		delete _junctionPlate;
+		_junctionPlate = 0;
 	}
-	mCreator->destroySceneNode(mSceneNode->getName());
+	_creator->destroySceneNode(_sceneNode->getName());
 }
 
 void WorldNode::setLabel(const String& label)
 {
-	mLabel->setCaption(label);
+	_label->setCaption(label);
 }
 
 const String& WorldNode::getLabel() const
 {
-	return mLabel->getCaption();
+	return _label->getCaption();
 }
 
 void WorldNode::showHighlighted(bool highlighted)
 {
-	mHighlight->setVisible(highlighted);
+	_highlight->setVisible(highlighted);
 	//mMesh->setVisible(!highlighted & !(mSelected->getVisible()));
 }
 
 void WorldNode::showSelected(bool selected)
 {
-	mSelected->setVisible(selected && mDegree < 2);
-	mMesh->setVisible(!selected && mDegree < 2);
+	_selected->setVisible(selected && _degree < 2);
+	_mesh->setVisible(!selected && _degree < 2);
 }
 
 void WorldNode::setPosition(const Ogre::Vector3 &pos)
@@ -114,7 +114,7 @@ void WorldNode::setPosition(Real x, Real y, Real z)
 	// in the case of WorldRoad this is most definite
 	std::vector<RoadInterface*> roads;
 	RoadIterator2 rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(mNodeId); rIt != rEnd; rIt++)
+	for(boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(_nodeId); rIt != rEnd; rIt++)
 		roads.push_back(_roadGraph.getRoad(*rIt));
 
 	for(size_t i=0; i<roads.size(); i++)
@@ -163,7 +163,7 @@ bool WorldNode::hasRoadIntersection()
 {
 	// check for any intersections
 	RoadIterator2 rIt, rEnd;
-	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(_nodeId); 
 	for(; rIt != rEnd; rIt++)
 	{
 		//HACKISH
@@ -179,7 +179,7 @@ bool WorldNode::hasRoadIntersection()
 
 Vector3 WorldNode::getPosition3D() const
 {
-	return mSceneNode->getPosition();
+	return _sceneNode->getPosition();
 }
 
 void WorldNode::setPosition3D(Real x, Real y, Real z)
@@ -210,41 +210,37 @@ bool WorldNode::move(Ogre::Vector2 pos)
 
 void WorldNode::build()
 {
-	if(mJunctionPlate)
+	if(_junctionPlate)
 	{
-		delete mJunctionPlate;
-		mJunctionPlate = 0;
-	}
-	if(_name == "node8")
-	{
-		size_t z=0;
+		delete _junctionPlate;
+		_junctionPlate = 0;
 	}
 
 	// how many roads connect here
-	switch(mDegree)
+	switch(_degree)
 	{
 	case 0:
-		mLabel->setVisible(true);
-		mMesh->setVisible(true);
+		_label->setVisible(true);
+		_mesh->setVisible(true);
 		return;
 	case 1:
-		mLabel->setVisible(true);
-		mMesh->setVisible(true);
+		_label->setVisible(true);
+		_mesh->setVisible(true);
 		createTerminus();
 		return;
 	case 2:
-		mLabel->setVisible(false);
-		mMesh->setVisible(false);
+		_label->setVisible(false);
+		_mesh->setVisible(false);
 		break;
 	case 3:
-		mLabel->setVisible(false);
-		mMesh->setVisible(false);
+		_label->setVisible(false);
+		_mesh->setVisible(false);
 		if(createTJunction()) return;
 		break;
 	default:
 		// try it
-		mLabel->setVisible(false);
-		mMesh->setVisible(false);
+		_label->setVisible(false);
+		_mesh->setVisible(false);
 		break;
 	}
 	
@@ -262,18 +258,18 @@ void WorldNode::build()
 
 	// get the first road and node
 	RoadIterator2 rIt2, rEnd2;
-	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(_nodeId); 
 	firstRoad = previousRoad = *rIt2;
 	previousNode = _roadGraph.getDst(previousRoad);
 	roadClockwiseList.push_back(previousRoad);
 
 	// start with the second road using the first as prev
 	// NOTE: a dest node exactly on the src node screws this up
-	for(size_t i = 1; i < mDegree; i++)
+	for(size_t i = 1; i < _degree; i++)
 	{
 		// get next node and road in a counter clockwise direction
-		_roadGraph.getCounterClockwiseMostFromPrev(previousNode, mNodeId, currentNode);
-		currentRoad = _roadGraph.getRoad(mNodeId, currentNode);
+		_roadGraph.getCounterClockwiseMostFromPrev(previousNode, _nodeId, currentNode);
+		currentRoad = _roadGraph.getRoad(_nodeId, currentNode);
 		roadClockwiseList.push_back(currentRoad);
 
 		// MADNESS CHECK
@@ -289,13 +285,13 @@ void WorldNode::build()
 	pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
 
 	// fill the junction data for use by roads
-	mRoadJunction.clear();
-	for(size_t i=0; i < mDegree; i++)
+	_roadJunction.clear();
+	for(size_t i=0; i < _degree; i++)
 	{
-		size_t j = (i + 1) % mDegree;
+		size_t j = (i + 1) % _degree;
 
 		// create a junction -> road join pair
-		mRoadJunction[roadClockwiseList[j]] = 
+		_roadJunction[roadClockwiseList[j]] = 
 			std::make_pair(Vector3(pointlist[j].x, height, pointlist[j].y), 
 							Vector3(pointlist[i].x, height, pointlist[i].y));
 	}
@@ -306,8 +302,8 @@ void WorldNode::build()
 	if(Triangulate::Process(pointlist, result))
 	{
 		// declare the manual object
-		mJunctionPlate = new ManualObject(_name+"j");
-		mJunctionPlate->begin("gk/RoadJunction", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+		_junctionPlate = new ManualObject(_name+"j");
+		_junctionPlate->begin("gk/RoadJunction", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 		Vector2 poser = getPosition2D();
 		for(size_t i=0; i<result.size(); i+=3)
@@ -317,25 +313,25 @@ void WorldNode::build()
 			result[i+1] -= poser;
 			result[i+2] -= poser;
 
-			mJunctionPlate->position(Vector3(result[i+2].x, 0.3, result[i+2].y));
-			mJunctionPlate->normal(Vector3::UNIT_Y);
-			mJunctionPlate->position(Vector3(result[i+1].x, 0.3, result[i+1].y));
-			mJunctionPlate->normal(Vector3::UNIT_Y);
-			mJunctionPlate->position(Vector3(result[i].x, 0.3, result[i].y));
-			mJunctionPlate->normal(Vector3::UNIT_Y);
+			_junctionPlate->position(Vector3(result[i+2].x, 0.3, result[i+2].y));
+			_junctionPlate->normal(Vector3::UNIT_Y);
+			_junctionPlate->position(Vector3(result[i+1].x, 0.3, result[i+1].y));
+			_junctionPlate->normal(Vector3::UNIT_Y);
+			_junctionPlate->position(Vector3(result[i].x, 0.3, result[i].y));
+			_junctionPlate->normal(Vector3::UNIT_Y);
 		}
-		mJunctionPlate->end();
-		mSceneNode->attachObject(mJunctionPlate);
+		_junctionPlate->end();
+		_sceneNode->attachObject(_junctionPlate);
 	}
 }
 
 void WorldNode::createTerminus()
 {
-	mRoadJunction.clear();
+	_roadJunction.clear();
 
 	// get road
 	RoadIterator2 rIt2, rEnd2;
-	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(_nodeId); 
 	if(rIt2 != rEnd2)
 	{		
 		Real h = getPosition3D().y + 0.4;
@@ -347,7 +343,7 @@ void WorldNode::createTerminus()
 		offset *= _roadGraph.getRoad(*rIt2)->getWidth();;
 
 
-		mRoadJunction[*rIt2] = std::make_pair(Vector3(p1.x - offset.x, h, p1.y - offset.y),
+		_roadJunction[*rIt2] = std::make_pair(Vector3(p1.x - offset.x, h, p1.y - offset.y),
 						Vector3(p1.x + offset.x, h, p1.y + offset.y));
 	}
 }
@@ -355,8 +351,8 @@ void WorldNode::createTerminus()
 std::pair<Vector3, Vector3> WorldNode::getRoadJunction(RoadId rd) 
 {
 	std::map<RoadId, std::pair<Vector3, Vector3>, road_less_than >::iterator rIt;
-	rIt = mRoadJunction.find(rd);
-	if(rIt == mRoadJunction.end())
+	rIt = _roadJunction.find(rd);
+	if(rIt == _roadJunction.end())
 	{
 		//size_t degree = _roadGraph.getDegree(mNodeId);
 		//throw new Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "WorldNode::getRoadJunction");
@@ -370,7 +366,7 @@ std::pair<Vector3, Vector3> WorldNode::getRoadJunction(RoadId rd)
 void WorldNode::onMove()
 {
 	RoadIterator2 rIt, rEnd;
-	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(_nodeId); 
 	for(; rIt != rEnd; rIt++)
 	{
 		_roadGraph.getRoad(*rIt)->onMoveNode();
@@ -379,13 +375,13 @@ void WorldNode::onMove()
 
 void WorldNode::onAddRoad()
 {
-	mDegree = _roadGraph.getDegree(mNodeId);
+	_degree = _roadGraph.getDegree(_nodeId);
 	invalidate();
 }
 
 void WorldNode::onRemoveRoad()
 {
-	mDegree = _roadGraph.getDegree(mNodeId);
+	_degree = _roadGraph.getDegree(_nodeId);
 	invalidate();
 }
 
@@ -394,7 +390,7 @@ void WorldNode::invalidate()
 	WorldObject::invalidate();
 	// invalidate roads
 	RoadIterator2 rIt, rEnd;
-	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(_nodeId); 
 	for(; rIt != rEnd; rIt++)
 	{
 		RoadInterface* ri = _roadGraph.getRoad(*rIt);
@@ -405,7 +401,7 @@ void WorldNode::invalidate()
 
 bool WorldNode::createTJunction()
 {
-	mRoadJunction.clear();
+	_roadJunction.clear();
 
 	std::vector<RoadId> throughRoads(2);
 	RoadId joiningRoad;
@@ -413,7 +409,7 @@ bool WorldNode::createTJunction()
 
 	//
 	RoadIterator2 rIt, rIt2, rEnd;
-	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(_nodeId); 
 	joiningRoad = *rIt;
 	joiningRoadWidth = _roadGraph.getRoad(*rIt)->getWidth();
 
@@ -457,24 +453,24 @@ bool WorldNode::createTJunction()
 	Vector2 p1 = _roadGraph.getRoadBounaryIntersection(throughRoads[0], throughRoads[1]);
 	Vector2 p2 = _roadGraph.getRoadBounaryIntersection(throughRoads[1], throughRoads[0]);
 
-	mRoadJunction[throughRoads[0]] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
-	mRoadJunction[throughRoads[1]] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
+	_roadJunction[throughRoads[0]] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+	_roadJunction[throughRoads[1]] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
 
 	// create the juntion for the joining road
 	NodeId ccwNd;
-	_roadGraph.getCounterClockwiseMostFromPrev(_roadGraph.getDst(joiningRoad), mNodeId, ccwNd);
+	_roadGraph.getCounterClockwiseMostFromPrev(_roadGraph.getDst(joiningRoad), _nodeId, ccwNd);
 	if(_roadGraph.getDst(throughRoads[0]) == ccwNd)
 	{
 		p1 = _roadGraph.getRoadBounaryIntersection(joiningRoad, throughRoads[0]);
 		p2 = _roadGraph.getRoadBounaryIntersection(throughRoads[1], joiningRoad);
-		mRoadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+		_roadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 	}
 	else
 	{
 		p1 = _roadGraph.getRoadBounaryIntersection(joiningRoad, throughRoads[1]);
 		p2 = _roadGraph.getRoadBounaryIntersection(throughRoads[0], joiningRoad);
 		//mRoadJunction[joiningRoad] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
-		mRoadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+		_roadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 	}
 	return true;
 }
@@ -503,7 +499,7 @@ int WorldNode::snapInfo(const Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 		return 2;
 
 	RoadId rd;
-	if(_roadGraph.findClosestRoad(mNodeId, snapSz, pos, rd))
+	if(_roadGraph.findClosestRoad(_nodeId, snapSz, pos, rd))
 	{
 		assert(typeid(*_roadGraph.getRoad(rd)) == typeid(WorldRoad));
 		wr = static_cast<WorldRoad*>(_roadGraph.getRoad(rd));

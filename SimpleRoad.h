@@ -7,9 +7,9 @@
 class SimpleRoad : public RoadInterface
 {
 private:
-	bool mIsRoadCycle;
-	NodeInterface *mSrcNode, *mDstNode;
-	Ogre::Real mRoadWidth;
+	bool			_isRoadCycle;
+	NodeInterface	*_srcNode, *_dstNode;
+	Ogre::Real		_roadWidth;
 
 public:
 	SimpleRoad(NodeInterface *src, NodeInterface *dst);

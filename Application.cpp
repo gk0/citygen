@@ -10,8 +10,8 @@ IMPLEMENT_APP(Application);
 
 Application::Application()
 : wxApp(),
-  mRoot(0),
-  mWindow(0)
+  _root(0),
+  _window(0)
 {
 }
 
@@ -30,21 +30,21 @@ bool Application::OnInit()
 	setupResources();
 	//loadResources();
 
-	mWindow = new MainWindow(0); 
+	_window = new MainWindow(0); 
 
 	// now we need to create MainWindow singleton because
 	// it creates RenderWindow, which is needed for resource loading (for example, textures and VBO)
 	// we create it, but don't show to user to avoid flickness
-	SetTopWindow(mWindow); // set our MainWindow the main application window
-	mWindow->Show(true);
-	mWindow->init();
-	mWindow->updateOgre();
+	SetTopWindow(_window); // set our MainWindow the main application window
+	_window->Show(true);
+	_window->init();
+	_window->updateOgre();
 
 	// Resources and resource initialization
 	
 	loadResources();
 
-	//mWindow->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test5.cgx"));
+	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\roaderror.cgx"));
 	
 	// All clear!
 	return true;
@@ -54,8 +54,8 @@ bool Application::OnInit()
 int Application::OnExit()
 {
 	// Clean Up OGRE
-	if (mRoot)
-		delete mRoot;
+	if (_root)
+		delete _root;
 
 	// All done here.
 	return 0;
@@ -65,16 +65,16 @@ int Application::OnExit()
 bool Application::InitializeOgre()
 {
 	// Make the root
-	mRoot = new Root();
+	_root = new Root();
 
 	try
 	{
-		if(!mRoot->restoreConfig())
+		if(!_root->restoreConfig())
 		{
-			mRoot->showConfigDialog();
+			_root->showConfigDialog();
 		}
 		// initialise with false doesn't create a window
-		mRoot->initialise(false);
+		_root->initialise(false);
    }
    catch(Ogre::Exception &e)
    {

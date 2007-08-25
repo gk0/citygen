@@ -5,16 +5,16 @@ using namespace Ogre;
 
 ToolView::ToolView(WorldFrame* wf)
 {
-	mWorldFrame = wf;
-	mMoveSpeed = 4.0;
+	_worldFrame = wf;
+	_moveSpeed = 4.0;
 }
 
 void ToolView::activate()
 {
-	mMouseX = 0;
-	mMouseY = 0;
-	mMouseDeltaX = 0;
-	mMouseDeltaY = 0;
+	_mouseX = 0;
+	_mouseY = 0;
+	_mouseDeltaX = 0;
+	_mouseDeltaY = 0;
 }
 
 void ToolView::deactivate()
@@ -28,51 +28,51 @@ void ToolView::OnChar(wxKeyEvent& e)
 	{
 	case '+':
 	case '=':
-		mMoveSpeed += 0.1f;
-		LogManager::getSingleton().logMessage("Move Speed: "+StringConverter::toString(mMoveSpeed), LML_CRITICAL);
+		_moveSpeed += 0.1f;
+		LogManager::getSingleton().logMessage("Move Speed: "+StringConverter::toString(_moveSpeed), LML_CRITICAL);
 		break;
 	case '_':
 	case '-':
-		mMoveSpeed -= 0.1f;
-		LogManager::getSingleton().logMessage("Move Speed: "+StringConverter::toString(mMoveSpeed), LML_CRITICAL);
+		_moveSpeed -= 0.1f;
+		LogManager::getSingleton().logMessage("Move Speed: "+StringConverter::toString(_moveSpeed), LML_CRITICAL);
 		break;
 	case WXK_PAGEUP:
 	case WXK_NUMPAD_PAGEUP:
-		mWorldFrame->cameraMove(0.0f, mMoveSpeed, 0.0f);
-		mWorldFrame->update();
+		_worldFrame->cameraMove(0.0f, _moveSpeed, 0.0f);
+		_worldFrame->update();
 		break;
 	case WXK_PAGEDOWN:
 	case WXK_NUMPAD_PAGEDOWN:
-		mWorldFrame->cameraMove(0.0f, -mMoveSpeed, 0.0f);
-		mWorldFrame->update();
+		_worldFrame->cameraMove(0.0f, -_moveSpeed, 0.0f);
+		_worldFrame->update();
 		break;
 	case 'w':
 	case 'W':
 	case WXK_UP:
 	case WXK_NUMPAD_UP:
-		mWorldFrame->cameraMove(0.0f, 0.0f, -mMoveSpeed);
-		mWorldFrame->update();
+		_worldFrame->cameraMove(0.0f, 0.0f, -_moveSpeed);
+		_worldFrame->update();
 		break;
 	case 's':
 	case 'S':
 	case WXK_DOWN:
 	case WXK_NUMPAD_DOWN:
-		mWorldFrame->cameraMove(0.0f, 0.0f, mMoveSpeed);
-		mWorldFrame->update();
+		_worldFrame->cameraMove(0.0f, 0.0f, _moveSpeed);
+		_worldFrame->update();
 		break;
 	case 'a':
 	case 'A':
 	case WXK_LEFT:
 	case WXK_NUMPAD_LEFT:
-		mWorldFrame->cameraMove(-mMoveSpeed, 0.0f, 0.0f);
-		mWorldFrame->update();
+		_worldFrame->cameraMove(-_moveSpeed, 0.0f, 0.0f);
+		_worldFrame->update();
 		break;
 	case 'd':
 	case 'D':
 	case WXK_RIGHT:
 	case WXK_NUMPAD_RIGHT:
-		mWorldFrame->cameraMove(mMoveSpeed, 0.0f, 0.0f);
-		mWorldFrame->update();
+		_worldFrame->cameraMove(_moveSpeed, 0.0f, 0.0f);
+		_worldFrame->update();
 		break;
 	default:
 		e.Skip();
@@ -84,27 +84,27 @@ void ToolView::OnChar(wxKeyEvent& e)
 void ToolView::OnMouseMove(wxMouseEvent &e)
 {
 	// Compute deltas
-	mMouseDeltaX = e.m_x - mMouseX;
-	mMouseDeltaY = e.m_y - mMouseY;
+	_mouseDeltaX = e.m_x - _mouseX;
+	_mouseDeltaY = e.m_y - _mouseY;
 
 	// 
 	if(e.m_leftDown)
 	{
 		if(e.m_rightDown)
-			mWorldFrame->cameraMove(0.0f, 0.0f, mMouseDeltaY * (mMoveSpeed / 4));
+			_worldFrame->cameraMove(0.0f, 0.0f, _mouseDeltaY * (_moveSpeed / 4));
 		else
-			mWorldFrame->cameraRotate(mMouseDeltaX*2, mMouseDeltaY);
-		mWorldFrame->update();
+			_worldFrame->cameraRotate(_mouseDeltaX*2, _mouseDeltaY);
+		_worldFrame->update();
 	}
 	else if(e.m_rightDown)
 	{
-		mWorldFrame->cameraMove((Ogre::Real)(-mMouseDeltaX) * (mMoveSpeed / 4), (Ogre::Real)mMouseDeltaY * (mMoveSpeed / 4), 0.0f);
-		mWorldFrame->update();
+		_worldFrame->cameraMove((Ogre::Real)(-_mouseDeltaX) * (_moveSpeed / 4), (Ogre::Real)_mouseDeltaY * (_moveSpeed / 4), 0.0f);
+		_worldFrame->update();
 	}
 
 	// save for calc of next deltas
-	mMouseX = e.m_x;
-	mMouseY = e.m_y;
+	_mouseX = e.m_x;
+	_mouseY = e.m_y;
 }
 
 void ToolView::OnLeftPressed(wxMouseEvent &e)
@@ -115,7 +115,7 @@ void ToolView::OnMouseWheel(wxMouseEvent &e)
 {
 	if(e.GetWheelRotation()!=0)
 	{
-		mWorldFrame->cameraMove(0, 0, (e.GetWheelRotation() / 40) * mMoveSpeed);
-		mWorldFrame->update();
+		_worldFrame->cameraMove(0, 0, (e.GetWheelRotation() / 40) * _moveSpeed);
+		_worldFrame->update();
 	}
 }

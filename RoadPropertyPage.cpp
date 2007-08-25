@@ -22,17 +22,17 @@ void RoadPropertyPage::Init()
 	arrPlot.Add(wxT("Even Elevation Diff."), EvenElevationDiff);
 	arrPlot.Add(wxT("Minimum Elevation Diff."), MinimumElevationDiff);
 	arrPlot.Add(wxT("Minimum Elevation"), MinimumElevation);
-    plotAlgorProp = Append( wxEnumProperty(wxT("Algorithm"), wxPG_LABEL, arrPlot) );
+    _plotAlgorProp = Append( wxEnumProperty(wxT("Algorithm"), wxPG_LABEL, arrPlot) );
 
 	// Add float property (value type is actually double)
-	sampleSizeProp = Append(wxFloatProperty(wxT("Sample Size"), wxPG_LABEL, 0));
-    roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0));
-	sampleDevianceProp = Append(wxFloatProperty(wxT("Road Deviance Angle"), wxPG_LABEL,0));
-	samplesProp = Append(wxIntProperty(wxT("Number of Samples"), wxPG_LABEL,0));
+	_sampleSizeProp = Append(wxFloatProperty(wxT("Sample Size"), wxPG_LABEL, 0));
+    _roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0));
+	_sampleDevianceProp = Append(wxFloatProperty(wxT("Road Deviance Angle"), wxPG_LABEL,0));
+	_samplesProp = Append(wxIntProperty(wxT("Number of Samples"), wxPG_LABEL,0));
 
 	Append(wxPropertyCategory(wxT("Display Options")));
-	segmentDrawSizeProp = Append(wxFloatProperty(wxT("Segment Draw Size"), wxPG_LABEL,0));
-	plotDebugProp = Append(wxBoolProperty(wxT("View Plot Debug Info"), wxPG_LABEL,0));
+	_segmentDrawSizeProp = Append(wxFloatProperty(wxT("Segment Draw Size"), wxPG_LABEL,0));
+	_plotDebugProp = Append(wxBoolProperty(wxT("View Plot Debug Info"), wxPG_LABEL,0));
 }
 
 
@@ -41,24 +41,24 @@ void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
-	if( (eventProp == sampleSizeProp) || (eventProp == roadWidthProp) || 
-		(eventProp == sampleDevianceProp) || (eventProp == samplesProp) || 
-		(eventProp == plotDebugProp) || (eventProp == plotAlgorProp) || (eventProp == segmentDrawSizeProp))
+	if( (eventProp == _sampleSizeProp) || (eventProp == _roadWidthProp) || 
+		(eventProp == _sampleDevianceProp) || (eventProp == _samplesProp) || 
+		(eventProp == _plotDebugProp) || (eventProp == _plotAlgorProp) || (eventProp == _segmentDrawSizeProp))
 	{
-		WorldRoad* wr = mWorldFrame->getSelectedRoad();
+		WorldRoad* wr = _worldFrame->getSelectedRoad();
 		if(wr)
 		{
 			RoadGenParams g;
-			g.algorithm = static_cast<RoadPlotAlgorithm>(GetPropertyValueAsInt(plotAlgorProp));
-			g.sampleSize = GetPropertyValueAsDouble(sampleSizeProp);
-			g.sampleDeviance = GetPropertyValueAsDouble(sampleDevianceProp);
-			g.roadWidth = GetPropertyValueAsDouble(roadWidthProp);
-			g.debug = GetPropertyValueAsBool(plotDebugProp);
-			int samples = GetPropertyValueAsInt(samplesProp);
-			double drawSz = GetPropertyValueAsDouble(segmentDrawSizeProp);
+			g._algorithm = static_cast<RoadPlotAlgorithm>(GetPropertyValueAsInt(_plotAlgorProp));
+			g._sampleSize = GetPropertyValueAsDouble(_sampleSizeProp);
+			g._sampleDeviance = GetPropertyValueAsDouble(_sampleDevianceProp);
+			g._roadWidth = GetPropertyValueAsDouble(_roadWidthProp);
+			g._debug = GetPropertyValueAsBool(_plotDebugProp);
+			int samples = GetPropertyValueAsInt(_samplesProp);
+			double drawSz = GetPropertyValueAsDouble(_segmentDrawSizeProp);
 
 			//TODO: check params within limits
-			if(g.sampleDeviance < Ogre::Degree(0) || g.sampleDeviance > Ogre::Degree(44))
+			if(g._sampleDeviance < Ogre::Degree(0) || g._sampleDeviance > Ogre::Degree(44))
 			{
 				//alert user
 				wxMessageBox(_T("Invalid 'sample deviance' value entered, a value between 0-44 is required."),
@@ -80,7 +80,7 @@ void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 				return;
 			}
 			else
-				g.numOfSamples = static_cast<Ogre::uint16>(samples);
+				g._numOfSamples = static_cast<Ogre::uint16>(samples);
 
 
 			if(drawSz < 0.5)
@@ -92,10 +92,10 @@ void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 				return;
 			}
 			else
-				g.segmentDrawSize = static_cast<Ogre::Real>(drawSz);
+				g._segmentDrawSize = static_cast<Ogre::Real>(drawSz);
 
 			wr->setGenParams(g);
-			mWorldFrame->update();
+			_worldFrame->update();
 		}
 	}
 
@@ -107,7 +107,7 @@ void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 void RoadPropertyPage::update()
 {
 	RoadGenParams rp;
-	WorldRoad *wr = mWorldFrame->getSelectedRoad();
+	WorldRoad *wr = _worldFrame->getSelectedRoad();
 	if(wr)
 	{
 		rp = wr->getGenParams();
@@ -122,26 +122,26 @@ void RoadPropertyPage::update()
 			Ogre::Real segmentDrawSize;
 		} RoadGenParams;
 		*/
-		SetPropertyValue(plotAlgorProp, rp.algorithm);
-		SetPropertyValue(sampleSizeProp, rp.sampleSize);
-		SetPropertyValue(sampleDevianceProp, rp.sampleDeviance.valueDegrees());
-		SetPropertyValue(roadWidthProp, rp.roadWidth);
-		SetPropertyValue(samplesProp, static_cast<int>(rp.numOfSamples));
-		SetPropertyValue(plotDebugProp, rp.debug);
-		SetPropertyValue(segmentDrawSizeProp, static_cast<float>(rp.segmentDrawSize));
+		SetPropertyValue(_plotAlgorProp, rp._algorithm);
+		SetPropertyValue(_sampleSizeProp, rp._sampleSize);
+		SetPropertyValue(_sampleDevianceProp, rp._sampleDeviance.valueDegrees());
+		SetPropertyValue(_roadWidthProp, rp._roadWidth);
+		SetPropertyValue(_samplesProp, static_cast<int>(rp._numOfSamples));
+		SetPropertyValue(_plotDebugProp, rp._debug);
+		SetPropertyValue(_segmentDrawSizeProp, static_cast<float>(rp._segmentDrawSize));
 	}
 
-	RefreshProperty(plotAlgorProp);
-	RefreshProperty(sampleSizeProp);
-	RefreshProperty(sampleDevianceProp);
-	RefreshProperty(roadWidthProp);
-	RefreshProperty(samplesProp);
-	RefreshProperty(plotDebugProp);
-	RefreshProperty(segmentDrawSizeProp);
+	RefreshProperty(_plotAlgorProp);
+	RefreshProperty(_sampleSizeProp);
+	RefreshProperty(_sampleDevianceProp);
+	RefreshProperty(_roadWidthProp);
+	RefreshProperty(_samplesProp);
+	RefreshProperty(_plotDebugProp);
+	RefreshProperty(_segmentDrawSizeProp);
 }
 
 
 void RoadPropertyPage::setWorldFrame(WorldFrame* wf)
 {
-	mWorldFrame = wf;
+	_worldFrame = wf;
 }

@@ -10,11 +10,13 @@ class NodePropertyPage : public wxPropertyGridPage
 	DECLARE_CLASS(NodePropertyPage)
 
 private:
-	wxPGProperty* labelProp;
-	wxPGProperty* xProp;
-	wxPGProperty* yProp;
-	wxPGProperty* zProp;
-	WorldFrame* mWorldFrame;
+	WorldFrame*		_worldFrame;
+
+	// properties
+	wxPGProperty*	_labelProp;
+	wxPGProperty*	_xProp;
+	wxPGProperty*	_yProp;
+	wxPGProperty*	_zProp;
 
 protected:
 	DECLARE_EVENT_TABLE()

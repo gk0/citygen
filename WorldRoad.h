@@ -17,44 +17,41 @@ enum RoadPlotAlgorithm
 	MinimumElevation
 };
 
-typedef struct {
-	RoadPlotAlgorithm algorithm;
-	Ogre::Real sampleSize;
-	Ogre::Degree sampleDeviance;
-	Ogre::Real roadWidth;
-	Ogre::uint16 numOfSamples;
-	bool debug;
-	Ogre::Real segmentDrawSize;
-} RoadGenParams;
+struct RoadGenParams 
+{
+	RoadPlotAlgorithm	_algorithm;
+	Ogre::Real			_sampleSize;
+	Ogre::Degree		_sampleDeviance;
+	Ogre::Real			_roadWidth;
+	Ogre::uint16		_numOfSamples;
+	bool				_debug;
+	Ogre::Real			_segmentDrawSize;
+};
 
 class WorldRoad : public WorldObject, public RoadInterface
 {
 private:
-	static int mRoadCount;
+	static unsigned int		_instanceCount;
 
-	RoadId mSimpleRoadId;
+	RoadId					_simpleRoadId;
 
-	Ogre::ManualObject *mManualObject;
-	Ogre::ManualObject *_debugMOObject;
-	Ogre::MovableText *mLabel;
-	Ogre::String _name;
-	bool mSelected;
-	Ogre::Real mLength;
+	Ogre::ManualObject*		_manualObject;
+	Ogre::ManualObject*		_debugMOObject;
+	Ogre::MovableText*		_label;
+	Ogre::String			_name;
+	bool					_selected;
+	Ogre::Real				_length;
 
-	bool mIsRoadCycle;
-//	WorldNode *mSrcNode, *mDstNode;
+	bool					_isRoadCycle;
 
-	RoadGraph &_roadGraph;
-	RoadGraph &_simpleRoadGraph;
+	RoadGraph&				_roadGraph;
+	RoadGraph&				_simpleRoadGraph;
 
-	RoadGenParams mGenParams;
+	RoadGenParams			_genParams;
 
-	std::vector<RoadId> mRoadSegmentList;
-	Ogre::SimpleSpline mSpline;
-	std::vector<Ogre::Vector3> mPlotList;
-	void buildSegment(const Ogre::Vector3 &a1, const Ogre::Vector3 &a2, const Ogre::Vector3 &aNorm,
-		const Ogre::Vector3 &b1, const Ogre::Vector3 &b2, const Ogre::Vector3 &bNorm, Ogre::Real uMin, Ogre::Real uMax);
-
+	std::vector<RoadId>		_roadSegmentList;
+	Ogre::SimpleSpline		_spline;
+	std::vector<Ogre::Vector3> _plotList;
 
 public:
 	WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
@@ -79,7 +76,7 @@ public:
 	void invalidate();
 	void showSelected(bool show)
 	{
-		mSelected = show;
+		_selected = show;
 		invalidate();
 	}
 
@@ -94,7 +91,7 @@ public:
 
 	void getMidPointAndDirection(Ogre::Vector2 &pos, Ogre::Vector2 &dir) const;
 
-	Ogre::Real getLength() const { return mLength; }
+	Ogre::Real getLength() const { return _length; }
 	Ogre::Vector3 getMidPoint();
 
 	// compare by length
@@ -116,7 +113,6 @@ private:
 	void destroyRoadGraph();
 	void plotRoad();
 
-
 	void buildSampleFan(const Ogre::Vector2& cursor, const Ogre::Vector2& direction, 
 		std::vector<Ogre::Vector3> &samples) const;
 
@@ -130,6 +126,9 @@ private:
 		const std::vector<Ogre::Vector3> &samples, const Ogre::Vector3 &target);
 
 	void buildDebugSegments(const Ogre::Vector3 &pos, const std::vector<Ogre::Vector3> &samples);
+
+	void buildSegment(const Ogre::Vector3 &a1, const Ogre::Vector3 &a2, const Ogre::Vector3 &aNorm,
+		const Ogre::Vector3 &b1, const Ogre::Vector3 &b2, const Ogre::Vector3 &bNorm, Ogre::Real uMin, Ogre::Real uMax);
 
 };
 

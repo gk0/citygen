@@ -6,35 +6,35 @@
 class PerformanceTimer
 {
 private:
-	Ogre::String mTitle;
-	wxDateTime mTime;
-	wxDateTime mStopTime;
-	bool mActive;
+	Ogre::String	_title;
+	wxDateTime		_time;
+	wxDateTime		_stopTime;
+	bool			_active;
 
 public:
 	PerformanceTimer(const Ogre::String& t = "Default Timer")
-		: mTitle(t)
+		: _title(t)
 	{
 		reset();
 	}
 
 	void setTitle(const Ogre::String& t)
 	{
-		mTitle = t;
+		_title = t;
 	}
 
 	void reset()
 	{
-		mActive = true;
-		mTime = wxDateTime::UNow();
+		_active = true;
+		_time = wxDateTime::UNow();
 	}
 
 	void stop()
 	{
-		if(mActive)
+		if(_active)
 		{
-			mStopTime = wxDateTime::UNow();
-			mActive = false;
+			_stopTime = wxDateTime::UNow();
+			_active = false;
 		}
 	}
 
@@ -46,11 +46,11 @@ public:
 
 	Ogre::String toString()
 	{
-		if(mActive) return Ogre::String(mTitle+": active.");
-		wxLongLong ms = (mStopTime - mTime).GetMilliseconds();
+		if(_active) return Ogre::String(_title+": active.");
+		wxLongLong ms = (_stopTime - _time).GetMilliseconds();
 		Ogre::String strMs = static_cast<const char*>(ms.ToString().mb_str());
 		std::stringstream oss;
-		oss << mTitle << ": " << strMs << "ms.";
+		oss << _title << ": " << strMs << "ms.";
 		return Ogre::String(oss.str());
 	}
 };

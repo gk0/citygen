@@ -69,6 +69,117 @@ bool Geometry::isInside(const Ogre::Vector2 &loc, const std::vector<Ogre::Vector
 }
 
 
+bool Geometry::polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints)
+{
+	// get size
+	size_t i, j, N = polyPoints.size();
+
+	// check cycle
+	if(N < 3)
+		throw Exception(Exception::ERR_INVALIDPARAMS, 
+		"Invalid number of points in polygon", "Geometry::polygonInsetFast");
+
+	// create footprint edge structure
+	vector< pair<Vector2, Vector2> > edges;
+	edges.reserve(N);
+	vector<Vector2> newFootprint;
+	newFootprint.reserve(N);
+
+	// get footprint edge vectors
+	for(i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		Vector2 dir(polyPoints[j] - polyPoints[i]);
+		dir = dir.perpendicular();
+		dir.normalise();
+		dir *= inset;
+		edges.push_back(make_pair(polyPoints[i] + dir, polyPoints[j] + dir));
+	}
+
+	// calculate footprint points from edges
+	for(i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		// get edge intersection point
+		Ogre::Real r,s;
+		Vector2 intscn;
+		if(Geometry::lineIntersect(edges[i].first, edges[i].second, 
+			edges[j].first, edges[j].second, intscn, r, s) && r >= 0 && s <= 1)
+		{
+			newFootprint.push_back(intscn);
+		}
+		else
+		{
+			// no intersection, could be parallel could be mad lets average the pair
+			newFootprint.push_back((edges[i].second + edges[j].first)/2);
+		}
+	}
+	polyPoints.swap(newFootprint);
+	return true;
+}
+
+
+bool Geometry::polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector3> &polyPoints)
+{
+	// get size
+	size_t i, j, N = polyPoints.size();
+
+	// negate inset
+	inset = -inset;
+
+	// check cycle
+	if(N < 3)
+		throw Exception(Exception::ERR_INVALIDPARAMS, 
+		"Invalid number of points in polygon", "Geometry::polygonInsetFast");
+
+	// create footprint edge structure
+	vector< pair<Vector2, Vector2> > edges;
+	edges.reserve(N);
+	vector<Vector2> newFootprint;
+	newFootprint.reserve(N);
+
+	// get footprint edge vectors
+	for(i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		Vector2 dir(polyPoints[i].x - polyPoints[j].x, polyPoints[i].z - polyPoints[j].z);
+		dir = dir.perpendicular();
+		dir.normalise();
+		dir *= inset;
+		edges.push_back(make_pair(
+			Vector2(polyPoints[i].x + dir.x, polyPoints[i].z + dir.y), 
+			Vector2(polyPoints[j].x + dir.x, polyPoints[j].z + dir.y)));
+	}
+
+	// calculate footprint points from edges
+	for(i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		// get edge intersection point
+		Ogre::Real r,s;
+		Vector2 intscn;
+		if(Geometry::lineIntersect(edges[i].first, edges[i].second, 
+			edges[j].first, edges[j].second, intscn, r, s) && r >= 0 && s <= 1)
+		{
+			newFootprint.push_back(intscn);
+		}
+		else
+		{
+			// no intersection, could be parallel could be mad lets average the pair
+			newFootprint.push_back((edges[i].second + edges[j].first)/2);
+		}
+	}
+
+	assert(newFootprint.size() == N);
+	for(size_t i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		polyPoints[j].x = newFootprint[i].x;
+		polyPoints[j].z = newFootprint[i].y;
+	}
+	return true;
+}
+
 bool Geometry::polygonInset(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints)
 {
 	vector<Ogre::Vector2> newFootprint, originalFootprint(polyPoints.rbegin(), polyPoints.rend());

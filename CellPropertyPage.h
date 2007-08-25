@@ -10,24 +10,26 @@ class CellPropertyPage : public wxPropertyGridPage
 	DECLARE_CLASS(CellPropertyPage)
 
 private:
-	wxPGProperty* presetProp;
-	wxPGProperty* typeProp;
-	wxPGProperty* seedProp;
-	wxPGProperty* segmentSizeProp;
-	wxPGProperty* segmentDevianceProp;
-	wxPGProperty* degreeProp;
-	wxPGProperty* degreeDevianceProp;
-	wxPGProperty* snapSizeProp;
-	wxPGProperty* snapDevianceProp;
-	wxPGProperty* buildingHeightProp;
-	wxPGProperty* buildingDevianceProp;
-	wxPGProperty* roadWidthProp;
-	wxPGProperty* roadLimitProp;
-	wxPGProperty* connectivityProp;
-	wxPGProperty* lotSizeProp;
-	wxPGProperty* lotDevianceProp;
-	WorldFrame* mWorldFrame;
+	WorldFrame*		_worldFrame;
 
+	// properties
+	wxPGProperty*	_presetProp;
+	wxPGProperty*	_typeProp;
+	wxPGProperty*	_seedProp;
+	wxPGProperty*	_segmentSizeProp;
+	wxPGProperty*	_segmentDevianceProp;
+	wxPGProperty*	_degreeProp;
+	wxPGProperty*	_degreeDevianceProp;
+	wxPGProperty*	_snapSizeProp;
+	wxPGProperty*	_snapDevianceProp;
+	wxPGProperty*	_buildingHeightProp;
+	wxPGProperty*	_buildingDevianceProp;
+	wxPGProperty*	_roadWidthProp;
+	wxPGProperty*	_roadLimitProp;
+	wxPGProperty*	_connectivityProp;
+	wxPGProperty*	_lotSizeProp;
+	wxPGProperty*	_lotDevianceProp;
+	wxPGProperty*	_debugProp;
 
 protected:
 	DECLARE_EVENT_TABLE()

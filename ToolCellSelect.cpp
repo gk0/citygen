@@ -12,35 +12,15 @@ ToolCellSelect::ToolCellSelect(WorldFrame* wf)
 void ToolCellSelect::OnChar(wxKeyEvent &e)
 {
 	int key = e.GetKeyCode();
-	WorldCell* wc = mWorldFrame->getSelectedCell();
+	WorldCell* wc = _worldFrame->getSelectedCell();
 	switch(key)
 	{
-	case 'U':
-	case 'u':
-		if(wc)
-		{
-			LogManager::getSingleton().logMessage("Begin Cell Decomposition.");
-			wc->beginGraphicalCellDecomposition();
-		}
-		break;
-	case 'I':
-	case 'i':
-		if(wc)
-		{
-			LogManager::getSingleton().logMessage("Step Forward.");
-			wc->stepGraphicalCellDecomposition();
-		}
-		break;
-	case 'O':
-	case 'o':
-		LogManager::getSingleton().logMessage("Step Back.");
-		// call to road graph
-		break;
+	// cell decomposition was here
 	default:
 		ToolView::OnChar(e);
 		break;
 	}
-	mWorldFrame->update();
+	_worldFrame->update();
 }
 
 void ToolCellSelect::OnMouseMove(wxMouseEvent &e)
@@ -48,8 +28,8 @@ void ToolCellSelect::OnMouseMove(wxMouseEvent &e)
 	ToolView::OnMouseMove(e);
 
 	// Compute deltas
-	mMouseDeltaX = e.m_x - mMouseX;
-	mMouseDeltaY = e.m_y - mMouseY;
+	_mouseDeltaX = e.m_x - _mouseX;
+	_mouseDeltaY = e.m_y - _mouseY;
 /*
 	//TODO: 
 	#define HIGHLIGHTNODESNAPSQ 16
@@ -60,17 +40,17 @@ void ToolCellSelect::OnMouseMove(wxMouseEvent &e)
 		mWorldFrame->highlightCell(c);
 */
 	// save for calc of next deltas
-	mMouseX = e.m_x;
-	mMouseY = e.m_y;
+	_mouseX = e.m_x;
+	_mouseY = e.m_y;
 }
 
 void ToolCellSelect::OnLeftPressed(wxMouseEvent &e)
 {
 	WorldCell *c;
-	if(mWorldFrame->pickCell(e, c))
-		mWorldFrame->selectCell(c);
+	if(_worldFrame->pickCell(e, c))
+		_worldFrame->selectCell(c);
 	else
-		mWorldFrame->selectCell(0);
+		_worldFrame->selectCell(0); 
 
-	mWorldFrame->update();
+	_worldFrame->update();
 }

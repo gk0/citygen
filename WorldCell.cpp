@@ -12,9 +12,10 @@
 #include "PerformanceTimer.h"
 #include "WorldBlock.h"
 
+
 using namespace Ogre;
 using namespace std;
-int WorldCell::mInstanceCount = 0;
+int WorldCell::_instanceCount = 0;
 
 WorldCell::WorldCell(const RoadGraph &p, const RoadGraph &s)
  : 	_parentRoadGraph(p),
@@ -33,37 +34,37 @@ WorldCell::WorldCell(const RoadGraph &p, const RoadGraph &s, vector<NodeInterfac
 
 void WorldCell::init()
 {
-_busy = false;
-
+	_busy = false;
 
 	_showRoads = true;
 	_showBuildings = true;
 
 	// set up some default growth gen params
-	_growthGenParams.seed = 0;
-	_growthGenParams.segmentSize = 6;
-	_growthGenParams.segmentDeviance = 0.4;
-	_growthGenParams.degree = 4;
-	_growthGenParams.degreeDeviance = 0.01;
-	_growthGenParams.snapSize = 2.4;
-	_growthGenParams.snapDeviance = 0.1;
-	_growthGenParams.buildingHeight = 2.4;
-	_growthGenParams.buildingDeviance = 0.1;
-	_growthGenParams.roadWidth = 0.4;
-	_growthGenParams.roadLimit = 0;
-	_growthGenParams.connectivity = 1;
-	_growthGenParams.lotSize = 2;
-	_growthGenParams.lotDeviance = 0.2;
+	_genParams._seed = 1;
+	_genParams._segmentSize = 6;
+	_genParams._segmentDeviance = 0.4;
+	_genParams._degree = 4;
+	_genParams._degreeDeviance = 0.01;
+	_genParams._snapSize = 2.4;
+	_genParams._snapDeviance = 0.1;
+	_genParams._buildingHeight = 2.4;
+	_genParams._buildingDeviance = 0.1;
+	_genParams._roadWidth = 0.4;
+	_genParams._roadLimit = 0;
+	_genParams._connectivity = 1;
+	_genParams._lotSize = 2;
+	_genParams._lotDeviance = 0.2;
+	_genParams._debug = false;
 
 	_roadNetworkMO = 0;
 	_roadJunctionsMO = 0;
 	_buildingsMO = 0;
+	_buildingsMO1 = 0;
+	_buildingsMO2 = 0;
 	_debugMO = 0;
-	mOverlay = 0;
-	mOverlay2 = 0;
 
-	_name = "cell"+StringConverter::toString(mInstanceCount++);
-	mSceneNode = WorldFrame::getSingleton().getSceneManager()->getRootSceneNode()->createChildSceneNode(_name);
+	_name = "cell"+StringConverter::toString(_instanceCount++);
+	_sceneNode = WorldFrame::getSingleton().getSceneManager()->getRootSceneNode()->createChildSceneNode(_name);
 }
 
 WorldCell::~WorldCell()
@@ -71,12 +72,10 @@ WorldCell::~WorldCell()
 	clearBoundary();
 	clearFilaments();
 	clearRoadGraph();
-	if(mOverlay)
-		delete mOverlay;
 
 	destroySceneObject();
-	mSceneNode->detachAllObjects();
-	mSceneNode->getCreator()->destroySceneNode(mSceneNode->getName());
+	_sceneNode->detachAllObjects();
+	_sceneNode->getCreator()->destroySceneNode(_sceneNode->getName());
 }
 
 void WorldCell::clear()
@@ -90,28 +89,43 @@ void WorldCell::clear()
 void WorldCell::destroySceneObject()
 {
 	if(_roadNetworkMO) {
-		mSceneNode->detachObject(_roadNetworkMO->getName());
-		mSceneNode->getCreator()->destroyManualObject(_roadNetworkMO);
+		_sceneNode->detachObject(_roadNetworkMO->getName());
+		_sceneNode->getCreator()->destroyManualObject(_roadNetworkMO);
 		delete _roadNetworkMO;
 		_roadNetworkMO = 0;
 	}
 	if(_roadJunctionsMO) {
-		mSceneNode->detachObject(_roadJunctionsMO->getName());
-		mSceneNode->getCreator()->destroyManualObject(_roadJunctionsMO);
+		_sceneNode->detachObject(_roadJunctionsMO->getName());
+		_sceneNode->getCreator()->destroyManualObject(_roadJunctionsMO);
 		delete _roadJunctionsMO;
 		_roadJunctionsMO = 0;
 	}
 
 	if(_buildingsMO) {
-		mSceneNode->detachObject(_buildingsMO->getName());
-		mSceneNode->getCreator()->destroyManualObject(_buildingsMO);
+		_sceneNode->detachObject(_buildingsMO->getName());
+		_sceneNode->getCreator()->destroyManualObject(_buildingsMO);
 		delete _buildingsMO;
 		_buildingsMO = 0;
 	}
 
+	if(_buildingsMO1) {
+		_sceneNode->detachObject(_buildingsMO1->getName());
+		_sceneNode->getCreator()->destroyManualObject(_buildingsMO1);
+		delete _buildingsMO1;
+		_buildingsMO1 = 0;
+	}
+
+	if(_buildingsMO2) {
+		_sceneNode->detachObject(_buildingsMO2->getName());
+		_sceneNode->getCreator()->destroyManualObject(_buildingsMO2);
+		delete _buildingsMO2;
+		_buildingsMO2 = 0;
+	}
+
+
 	if(_debugMO) {
-		mSceneNode->detachObject(_debugMO->getName());
-		mSceneNode->getCreator()->destroyManualObject(_debugMO);
+		_sceneNode->detachObject(_debugMO->getName());
+		_sceneNode->getCreator()->destroyManualObject(_debugMO);
 		delete _debugMO;
 		_debugMO = 0;
 	}
@@ -151,17 +165,16 @@ bool cmpRd(const WorldRoad* l, const WorldRoad* r)
 	return l->getLength() < r->getLength();
 }
 
-void WorldCell::generateRoadNetwork()
+void WorldCell::generateRoadNetwork(rando genRandom)
 {
 	queue< pair<NodeInterface*, Vector2> > q;
 	//TODO tidy
 
-	Ogre::Real snapSzSquared = _growthGenParams.snapSize * _growthGenParams.snapSize;
-
+	Ogre::Real snapSzSquared = _genParams._snapSize * _genParams._snapSize;
 
 	// 
 	bool centreSuccess = false;
-	if(_growthGenParams.connectivity >= 1.0f)
+	if(_genParams._connectivity >= 1.0f)
 	{
 		// 2. Get Center as a start point !!return if its node inside the cell	
 		vector<Vector2> pointList;
@@ -179,7 +192,7 @@ void WorldCell::generateRoadNetwork()
 			RoadInterface *longest = getLongestBoundaryRoad();
 			Vector2 direction = longest->getSrcNode()->getPosition2D() - longest->getDstNode()->getPosition2D();
 			direction.normalise();   
-			direction *= _growthGenParams.segmentSize;
+			direction *= _genParams._segmentSize;
 
 			q.push(make_pair<NodeInterface*, Vector2>(startNode, direction));
 			centreSuccess = true;
@@ -219,8 +232,8 @@ void WorldCell::generateRoadNetwork()
 			Vector2 roadDir(_boundaryCycle[k]->getPosition2D() - _boundaryCycle[j]->getPosition2D());
 			roadDir = roadDir.perpendicular();
 			roadDir.normalise();
-			Vector2 pos2 = pos1 + (roadDir * _growthGenParams.segmentSize);
-			pos1 -= (roadDir * _growthGenParams.segmentSize);
+			Vector2 pos2 = pos1 + (roadDir * _genParams._segmentSize);
+			pos1 -= (roadDir * _genParams._segmentSize);
 			
 			NodeInterface* currentNode = 0;
 			if(!isInside(pos2)) 
@@ -235,7 +248,7 @@ void WorldCell::generateRoadNetwork()
 			// 6600 vs. 8600 debug
 			// 94 vs. 109 release
 			//switch(_roadGraph.findClosestSnappedIntersection(currentNode->getPosition2D(), cursor, snapSzSquared, nd, rd, newPoint))
-			switch(_roadGraph.snapInfo(currentNode->mNodeId, pos1, snapSzSquared, nd, rd, newPoint))
+			switch(_roadGraph.snapInfo(currentNode->_nodeId, pos1, snapSzSquared, nd, rd, newPoint))
 			{
 			case 0: 
 				break;
@@ -245,7 +258,7 @@ void WorldCell::generateRoadNetwork()
 					//NodeInterface *cursorNode = createNode(newPoint);
 					NodeInterface *cursorNode = new SimpleNode(_roadGraph, newPoint);
 					NodeId cursorNodeId = _roadGraph.addNode(cursorNode);
-					cursorNode->mNodeId = cursorNodeId;
+					cursorNode->_nodeId = cursorNodeId;
 					createRoad(currentNode, cursorNode);
 
 					// get intersected source src and dst
@@ -290,13 +303,12 @@ void WorldCell::generateRoadNetwork()
 		}
 	}
 
-	int seed = _growthGenParams.seed;
-	Ogre::Real segDevSz = _growthGenParams.segmentSize * _growthGenParams.segmentDeviance;
-	Ogre::Real segSzBase = _growthGenParams.segmentSize - (segDevSz / 2);
-	Real degDev = _growthGenParams.degree * _growthGenParams.degreeDeviance;
-	Real degBase = _growthGenParams.degree - (degDev / 2);
+	Ogre::Real segDevSz = _genParams._segmentSize * _genParams._segmentDeviance;
+	Ogre::Real segSzBase = _genParams._segmentSize - (segDevSz / 2);
+	Real degDev = _genParams._degree * _genParams._degreeDeviance;
+	Real degBase = _genParams._degree - (degDev / 2);
 
-	srand(seed++);
+	srand(_genParams._seed);
 
 	size_t roadCount = 0;
 
@@ -307,14 +319,16 @@ void WorldCell::generateRoadNetwork()
 		boost::tie(currentNode, currentDirection) = q.front();
 		q.pop();
 
-		Ogre::Radian theta(Math::TWO_PI / (degBase + (degDev * ((float)rand()/(float)RAND_MAX))));
+		//Ogre::Radian theta(Math::TWO_PI / (degBase + (degDev * ((float)rand()/(float)RAND_MAX))));
+		Ogre::Radian theta(Math::TWO_PI / (degBase + (degDev * genRandom())));
+
 
 		// alter our direction vector 
-		for(unsigned int i=0; i < _growthGenParams.degree; i++)
+		for(unsigned int i=0; i < _genParams._degree; i++)
 		{
-			if(_growthGenParams.roadLimit != 0 && roadCount++ >= _growthGenParams.roadLimit) return;
+			if(_genParams._roadLimit != 0 && roadCount++ >= _genParams._roadLimit) return;
 
-			if(roadCount > 57)
+			if(roadCount >= 187)
 			{
 				size_t z = 0;
 			}
@@ -324,7 +338,8 @@ void WorldCell::generateRoadNetwork()
 			// doesn't work grrrrrrrrrr
 
 			currentDirection.normalise();
-			Real segSz = (segSzBase + (segDevSz *  ((float)rand()/(float)RAND_MAX)));
+			//Real segSz = (segSzBase + (segDevSz *  ((float)rand()/(float)RAND_MAX)));
+			Real segSz = (segSzBase + (segDevSz *  genRandom()));
 			currentDirection *= segSz;
 			Vector2 cursor(currentDirection + currentNode->getPosition2D());
 
@@ -335,7 +350,7 @@ void WorldCell::generateRoadNetwork()
 			// 6600 vs. 8600 debug
 			// 94 vs. 109 release
 			//switch(_roadGraph.findClosestSnappedIntersection(currentNode->getPosition2D(), cursor, snapSzSquared, nd, rd, newPoint))
-			switch(_roadGraph.snapInfo(currentNode->mNodeId, cursor, snapSzSquared, nd, rd, newPoint))
+			switch(_roadGraph.snapInfo(currentNode->_nodeId, cursor, snapSzSquared, nd, rd, newPoint))
 			{
 			case 0: 
 				// no intersection found
@@ -347,14 +362,15 @@ void WorldCell::generateRoadNetwork()
 				break;
 			case 1: 
 				{
-				if(((float)rand()/(float)RAND_MAX) > _growthGenParams.connectivity)
+				//if(((float)rand()/(float)RAND_MAX) > _genParams._connectivity)
+				if(genRandom() > _genParams._connectivity)
 					break;
 
 				// road intersection
 				//NodeInterface *cursorNode = createNode(newPoint);
 				NodeInterface *cursorNode = new SimpleNode(_roadGraph, newPoint);
 				NodeId cursorNodeId = _roadGraph.addNode(cursorNode);
-				cursorNode->mNodeId = cursorNodeId;
+				cursorNode->_nodeId = cursorNodeId;
 				createRoad(currentNode, cursorNode);
 
 				// get intersected source src and dst
@@ -388,7 +404,8 @@ void WorldCell::generateRoadNetwork()
 				break;
 			case 2:
 				// node snap
-				if(((float)rand()/(float)RAND_MAX) > _growthGenParams.connectivity)
+				//if(((float)rand()/(float)RAND_MAX) > _genParams._connectivity)
+				if(genRandom() > _genParams._connectivity)
 					break;
 				// MMM: dont snap to your self ass monkey
 				if(currentNode != _roadGraph.getNode(nd))
@@ -419,7 +436,7 @@ void WorldCell::buildRoadNetwork()
 	}
 
 	_roadJunctionsMO->end();
-	mSceneNode->attachObject(_roadJunctionsMO);
+	_sceneNode->attachObject(_roadJunctionsMO);
 
 	// Create the Road Network
 	_roadNetworkMO = new ManualObject(_name+"Road");
@@ -432,21 +449,45 @@ void WorldCell::buildRoadNetwork()
 
 	_roadNetworkMO->end();
 	_roadNetworkMO->setVisible(_showRoads);
-	mSceneNode->attachObject(_roadNetworkMO);
+	_sceneNode->attachObject(_roadNetworkMO);
 }
 
 
 void WorldCell::prebuild()
 {
+	if(_busy) 
+		return;
+	_busy = true;
+
+	// 1.
+	// Assemble the random generator
+
+	// Define a random number generator and init with a reproducible seed.
+	base_generator_type generator(_genParams._seed);
+
+	// Define a uniform random number distribution which produces "double"
+	// values between 0 and 1 (0 inclusive, 1 exclusive).
+	boost::uniform_real<> uni_dist(0,1);
+	rando rg(generator, uni_dist);
+
+
 	clearRoadGraph();
 	installGraph();
-	generateRoadNetwork();
-	vector< vector<Vector2> > footprints;
-	_roadGraph.extractFootprints(footprints, _growthGenParams.lotSize);
-	BOOST_FOREACH(vector<Vector2> &footprint, footprints)
+	generateRoadNetwork(rg);
+	vector< vector<Vector3> > footprints;
+	_roadGraph.extractFootprints(footprints, _genParams._lotSize);
+
+	if(_genParams._debug)
 	{
-		_blocks.push_back(WorldBlock(footprint, _growthGenParams));
+		BOOST_FOREACH(vector<Vector3> &footprint, footprints)
+		_blocks.push_back(WorldBlock(footprint, _genParams, rg, true));
 	}
+	else
+	{
+		BOOST_FOREACH(vector<Vector3> &footprint, footprints)
+		_blocks.push_back(WorldBlock(footprint, _genParams, rg));
+	}
+	_busy = false;
 }
 
 void WorldCell::build()
@@ -462,18 +503,48 @@ void WorldCell::build()
 	//bd.push_back(Vector2(975, 975));
 	//bd.push_back(Vector2(975, 1000));
 
+	// seed it
+	srand(_genParams._seed);
+
+	//debug
+	_debugMO = new ManualObject(_name+"do");
+	_debugMO->begin("gk/Hilite/Red2", Ogre::RenderOperation::OT_LINE_LIST);
 
 	//// declare the manual object
 	_buildingsMO = new ManualObject(_name+"b");
-	_buildingsMO->begin("gk/Building", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	_buildingsMO1 = new ManualObject(_name+"b1");
+	_buildingsMO2 = new ManualObject(_name+"b2");
 
-	BOOST_FOREACH(WorldBlock &block, _blocks)
-		block.build(_buildingsMO);
+	// "Examples/BumpMapping/SingleLight"
+	_buildingsMO->begin("gk/Building2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	_buildingsMO1->begin("gk/Building3", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	_buildingsMO2->begin("gk/Building4", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
+	if(_genParams._debug)
+	{
+		BOOST_FOREACH(WorldBlock &block, _blocks)
+			block.build(_buildingsMO, _buildingsMO1, _buildingsMO2, _debugMO);
+	}
+	else
+	{
+		BOOST_FOREACH(WorldBlock &block, _blocks)
+			block.build(_buildingsMO, _buildingsMO1, _buildingsMO2);
+	} 
 
 	_buildingsMO->end();
+	_buildingsMO1->end();
+	_buildingsMO2->end();
 	_buildingsMO->setVisible(_showBuildings);
-	mSceneNode->attachObject(_buildingsMO);
+	_buildingsMO1->setVisible(_showBuildings);
+	_buildingsMO2->setVisible(_showBuildings);
+
+
+	_sceneNode->attachObject(_buildingsMO);
+	_sceneNode->attachObject(_buildingsMO1);
+	_sceneNode->attachObject(_buildingsMO2);
+
+	_debugMO->end();
+	_sceneNode->attachObject(_debugMO);
 
 	// am done with blocks now.
 	_blocks.clear();
@@ -500,7 +571,7 @@ void WorldCell::build()
 	//for(boost::tie(rIt, rEnd) = _roadGraph.getRoads(); rIt != rEnd; rIt++)
 	//{
 	//	Vector2 road(_roadGraph.getSrcNode(*rIt)->getPosition2D() - _roadGraph.getDstNode(*rIt)->getPosition2D());
-	//	if(road.length() < _growthGenParams.snapSize) i++;
+	//	if(road.length() < _genParams.snapSize) i++;
 	//}
 	//LogManager::getSingleton().logMessage("Small road count: "+StringConverter::toString(i));
 	//LogManager::getSingleton().logMessage("Build fail count: "+StringConverter::toString(buildFail));
@@ -559,7 +630,7 @@ void WorldCell::installRoad(RoadInterface* ri, map<NodeInterface*, NodeInterface
 		// create the road seg
 		//createRoad(nodeMap[srcNd], nodeMap[dstNd]);
 		RoadId rd;
-		if(_roadGraph.addRoad(nodeMap[srcNd]->mNodeId, nodeMap[dstNd]->mNodeId, rd))
+		if(_roadGraph.addRoad(nodeMap[srcNd]->_nodeId, nodeMap[dstNd]->_nodeId, rd))
 		{
 			_roadGraph.setRoad(rd, ri);
 		}
@@ -649,11 +720,11 @@ void WorldCell::clearFilaments()
 
 CellGenParams WorldCell::getGenParams() const
 {
-	return _growthGenParams;
+	return _genParams;
 }
 void WorldCell::setGenParams(const CellGenParams &g)
 {
-	_growthGenParams = g;
+	_genParams = g;
 	invalidate();
 }
 
@@ -676,17 +747,17 @@ NodeInterface* WorldCell::createNode(const Vector2 &pos)
 {
 	SimpleNode *sn = new SimpleNode(_roadGraph, pos);
 	NodeId nd = _roadGraph.addNode(sn);
-	sn->mNodeId = nd;
+	sn->_nodeId = nd;
 	return sn;
 }
 
 RoadInterface* WorldCell::createRoad(NodeInterface *n1, NodeInterface *n2)
 {
 	RoadId rd;
-	if(_roadGraph.addRoad(n1->mNodeId, n2->mNodeId, rd))
+	if(_roadGraph.addRoad(n1->_nodeId, n2->_nodeId, rd))
 	{
 		SimpleRoad *sr = new SimpleRoad(n1, n2);
-		sr->setWidth(_growthGenParams.roadWidth);
+		sr->setWidth(_genParams._roadWidth);
 		_roadGraph.setRoad(rd, sr);
 		return sr;
 	}
@@ -697,7 +768,7 @@ RoadInterface* WorldCell::createRoad(NodeInterface *n1, NodeInterface *n2)
 void WorldCell::deleteRoad(RoadInterface *ri)
 {
 	// remove it from the graph
-	_roadGraph.removeRoad(ri->getSrcNode()->mNodeId, ri->getDstNode()->mNodeId);
+	_roadGraph.removeRoad(ri->getSrcNode()->_nodeId, ri->getDstNode()->_nodeId);
 	// delete it
 	delete ri;
 }
@@ -747,159 +818,9 @@ bool WorldCell::compareBoundary(const vector<NodeInterface*>& nodeCycle) const
 
 RoadInterface* WorldCell::getRoad(NodeInterface* n1, NodeInterface* n2)
 {
-	return _roadGraph.getRoad(_roadGraph.getRoad(n1->mNodeId, n2->mNodeId));
+	return _roadGraph.getRoad(_roadGraph.getRoad(n1->_nodeId, n2->_nodeId));
 }
 
-bool WorldCell::extractFootprint(const vector<NodeInterface*> &nodeCycle, vector<Vector2> &footprint)
-{
-	// get size
-	size_t i, j, N = nodeCycle.size();
-
-	// check cycle
-	if(N < 3)
-		throw Exception(Exception::ERR_INVALIDPARAMS, 
-		"Invalid number of nodes in cycle", "WorldCell::extractFootprint");
-
-	// prepare footprint data structures
-	vector<Vector2> originalFootprint;
-	vector<Real> roadWidths;
-	originalFootprint.reserve(N);
-	for(i=0; i<N; i++)
-	{
-		originalFootprint.push_back(nodeCycle[i]->getPosition2D());
-		roadWidths.push_back(getRoad(nodeCycle[i], nodeCycle[(i+1)%N])->getWidth());
-	}
-
-/*	//Real width = roadCycle[0]->getWidth();
-	Real width = roadWidths[0];
-	for(i=1; i<N && roadWidths[i] == width; i++);
-	if(i==N)
-	{
-		if(Geometry::polygonInset(width, originalFootprint))
-		{
-			footprint = originalFootprint;
-			return true;
-		}
-		else return false;
-	}
-	else*/
-	{
-/*
-		// I'm affraid its a little more complicated for this case
-		// The sk code provides a skeleton for uniform insetting but 
-		// cells primary road network join onto larger roads that require 
-		// a non uniform inset, ideally a weighted straight skeleton should
-		// but for the meantime, a manual inset for the larger roads is used
-
-		// calculate the minimum road width
-		for(i=1; i<N; i++) 
-			if(roadCycle[i]->getWidth() < width) 
-				width = roadCycle[i]->getWidth();
-
-		// store a list of larger road sections
-		vector< vector<Vector2> > roadSections;
-		vector< Real > roadSectionWidths;
-
-		vector<RoadInterface*> rds;
-		for(i=0; i<N; i++) 
-		{
-			NodeId n1 = nodeCycle[i]->mNodeId;
-			NodeId n2 = nodeCycle[(i+1)%N]->mNodeId;
-			RoadId rd = _roadGraph.getRoad(n1, n2);
-			RoadInterface* ri = _roadGraph.getRoad(rd);
-			assert(roadCycle[(i+1)%N] == ri);
-			rds.push_back(ri);
-		}
-
-		for(i=0; i<N; i++) 
-		{
-			if(roadCycle[i]->getWidth() != width)
-			{
-				// store width
-				Real roadSectionWidth = roadCycle[i]->getWidth();
-
-				NodeId n1 = nodeCycle[i]->mNodeId;
-				NodeId n2 = nodeCycle[(i+1)%N]->mNodeId;
-				RoadId rd = _roadGraph.getRoad(n1, n2);
-				RoadInterface* ri = _roadGraph.getRoad(rd);
-				//assert(roadCycle[i] == ri);
-
-				// store points in section
-				vector<Vector2> roadSection;
-				roadSection.push_back(originalFootprint[(i-1)%N]);
-				roadSection.push_back(originalFootprint[i++]);
-				for(; i<N && roadCycle[i]->getWidth() == roadSectionWidth; i++)
-					roadSection.push_back(originalFootprint[i]);
-
-				i--;  // don't advance too far
-
-				// add to list
-				roadSectionWidths.push_back(roadSectionWidth);
-				roadSections.push_back(roadSection);
-			}
-		}
-
-		// get a minimal inset footprint
-		if(!Geometry::polygonInset(width, originalFootprint))
-			return false;
-
-		size_t numOfSections = roadSections.size();
-		for(i=0; i<numOfSections; i++)
-		{
-			// inset road section
-			if(!Geometry::lineInset(roadSectionWidths[i], roadSections[i]))
-				return false;
-
-			// add to footprint
-			//for(size_t j=0; j<roadSections[i].size(); j++) newFootprint.push_back(roadSections[i][j]);
-			if(!Geometry::unionPolyAndLine(originalFootprint, roadSections[i]))
-				return false;
-		}
-		footprint = originalFootprint;
-		return true;
-*/
-		// try it old school see if it works any better
-
-		// create footprint edge structure
-		vector< pair<Vector2, Vector2> > edges;
-		edges.reserve(N);
-		vector<Vector2> newFootprint;
-		newFootprint.reserve(N);
-
-		// get footprint edge vectors
-		for(i=0; i<N; i++)
-		{
-			j = (i+1)%N;
-			Vector2 dir(originalFootprint[i] - originalFootprint[j]);
-			dir = dir.perpendicular();
-			dir.normalise();
-			dir *= -roadWidths[i];
-			edges.push_back(make_pair(originalFootprint[i] + dir, originalFootprint[j] + dir));
-		}
-
-		// calculate footprint points from edges
-		for(i=0; i<N; i++)
-		{
-			j = (i+1)%N;
-			// get edge intersection point
-			Ogre::Real r,s;
-			Vector2 intscn;
-			if(Geometry::lineIntersect(edges[i].first, edges[i].second, 
-				edges[j].first, edges[j].second, intscn, r, s) && r >= 0 && s <= 1)
-			{
-				newFootprint.push_back(intscn);
-			}
-			else
-			{
-				// no intersection, couldbe parallel could be mad lets average the pair
-				newFootprint.push_back((edges[i].second + edges[j].first)/2);
-			}
-		}
-		footprint.clear();
-		footprint.insert(footprint.begin(), newFootprint.rbegin(), newFootprint.rend());
-		return true;
-	}
-}
 
 void WorldCell::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3 &aNorm,
 			const Vector3 &b1, const Vector3 &b2, const Vector3 &bNorm, Real uMin, Real uMax)
@@ -959,40 +880,40 @@ bool WorldCell::loadXML(const TiXmlHandle& cellRoot)
 			string key = element->Value();
 			
 			if(key == "seed")
-				element->QueryIntAttribute("value", &_growthGenParams.seed);
+				element->QueryIntAttribute("value", &_genParams._seed);
 			else if(key == "type") 
 			{
 				int t;
 				element->QueryIntAttribute("value", &t);
-				_growthGenParams.type = static_cast<unsigned int>(t);
+				_genParams._type = static_cast<unsigned int>(t);
 			}
 			else if(key == "segmentSize")
-				element->QueryFloatAttribute("value", &_growthGenParams.segmentSize);
+				element->QueryFloatAttribute("value", &_genParams._segmentSize);
 			else if(key == "segmentDeviance")
-				element->QueryFloatAttribute("value", &_growthGenParams.segmentDeviance);
+				element->QueryFloatAttribute("value", &_genParams._segmentDeviance);
 			else if(key == "degree") 
 			{
 				int deg;
 				element->QueryIntAttribute("value", &deg);
-				_growthGenParams.degree = static_cast<unsigned int>(deg);
+				_genParams._degree = static_cast<unsigned int>(deg);
 			}else if(key == "degreeDeviance")
-				element->QueryFloatAttribute("value", &_growthGenParams.degreeDeviance);
+				element->QueryFloatAttribute("value", &_genParams._degreeDeviance);
 			else if(key == "snapSize")
-				element->QueryFloatAttribute("value", &_growthGenParams.snapSize);
+				element->QueryFloatAttribute("value", &_genParams._snapSize);
 			else if(key == "snapDeviance")
-				element->QueryFloatAttribute("value", &_growthGenParams.snapDeviance);
+				element->QueryFloatAttribute("value", &_genParams._snapDeviance);
 			else if(key == "roadWidth")
-				element->QueryFloatAttribute("value", &_growthGenParams.roadWidth);
+				element->QueryFloatAttribute("value", &_genParams._roadWidth);
 			else if(key == "buildingHeight")
-				element->QueryFloatAttribute("value", &_growthGenParams.buildingHeight);
+				element->QueryFloatAttribute("value", &_genParams._buildingHeight);
 			else if(key == "buildingDeviance")
-				element->QueryFloatAttribute("value", &_growthGenParams.buildingDeviance);
+				element->QueryFloatAttribute("value", &_genParams._buildingDeviance);
 			else if(key == "connectivity")
-				element->QueryFloatAttribute("value", &_growthGenParams.connectivity);
+				element->QueryFloatAttribute("value", &_genParams._connectivity);
 			else if(key == "lotSize")
-				element->QueryFloatAttribute("value", &_growthGenParams.lotSize);
+				element->QueryFloatAttribute("value", &_genParams._lotSize);
 			else if(key == "lotDeviance")
-				element->QueryFloatAttribute("value", &_growthGenParams.lotDeviance);
+				element->QueryFloatAttribute("value", &_genParams._lotDeviance);
 		}
 	}
 	return true;
@@ -1026,20 +947,20 @@ TiXmlElement* WorldCell::saveXML()
 
 	// Save Params
 	TiXmlElement *gp = addNewElement(root, "genparams");
-	addNewElement(gp, "seed")->SetAttribute("value", _growthGenParams.seed);
-	addNewElement(gp, "type")->SetAttribute("value", _growthGenParams.type);
-	addNewElement(gp, "segmentSize")->SetDoubleAttribute("value", _growthGenParams.segmentSize);
-	addNewElement(gp, "segmentDeviance")->SetDoubleAttribute("value", _growthGenParams.segmentDeviance);
-	addNewElement(gp, "degree")->SetAttribute("value", _growthGenParams.degree);
-	addNewElement(gp, "degreeDeviance")->SetDoubleAttribute("value", _growthGenParams.degreeDeviance);
-	addNewElement(gp, "snapSize")->SetDoubleAttribute("value", _growthGenParams.snapSize);
-	addNewElement(gp, "snapDeviance")->SetDoubleAttribute("value", _growthGenParams.snapDeviance);
-	addNewElement(gp, "roadWidth")->SetDoubleAttribute("value", _growthGenParams.roadWidth);
-	addNewElement(gp, "buildingHeight")->SetDoubleAttribute("value", _growthGenParams.buildingHeight);
-	addNewElement(gp, "buildingDeviance")->SetDoubleAttribute("value", _growthGenParams.buildingDeviance);
-	addNewElement(gp, "connectivity")->SetDoubleAttribute("value", _growthGenParams.connectivity);
-	addNewElement(gp, "lotSize")->SetDoubleAttribute("value", _growthGenParams.lotSize);
-	addNewElement(gp, "lotDeviance")->SetDoubleAttribute("value", _growthGenParams.lotDeviance);
+	addNewElement(gp, "seed")->SetAttribute("value", _genParams._seed);
+	addNewElement(gp, "type")->SetAttribute("value", _genParams._type);
+	addNewElement(gp, "segmentSize")->SetDoubleAttribute("value", _genParams._segmentSize);
+	addNewElement(gp, "segmentDeviance")->SetDoubleAttribute("value", _genParams._segmentDeviance);
+	addNewElement(gp, "degree")->SetAttribute("value", _genParams._degree);
+	addNewElement(gp, "degreeDeviance")->SetDoubleAttribute("value", _genParams._degreeDeviance);
+	addNewElement(gp, "snapSize")->SetDoubleAttribute("value", _genParams._snapSize);
+	addNewElement(gp, "snapDeviance")->SetDoubleAttribute("value", _genParams._snapDeviance);
+	addNewElement(gp, "roadWidth")->SetDoubleAttribute("value", _genParams._roadWidth);
+	addNewElement(gp, "buildingHeight")->SetDoubleAttribute("value", _genParams._buildingHeight);
+	addNewElement(gp, "buildingDeviance")->SetDoubleAttribute("value", _genParams._buildingDeviance);
+	addNewElement(gp, "connectivity")->SetDoubleAttribute("value", _genParams._connectivity);
+	addNewElement(gp, "lotSize")->SetDoubleAttribute("value", _genParams._lotSize);
+	addNewElement(gp, "lotDeviance")->SetDoubleAttribute("value", _genParams._lotDeviance);
 
 	return root;
 }
@@ -1055,177 +976,8 @@ void WorldCell::showBuildings(bool show)
 {
 	_showBuildings = show;
 	if(_buildingsMO) _buildingsMO->setVisible(_showBuildings);
-}
-
-
-void WorldCell::beginGraphicalCellDecomposition()
-{
-	// take a copy of the graph
-	mGCDRoadGraph = _roadGraph;
-
-	//init roads
-	RoadIterator rIt, rEnd;
-	for(tie(rIt, rEnd) = mGCDRoadGraph.getRoads(); rIt != rEnd; rIt++)
-		mGCDRoadGraph.getRoad(*rIt)->setRoadCycle(false);
-
-	//set<NodeId> mGCDHeap = vertices; 
-	//gk: at the moment I'm using a vertex to store vertices so they are already sorted
-	NodeIterator nIt, nEnd;
-	boost::tie(nIt, nEnd) = mGCDRoadGraph.getNodes();
-	//set<NodeId> mGCDHeap(i, end);
-	
-	//SET needs sort
-	//sort(mGCDHeap.begin(), mGCDHeap.end(), comp());
-	//it would be neater o use a comparator but our comparision isn't standalone
-
-
-	//insert one
-	mGCDHeap.clear();
-	mGCDHeap.push_back(*nIt++);
-
-	for(; nIt != nEnd; ++nIt)
-	{
-		for(std::list<NodeId>::iterator tit = mGCDHeap.begin(); true; tit++)
-		{
-			if(tit == mGCDHeap.end()) {
-				mGCDHeap.push_back(*nIt);
-				break;
-			}
-			else if(mGCDRoadGraph.getNode(*nIt)->getPosition2D().x < mGCDRoadGraph.getNode(*tit)->getPosition2D().x)
-			{
-				mGCDHeap.insert(tit, *nIt);
-				break;
-			}
-		}
-	}
-
-	drawGraphicalCellDecomposition();
-}
-
-void WorldCell::drawGraphicalCellDecomposition()
-{	
-	// 
-	if(mOverlay)
-	{
-		mSceneNode->detachObject(mOverlay);
-		delete mOverlay;
-	}
-
-	if(mOverlay2)
-	{
-		mSceneNode->detachObject(mOverlay2);
-		delete mOverlay2;
-	}
-
-	// Specify clearance
-	Vector3 extraClearance(0, 2, 0);
-
-	// begin manual object
-	mOverlay = new ManualObject(_name+"o");
-	mOverlay->begin("gk/Hilite/Red2", Ogre::RenderOperation::OT_LINE_LIST);
-
-	// for each edge
-	RoadIterator rIt, rEnd;
-	for(tie(rIt, rEnd) = mGCDRoadGraph.getRoads(); rIt != rEnd; rIt++) 
-	{
-		NodeInterface* srcNode = mGCDRoadGraph.getSrcNode((*rIt));
-		NodeInterface* dstNode = mGCDRoadGraph.getDstNode((*rIt));
-		mOverlay->position(srcNode->getPosition3D() + extraClearance);
-		mOverlay->position(dstNode->getPosition3D() + extraClearance);
-	}
-
-	// end manual object
-	mOverlay->end();
-	mSceneNode->attachObject(mOverlay);
-
-
-	// begin manual object
-	mOverlay2 = new ManualObject(_name+"o2");
-	mOverlay2->begin("gk/Hilite/Yellow", Ogre::RenderOperation::OT_LINE_LIST);
-
-	// for each cell
-	for(size_t i=0; i<mGCDNodeCycles.size(); i++)
-	{
-		std::vector<Vector2> polypoints;
-		polypoints.reserve(mGCDNodeCycles[i].size());
-
-		for(size_t j=0; j<mGCDNodeCycles[i].size(); j++)
-		{
-			polypoints.push_back(mGCDNodeCycles[i][j]->getPosition2D());
-		}
-		Geometry::polygonInset(0.2f, polypoints);
-
-		for(size_t j=0; j<(mGCDNodeCycles[i].size() - 1); j++)
-		{
-			Vector3 src(polypoints[j].x, mGCDNodeCycles[i][j]->getPosition3D().y + 2, polypoints[j].y);
-			mOverlay2->position(src);
-
-			Vector3 dst(polypoints[j+1].x, mGCDNodeCycles[i][j+1]->getPosition3D().y + 2, polypoints[j+1].y);
-			mOverlay2->position(dst);
-		}
-
-		Vector3 src(polypoints[mGCDNodeCycles[i].size() - 1].x, 
-			mGCDNodeCycles[i][mGCDNodeCycles[i].size() - 1]->getPosition3D().y + 2, 
-			polypoints[mGCDNodeCycles[i].size() - 1].y);
-		mOverlay2->position(src);
-
-		Vector3 dst(polypoints[0].x, 
-			mGCDNodeCycles[i][0]->getPosition3D().y + 2, polypoints[0].y);
-		mOverlay2->position(dst);
-
-	}
-
-	// end manual object
-	mOverlay2->end();
-	mSceneNode->attachObject(mOverlay2);
-
-
-}
-
-void WorldCell::stepGraphicalCellDecomposition()
-{	
-	
-	try {
-	
-	//while (mGCDHeap is not empty) do
-	if(mGCDHeap.size() != 0)
-	{
-		//Vertex v0 = mGCDHeap.GetMin();
-		NodeId v0 = *(mGCDHeap.begin());
-
-		switch(out_degree(v0, mGCDRoadGraph.mGraph))
-		{
-		case 0:
-			remove_vertex(v0, mGCDRoadGraph.mGraph);
-			RoadGraph::removeFromHeap(v0, mGCDHeap);
-			break;
-		case 1:
-			RoadGraph::extractFilament(v0, RoadGraph::getFirstAdjacent(v0, mGCDRoadGraph.mGraph), mGCDRoadGraph.mGraph, mGCDHeap, mGCDFilaments);
-			//oss<<"Filament: "<<graph[v0].getName()<<endl;
-
-			//DEBUG
-			//mGCDHeap.erase(v0);
-			break;
-		default:
-			RoadGraph::extractPrimitive(v0, mGCDRoadGraph.mGraph, mGCDHeap, mGCDFilaments, mGCDNodeCycles); // filament or minimal cycle
-			//oss<<"Cycle or Filament: "<<mGraph[v0].getName()<<endl;
-
-			//DEBUG
-			//mGCDHeap.erase(v0);
-			break;
-		}
-		//mGCDHeap.erase(v0);
-	}
-
-	}
-	catch(Exception e)
-	{
-		LogManager::getSingleton().logMessage(e.getDescription());
-
-		//DANGER - setting partially decomposed graph to real graph
-		//mGraph = g;
-	}
-	drawGraphicalCellDecomposition();
+	if(_buildingsMO1) _buildingsMO1->setVisible(_showBuildings);
+	if(_buildingsMO2) _buildingsMO2->setVisible(_showBuildings);
 }
 
 vector<Vector3> WorldCell::getBoundaryPoints3D()

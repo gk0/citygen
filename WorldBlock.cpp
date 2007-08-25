@@ -1,32 +1,96 @@
 #include "stdafx.h"
 #include "WorldBlock.h"
 #include "Geometry.h"
-#include "CellGenParams.h" 
+#include "CellGenParams.h"
 #include "WorldFrame.h"
 
 using namespace Ogre;
 using namespace std;
 
-WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp)
+
+WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp, rando rg, bool debug)
+//  : _randGen(rg)  // not assignable see docs, maybe can be
 {
-		// Do something to extract lots
+	//
+	size_t i,j,N = boundary.size(), N2 = N * 2;
+
+	// build a footpath
+	_vertices.reserve(3*N);
+	_normals.reserve(N);
+	_footpathPolys.reserve(12*N);
+	_vertices.insert(_vertices.end(), boundary.begin(), boundary.end());
+	vector<Vector3> outerBoundary(boundary);
+
+	// raise footpath
+	for(i=0; i<N; i++) outerBoundary[i].y += 0.05; 
+	_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
+	vector<Vector3> innerBoundary(outerBoundary);
+
+	if(Geometry::polygonInsetFast(0.2, innerBoundary))
+	{
+		assert(innerBoundary.size() == N);
+		_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
+		for(i=0; i<N; i++)
+		{
+			j = (i+1)%N;
+			
+			// build polygons for footpath
+
+			// get normal for side
+			_normals.push_back((innerBoundary[i]-innerBoundary[j]).perpendicular().normalisedCopy());
+
+
+			// side
+			_footpathPolys.push_back(j);
+			_footpathPolys.push_back(i);
+			_footpathPolys.push_back(N+i);
+			_footpathPolys.push_back(j);
+			_footpathPolys.push_back(N+i);
+			_footpathPolys.push_back(N+j);
+
+			// top
+			_footpathPolys.push_back(N+j);
+			_footpathPolys.push_back(N+i);
+			_footpathPolys.push_back(N2+i);
+			_footpathPolys.push_back(N+j);
+			_footpathPolys.push_back(N2+i);
+			_footpathPolys.push_back(N2+j);
+		}
+	}
+	else
+		return;
+
+	// prepare 2d boundary for rest of function
+	vector<Vector2> innerBoundary2(N);
+	for(i=0; i<N; i++)
+	{
+		innerBoundary2[i].x = innerBoundary[i].x;
+		innerBoundary2[i].y = innerBoundary[i].z;
+	}
+
+	vector<size_t> tmp;
+	if(!Triangulate::Process(innerBoundary2, tmp))
+		return;
+
+	// Do something to extract lots
 	queue< LotBoundary > q;
 
 	// the bool stores is the side is adjacent a road
 	LotBoundary blockBoundary;
 	vector< LotBoundary > lotBoundaries;
-	BOOST_FOREACH(const Vector2 &b, boundary) blockBoundary.push_back(LotBoundaryPoint(true, b));
+	BOOST_FOREACH(const Vector2 &b, innerBoundary2) blockBoundary.push_back(LotBoundaryPoint(true, b));
 	q.push(blockBoundary);
-	Real lotSplitSz = Math::Sqr(2*gp.lotSize);
+	Real lotSplitSz = Math::Sqr(2*gp._lotSize);
 
 	size_t count=0;
 	while(!q.empty())
 	{
 		if(count>10000) return;
+		if(gp._roadLimit && count > gp._roadLimit) return;
 		count++;
 		LotBoundary b(q.front());
 		q.pop();
-		
+
 		//	find the longest side
 		size_t lsIndex;
 
@@ -35,11 +99,25 @@ WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp)
 		{
 			// add to lot boundaries
 			lotBoundaries.push_back(b);
+
+			if(debug)
+			{
+				std::vector<Vector3> debugLot;
+				debugLot.reserve(b.size());
+				for(size_t j=0; j<b.size(); j++)
+				{	
+					Vector3 p;
+					WorldFrame::getSingleton().plotPointOnTerrain(b[j]._pos, p);
+					debugLot.push_back(p);
+				}
+				_debugLots.push_back(debugLot);
+			}
+
 			continue;
 		}
 
 		std::vector<LotBoundary> splitBoundaries;
-		if(splitBoundary(lsIndex, gp.lotDeviance, b, splitBoundaries))
+		if(splitBoundary(lsIndex, gp._lotDeviance, rg, b, splitBoundaries))
 		{
 			// check boundary borders road
 			for(size_t j, i=0; i<splitBoundaries.size(); i++)
@@ -52,15 +130,49 @@ WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp)
 						break;
 					}
 				}
+
+				// if no road access
+				if(j>=splitBoundaries[i].size())
+				{
+					if(debug)
+					{
+						std::vector<Vector3> debugLot;
+						debugLot.reserve(splitBoundaries[i].size());
+						for(size_t j=0; j<splitBoundaries[i].size(); j++)
+						{	
+							Vector3 p;
+							WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, p);
+							debugLot.push_back(p);
+						}
+						_debugLots.push_back(debugLot);
+					}
+				}
 			}
 			//LogManager::getSingleton().logMessage("Road border: "+StringConverter::toString(k));
 		}
 		//else
 		//	LogManager::getSingleton().logMessage("WorldBlock::splitLotBoundary() failed.");
+
+
+		//if(debug)
+		//{
+		//	for(size_t i=0; i<splitBoundaries.size(); i++)
+		//	{
+		//		std::vector<Vector3> debugLot;
+		//		debugLot.reserve(splitBoundaries[i].size());
+		//		for(size_t j=0; j<splitBoundaries[i].size(); j++)
+		//		{	
+		//			Vector3 p;
+		//			WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, p);
+		//			debugLot.push_back(p);
+		//		}
+		//		_debugLots.push_back(debugLot);
+		//	}
+		//}
 	}
 
 	//_lots = lotBoundaries;
-	Real buildingDeviance = gp.buildingHeight * gp.buildingDeviance;
+	Real buildingDeviance = gp._buildingHeight * gp._buildingDeviance;
 
 	size_t fail = 0;
 	BOOST_FOREACH(LotBoundary &b, lotBoundaries)
@@ -68,9 +180,9 @@ WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp)
 		Vector3 p;
 		WorldFrame::getSingleton().plotPointOnTerrain(b[0]._pos, p);
 		Real foundation = p.y;
-		Real buildingHeight = foundation + gp.buildingHeight - (buildingDeviance / 2);
+		Real buildingHeight = foundation + gp._buildingHeight - (buildingDeviance / 2);
 
-		WorldLot lot(b, gp, foundation, buildingHeight + (buildingDeviance * ((float)rand()/(float)RAND_MAX)));
+		WorldLot lot(b, gp, foundation, buildingHeight + (buildingDeviance * rg()));
 		if(lot.hasError())
 			fail++;
 		else
@@ -80,47 +192,215 @@ WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp)
 }
 
 
-void WorldBlock::build(ManualObject* mObject,  ManualObject* dob)
+
+WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp, rando rg, bool debug)
+//  : _randGen(rg)  // not assignable see docs, maybe can be
 {
-	BOOST_FOREACH(WorldLot& lot, _lots)
-		lot.build(mObject);
-	//	// draw debug lines so
-	//	if(dob)
-	//	{
-	//		for(size_t i=0; i<splitBoundaries.size(); i++)
-	//		{
-	//			for(size_t k,j=0; j<splitBoundaries[i].size(); j++)
-	//			{	
-	//				k = (j+1)%splitBoundaries[i].size();
+	// build a footpath
+	vector<Vector2> outerBoundary(boundary);
 
-	//				Vector3 a,b;
-	//				WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, a);
-	//				WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][k]._pos, b);
-	//				dob->position(a+Vector3(0,1.3,0));
-	//				dob->position(b+Vector3(0,1.3,0));
-	//			}
-	//		}
-	//	}
-	//}
+	vector<Vector2> innerBoundary(boundary);
+	if(Geometry::polygonInsetFast(0.2, innerBoundary))
+	{
+		for(size_t i=0; i<innerBoundary.size(); i++)
+		{
+			Vector3 p;
+			WorldFrame::getSingleton().plotPointOnTerrain(outerBoundary[i], p);
+
+		}
+	}
+
+	// Do something to extract lots
+	queue< LotBoundary > q;
+
+	// the bool stores is the side is adjacent a road
+	LotBoundary blockBoundary;
+	vector< LotBoundary > lotBoundaries;
+	BOOST_FOREACH(const Vector2 &b, innerBoundary) blockBoundary.push_back(LotBoundaryPoint(true, b));
+	q.push(blockBoundary);
+	Real lotSplitSz = Math::Sqr(2*gp._lotSize);
+
+	size_t count=0;
+	while(!q.empty())
+	{
+		if(count>10000) return;
+		if(gp._roadLimit && count > gp._roadLimit) return;
+		count++;
+		LotBoundary b(q.front());
+		q.pop();
+		
+		//	find the longest side
+		size_t lsIndex;
+
+		//if(!getLongestSideAboveLimit(b, lotSplitSz, lsIndex))
+		if(!getLongestSideIndex(b, lotSplitSz, lsIndex))
+		{
+			// add to lot boundaries
+			lotBoundaries.push_back(b);
+
+			if(debug)
+			{
+				std::vector<Vector3> debugLot;
+				debugLot.reserve(b.size());
+				for(size_t j=0; j<b.size(); j++)
+				{	
+					Vector3 p;
+					WorldFrame::getSingleton().plotPointOnTerrain(b[j]._pos, p);
+					debugLot.push_back(p);
+				}
+				_debugLots.push_back(debugLot);
+			}
+
+			continue;
+		}
+
+		std::vector<LotBoundary> splitBoundaries;
+		if(splitBoundary(lsIndex, gp._lotDeviance, rg, b, splitBoundaries))
+		{
+			// check boundary borders road
+			for(size_t j, i=0; i<splitBoundaries.size(); i++)
+			{
+				for(j=0; j<splitBoundaries[i].size(); j++)
+				{
+					if(splitBoundaries[i][j]._roadAccess)
+					{
+						q.push(splitBoundaries[i]);
+						break;
+					}
+				}
+
+				// if no road access
+				if(j>=splitBoundaries[i].size())
+				{
+					if(debug)
+					{
+						std::vector<Vector3> debugLot;
+						debugLot.reserve(splitBoundaries[i].size());
+						for(size_t j=0; j<splitBoundaries[i].size(); j++)
+						{	
+							Vector3 p;
+							WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, p);
+							debugLot.push_back(p);
+						}
+						_debugLots.push_back(debugLot);
+					}
+				}
+			}
+			//LogManager::getSingleton().logMessage("Road border: "+StringConverter::toString(k));
+		}
+		//else
+		//	LogManager::getSingleton().logMessage("WorldBlock::splitLotBoundary() failed.");
 
 
-	// build lots
-	//LogManager::getSingleton().logMessage("Lots: "+StringConverter::toString(lotBoundaries.size()));
-	//Real buildingDeviance = gp.buildingHeight * gp.buildingDeviance;
+		//if(debug)
+		//{
+		//	for(size_t i=0; i<splitBoundaries.size(); i++)
+		//	{
+		//		std::vector<Vector3> debugLot;
+		//		debugLot.reserve(splitBoundaries[i].size());
+		//		for(size_t j=0; j<splitBoundaries[i].size(); j++)
+		//		{	
+		//			Vector3 p;
+		//			WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, p);
+		//			debugLot.push_back(p);
+		//		}
+		//		_debugLots.push_back(debugLot);
+		//	}
+		//}
+	}
 
-	//size_t fail = 0;
-	//BOOST_FOREACH(LotBoundary &b, _lots)
-	//{
-	//	Vector3 p;
-	//	WorldFrame::getSingleton().plotPointOnTerrain(b[0]._pos, p);
-	//	Real foundation = p.y;
-	//	Real buildingHeight = foundation + gp.buildingHeight - (buildingDeviance / 2);
-	//	if(!WorldLot::build(b, gp, foundation, buildingHeight + (buildingDeviance * ((float)rand()/(float)RAND_MAX)), mObject))
-	//		fail++;
-	//}
+	//_lots = lotBoundaries;
+	Real buildingDeviance = gp._buildingHeight * gp._buildingDeviance;
 
-	//DEBUG
-	//LogManager::getSingleton().logMessage("WorldBlock::build() "+StringConverter::toString(count)+" ops "+StringConverter::toString(fail)+" failed.");
+	size_t fail = 0;
+	BOOST_FOREACH(LotBoundary &b, lotBoundaries)
+	{
+		Vector3 p;
+		WorldFrame::getSingleton().plotPointOnTerrain(b[0]._pos, p);
+		Real foundation = p.y;
+		Real buildingHeight = foundation + gp._buildingHeight - (buildingDeviance / 2);
+
+		WorldLot lot(b, gp, foundation, buildingHeight + (buildingDeviance * rg()));
+		if(lot.hasError())
+			fail++;
+		else
+			_lots.push_back(lot);
+
+	}
+}
+
+#define RAND_MAX_THRD RAND_MAX/3
+#define RAND_MAX_2THRD RAND_MAX_THRD*2
+
+void WorldBlock::build(ManualObject* m1, ManualObject* m2, ManualObject* m3)
+{
+	// footpath
+	size_t i, normIndex = 0, N=_footpathPolys.size();
+	for(i=0; i<N; i+=12)
+	{
+		// side
+		m1->position(_vertices[_footpathPolys[i]]);
+		m1->normal(_normals[normIndex]);
+		m1->position(_vertices[_footpathPolys[i+1]]);
+		m1->normal(_normals[normIndex]);
+		m1->position(_vertices[_footpathPolys[i+2]]);
+		m1->normal(_normals[normIndex]);
+		m1->position(_vertices[_footpathPolys[i+3]]);
+		m1->normal(_normals[normIndex]);
+		m1->position(_vertices[_footpathPolys[i+4]]);
+		m1->normal(_normals[normIndex]);
+		m1->position(_vertices[_footpathPolys[i+5]]);
+		m1->normal(_normals[normIndex]);
+
+		// top
+		m1->position(_vertices[_footpathPolys[i+6]]);
+		m1->normal(Vector3::UNIT_Y);
+		m1->position(_vertices[_footpathPolys[i+7]]);
+		m1->normal(Vector3::UNIT_Y);
+		m1->position(_vertices[_footpathPolys[i+8]]);
+		m1->normal(Vector3::UNIT_Y);
+		m1->position(_vertices[_footpathPolys[i+9]]);
+		m1->normal(Vector3::UNIT_Y);
+		m1->position(_vertices[_footpathPolys[i+10]]);
+		m1->normal(Vector3::UNIT_Y);
+		m1->position(_vertices[_footpathPolys[i+11]]);
+		m1->normal(Vector3::UNIT_Y);
+
+		normIndex++;
+	}
+	m1->end();
+	m1->begin("gk/Building2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+	// WARNING: don't do m->begin m->end too much it makes it *very* slow to render
+
+	// shit rand in the  build
+	BOOST_FOREACH(WorldLot& lot, _lots) 
+	{
+		int rnd = rand();
+		if(rnd < RAND_MAX_THRD)
+			lot.build(m1);
+		else if(rnd < RAND_MAX_2THRD)
+			lot.build(m2);
+		else
+			lot.build(m3);
+	}
+}
+
+void WorldBlock::build(ManualObject* m1, ManualObject* m2, ManualObject* m3,  ManualObject* dob)
+{
+	build(m1, m2, m3);
+
+	//
+	for(size_t i=0; i<_debugLots.size(); i++)
+	{
+		for(size_t j=0; j<_debugLots[i].size(); j++)
+		{
+			size_t k = (j+1)%_debugLots[i].size();
+			Vector3 &a(_debugLots[i][j]), &b(_debugLots[i][k]);
+			dob->position(a.x, a.y+0.1, a.z);
+			dob->position(b.x, b.y+0.1, b.z);
+		}
+	}
 }
 
 
@@ -154,7 +434,7 @@ struct compare_inscns{
 // TODO: doesn't work with concave blocks
 // as an alternative to this i could just make a road graph and extract cells
 // intersection testing would still be required so it definately would be more expensive
-bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, const LotBoundary &input, std::vector<LotBoundary> &output)
+bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, rando rg, const LotBoundary &input, std::vector<LotBoundary> &output)
 {
 	//
 	size_t i, j, N = input.size();
@@ -166,7 +446,7 @@ bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, const 
 
 	//TODO: simplify/optimise this line, is too long
 	Vector2 longestSideMid = input[index]._pos + (longestSide/2) - (longestSide*(deviance/2)) + 
-										(longestSide*(deviance * ((float)rand()/(float)RAND_MAX)));
+										(longestSide*(deviance * rg()));
 
 
 	// fill a vector of intersections, ordered as they're encountered
@@ -226,6 +506,7 @@ bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, const 
 			// break start segment
 			start->_nextIndex = numeric_limits<size_t>::max();
 
+
 			while(true)
 			{
 				if(boundaryIndex != inscns[inscnIndex]._boundaryIndex)
@@ -247,14 +528,26 @@ bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, const 
 						lotBoundary.push_back(LotBoundaryPoint(false, first->_pos));
 						inscnIndex = first->_nextIndex;
 
-						//break seg
+						//break segment link
 						first->_nextIndex = numeric_limits<size_t>::max();
+						
+						try
+						{
+							// add second to boundary
+							lotBoundary.push_back(LotBoundaryPoint(
+								input[inscns[inscnIndex]._boundaryIndex]._roadAccess, inscns[inscnIndex]._pos)); //error
+						}
+						catch (Exception* e)
+						{
+							int z = 0;
+						}
+						catch(...)
+						{
+							int z = 1;
+						}
 
-						// add second to boundary
-						lotBoundary.push_back(LotBoundaryPoint(
-							input[inscns[inscnIndex]._boundaryIndex]._roadAccess, inscns[inscnIndex]._pos)); //error
 
-						// advance indices
+						// advance index vars
 						boundaryIndex = (inscns[inscnIndex]._boundaryIndex + 1) % N;
 						inscnIndex = (inscns[inscnIndex]._index + 1) % inscns.size();
 
@@ -419,6 +712,5 @@ bool WorldBlock::getLongestSideIndex(const LotBoundary &b, const Real limitSq, s
 			return true;
 		}
 	}
-
 	return false;
 }

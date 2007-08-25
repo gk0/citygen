@@ -17,47 +17,43 @@ class WorldFrame : public wxControl, public Ogre::Singleton<WorldFrame>
 {
 	DECLARE_CLASS(WorldFrame);
 
-	int intType;
-
 private:
 	/* WX members */
-	wxTimer	mTimer;
+	wxTimer				_timer;
 
 	/* Ogre members */
-	Ogre::Camera* mCamera;
-	Ogre::RenderWindow* mRenderWindow;
-	Ogre::SceneManager* mSceneManager;
-	Ogre::Viewport* mViewport;
+	Ogre::Camera*		_camera;
+	Ogre::RenderWindow* _renderWindow;
+	Ogre::SceneManager* _sceneManager;
+	Ogre::Viewport*		_viewport;
 
-	bool isDocOpen;
+	bool				_isDocOpen;
 
-	Ogre::RaySceneQuery* mRaySceneQuery;
+	Ogre::RaySceneQuery* _raySceneQuery;
 
-	MainWindow::ViewMode mViewMode;
-	MainWindow::ToolsetMode mToolsetMode;
-	MainWindow::ActiveTool mActiveTool;
+	MainWindow::ViewMode		_viewMode;
+	MainWindow::ToolsetMode		_toolsetMode;
+	MainWindow::ActiveTool		_activeTool;
 
-	RoadGraph _roadGraph;
-	RoadGraph _simpleRoadGraph;
+	RoadGraph			_roadGraph;
+	RoadGraph			_simpleRoadGraph;
 
-	WorldTerrain mWorldTerrain;
-	std::map< Ogre::SceneNode*, WorldNode* > mSceneNodeMap;
-	std::map< Ogre::SceneNode*, WorldRoad* > mSceneRoadMap;
-	std::map< Ogre::SceneNode*, WorldCell* > mSceneCellMap;
+	WorldTerrain		_worldTerrain;
+	std::map< Ogre::SceneNode*, WorldNode* > _sceneNodeMap;
+	std::map< Ogre::SceneNode*, WorldRoad* > _sceneRoadMap;
+	std::map< Ogre::SceneNode*, WorldCell* > _sceneCellMap;
 
-	WorldNode* mHighlightedNode;
-	WorldNode* mSelectedNode;
-	WorldRoad* mSelectedRoad;
-	WorldCell* mSelectedCell;
+	WorldNode*			_highlightedNode;
+	WorldNode*			_selectedNode;
+	WorldRoad*			_selectedRoad;
+	WorldCell*			_selectedCell;
 
-	std::set<WorldCell*> mCells;
-	std::vector<RoadInterface*> mFilaments;
+	std::set<WorldCell*> _cellSet;
 
-	bool mIntersectionPresent;
-	RoadId mRoadIntersection;
+	bool				_intersectionPresent;
+	RoadId				_roadIntersection;
 
-	std::vector<Tool*> mTools;
-	//Ogre::uint32 mActiveTool;
+	std::vector<Tool*>	_tools;
 
 protected:
 	void OnChar(wxKeyEvent& e);
@@ -90,7 +86,7 @@ public:
 	WorldFrame(wxFrame* parent);
 	virtual ~WorldFrame();
 
-	Ogre::SceneManager* getSceneManager() { return mSceneManager; }
+	Ogre::SceneManager* getSceneManager() { return _sceneManager; }
 
 	WorldNode* createNode();
 	WorldRoad* createRoad(WorldNode* wn1, WorldNode* wn2);
@@ -132,7 +128,7 @@ public:
 	 */
 	Ogre::Camera* getCamera()
 	{
-		return mCamera;
+		return _camera;
 	}
 
 	/**
@@ -141,7 +137,7 @@ public:
 	 */
 	WorldNode* getHighlighted()
 	{
-		return mHighlightedNode;
+		return _highlightedNode;
 	}
 
 	/**
@@ -150,7 +146,7 @@ public:
 	 */
 	WorldNode* getSelected()
 	{
-		return mSelectedNode;
+		return _selectedNode;
 	}
 
 	/**
@@ -159,7 +155,7 @@ public:
 	 */
 	WorldRoad* getSelectedRoad()
 	{
-		return mSelectedRoad;
+		return _selectedRoad;
 	}
 
 	/**
@@ -168,32 +164,32 @@ public:
 	 */
 	WorldCell* getSelectedCell()
 	{
-		return mSelectedCell;
+		return _selectedCell;
 	}
 
 	/**
-	 * Pick a node from the scene using a mouse event with coords
+	 * Pick a node from the scene using a mouse event with coordinates
 	 * @param e an wxMouseEvent.
 	 * @param snapSq the amount of distance squared that can be snapped to.
 	 * @param wn a WorldNode pointer reference that can be used to store the picked node.
-	 * @return true if pick is successfull
+	 * @return true if pick is successful
 	 */
 	bool pickNode(wxMouseEvent &e, Ogre::Real snapSq, WorldNode *&wn);
 
    /**
 	 * Pick a point of intersection from the terrain in the scene 
-	 * using a mouse event with coords
+	 * using a mouse event with coordinates
 	 * @param e a wxMouseEvent.
 	 * @param pos a Vector3 reference that can be used to store the intersection point.
-	 * @return true if successfull
+	 * @return true if successful
 	 */
 	bool pickTerrainIntersection(wxMouseEvent& e, Ogre::Vector3& pos);
 
 	/**
-	 * Pick a node from the scene using a mouse event with coords
+	 * Pick a node from the scene using a mouse event with coordinates
 	 * @param e an wxMouseEvent.
 	 * @param wn a WorldNode pointer reference that can be used to store the picked node.
-	 * @return true if pick is successfull
+	 * @return true if pick is successful
 	 */
 	bool pickNode(wxMouseEvent &e, WorldNode *&wn);
 

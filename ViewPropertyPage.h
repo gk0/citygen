@@ -8,14 +8,15 @@ class WorldFrame;
 class ViewPropertyPage : public wxPropertyGridPage
 {
 private:
-	WorldFrame* mWorldFrame;
+	WorldFrame*		_worldFrame;
 
-	wxPGProperty* xProp;
-	wxPGProperty* yProp;
-	wxPGProperty* zProp;
-	wxPGProperty* xDirProp;
-	wxPGProperty* yDirProp;
-	wxPGProperty* zDirProp;
+	// properties
+	wxPGProperty*	_xProp;
+	wxPGProperty*	_yProp;
+	wxPGProperty*	_zProp;
+	wxPGProperty*	_xDirProp;
+	wxPGProperty*	_yDirProp;
+	wxPGProperty*	_zDirProp;
 
 public:
 	ViewPropertyPage(WorldFrame* wf);

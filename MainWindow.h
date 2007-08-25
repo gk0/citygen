@@ -38,27 +38,27 @@ public:
 	};
 
 private:
-	wxAuiManager mFrameManager;
-	WorldFrame *mWorldFrame;
-	LogFrame *mLogFrame;
+	wxAuiManager	_frameManager;
+	WorldFrame*		_worldFrame;
+	LogFrame*		_logFrame;
 
 	// edit mode
-	ToolsetMode mToolsetMode;
-	ActiveTool mActiveTool;
+	ToolsetMode		_toolsetMode;
+	ActiveTool		_activeTool;
 
-	wxToolBar *mFileToolBar, *mViewModeToolBar, *mToolsetModeToolBar, 
-		*mNodeEditToolBar, *mRoadEditToolBar;
+	wxToolBar		*_fileToolBar, *_viewModeToolBar, *_toolsetModeToolBar, 
+					*_nodeEditToolBar, *_roadEditToolBar;
 
-	wxPropertyGridManager* mPropertyGridManager;
-	ViewPropertyPage* mViewPropertyPage;
-	NodePropertyPage* mNodePropertyPage;
-	RoadPropertyPage* mRoadPropertyPage;
-	CellPropertyPage* mCellPropertyPage;
+	wxPropertyGridManager*	_propertyGridManager;
+	ViewPropertyPage*		_viewPropertyPage;
+	NodePropertyPage*		_nodePropertyPage;
+	RoadPropertyPage*		_roadPropertyPage;
+	CellPropertyPage*		_cellPropertyPage;
 
 	// doc variables
-	wxString mDocFile;
-    bool mSavedYet;
-	bool mModified;
+	wxString		_docFile;
+    bool			_savedYet;
+	bool			_modified;
 
 private:
 	void setFilename(const wxString &file);

@@ -10,8 +10,8 @@ ToolNodeSelect::ToolNodeSelect(WorldFrame* wf)
 void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 {
 	// Compute deltas
-	mMouseDeltaX = e.m_x - mMouseX;
-	mMouseDeltaY = e.m_y - mMouseY;
+	_mouseDeltaX = e.m_x - _mouseX;
+	_mouseDeltaY = e.m_y - _mouseY;
 
 	//TODO: 
 	#define HIGHLIGHTNODESNAPSQ 16
@@ -21,22 +21,22 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 	if(e.m_leftDown)
 	{
 		Ogre::Vector3 pos;
-		if(mWorldFrame->pickTerrainIntersection(e, pos))
-			mWorldFrame->moveSelectedNode(pos);
+		if(_worldFrame->pickTerrainIntersection(e, pos))
+			_worldFrame->moveSelectedNode(pos);
 	}
 	else if(e.m_rightDown)
 	{
-		mWorldFrame->cameraMove((Ogre::Real)(-mMouseDeltaX) * (mMoveSpeed / 4), (Ogre::Real)mMouseDeltaY * (mMoveSpeed / 4), 0.0f);
-		mWorldFrame->update();
+		_worldFrame->cameraMove((Ogre::Real)(-_mouseDeltaX) * (_moveSpeed / 4), (Ogre::Real)_mouseDeltaY * (_moveSpeed / 4), 0.0f);
+		_worldFrame->update();
 	}
-	else if(mWorldFrame->pickNode(e, HIGHLIGHTNODESNAPSQ, wn))
-		mWorldFrame->highlightNode(wn);
+	else if(_worldFrame->pickNode(e, HIGHLIGHTNODESNAPSQ, wn))
+		_worldFrame->highlightNode(wn);
 
-	if(!mWorldFrame->getSelected()) ToolView::OnMouseMove(e);
+	if(!_worldFrame->getSelected()) ToolView::OnMouseMove(e);
 
 	// save for calc of next deltas
-	mMouseX = e.m_x;
-	mMouseY = e.m_y;
+	_mouseX = e.m_x;
+	_mouseY = e.m_y;
 }
 
 void ToolNodeSelect::OnLeftPressed(wxMouseEvent &e)
@@ -45,11 +45,11 @@ void ToolNodeSelect::OnLeftPressed(wxMouseEvent &e)
 	#define SELECTNODESNAPSQ 16
 
 	WorldNode *wn;
-	if(mWorldFrame->pickNode(e, SELECTNODESNAPSQ, wn))
-		mWorldFrame->selectNode(wn);
+	if(_worldFrame->pickNode(e, SELECTNODESNAPSQ, wn))
+		_worldFrame->selectNode(wn);
 	else
-		mWorldFrame->selectNode(0);
+		_worldFrame->selectNode(0);
 
-	mWorldFrame->update();
+	_worldFrame->update();
 }
 

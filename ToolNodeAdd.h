@@ -10,16 +10,16 @@ class WorldRoad;
 class ToolNodeAdd : public ToolView
 {
 private:
-	Ogre::SceneManager* mSceneManager;
-	RoadGraph& _roadGraph;
-	RoadGraph& _simpleRoadGraph;
+	Ogre::SceneManager* _sceneManager;
+	RoadGraph&		_roadGraph;
+	RoadGraph&		_simpleRoadGraph;
 
-	WorldNode *mProposedNode;
-	WorldRoad *mProposedRoad;
+	WorldNode*		_proposedNode;
+	WorldRoad*		_proposedRoad;
 
-	int mSnapState;
-	WorldRoad *mIntersectingRoad;
-	WorldNode *mSnapNode;
+	int				_snapState;
+	WorldRoad*		_intersectingRoad;
+	WorldNode*		_snapNode;
 
 
 public:

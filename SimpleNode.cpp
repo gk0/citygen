@@ -43,7 +43,7 @@ bool SimpleNode::setPosition2D(Ogre::Real x, Ogre::Real z)
 void SimpleNode::createJunction(ManualObject* junctionPlate)
 {
 	// how many roads connect here
-	size_t degree = _roadGraph.getDegree(mNodeId);
+	size_t degree = _roadGraph.getDegree(_nodeId);
 	switch(degree)
 	{
 	case 0:
@@ -83,7 +83,7 @@ void SimpleNode::createJunction(ManualObject* junctionPlate)
 
 	// get the first road and node
 	RoadIterator2 rIt2, rEnd2;
-	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(_nodeId); 
 	firstRoad = previousRoad = *rIt2;
 	previousNode = _roadGraph.getDst(previousRoad);
 	roadClockwiseList.push_back(previousRoad);
@@ -93,8 +93,8 @@ void SimpleNode::createJunction(ManualObject* junctionPlate)
 	for(size_t i = 1; i < degree; i++)
 	{
 		// get next node and road in a counter clockwise direction
-		_roadGraph.getCounterClockwiseMostFromPrev(previousNode, mNodeId, currentNode);
-		currentRoad = _roadGraph.getRoad(mNodeId, currentNode);
+		_roadGraph.getCounterClockwiseMostFromPrev(previousNode, _nodeId, currentNode);
+		currentRoad = _roadGraph.getRoad(_nodeId, currentNode);
 		roadClockwiseList.push_back(currentRoad);
 
 		// MADNESS CHECK
@@ -110,13 +110,13 @@ void SimpleNode::createJunction(ManualObject* junctionPlate)
 	pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
 
 	// fill the junction data for use by roads
-	mRoadJunction.clear();
+	_roadJunction.clear();
 	for(size_t i=0; i < degree; i++)
 	{
 		size_t j = (i + 1) % degree;
 
 		// create a junction -> road join pair
-		mRoadJunction[roadClockwiseList[j]] = 
+		_roadJunction[roadClockwiseList[j]] = 
 			std::make_pair(Vector3(pointlist[j].x, height, pointlist[j].y), 
 							Vector3(pointlist[i].x, height, pointlist[i].y));
 	}
@@ -147,8 +147,8 @@ void SimpleNode::createJunction(ManualObject* junctionPlate)
 std::pair<Vector3, Vector3> SimpleNode::getRoadJunction(RoadId rd) 
 {
 	std::map<RoadId, std::pair<Vector3, Vector3>, road_less_than >::iterator rIt;
-	rIt = mRoadJunction.find(rd);
-	if(rIt == mRoadJunction.end())
+	rIt = _roadJunction.find(rd);
+	if(rIt == _roadJunction.end())
 	{
 		//size_t degree = _roadGraph.getDegree(mNodeId);
 		//throw new Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "WorldNode::getRoadJunction");
@@ -161,7 +161,7 @@ std::pair<Vector3, Vector3> SimpleNode::getRoadJunction(RoadId rd)
 
 bool SimpleNode::createTJunction()
 {
-	mRoadJunction.clear();
+	_roadJunction.clear();
 
 	std::vector<RoadId> throughRoads(2);
 	RoadId joiningRoad;
@@ -169,7 +169,7 @@ bool SimpleNode::createTJunction()
 
 	//
 	RoadIterator2 rIt, rIt2, rEnd;
-	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt, rEnd) = _roadGraph.getRoadsFromNode(_nodeId); 
 	joiningRoad = *rIt;
 	joiningRoadWidth = _roadGraph.getRoad(*rIt)->getWidth();
 
@@ -216,19 +216,19 @@ bool SimpleNode::createTJunction()
 	Vector2 p2 = _roadGraph.getRoadBounaryIntersection(throughRoads[1], throughRoads[0]);
 	p2 = madnessCheck(nodePos2D, p2, 9.0f, 3.0f);
 
-	mRoadJunction[throughRoads[0]] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
-	mRoadJunction[throughRoads[1]] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
+	_roadJunction[throughRoads[0]] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+	_roadJunction[throughRoads[1]] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
 
 	// create the juntion for the joining road
 	NodeId ccwNd;
-	_roadGraph.getCounterClockwiseMostFromPrev(_roadGraph.getDst(joiningRoad), mNodeId, ccwNd);
+	_roadGraph.getCounterClockwiseMostFromPrev(_roadGraph.getDst(joiningRoad), _nodeId, ccwNd);
 	if(_roadGraph.getDst(throughRoads[0]) == ccwNd)
 	{
 		p1 = _roadGraph.getRoadBounaryIntersection(joiningRoad, throughRoads[0]);
 		p1 = madnessCheck(nodePos2D, p1, 9.0f, 3.0f);
 		p2 = _roadGraph.getRoadBounaryIntersection(throughRoads[1], joiningRoad);
 		p2 = madnessCheck(nodePos2D, p2, 9.0f, 3.0f);
-		mRoadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+		_roadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 	}
 	else
 	{
@@ -236,7 +236,7 @@ bool SimpleNode::createTJunction()
 		p1= madnessCheck(nodePos2D, p1, 9.0f, 3.0f);
 		p2 = _roadGraph.getRoadBounaryIntersection(throughRoads[0], joiningRoad);
 		p2 = madnessCheck(nodePos2D, p2, 9.0f, 3.0f);
-		mRoadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+		_roadJunction[joiningRoad] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 	}
 	return true;
 }
@@ -245,11 +245,11 @@ bool SimpleNode::createTJunction()
 
 void SimpleNode::createTerminus()
 {
-	mRoadJunction.clear();
+	_roadJunction.clear();
 
 	// get road
 	RoadIterator2 rIt2, rEnd2;
-	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(mNodeId); 
+	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(_nodeId); 
 	if(rIt2 != rEnd2)
 	{		
 		Real h = getPosition3D().y;
@@ -260,7 +260,7 @@ void SimpleNode::createTerminus()
 		offset.normalise();
 		offset *= _roadGraph.getRoad(*rIt2)->getWidth();
 
-		mRoadJunction[*rIt2] = std::make_pair(Vector3(p1.x - offset.x, h, p1.y - offset.y),
+		_roadJunction[*rIt2] = std::make_pair(Vector3(p1.x - offset.x, h, p1.y - offset.y),
 						Vector3(p1.x + offset.x, h, p1.y + offset.y));
 	}
 }

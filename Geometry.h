@@ -14,7 +14,7 @@ public:
 	 * @param e an wxMouseEvent.
 	 * @param snapSq the amount of distance squared that can be snapped to.
 	 * @param wn a WorldNode pointer reference that can be used to store the picked node.
-	 * @return true if pick is successfull
+	 * @return true if pick is successful
 	 */
 	static Ogre::Real dotPerp(const Ogre::Vector2& v0, const Ogre::Vector2& v1);
 
@@ -23,7 +23,7 @@ public:
 	 * @param e an wxMouseEvent.
 	 * @param snapSq the amount of distance squared that can be snapped to.
 	 * @param wn a WorldNode pointer reference that can be used to store the picked node.
-	 * @return true if pick is successfull
+	 * @return true if pick is successful
 	 */
 	static bool pointInCell(const Ogre::Vector2& loc, const Cell& c);
 
@@ -32,7 +32,7 @@ public:
 	 * @param e an wxMouseEvent.
 	 * @param snapSq the amount of distance squared that can be snapped to.
 	 * @param wn a WorldNode pointer reference that can be used to store the picked node.
-	 * @return true if pick is successfull
+	 * @return true if pick is successful
 	 */
 	static bool rayCross(const Ogre::Vector2& loc, const Ogre::Vector2& pt1, const Ogre::Vector2& pt2);
 
@@ -310,29 +310,58 @@ public:
 		@remarks
 			This function returns a polygon that is inset
         @param 
-			inset a Ogre::Real that specifies the amount to inset the poly
+			inset a Ogre::Real that specifies the amount to inset the polygon
         @param
             polyPoints a std::vector that defines the polygon in the
 			form of ordered points.
 
         @returns
-			true if the inset is successfull, false if it is not successful for
-			example in the event that the poly is too small to be inset
+			true if the inset is successful, false if it is not successful for
+			example in the event that the polygon is too small to be inset
 	*/
 	static bool polygonInset(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints);
 
+	/** Insets a polygon
+	@remarks
+	This function returns a polygon that is inset
+	@param 
+	inset a Ogre::Real that specifies the amount to inset the polygon
+	@param
+	polyPoints a std::vector that defines the polygon in the
+	form of ordered points.
+
+	@returns
+	true if the inset is successful, false if it is not successful for
+	example in the event that the polygon is too small to be inset
+	*/
+	static bool polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints);
+
+	/** Insets a polygon
+	@remarks
+	This function returns a polygon that is inset
+	@param 
+	inset a Ogre::Real that specifies the amount to inset the polygon
+	@param
+	polyPoints a std::vector that defines the polygon in the
+	form of ordered points.
+
+	@returns
+	true if the inset is successful, false if it is not successful for
+	example in the event that the polygon is too small to be inset
+	*/
+	static bool polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector3> &polyPoints);
 
 	/** Insets a line
 		@remarks
 			This function returns a line that is inset
         @param 
-			inset a Ogre::Real that specifies the amount to inset the poly
+			inset a Ogre::Real that specifies the amount to inset the polygon
         @param
             linePoints a std::vector that defines the polygon in the
 			form of ordered points.
 
         @returns
-			true if the inset is successfull, false if it is not successful for
+			true if the inset is successful, false if it is not successful for
 			example in the event that the poly is too small to be inset
 	*/
 	static bool lineInset(Ogre::Real inset, std::vector<Ogre::Vector2> &linePoints);

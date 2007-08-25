@@ -12,9 +12,9 @@ void ToolNodeDelete::OnLeftPressed(wxMouseEvent &e)
 	#define DELETENODESNAPSQ 16
 
 	WorldNode *wn;
-	if(mWorldFrame->pickNode(e, DELETENODESNAPSQ, wn))
+	if(_worldFrame->pickNode(e, DELETENODESNAPSQ, wn))
 	{
-		mWorldFrame->deleteNode(wn);
-		mWorldFrame->update();
+		_worldFrame->deleteNode(wn);
+		_worldFrame->update();
 	}
 }

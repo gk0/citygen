@@ -4,31 +4,31 @@
 
 ViewPropertyPage::ViewPropertyPage(WorldFrame* wf) : wxPropertyGridPage() 
 {
-	mWorldFrame = wf;
+	_worldFrame = wf;
 }
 
 void ViewPropertyPage::update()
 {
-	Ogre::Camera* cam = mWorldFrame->getCamera();
+	Ogre::Camera* cam = _worldFrame->getCamera();
 	if(cam)
 	{
 		Ogre::Vector3 camPos = cam->getPosition();
-		SetPropertyValue(xProp, camPos.x);
-		SetPropertyValue(yProp, camPos.y);
-		SetPropertyValue(zProp, camPos.z);
+		SetPropertyValue(_xProp, camPos.x);
+		SetPropertyValue(_yProp, camPos.y);
+		SetPropertyValue(_zProp, camPos.z);
 
 		Ogre::Vector3 camDir = cam->getDirection();
-		SetPropertyValue(xDirProp, camDir.x);
-		SetPropertyValue(yDirProp, camDir.y);
-		SetPropertyValue(zDirProp, camDir.z);
+		SetPropertyValue(_xDirProp, camDir.x);
+		SetPropertyValue(_yDirProp, camDir.y);
+		SetPropertyValue(_zDirProp, camDir.z);
 
-		RefreshProperty(xProp);
-		RefreshProperty(yProp);
-		RefreshProperty(zProp);
+		RefreshProperty(_xProp);
+		RefreshProperty(_yProp);
+		RefreshProperty(_zProp);
 
-		RefreshProperty(xDirProp);
-		RefreshProperty(yDirProp);
-		RefreshProperty(zDirProp);
+		RefreshProperty(_xDirProp);
+		RefreshProperty(_yDirProp);
+		RefreshProperty(_zDirProp);
 	}
 }
 
@@ -37,16 +37,16 @@ void ViewPropertyPage::Init()
 	Append(wxPropertyCategory(wxT("Position")));
 
 	// Add float property (value type is actually double)
-	xProp = Append(wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0));
-	yProp = Append(wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0));
-	zProp = Append(wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
+	_xProp = Append(wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0));
+	_yProp = Append(wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0));
+	_zProp = Append(wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
 
 	Append(wxPropertyCategory(wxT("Direction")));
 
 	// Add float property (value type is actually double)
-	xDirProp = Append(wxFloatProperty(wxT("x_dir"), wxPG_LABEL, 0.0));
-	yDirProp = Append(wxFloatProperty(wxT("y_dir"), wxPG_LABEL, 0.0));
-	zDirProp = Append(wxFloatProperty(wxT("z_dir"), wxPG_LABEL, 0.0));
+	_xDirProp = Append(wxFloatProperty(wxT("x_dir"), wxPG_LABEL, 0.0));
+	_yDirProp = Append(wxFloatProperty(wxT("y_dir"), wxPG_LABEL, 0.0));
+	_zDirProp = Append(wxFloatProperty(wxT("z_dir"), wxPG_LABEL, 0.0));
 
 	// Another way  
 	Append(wxPropertyCategory(wxT("Advanced")));

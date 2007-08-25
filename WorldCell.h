@@ -16,15 +16,17 @@ class WorldCell : public WorldObject
 {
 
 private:
-	bool _busy;
+	bool				_busy;
 
-	static int mInstanceCount;
+	static int			_instanceCount;
 
 	Ogre::String		_name;
 	Ogre::Vector2		_centre;
 	Ogre::ManualObject* _roadNetworkMO;
 	Ogre::ManualObject* _roadJunctionsMO;
 	Ogre::ManualObject* _buildingsMO;
+	Ogre::ManualObject* _buildingsMO1;
+	Ogre::ManualObject* _buildingsMO2;
 	Ogre::ManualObject* _debugMO;
 	bool				_showRoads;			
 	bool				_showBuildings;
@@ -33,7 +35,7 @@ private:
 	RoadGraph			_roadGraph;
 	const RoadGraph&	_parentRoadGraph;
 	const RoadGraph&	_simpleRoadGraph;
-	CellGenParams		_growthGenParams;
+	CellGenParams		_genParams;
 
 	std::vector<RoadInterface*> _boundaryRoads;
 	std::vector<NodeInterface*> _boundaryCycle;
@@ -41,14 +43,6 @@ private:
 
 	std::vector<WorldBlock>		_blocks;
 
-	// gcd crap
-	RoadGraph mGCDRoadGraph;
-	Ogre::ManualObject* mOverlay;
-	Ogre::ManualObject* mOverlay2;
-	std::list<NodeId> mGCDHeap;
-	std::vector< std::vector<NodeInterface*> > mGCDFilaments;
-	std::vector< std::vector<NodeInterface*> > mGCDNodeCycles;
-	std::vector< std::vector<RoadInterface*> > mGCDRoadCycles;
 
 public:
 	WorldCell(const RoadGraph &p, const RoadGraph &s);
@@ -85,11 +79,6 @@ public:
 	bool loadXML(const TiXmlHandle& worldRoot);
 	TiXmlElement* saveXML();
 
-	// for graphical DEBUG
-	void beginGraphicalCellDecomposition();
-	void stepGraphicalCellDecomposition();
-	void drawGraphicalCellDecomposition();
-
 	std::vector<Ogre::Vector3> getBoundaryPoints3D();
 	std::vector<Ogre::Vector2> getBoundaryPoints2D();
 	Ogre::Real calcArea2D();
@@ -108,9 +97,6 @@ private:
 	void installRoad(RoadInterface* r, std::map<NodeInterface*, NodeInterface*> &nodeMap);
 	RoadInterface* getLongestBoundaryRoad() const;
 
-	bool extractFootprint(const std::vector<NodeInterface*> &nodeCycle,  
-						 std::vector<Ogre::Vector2> &footprint); 
-
 	bool createBuilding(Ogre::ManualObject* m, const std::vector<Ogre::Vector2> &footprint,
 							   const Ogre::Real foundation, const Ogre::Real height);
 
@@ -125,7 +111,7 @@ private:
 	//hack
 	RoadInterface* getRoad(NodeInterface* n1, NodeInterface* n2);
 
-	void generateRoadNetwork();
+	void generateRoadNetwork(rando genRandom);
 	void buildRoadNetwork();
 };
 
