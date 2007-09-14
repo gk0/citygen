@@ -27,7 +27,7 @@
 #include <GL/glx.h> 
 #endif
 
-#define THREADME 1
+//#define THREADME 1
 
 
 // Namespace 
@@ -134,6 +134,10 @@ void WorldFrame::init()
 
 	// Set default mipmap level (NB some APIs ignore this)
 	TextureManager::getSingleton().setDefaultNumMipmaps(5);
+	
+	// Desperate attempt to improve image quality on linux w/fglrx
+	MaterialManager::getSingleton().setDefaultTextureFiltering(TFO_ANISOTROPIC);
+	MaterialManager::getSingleton().setDefaultAnisotropy(8);
 
 	// Make sure assets are loaded before we create the scene
 	ResourceGroupManager::getSingleton().initialiseAllResourceGroups();

@@ -82,6 +82,8 @@ public:
 	std::vector<Ogre::Vector3> getBoundaryPoints3D();
 	std::vector<Ogre::Vector2> getBoundaryPoints2D();
 	Ogre::Real calcArea2D();
+	void extractPolygon(std::vector<NodeInterface*> &cycle, std::vector<Ogre::Vector3> &poly);
+
 
 private:
 	void clearRoadGraph();

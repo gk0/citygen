@@ -41,19 +41,20 @@ void WorldCell::init()
 
 	// set up some default growth gen params
 	_genParams._seed = 1;
-	_genParams._segmentSize = 6;
-	_genParams._segmentDeviance = 0.4;
+	_genParams._type = 0;
+	_genParams._segmentSize = 5;
+	_genParams._segmentDeviance = 0.2;
 	_genParams._degree = 4;
 	_genParams._degreeDeviance = 0.01;
 	_genParams._snapSize = 2.4;
 	_genParams._snapDeviance = 0.1;
-	_genParams._buildingHeight = 2.4;
-	_genParams._buildingDeviance = 0.1;
-	_genParams._roadWidth = 0.4;
+	_genParams._buildingHeight = 1.4;
+	_genParams._buildingDeviance = 0.7;
+	_genParams._connectivity = 1.0;
+	_genParams._roadWidth = 0.45;
+	_genParams._lotSize = 0.7;
+	_genParams._lotDeviance = 0.4;
 	_genParams._roadLimit = 0;
-	_genParams._connectivity = 1;
-	_genParams._lotSize = 2;
-	_genParams._lotDeviance = 0.2;
 	_genParams._debug = false;
 
 	_roadNetworkMO = 0;
@@ -326,7 +327,11 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 		// alter our direction vector 
 		for(unsigned int i=0; i < _genParams._degree; i++)
 		{
-			if(_genParams._roadLimit != 0 && roadCount++ >= _genParams._roadLimit) return;
+			if(_genParams._roadLimit != 0 && roadCount++ >= _genParams._roadLimit)
+			{
+				while(!q.empty()) q.pop();
+				break;
+			}
 
 			if(roadCount >= 187)
 			{
@@ -474,18 +479,18 @@ void WorldCell::prebuild()
 	clearRoadGraph();
 	installGraph();
 	generateRoadNetwork(rg);
-	vector< vector<Vector3> > footprints;
-	_roadGraph.extractFootprints(footprints, _genParams._lotSize);
+	vector< vector<NodeInterface*> > cycles;
+	_roadGraph.extractFootprints(cycles, _genParams._lotSize);
 
-	if(_genParams._debug)
+	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
 	{
-		BOOST_FOREACH(vector<Vector3> &footprint, footprints)
-		_blocks.push_back(WorldBlock(footprint, _genParams, rg, true));
-	}
-	else
-	{
-		BOOST_FOREACH(vector<Vector3> &footprint, footprints)
-		_blocks.push_back(WorldBlock(footprint, _genParams, rg));
+		vector<Vector3> poly;
+		extractPolygon(cycle, poly);
+	
+		if(_genParams._debug)
+			_blocks.push_back(WorldBlock(poly, _genParams, rg, true));
+		else
+			_blocks.push_back(WorldBlock(poly, _genParams, rg));
 	}
 	_busy = false;
 }
@@ -1003,3 +1008,19 @@ Real WorldCell::calcArea2D()
 	return Geometry::polygonArea(getBoundaryPoints2D());
 }
 
+void WorldCell::extractPolygon(vector<NodeInterface*> &cycle, vector<Vector3> &poly)
+{
+	size_t i,j,N = cycle.size();
+	vector<Real> insets;
+	poly.reserve(cycle.size());
+	insets.reserve(cycle.size());
+
+	for(i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		poly.push_back(cycle[i]->getPosition3D());
+		insets.push_back(_roadGraph.getRoad(_roadGraph.getRoad(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth());
+	}
+
+	Geometry::polygonInset(insets, poly);
+}

@@ -215,10 +215,10 @@ public:
 	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector2> &poly);
 
 	//Vector3 version
-	void extractFootprints(std::vector< std::vector<Ogre::Vector3> > &polys, Ogre::Real num, Ogre::ManualObject* dob=0);
+	void extractFootprints(std::vector< std::vector<NodeInterface*> > &polys, Ogre::Real num, Ogre::ManualObject* dob=0);
 
 	static void extractPrimitiveF(NodeId v0, Graph &g, std::list<NodeId>& heap, 
-		std::vector< std::vector<Ogre::Vector3> > &polys);
+		std::vector< std::vector<NodeInterface*> > &polys);
 
 	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector3> &poly);
 

@@ -79,6 +79,7 @@ enum
 	#include "bitmaps/graph.xpm"
 	#include "bitmaps/roads.xpm"
 	#include "bitmaps/all.xpm"
+	#include "bitmaps/building.xpm"
 
 	#define TOOL_BMP(bmp) wxBitmap(bmp##_xpm)
 #else

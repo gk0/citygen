@@ -313,7 +313,7 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 		vector< RoadInterface* >::iterator rIt, rEnd;
 		for(rIt = roadCycle.begin(), rEnd = roadCycle.end(); rIt != rEnd; rIt++)
 			(*rIt)->setRoadCycle(true);
-		
+
 		remove_edge(v0, v1, g);
 
 		if(out_degree(v0, g) == 1)
@@ -321,7 +321,9 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 			// Remove the filament rooted at v0.
 			extractFilament(v0,  getFirstAdjacent(v0, g), g, heap, filaments);
 		}
-		if(out_degree(v1, g) == 1) //TODO: causes error sometimes
+
+		// need to check if v1 is still there
+		if(out_degree(v1, g) == 1) //BUG: TODO: causes error sometimes
 		{
 			// Remove the filament rooted at v1.
 			extractFilament(v1,  getFirstAdjacent(v1, g), g, heap, filaments);
@@ -1038,7 +1040,7 @@ bool operator<(const NodeInfo &l, const NodeInfo &r)
 {  return l._pos.x < r._pos.x;  }
 
 
-void RoadGraph::extractFootprints(std::vector< std::vector<Ogre::Vector2> > &polys, Real num, ManualObject* dob)
+void RoadGraph::extractFootprints(std::vector< std::vector<NodeInterface*> > &polys, Real num, ManualObject* dob)
 {
 	// create a copy of our road graph to work on
 	Graph g(_graph);
@@ -1117,11 +1119,11 @@ void RoadGraph::extractFootprints(std::vector< std::vector<Ogre::Vector2> > &pol
 
 }
 
-void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vector< vector<Vector2> > &polys)
+void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vector< vector<NodeInterface*> > &polys)
 {
 	set<NodeId> visited;
 	vector<NodeId> nodeCycle;
-	vector<Vector2> poly;
+	vector<NodeInterface*> poly;
 
 	NodeId v1;
 	bool vertexFound = getClockwiseMost(v0, v1, g);
@@ -1150,7 +1152,7 @@ void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vecto
 				break;
 			}
 
-			poly.push_back(getSuperIntscn(vprev, vcurr, vnext, g));
+			poly.push_back(g[vcurr]);
 			if(visited.find(vcurr) != visited.end()) 
 			{
 				//snip vprev --> vcurr
@@ -1171,7 +1173,7 @@ void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vecto
 		}
 		else
 		{
-			addTerminalPoints(vprev, vcurr, g, poly);
+			poly.push_back(g[vcurr]);
 			visited.insert(vcurr);
 			swap(vprev, vcurr);
 
@@ -1306,169 +1308,6 @@ void RoadGraph::addTerminalPoints(NodeId na, NodeId nb, Graph& g, vector<Vector2
 	abPerp *= g[edge(na, nb, g).first]->getWidth();
 	poly.push_back(b+abPerp);
 	poly.push_back(b-abPerp);
-}
-
-
-void RoadGraph::extractFootprints(std::vector< std::vector<Ogre::Vector3> > &polys, Real num, ManualObject* dob)
-{
-	// create a copy of our road graph to work on
-	Graph g(_graph);
-
-	//init roads
-	RoadIterator rIt, rEnd;
-	for(tie(rIt, rEnd) = edges(g); rIt != rEnd; rIt++)
-		g[*rIt]->setRoadCycle(false);
-
-	set<NodeInfo> heap2;
-	BOOST_FOREACH(NodeId nd, vertices(g))
-		heap2.insert(NodeInfo(nd, g[nd]->getPosition2D()));
-
-
-	//DEBUG:
-	//ostringstream oss;
-	//BOOST_FOREACH(NodeInfo &n, heap2) oss << n._id << ": " << n._pos << "\n";
-	//LogManager::getSingleton().logMessage(oss.str());
-
-	std::list<NodeId> heap;
-	BOOST_FOREACH(NodeInfo n, heap2) heap.insert(heap.end(), n._id);
-
-	try {
-
-		//while (heap is not empty) do
-		size_t i;
-		for(i=0; i<1000 && heap.size() != 0; i++)
-		{
-			//if(i<num)
-			if(i>=10)
-				int z=0;
-
-			//Vertex v0 = heap.GetMin();
-			NodeId v0 = *(heap.begin());
-
-			switch(out_degree(v0, g))
-			{
-			case 0:
-				remove_vertex(v0, g);
-				removeFromHeap(v0, heap);
-				break;
-			case 1:
-				extractFilamentF(v0, getFirstAdjacent(v0, g), g, heap);
-				//oss<<"Filament: "<<graph[v0].getName()<<endl;
-
-				//DEBUG
-				//heap.erase(v0);
-				break;
-			default:
-				extractPrimitiveF(v0, g, heap, polys); // filament or minimal cycle
-				//oss<<"Cycle or Filament: "<<mGraph[v0].getName()<<endl;
-
-				//DEBUG
-				//heap.erase(v0);
-				break;
-			}
-			//heap.erase(v0);
-		}
-
-		if(i>=1000)
-			LogManager::getSingleton().logMessage("Primitive Infinitum");
-
-	}
-	catch(Exception e)
-	{
-		LogManager::getSingleton().logMessage(e.getDescription());
-	}
-
-	if(dob==0) return;
-	//RoadIterator rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = edges(g); rIt != rEnd; rIt++)
-	{
-		dob->position(g[source(*rIt, g)]->getPosition3D() + Vector3(0,0.5,0));
-		dob->position(g[target(*rIt, g)]->getPosition3D() + Vector3(0,0.5,0));
-	}
-
-}
-
-void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vector< vector<Vector3> > &polys)
-{
-	set<NodeId> visited;
-	vector<NodeId> nodeCycle;
-	vector<Vector3> poly;
-
-	NodeId v1;
-	bool vertexFound = getClockwiseMost(v0, v1, g);
-
-	NodeId vprev = v0;
-	NodeId vcurr = v1;
-	NodeId vnext;
-
-	//while (vcurr is not nil) and (vcurr is not v0) and (vcurr is not visited) do
-	size_t i;
-	for(i=0; i<1000; i++)
-	{
-		nodeCycle.push_back(vcurr);
-		vertexFound = getCounterClockwiseMostFromPrev(vprev, vcurr, vnext, g);	// error
-
-		// lets add a point here
-		if(vertexFound)
-		{
-			// BAD KITTY: can't go backwards, esp at start, 
-			// am guessin v0-v1 should always be on a boundary of sorts
-			// so no start on a filament
-			if(vcurr == v1 && vnext == v0) 
-			{
-				// bad kitty
-				removeFromHeap(v0, heap);
-				break;
-			}
-
-			poly.push_back(getSuperIntscn2(vprev, vcurr, vnext, g));
-			if(visited.find(vcurr) != visited.end()) 
-			{
-				//snip vprev --> vcurr
-				remove_edge(vprev, vcurr, g);
-			}
-			else
-				g[edge(vprev, vcurr, g).first]->setRoadCycle(true);
-
-			if(vcurr == v0 && vnext == v1) 
-			{
-				polys.push_back(poly);
-				break;
-			}
-
-			visited.insert(vcurr);
-			vprev = vcurr;
-			vcurr = vnext;
-		}
-		else
-		{
-			addTerminalPoints(vprev, vcurr, g, poly);
-			visited.insert(vcurr);
-			swap(vprev, vcurr);
-
-			//extractFilamentF(vcurr, getFirstAdjacent(vcurr, g), g, heap, poly);
-		}
-	}
-	if(i>=1000)
-		LogManager::getSingleton().logMessage("Infinitum");
-	else
-	{
-		// trash this bad monkey
-
-		// snip it
-		remove_edge(v0, v1, g);
-
-		if(out_degree(v0, g) == 1)
-		{
-			// Remove the filament rooted at v0.
-			extractFilamentF(v0,  getFirstAdjacent(v0, g), g, heap);
-		}
-		if(out_degree(v1, g) == 1) //TODO: causes error sometimes
-		{
-			// Remove the filament rooted at v1.
-			extractFilamentF(v1,  getFirstAdjacent(v1, g), g, heap);		// error
-		}
-	}
 }
 
 void RoadGraph::addTerminalPoints(NodeId na, NodeId nb, Graph& g, vector<Vector3> &poly)

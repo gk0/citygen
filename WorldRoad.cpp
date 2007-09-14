@@ -5,12 +5,14 @@
 #include "SimpleNode.h"
 #include "Geometry.h"
 
-
+// finegrain roads currently cause problems due to simple insets
+#define FINEGRAIN 1
 #define GROUNDCLEARANCE Ogre::Vector3(0,0.2,0)
 
 
 unsigned int WorldRoad::_instanceCount = 0;
 using namespace Ogre;
+using namespace std;
 
 WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
 					 RoadGraph& s, Ogre::SceneManager *creator, bool bind)
@@ -61,6 +63,12 @@ void WorldRoad::build()
 {
 	std::vector<Vector3> interpolatedList;
 
+#ifdef FINEGRAIN
+
+	interpolatedList.push_back(getSrcNode()->getPosition3D());
+	BOOST_FOREACH(RoadId rd, _roadSegmentList) 
+		interpolatedList.push_back(_roadGraph.getDstNode(rd)->getPosition3D());
+#else
 	// calculate approximate number of points to get desired segment size 
 	Real interpolateStep = 1;
 	if(_roadSegmentList.size() > 0)
@@ -71,6 +79,7 @@ void WorldRoad::build()
 	{
 		interpolatedList.push_back(_spline.interpolate(t));
 	}
+#endif
 
 	// always destroy previous
 	destroyRoadObject();
@@ -110,66 +119,63 @@ void WorldRoad::build()
 		bNormal = (nextRoadSegNormal + Vector3::UNIT_Y) / 2;
 
 
-//get the first b from the node
+		//get the first b from the node
 		b = interpolatedList[0];
 		boost::tie(b1, b2) = getSrcNode()->getRoadJunction(_roadSegmentList[0]);
-	}
 
-	for(size_t i=0; i<(interpolatedList.size()-2); i++)
-	{
-		// for a road segment pointA -> pointB
-		a = b;
-		b = interpolatedList[i+1], c = interpolatedList[i+2];
+		for(size_t i=0; i<(interpolatedList.size()-2); i++)
+		{
+			// for a road segment pointA -> pointB
+			a = b;
+			b = interpolatedList[i+1], c = interpolatedList[i+2];
 
-		// get current from last runs next vars
-		currRoadSegVector = nextRoadSegVector;
-		currRoadSegVector2D = nextRoadSegVector2D;
-		currRoadSegOffset = nextRoadSegOffset;
-		currRoadSegNormal = nextRoadSegNormal;
-		currRoadSegLength = nextRoadSegLength;
+			// get current from last runs next vars
+			currRoadSegVector = nextRoadSegVector;
+			currRoadSegVector2D = nextRoadSegVector2D;
+			currRoadSegOffset = nextRoadSegOffset;
+			currRoadSegNormal = nextRoadSegNormal;
+			currRoadSegLength = nextRoadSegLength;
 
-		// advance A to previous B
-		a1 = b1;
-		a2 = b2;
-		aNormal = bNormal;
+			// advance A to previous B
+			a1 = b1;
+			a2 = b2;
+			aNormal = bNormal;
 
-		// calculate vertex positions using the offset
-		b1.x = b.x - currRoadSegOffset.x;
-		b1.y = b.y;
-		b1.z = b.z - currRoadSegOffset.y;
-		b2.x = b.x + currRoadSegOffset.x;
-		b2.y = b.y;
-		b2.z = b.z + currRoadSegOffset.y;
+			// calculate vertex positions using the offset
+			b1.x = b.x - currRoadSegOffset.x;
+			b1.y = b.y;
+			b1.z = b.z - currRoadSegOffset.y;
+			b2.x = b.x + currRoadSegOffset.x;
+			b2.y = b.y;
+			b2.z = b.z + currRoadSegOffset.y;
 
-		// calculate next road seg vectors to get b normal
-		nextRoadSegVector = c - b;
-		nextRoadSegVector2D.x = nextRoadSegVector.x;
-		nextRoadSegVector2D.y = nextRoadSegVector.z;
+			// calculate next road seg vectors to get b normal
+			nextRoadSegVector = c - b;
+			nextRoadSegVector2D.x = nextRoadSegVector.x;
+			nextRoadSegVector2D.y = nextRoadSegVector.z;
 
-		// use the 2D road seg vector to calculate length for speed
-		nextRoadSegLength = nextRoadSegVector2D.length();
+			// use the 2D road seg vector to calculate length for speed
+			nextRoadSegLength = nextRoadSegVector2D.length();
 
-		// calculate the offset of length roadWidth
-		nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
-		nextRoadSegOffset.normalise();
-		nextRoadSegOffset *= _genParams._roadWidth;
+			// calculate the offset of length roadWidth
+			nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
+			nextRoadSegOffset.normalise();
+			nextRoadSegOffset *= _genParams._roadWidth;
 
-		// calculate normal
-		Vector3 nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
-		nextRoadSegNormal.normalise();
+			// calculate normal
+			Vector3 nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
+			nextRoadSegNormal.normalise();
 
-		// calculate b normal 
-		bNormal = (currRoadSegNormal + nextRoadSegNormal) / 2;
+			// calculate b normal 
+			bNormal = (currRoadSegNormal + nextRoadSegNormal) / 2;
 
-		// create road segment
-		uMax += currRoadSegLength;
-		buildSegment(a1, a2, aNormal, b1, b2, bNormal, uMin, uMax);
-		uMin += currRoadSegLength;
-	}
+			// create road segment
+			uMax += currRoadSegLength;
+			buildSegment(a1, a2, aNormal, b1, b2, bNormal, uMin, uMax);
+			uMin += currRoadSegLength;
+		}
 
-	// finish end
-	if(interpolatedList.size() >= 2)
-	{
+		// finish end
 		size_t i = interpolatedList.size() - 2;
 
 		// for a road segment pointA -> pointB
@@ -522,6 +528,48 @@ void WorldRoad::createRoadGraph()
 	// always delete the last graph
 	destroyRoadGraph();
 
+#ifdef FINEGRAIN
+	// um this could be more complicated than i originally thought,
+	// first and last are special cases
+	// calculate approximate number of points to get desired segment size 
+	Real interpolateStep = 1;
+	if(_plotList.size() > 1)
+		interpolateStep = 1/(((_plotList.size()-1) * _genParams._sampleSize) / _genParams._segmentDrawSize);
+
+	// set prevNodeId to source node
+	NodeId prevNodeId = getSrcNode()->_nodeId;
+
+	// extract point list from spline
+	for(Real t=interpolateStep; t<=(1-interpolateStep); t += interpolateStep)
+	{
+		// create node
+		SimpleNode* bn = new SimpleNode(_roadGraph, _spline.interpolate(t));
+		NodeId currNodeId = _roadGraph.addNode(bn);
+
+		// create road
+		RoadId roadSegId;
+		_roadGraph.addRoad(prevNodeId, currNodeId, this, roadSegId);
+		_roadSegmentList.push_back(roadSegId);
+
+		// update prevNodeId
+		prevNodeId = currNodeId;
+	}
+
+	// create final road segment
+	RoadId roadSegId;
+	_roadGraph.addRoad(prevNodeId, getDstNode()->_nodeId, this, roadSegId);
+	_roadSegmentList.push_back(roadSegId);
+
+	// print seg size report
+	/*stringstream os;
+	BOOST_FOREACH(RoadId rd, _roadSegmentList)
+	{
+
+		os << (_roadGraph.getSrcNode(rd)->getPosition2D() - _roadGraph.getDstNode(rd)->getPosition2D()).length() << ",";
+	}
+	LogManager::getSingleton().logMessage(os.str());*/
+#else
+
 	if(_plotList.size() == 2)
 	{
 		// create first road segment
@@ -555,8 +603,7 @@ void WorldRoad::createRoadGraph()
 		_roadGraph.addRoad(cursorNode, getDstNode()->_nodeId, this, roadSegId);
 		_roadSegmentList.push_back(roadSegId);
 	}
-	//mSrcNode->invalidate();
-	//mDstNode->invalidate();
+#endif
 }
 
 void WorldRoad::destroyRoadGraph()
@@ -704,6 +751,8 @@ bool WorldRoad::loadXML(const TiXmlHandle& roadRoot)
 				_genParams._sampleDeviance = Degree(sd);
 			}else if(key == "roadWidth")
 				element->QueryFloatAttribute("value", &_genParams._roadWidth);
+			else if(key == "segmentDrawSize")
+				element->QueryFloatAttribute("value", &_genParams._segmentDrawSize);
 			else if(key == "numOfSamples") {
 				int nos;
 				element->QueryIntAttribute("value", &nos);
@@ -761,6 +810,10 @@ TiXmlElement* WorldRoad::saveXML()
 	TiXmlElement *sampleSize = new TiXmlElement("sampleSize");  
 	sampleSize->SetDoubleAttribute("value", _genParams._sampleSize);
 	genParams->LinkEndChild(sampleSize);
+
+	TiXmlElement *segmentDrawSize = new TiXmlElement("segmentDrawSize");  
+	segmentDrawSize->SetDoubleAttribute("value", _genParams._segmentDrawSize);
+	genParams->LinkEndChild(segmentDrawSize);
 
 	TiXmlElement *sampleDeviance = new TiXmlElement("sampleDeviance");  
 	sampleDeviance->SetDoubleAttribute("value", _genParams._sampleDeviance.valueDegrees());

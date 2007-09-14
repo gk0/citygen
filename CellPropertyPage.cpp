@@ -101,7 +101,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		WorldCell *wc = _worldFrame->getSelectedCell();
 		if(wc)
 		{
-			CellGenParams g;
+			CellGenParams g = wc->getGenParams();
 			switch(GetPropertyValueAsInt(_presetProp))
 			{
 			// Manhattan

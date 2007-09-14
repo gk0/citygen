@@ -11,67 +11,117 @@ using namespace std;
 WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp, rando rg, bool debug)
 //  : _randGen(rg)  // not assignable see docs, maybe can be
 {
-	//
+	// 
 	size_t i,j,N = boundary.size(), N2 = N * 2;
+	vector<Vector2> innerBoundary2(N);
 
-	// build a footpath
-	_vertices.reserve(3*N);
-	_normals.reserve(N);
-	_footpathPolys.reserve(12*N);
-	_vertices.insert(_vertices.end(), boundary.begin(), boundary.end());
-	vector<Vector3> outerBoundary(boundary);
 
-	// raise footpath
-	for(i=0; i<N; i++) outerBoundary[i].y += 0.05; 
-	_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
-	vector<Vector3> innerBoundary(outerBoundary);
 
-	if(Geometry::polygonInsetFast(0.2, innerBoundary))
+	// sketching
+	Vector2 a(0.5,0.5);
+	Vector2 b(1, 0);
+	Vector2 c(0, 1);
+	Vector2 d(0.8660254037844386, 0.5);
+	a.normalise();
+	Real s = a.dotProduct(b);  // 45 - 7071
+	Real t = b.dotProduct(b);  // 0 - 1
+	Real u = b.dotProduct(c);  // 90 - 0
+	Real v = b.dotProduct(d);  // 30 - 0.8660
+	v = d.dotProduct(b);
+	// is quite link if not actually cosine
+
+	if(gp._type == 0)
 	{
-		assert(innerBoundary.size() == N);
-		_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
+		// build a footpath
+		_vertices.reserve(3*N);
+		_normals.reserve(N);
+		_footpathPolys.reserve(12*N);
+		vector<Vector3> outerBoundary(boundary);
+
+		// raise footpath
+		// footpath does not support inset properly
+		// different number of vertices is possible
+		for(i=0; i<N; i++) outerBoundary[i].y += 0.05; 
+		//_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
+		vector<Vector3> innerBoundary(outerBoundary);
+
+
+		if(Geometry::polygonInsetFast(0.2, innerBoundary))
+		{
+			if(innerBoundary.size() != N)
+			{
+				N = innerBoundary.size();
+				N2 = N * 2;
+				vector<Vector3> tmp;
+				tmp.insert(tmp.end(), innerBoundary.begin(), innerBoundary.end());
+				if(!Geometry::polygonInsetFast(-0.2, tmp)) return;
+				_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
+				BOOST_FOREACH(Vector3 &v, _vertices) v.y -= 0.05;
+				_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
+			}
+			else
+			{
+				_vertices.insert(_vertices.end(), boundary.begin(), boundary.end());
+				_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
+			}
+			_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
+
+
+			for(i=0; i<N; i++)
+			{
+				j = (i+1)%N;
+				
+				// build polygons for footpath
+
+				// get normal for side
+				_normals.push_back((innerBoundary[i]-innerBoundary[j]).perpendicular().normalisedCopy());
+
+
+				// side
+				_footpathPolys.push_back(j);
+				_footpathPolys.push_back(i);
+				_footpathPolys.push_back(N+i);
+				_footpathPolys.push_back(j);
+				_footpathPolys.push_back(N+i);
+				_footpathPolys.push_back(N+j);
+
+				// top
+				_footpathPolys.push_back(N+j);
+				_footpathPolys.push_back(N+i);
+				_footpathPolys.push_back(N2+i);
+				_footpathPolys.push_back(N+j);
+				_footpathPolys.push_back(N2+i);
+				_footpathPolys.push_back(N2+j);
+			}
+		}
+		else
+			return;
+
+		// prepare 2d boundary for rest of function
 		for(i=0; i<N; i++)
 		{
-			j = (i+1)%N;
-			
-			// build polygons for footpath
-
-			// get normal for side
-			_normals.push_back((innerBoundary[i]-innerBoundary[j]).perpendicular().normalisedCopy());
-
-
-			// side
-			_footpathPolys.push_back(j);
-			_footpathPolys.push_back(i);
-			_footpathPolys.push_back(N+i);
-			_footpathPolys.push_back(j);
-			_footpathPolys.push_back(N+i);
-			_footpathPolys.push_back(N+j);
-
-			// top
-			_footpathPolys.push_back(N+j);
-			_footpathPolys.push_back(N+i);
-			_footpathPolys.push_back(N2+i);
-			_footpathPolys.push_back(N+j);
-			_footpathPolys.push_back(N2+i);
-			_footpathPolys.push_back(N2+j);
+			innerBoundary2[i].x = innerBoundary[i].x;
+			innerBoundary2[i].y = innerBoundary[i].z;
 		}
 	}
 	else
-		return;
-
-	// prepare 2d boundary for rest of function
-	vector<Vector2> innerBoundary2(N);
-	for(i=0; i<N; i++)
 	{
-		innerBoundary2[i].x = innerBoundary[i].x;
-		innerBoundary2[i].y = innerBoundary[i].z;
+		// prepare 2d boundary for rest of function
+		for(i=0; i<N; i++)
+		{
+			innerBoundary2[i].x = boundary[i].x;
+			innerBoundary2[i].y = boundary[i].z;
+		}
 	}
+
+	return;
 
 	vector<size_t> tmp;
 	if(!Triangulate::Process(innerBoundary2, tmp))
+	{
+		LogManager::getSingleton().logMessage("Block Fail!!");
 		return;
-
+	}
 	// Do something to extract lots
 	queue< LotBoundary > q;
 
@@ -86,7 +136,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 	while(!q.empty())
 	{
 		if(count>10000) return;
-		if(gp._roadLimit && count > gp._roadLimit) return;
+		//if(gp._roadLimit && count > gp._roadLimit) return;
 		count++;
 		LotBoundary b(q.front());
 		q.pop();
@@ -206,7 +256,6 @@ WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp,
 		{
 			Vector3 p;
 			WorldFrame::getSingleton().plotPointOnTerrain(outerBoundary[i], p);
-
 		}
 	}
 
@@ -464,6 +513,8 @@ bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, rando 
 			inscns.push_back(inscn);
 		}
 	}
+	if(inscns.size() <= 1) 
+		return false;	// what only one intersection, how?
 
 	// need sort a copy of intersections by pos on line
 	vector<Intersection*> inscnsOrdered;

@@ -240,19 +240,19 @@
 <tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.1123183707" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.1706776379" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
 <option id="gnu.cpp.link.option.libs.832257506" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="OgreMain"/>
 <listOptionValue builtIn="false" value="tinyxml"/>
 <listOptionValue builtIn="false" value="wxPropertyGrid"/>
 <listOptionValue builtIn="false" value="X11"/>
 <listOptionValue builtIn="false" value="GL"/>
 <listOptionValue builtIn="false" value="Xaw"/>
+<listOptionValue builtIn="false" value="boost_thread-mt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1044776159" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
 <listOptionValue builtIn="false" value="/usr/lib"/>
 <listOptionValue builtIn="false" value="&quot;../../tinyxml/Debug Ubuntu&quot;"/>
 <listOptionValue builtIn="false" value="../../wxPropertyGrid/Release"/>
 </option>
-<option id="gnu.cpp.link.option.flags.1188904504" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="`wx-config --libs`" valueType="string"/>
+<option id="gnu.cpp.link.option.flags.1188904504" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-lOgreMain `wx-config --libs`" valueType="string"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.2123193981" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug"/>
 <macros/>

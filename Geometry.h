@@ -369,6 +369,33 @@ public:
 	static bool unionPolyAndLine(std::vector<Ogre::Vector2> &polyPoints, std::vector<Ogre::Vector2> &linePoints);
 
 	static bool isInside(const Ogre::Vector2 &loc, const std::vector<Ogre::Vector2> &polyPoints);
+
+
+
+
+	inline static Ogre::Vector2 calcNormVec2D(const Ogre::Vector2& p1, const Ogre::Vector2& p2)
+	{
+		return (p2 - p1).normalisedCopy();
+	}
+
+	inline static Ogre::Vector2 calcNormVec2D(const Ogre::Vector3& p1, const Ogre::Vector3& p2)
+	{
+		Ogre::Vector2 tmp(p2.x - p1.x, p2.y - p1.y);
+		tmp.normalise();
+		return tmp;
+	}
+
+	static void polygonInset(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector3> &poly);
+
+
+	inline static Ogre::Vector2 calcInsetVector(const  Ogre::Vector2& a, 
+		const Ogre::Vector2& b, const  Ogre::Real& inset)
+	{
+		Ogre::Vector2 bisectorVector2(a + b);
+		bisectorVector2.normalise();
+		// look daddy, no sin or cos
+		return bisectorVector2 * (inset / bisectorVector2.dotProduct(b));
+	}
 };
 
 
