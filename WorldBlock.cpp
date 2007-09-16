@@ -13,25 +13,36 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 {
 	// 
 	size_t i,j,N = boundary.size(), N2 = N * 2;
-	vector<Vector2> innerBoundary2(N);
+	vector<Vector3> innerBoundary;
+	innerBoundary.reserve(N);
 
-
-
-	// sketching
-	Vector2 a(0.5,0.5);
-	Vector2 b(1, 0);
-	Vector2 c(0, 1);
-	Vector2 d(0.8660254037844386, 0.5);
-	a.normalise();
-	Real s = a.dotProduct(b);  // 45 - 7071
-	Real t = b.dotProduct(b);  // 0 - 1
-	Real u = b.dotProduct(c);  // 90 - 0
-	Real v = b.dotProduct(d);  // 30 - 0.8660
-	v = d.dotProduct(b);
-	// is quite link if not actually cosine
-
-	if(gp._type == 0)
 	{
+		vector<size_t> tmp;
+		if(!Triangulate::Process(boundary, tmp))
+		{
+			return;
+			size_t tmpN = N;
+			vector<Vector3> tmp2(boundary);
+			LogManager::getSingleton().logMessage("Boundary Fail!!");
+			for(size_t i=1; i<tmpN-2;)
+			{
+				Geometry::polyRepair(tmp2, i);
+				if(tmp2.size() != tmpN)
+				{
+					tmpN = tmp2.size();
+					if(tmpN <= 2) break;
+					LogManager::getSingleton().logMessage("Jaysus!!"+StringConverter::toString(i));
+					//break;
+				}
+				else i++;
+			}
+			if(!Triangulate::Process(boundary, tmp))
+				LogManager::getSingleton().logMessage("Not Fixed Yet!!");
+		}
+	}
+	//return;
+//	if(gp._type == 0)
+//	{
 		// build a footpath
 		_vertices.reserve(3*N);
 		_normals.reserve(N);
@@ -43,11 +54,11 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 		// different number of vertices is possible
 		for(i=0; i<N; i++) outerBoundary[i].y += 0.05; 
 		//_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
-		vector<Vector3> innerBoundary(outerBoundary);
-
+		innerBoundary.insert(innerBoundary.end(), outerBoundary.begin(), outerBoundary.end());
 
 		if(Geometry::polygonInsetFast(0.2, innerBoundary))
 		{
+			//Geometry::polyRepair(innerBoundary, N/2);
 			if(innerBoundary.size() != N)
 			{
 				N = innerBoundary.size();
@@ -55,6 +66,14 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 				vector<Vector3> tmp;
 				tmp.insert(tmp.end(), innerBoundary.begin(), innerBoundary.end());
 				if(!Geometry::polygonInsetFast(-0.2, tmp)) return;
+				if(tmp.size() != N)
+				{
+					//LogManager::getSingleton().logMessage("Outset Fail!!");
+					return;
+				}
+				//else
+				//	LogManager::getSingleton().logMessage("Outset Pass.");
+
 				_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
 				BOOST_FOREACH(Vector3 &v, _vertices) v.y -= 0.05;
 				_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
@@ -65,6 +84,12 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 				_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
 			}
 			_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
+
+		//{
+		//	Geometry::polygonInsetFFast(0.2, innerBoundary);
+		//	_vertices.insert(_vertices.end(), boundary.begin(), boundary.end());
+		//	_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
+		//	_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
 
 
 			for(i=0; i<N; i++)
@@ -94,34 +119,49 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 				_footpathPolys.push_back(N2+j);
 			}
 		}
-		else
-			return;
-
-		// prepare 2d boundary for rest of function
-		for(i=0; i<N; i++)
-		{
-			innerBoundary2[i].x = innerBoundary[i].x;
-			innerBoundary2[i].y = innerBoundary[i].z;
-		}
-	}
-	else
-	{
-		// prepare 2d boundary for rest of function
-		for(i=0; i<N; i++)
-		{
-			innerBoundary2[i].x = boundary[i].x;
-			innerBoundary2[i].y = boundary[i].z;
-		}
-	}
-
-	return;
+		//else
+		//	return;
+//	} else
+//		innerBoundary.insert(innerBoundary.end(), boundary.begin(), boundary.end());
+/*	return;
 
 	vector<size_t> tmp;
-	if(!Triangulate::Process(innerBoundary2, tmp))
+	if(!Triangulate::Process(innerBoundary, tmp))
 	{
 		LogManager::getSingleton().logMessage("Block Fail!!");
 		return;
+		bool repaired = false;
+		size_t N = innerBoundary.size();
+		for(size_t i=1; i<30 && !repaired; i++)
+		{
+			if(!Geometry::polyRepair(innerBoundary, i))
+			{
+				LogManager::getSingleton().logMessage("Block cannot be repaired"+StringConverter::toString(i));
+				break;
+			}
+			//if(innerBoundary.size() != N)
+			{
+				N = innerBoundary.size();
+				if(Triangulate::Process(innerBoundary, tmp))
+				{
+					LogManager::getSingleton().logMessage("Block Repaired: "+StringConverter::toString(i));
+					repaired = true;
+				}
+			}
+		}
+		if(!repaired)
+		{
+			_footpathPolys.clear();
+		}
+		return;
 	}
+
+	return;
+*/
+	vector<Vector2> innerBoundary2;
+	innerBoundary2.reserve(innerBoundary.size());
+	BOOST_FOREACH(Vector3 &v, innerBoundary) innerBoundary2.push_back(Geometry::V2(v));
+
 	// Do something to extract lots
 	queue< LotBoundary > q;
 
@@ -452,7 +492,6 @@ void WorldBlock::build(ManualObject* m1, ManualObject* m2, ManualObject* m3,  Ma
 	}
 }
 
-
 bool rayCross(const Ogre::Vector2& pos, const LotBoundary &b)
 {
 	bool bRayCross = false;
@@ -482,7 +521,7 @@ struct compare_inscns{
 
 // TODO: doesn't work with concave blocks
 // as an alternative to this i could just make a road graph and extract cells
-// intersection testing would still be required so it definately would be more expensive
+// intersection testing would still be required so it definitely would be more expensive
 bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, rando rg, const LotBoundary &input, std::vector<LotBoundary> &output)
 {
 	//

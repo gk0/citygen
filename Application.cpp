@@ -23,8 +23,6 @@ bool Application::OnInit()
 	if (!wxApp::OnInit()) 
 		return false;
 
-
-
 	InitializeOgre();
 
 	setupResources();
@@ -34,7 +32,7 @@ bool Application::OnInit()
 
 	// now we need to create MainWindow singleton because
 	// it creates RenderWindow, which is needed for resource loading (for example, textures and VBO)
-	// we create it, but don't show to user to avoid flickness
+	// we create it, but don't show to user to avoid flickering
 	SetTopWindow(_window); // set our MainWindow the main application window
 	_window->Show(true);
 	_window->init();
@@ -44,8 +42,8 @@ bool Application::OnInit()
 	
 	loadResources();
 
-	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\roaderror.cgx"));
-	_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\trouble2.cgx"));
+	_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\messinok5.cgx"));
+	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\trouble2.cgx"));
 	
 	// All clear!
 	return true;

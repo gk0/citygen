@@ -5,9 +5,9 @@
 #include "SimpleNode.h"
 #include "Geometry.h"
 
-// finegrain roads currently cause problems due to simple insets
+// fine grain roads currently cause problems due to simple insets
 #define FINEGRAIN 1
-#define GROUNDCLEARANCE Ogre::Vector3(0,0.2,0)
+#define GROUNDCLEARANCE Ogre::Vector3(0,0.3,0)
 
 
 unsigned int WorldRoad::_instanceCount = 0;
@@ -89,11 +89,11 @@ void WorldRoad::build()
 	if(_selected) _manualObject->begin("gk/YellowBrickRoad", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 	else _manualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
+	//_debugMOObject = new ManualObject(_name+"do");
+
 	// vars
-	Vector3 currRoadSegNormal, nextRoadSegNormal;
-	Vector3 currRoadSegVector, nextRoadSegVector;
-	Vector2 currRoadSegVector2D, nextRoadSegVector2D;
-	Vector2 currRoadSegOffset, nextRoadSegOffset;
+	Vector3 currRoadSegNormal, nextRoadSegNormal, nextRoadSegVector;
+	Vector2 currRoadSegPerp, nextRoadSegPerp, nextRoadSegVector2D;
 	Real currRoadSegLength, nextRoadSegLength;
 	Real uMin = 0, uMax = 0;
 	Vector3 a, a1, a2, aNormal, b, b1, b2, bNormal, c;
@@ -105,34 +105,63 @@ void WorldRoad::build()
 		nextRoadSegVector2D.x = nextRoadSegVector.x;
 		nextRoadSegVector2D.y = nextRoadSegVector.z;
 
-		// use the 2D road seg vector to calculate length for speed
-		nextRoadSegLength = nextRoadSegVector2D.length();
+		// use the 3D road segment vector to calculate length for accuracy
+		nextRoadSegLength = nextRoadSegVector.length();
 
 		// calculate the offset of length roadWidth
-		nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
-		nextRoadSegOffset.normalise();
-		nextRoadSegOffset *= _genParams._roadWidth;
+		nextRoadSegPerp = nextRoadSegVector2D.perpendicular();
+		if(nextRoadSegLength != 0) nextRoadSegPerp /= nextRoadSegLength;
+		else nextRoadSegPerp.normalise();
 
 		// calculate normal
-		nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
+		nextRoadSegNormal = Vector3(nextRoadSegPerp.x, 0, nextRoadSegPerp.y).crossProduct(nextRoadSegVector);
 		nextRoadSegNormal.normalise();
 		bNormal = (nextRoadSegNormal + Vector3::UNIT_Y) / 2;
-
 
 		//get the first b from the node
 		b = interpolatedList[0];
 		boost::tie(b1, b2) = getSrcNode()->getRoadJunction(_roadSegmentList[0]);
 
+		//
+		size_t start=0,end=(interpolatedList.size()-2);
 		for(size_t i=0; i<(interpolatedList.size()-2); i++)
+		{
+			Vector2 intsctn;
+			Real r,s;
+			if(Geometry::lineIntersect(Geometry::V2(b1), Geometry::V2(b2), Geometry::V2(interpolatedList[i]), 
+				Geometry::V2(interpolatedList[i+1]), intsctn, r, s)
+				&& s >= 0 && s <= 1)
+			{
+				start = i + 1;
+				break;
+			}
+		}
+
+		for(size_t i=(interpolatedList.size()-2); i>0; i--)
+		{
+			size_t lastSeg = _roadSegmentList.size()-1;
+			Vector3 c1,c2;
+			boost::tie(c2, c1) = getDstNode()->getRoadJunction(_roadSegmentList[lastSeg]);
+			Vector2 intsctn;
+			Real r,s;
+			if(Geometry::lineIntersect(Geometry::V2(c1), Geometry::V2(c2), Geometry::V2(interpolatedList[i]), 
+				Geometry::V2(interpolatedList[i+1]), intsctn, r, s)
+				&& s >= 0 && s <= 1)
+			{
+				end = i;
+				break;
+			}
+		}
+
+
+		for(size_t i=start; i<end; i++)
 		{
 			// for a road segment pointA -> pointB
 			a = b;
 			b = interpolatedList[i+1], c = interpolatedList[i+2];
 
 			// get current from last runs next vars
-			currRoadSegVector = nextRoadSegVector;
-			currRoadSegVector2D = nextRoadSegVector2D;
-			currRoadSegOffset = nextRoadSegOffset;
+			currRoadSegPerp = nextRoadSegPerp;
 			currRoadSegNormal = nextRoadSegNormal;
 			currRoadSegLength = nextRoadSegLength;
 
@@ -141,29 +170,32 @@ void WorldRoad::build()
 			a2 = b2;
 			aNormal = bNormal;
 
-			// calculate vertex positions using the offset
-			b1.x = b.x - currRoadSegOffset.x;
-			b1.y = b.y;
-			b1.z = b.z - currRoadSegOffset.y;
-			b2.x = b.x + currRoadSegOffset.x;
-			b2.y = b.y;
-			b2.z = b.z + currRoadSegOffset.y;
-
-			// calculate next road seg vectors to get b normal
+			// calculate next road segment vectors to get b normal
 			nextRoadSegVector = c - b;
 			nextRoadSegVector2D.x = nextRoadSegVector.x;
 			nextRoadSegVector2D.y = nextRoadSegVector.z;
 
-			// use the 2D road seg vector to calculate length for speed
-			nextRoadSegLength = nextRoadSegVector2D.length();
+			// use the 3D road segment vector to calculate length for accuracy
+			nextRoadSegLength = nextRoadSegVector.length();
 
+			//TODO this offset is calculates
 			// calculate the offset of length roadWidth
-			nextRoadSegOffset = nextRoadSegVector2D.perpendicular();
-			nextRoadSegOffset.normalise();
-			nextRoadSegOffset *= _genParams._roadWidth;
+			nextRoadSegPerp = nextRoadSegVector2D.perpendicular();
+			if(nextRoadSegLength != 0) nextRoadSegPerp /= nextRoadSegLength;
+			else nextRoadSegPerp.normalise();
+
+			Vector2 offset(Geometry::calcInsetVector(currRoadSegPerp, nextRoadSegPerp, _genParams._roadWidth));
+
+			// calculate vertex positions using the offset
+			b1.x = b.x - offset.x;
+			b1.y = b.y;
+			b1.z = b.z - offset.y;
+			b2.x = b.x + offset.x;
+			b2.y = b.y;
+			b2.z = b.z + offset.y;
 
 			// calculate normal
-			Vector3 nextRoadSegNormal = Vector3(nextRoadSegOffset.x, 0, nextRoadSegOffset.y).crossProduct(nextRoadSegVector);
+			Vector3 nextRoadSegNormal = Vector3(nextRoadSegPerp.x, 0, nextRoadSegPerp.y).crossProduct(nextRoadSegVector);
 			nextRoadSegNormal.normalise();
 
 			// calculate b normal 
@@ -182,9 +214,6 @@ void WorldRoad::build()
 		a = interpolatedList[i], b = interpolatedList[i+1];
 
 		// get current from last runs next vars
-		currRoadSegVector = nextRoadSegVector;
-		currRoadSegVector2D = nextRoadSegVector2D;
-		currRoadSegOffset = nextRoadSegOffset;
 		currRoadSegNormal = nextRoadSegNormal;
 		currRoadSegLength = nextRoadSegLength;
 
@@ -193,8 +222,6 @@ void WorldRoad::build()
 		a2 = b2;
 		aNormal = bNormal;
 
-		//mDstNode->invalidate();
-		//getDstNode()->validate();
 		size_t lastSeg = _roadSegmentList.size()-1;
 		boost::tie(b2, b1) = getDstNode()->getRoadJunction(_roadSegmentList[lastSeg]);
 

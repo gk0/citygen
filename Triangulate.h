@@ -48,8 +48,12 @@ public:
   static bool Process(const std::vector<Ogre::Vector2> &contour,
 						std::vector<size_t> &result);
 
+  static bool Process(const std::vector<Ogre::Vector3> &contour,
+	  std::vector<size_t> &result);
+
   // compute area of a contour/polygon
   static float Area(const std::vector<Ogre::Vector2> &contour);
+  static float Area(const std::vector<Ogre::Vector3> &contour);
 
   // decide if point Px/Py is inside triangle defined by
   // (Ax,Ay) (Bx,By) (Cx,Cy)
@@ -61,6 +65,7 @@ public:
 
 private:
   static bool Snip(const std::vector<Ogre::Vector2> &contour,int u,int v,int w,int n,int *V);
+  static bool Snip(const std::vector<Ogre::Vector3> &contour,int u,int v,int w,int n,int *V);
 
 };
 

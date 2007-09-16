@@ -380,7 +380,7 @@ public:
 
 	inline static Ogre::Vector2 calcNormVec2D(const Ogre::Vector3& p1, const Ogre::Vector3& p2)
 	{
-		Ogre::Vector2 tmp(p2.x - p1.x, p2.y - p1.y);
+		Ogre::Vector2 tmp(p2.x - p1.x, p2.z - p1.z);
 		tmp.normalise();
 		return tmp;
 	}
@@ -393,9 +393,28 @@ public:
 	{
 		Ogre::Vector2 bisectorVector2(a + b);
 		bisectorVector2.normalise();
-		// look daddy, no sin or cos
+		//Ogre::Radian x = Ogre::Math::ACos(bisectorVector2.dotProduct(b));
+		//return bisectorVector2 * (inset / Ogre::Math::Cos(x));
 		return bisectorVector2 * (inset / bisectorVector2.dotProduct(b));
 	}
+
+	inline static Ogre::Vector2 V2(const Ogre::Vector3 &v)
+	{
+		return Ogre::Vector2(v.x, v.z);
+	}
+
+	void static polygonInsetFFast(Ogre::Real inset, std::vector<Ogre::Vector3> &poly);
+
+	static bool polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAhead);
+
+	static std::vector<std::pair<Ogre::Vector3, Ogre::Vector2>>  
+		calcInsetVectors(const Ogre::Real inset, std::vector<Ogre::Vector3> &poly);
+
+	static std::vector<std::pair<Ogre::Vector3, Ogre::Vector2>>  
+	calcInsetVectors(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector3> &poly);
+
+	static void 
+	processInsetVectors(const std::vector<std::pair<Ogre::Vector3, Ogre::Vector2>> &iv, std::vector<Ogre::Vector3> &poly);
 };
 
 
