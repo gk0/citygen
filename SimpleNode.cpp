@@ -253,15 +253,16 @@ void SimpleNode::createTerminus()
 	if(rIt2 != rEnd2)
 	{		
 		Real h = getPosition3D().y;
-		Vector2 p1, p2, offset;
+		Vector2 p1, p2, offset, roadVec;
 		p1 = _roadGraph.getSrcNode(*rIt2)->getPosition2D();
 		p2 = _roadGraph.getDstNode(*rIt2)->getPosition2D();
-		offset = (p2 - p1).perpendicular();
-		offset.normalise();
+		roadVec = (p1-p2);
+		roadVec.normalise();
+		offset = roadVec.perpendicular();
 		offset *= _roadGraph.getRoad(*rIt2)->getWidth();
-
-		_roadJunction[*rIt2] = std::make_pair(Vector3(p1.x - offset.x, h, p1.y - offset.y),
-						Vector3(p1.x + offset.x, h, p1.y + offset.y));
+		roadVec *= _roadGraph.getRoad(*rIt2)->getWidth();
+		_roadJunction[*rIt2] = std::make_pair(Vector3(p1.x + offset.x + roadVec.x, h, p1.y + offset.y + roadVec.y),
+						Vector3(p1.x - offset.x + roadVec.x, h, p1.y - offset.y + roadVec.y));
 	}
 }
 

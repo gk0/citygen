@@ -7,6 +7,8 @@
 using namespace Ogre;
 using namespace std;
 
+//THIS CLASS IS FUCKING HORRIBLE
+
 
 WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp, rando rg, bool debug)
 //  : _randGen(rg)  // not assignable see docs, maybe can be
@@ -15,149 +17,95 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 	size_t i,j,N = boundary.size(), N2 = N * 2;
 	vector<Vector3> innerBoundary;
 	innerBoundary.reserve(N);
+	vector<Vector3> outerBoundary(boundary);
 
+	// build a footpath
+	_vertices.reserve(3*N);
+	_normals.reserve(N);
+	_footpathPolys.reserve(12*N);
+
+	// raise footpath
+	// footpath does not support inset properly
+	// different number of vertices is possible
+	for(i=0; i<N; i++) outerBoundary[i].y += 0.035; 
+	//_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
+	innerBoundary.insert(innerBoundary.end(), outerBoundary.begin(), outerBoundary.end());
+
+	if(Geometry::polygonInsetFast(0.2, innerBoundary))
 	{
-		vector<size_t> tmp;
-		if(!Triangulate::Process(boundary, tmp))
+		//Geometry::polyRepair(innerBoundary, N/2);
+		if(innerBoundary.size() != N)
 		{
-			return;
-			size_t tmpN = N;
-			vector<Vector3> tmp2(boundary);
-			LogManager::getSingleton().logMessage("Boundary Fail!!");
-			for(size_t i=1; i<tmpN-2;)
+			N = innerBoundary.size();
+			N2 = N * 2;
+			vector<Vector3> tmp;
+			tmp.insert(tmp.end(), innerBoundary.begin(), innerBoundary.end());
+			if(!Geometry::polygonInsetFast(-0.2, tmp)) return;
+			//Geometry::polygonInsetFFast(-0.2, tmp);
+			if(tmp.size() != N)
 			{
-				Geometry::polyRepair(tmp2, i);
-				if(tmp2.size() != tmpN)
-				{
-					tmpN = tmp2.size();
-					if(tmpN <= 2) break;
-					LogManager::getSingleton().logMessage("Jaysus!!"+StringConverter::toString(i));
-					//break;
-				}
-				else i++;
+				//LogManager::getSingleton().logMessage("Outset Fail!!");
+				return;
 			}
-			if(!Triangulate::Process(boundary, tmp))
-				LogManager::getSingleton().logMessage("Not Fixed Yet!!");
+			//else
+			//	LogManager::getSingleton().logMessage("Outset Pass.");
+
+			_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
+			BOOST_FOREACH(Vector3 &v, _vertices) v.y -= 0.05;
+			_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
+		}
+		else
+		{
+			_vertices.insert(_vertices.end(), boundary.begin(), boundary.end());
+			_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
+		}
+		_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
+
+
+		for(i=0; i<N; i++)
+		{
+			j = (i+1)%N;
+			
+			// build polygons for footpath
+
+			// get normal for side
+			_normals.push_back((innerBoundary[i]-innerBoundary[j]).perpendicular().normalisedCopy());
+
+
+			// side
+			_footpathPolys.push_back(j);
+			_footpathPolys.push_back(i);
+			_footpathPolys.push_back(N+i);
+			_footpathPolys.push_back(j);
+			_footpathPolys.push_back(N+i);
+			_footpathPolys.push_back(N+j);
+
+			// top
+			_footpathPolys.push_back(N+j);
+			_footpathPolys.push_back(N+i);
+			_footpathPolys.push_back(N2+i);
+			_footpathPolys.push_back(N+j);
+			_footpathPolys.push_back(N2+i);
+			_footpathPolys.push_back(N2+j);
 		}
 	}
-	//return;
-//	if(gp._type == 0)
-//	{
-		// build a footpath
-		_vertices.reserve(3*N);
-		_normals.reserve(N);
-		_footpathPolys.reserve(12*N);
-		vector<Vector3> outerBoundary(boundary);
-
-		// raise footpath
-		// footpath does not support inset properly
-		// different number of vertices is possible
-		for(i=0; i<N; i++) outerBoundary[i].y += 0.05; 
-		//_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
-		innerBoundary.insert(innerBoundary.end(), outerBoundary.begin(), outerBoundary.end());
-
-		if(Geometry::polygonInsetFast(0.2, innerBoundary))
-		{
-			//Geometry::polyRepair(innerBoundary, N/2);
-			if(innerBoundary.size() != N)
-			{
-				N = innerBoundary.size();
-				N2 = N * 2;
-				vector<Vector3> tmp;
-				tmp.insert(tmp.end(), innerBoundary.begin(), innerBoundary.end());
-				if(!Geometry::polygonInsetFast(-0.2, tmp)) return;
-				if(tmp.size() != N)
-				{
-					//LogManager::getSingleton().logMessage("Outset Fail!!");
-					return;
-				}
-				//else
-				//	LogManager::getSingleton().logMessage("Outset Pass.");
-
-				_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
-				BOOST_FOREACH(Vector3 &v, _vertices) v.y -= 0.05;
-				_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
-			}
-			else
-			{
-				_vertices.insert(_vertices.end(), boundary.begin(), boundary.end());
-				_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
-			}
-			_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
-
-		//{
-		//	Geometry::polygonInsetFFast(0.2, innerBoundary);
-		//	_vertices.insert(_vertices.end(), boundary.begin(), boundary.end());
-		//	_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
-		//	_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
-
-
-			for(i=0; i<N; i++)
-			{
-				j = (i+1)%N;
-				
-				// build polygons for footpath
-
-				// get normal for side
-				_normals.push_back((innerBoundary[i]-innerBoundary[j]).perpendicular().normalisedCopy());
-
-
-				// side
-				_footpathPolys.push_back(j);
-				_footpathPolys.push_back(i);
-				_footpathPolys.push_back(N+i);
-				_footpathPolys.push_back(j);
-				_footpathPolys.push_back(N+i);
-				_footpathPolys.push_back(N+j);
-
-				// top
-				_footpathPolys.push_back(N+j);
-				_footpathPolys.push_back(N+i);
-				_footpathPolys.push_back(N2+i);
-				_footpathPolys.push_back(N+j);
-				_footpathPolys.push_back(N2+i);
-				_footpathPolys.push_back(N2+j);
-			}
-		}
-		//else
-		//	return;
-//	} else
-//		innerBoundary.insert(innerBoundary.end(), boundary.begin(), boundary.end());
-/*	return;
 
 	vector<size_t> tmp;
 	if(!Triangulate::Process(innerBoundary, tmp))
 	{
-		LogManager::getSingleton().logMessage("Block Fail!!");
-		return;
-		bool repaired = false;
-		size_t N = innerBoundary.size();
-		for(size_t i=1; i<30 && !repaired; i++)
-		{
-			if(!Geometry::polyRepair(innerBoundary, i))
-			{
-				LogManager::getSingleton().logMessage("Block cannot be repaired"+StringConverter::toString(i));
-				break;
-			}
-			//if(innerBoundary.size() != N)
-			{
-				N = innerBoundary.size();
-				if(Triangulate::Process(innerBoundary, tmp))
-				{
-					LogManager::getSingleton().logMessage("Block Repaired: "+StringConverter::toString(i));
-					repaired = true;
-				}
-			}
-		}
-		if(!repaired)
+		//LogManager::getSingleton().logMessage("Boundary Fail!!"+StringConverter::toString(N));
+		if(!Geometry::polyRepair(innerBoundary, 100))
 		{
 			_footpathPolys.clear();
+			return;
 		}
-		return;
+		else
+		{
+			N = innerBoundary.size();
+			N2 = N * 2;
+		}
 	}
 
-	return;
-*/
 	vector<Vector2> innerBoundary2;
 	innerBoundary2.reserve(innerBoundary.size());
 	BOOST_FOREACH(Vector3 &v, innerBoundary) innerBoundary2.push_back(Geometry::V2(v));
@@ -240,25 +188,6 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 			}
 			//LogManager::getSingleton().logMessage("Road border: "+StringConverter::toString(k));
 		}
-		//else
-		//	LogManager::getSingleton().logMessage("WorldBlock::splitLotBoundary() failed.");
-
-
-		//if(debug)
-		//{
-		//	for(size_t i=0; i<splitBoundaries.size(); i++)
-		//	{
-		//		std::vector<Vector3> debugLot;
-		//		debugLot.reserve(splitBoundaries[i].size());
-		//		for(size_t j=0; j<splitBoundaries[i].size(); j++)
-		//		{	
-		//			Vector3 p;
-		//			WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, p);
-		//			debugLot.push_back(p);
-		//		}
-		//		_debugLots.push_back(debugLot);
-		//	}
-		//}
 	}
 
 	//_lots = lotBoundaries;
@@ -269,144 +198,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 	{
 		Vector3 p;
 		WorldFrame::getSingleton().plotPointOnTerrain(b[0]._pos, p);
-		Real foundation = p.y;
-		Real buildingHeight = foundation + gp._buildingHeight - (buildingDeviance / 2);
-
-		WorldLot lot(b, gp, foundation, buildingHeight + (buildingDeviance * rg()));
-		if(lot.hasError())
-			fail++;
-		else
-			_lots.push_back(lot);
-
-	}
-}
-
-
-
-WorldBlock::WorldBlock(const vector<Vector2> &boundary, const CellGenParams &gp, rando rg, bool debug)
-//  : _randGen(rg)  // not assignable see docs, maybe can be
-{
-	// build a footpath
-	vector<Vector2> outerBoundary(boundary);
-
-	vector<Vector2> innerBoundary(boundary);
-	if(Geometry::polygonInsetFast(0.2, innerBoundary))
-	{
-		for(size_t i=0; i<innerBoundary.size(); i++)
-		{
-			Vector3 p;
-			WorldFrame::getSingleton().plotPointOnTerrain(outerBoundary[i], p);
-		}
-	}
-
-	// Do something to extract lots
-	queue< LotBoundary > q;
-
-	// the bool stores is the side is adjacent a road
-	LotBoundary blockBoundary;
-	vector< LotBoundary > lotBoundaries;
-	BOOST_FOREACH(const Vector2 &b, innerBoundary) blockBoundary.push_back(LotBoundaryPoint(true, b));
-	q.push(blockBoundary);
-	Real lotSplitSz = Math::Sqr(2*gp._lotSize);
-
-	size_t count=0;
-	while(!q.empty())
-	{
-		if(count>10000) return;
-		if(gp._roadLimit && count > gp._roadLimit) return;
-		count++;
-		LotBoundary b(q.front());
-		q.pop();
-		
-		//	find the longest side
-		size_t lsIndex;
-
-		//if(!getLongestSideAboveLimit(b, lotSplitSz, lsIndex))
-		if(!getLongestSideIndex(b, lotSplitSz, lsIndex))
-		{
-			// add to lot boundaries
-			lotBoundaries.push_back(b);
-
-			if(debug)
-			{
-				std::vector<Vector3> debugLot;
-				debugLot.reserve(b.size());
-				for(size_t j=0; j<b.size(); j++)
-				{	
-					Vector3 p;
-					WorldFrame::getSingleton().plotPointOnTerrain(b[j]._pos, p);
-					debugLot.push_back(p);
-				}
-				_debugLots.push_back(debugLot);
-			}
-
-			continue;
-		}
-
-		std::vector<LotBoundary> splitBoundaries;
-		if(splitBoundary(lsIndex, gp._lotDeviance, rg, b, splitBoundaries))
-		{
-			// check boundary borders road
-			for(size_t j, i=0; i<splitBoundaries.size(); i++)
-			{
-				for(j=0; j<splitBoundaries[i].size(); j++)
-				{
-					if(splitBoundaries[i][j]._roadAccess)
-					{
-						q.push(splitBoundaries[i]);
-						break;
-					}
-				}
-
-				// if no road access
-				if(j>=splitBoundaries[i].size())
-				{
-					if(debug)
-					{
-						std::vector<Vector3> debugLot;
-						debugLot.reserve(splitBoundaries[i].size());
-						for(size_t j=0; j<splitBoundaries[i].size(); j++)
-						{	
-							Vector3 p;
-							WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, p);
-							debugLot.push_back(p);
-						}
-						_debugLots.push_back(debugLot);
-					}
-				}
-			}
-			//LogManager::getSingleton().logMessage("Road border: "+StringConverter::toString(k));
-		}
-		//else
-		//	LogManager::getSingleton().logMessage("WorldBlock::splitLotBoundary() failed.");
-
-
-		//if(debug)
-		//{
-		//	for(size_t i=0; i<splitBoundaries.size(); i++)
-		//	{
-		//		std::vector<Vector3> debugLot;
-		//		debugLot.reserve(splitBoundaries[i].size());
-		//		for(size_t j=0; j<splitBoundaries[i].size(); j++)
-		//		{	
-		//			Vector3 p;
-		//			WorldFrame::getSingleton().plotPointOnTerrain(splitBoundaries[i][j]._pos, p);
-		//			debugLot.push_back(p);
-		//		}
-		//		_debugLots.push_back(debugLot);
-		//	}
-		//}
-	}
-
-	//_lots = lotBoundaries;
-	Real buildingDeviance = gp._buildingHeight * gp._buildingDeviance;
-
-	size_t fail = 0;
-	BOOST_FOREACH(LotBoundary &b, lotBoundaries)
-	{
-		Vector3 p;
-		WorldFrame::getSingleton().plotPointOnTerrain(b[0]._pos, p);
-		Real foundation = p.y;
+		Real foundation = p.y + 0.33;
 		Real buildingHeight = foundation + gp._buildingHeight - (buildingDeviance / 2);
 
 		WorldLot lot(b, gp, foundation, buildingHeight + (buildingDeviance * rg()));

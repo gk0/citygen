@@ -41,66 +41,71 @@ void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
-	if( (eventProp == _sampleSizeProp) || (eventProp == _roadWidthProp) || 
-		(eventProp == _sampleDevianceProp) || (eventProp == _samplesProp) || 
-		(eventProp == _plotDebugProp) || (eventProp == _plotAlgorProp) || (eventProp == _segmentDrawSizeProp))
+	WorldRoad* wr = _worldFrame->getSelectedRoad();
+	RoadGenParams g;
+	if(wr) g = wr->getGenParams();
+	else g = WorldRoad::getDefaultGenParams();
+
+	g._algorithm = static_cast<RoadPlotAlgorithm>(GetPropertyValueAsInt(_plotAlgorProp));
+	g._sampleSize = static_cast<Ogre::Real>(GetPropertyValueAsDouble(_sampleSizeProp));
+	g._sampleDeviance = GetPropertyValueAsDouble(_sampleDevianceProp);
+	g._roadWidth = GetPropertyValueAsDouble(_roadWidthProp);
+	g._debug = GetPropertyValueAsBool(_plotDebugProp);
+	int samples = GetPropertyValueAsInt(_samplesProp);
+	double drawSz = GetPropertyValueAsDouble(_segmentDrawSizeProp);
+
+	//TODO: check params within limits
+	if(g._sampleDeviance < Ogre::Degree(0) || g._sampleDeviance > Ogre::Degree(44))
 	{
-		WorldRoad* wr = _worldFrame->getSelectedRoad();
-		if(wr)
-		{
-			RoadGenParams g;
-			g._algorithm = static_cast<RoadPlotAlgorithm>(GetPropertyValueAsInt(_plotAlgorProp));
-			g._sampleSize = GetPropertyValueAsDouble(_sampleSizeProp);
-			g._sampleDeviance = GetPropertyValueAsDouble(_sampleDevianceProp);
-			g._roadWidth = GetPropertyValueAsDouble(_roadWidthProp);
-			g._debug = GetPropertyValueAsBool(_plotDebugProp);
-			int samples = GetPropertyValueAsInt(_samplesProp);
-			double drawSz = GetPropertyValueAsDouble(_segmentDrawSizeProp);
+		//alert user
+		wxMessageBox(_T("Invalid 'sample deviance' value entered, a value between 0-44 is required."),
+				_("Validation Failed"), wxICON_EXCLAMATION);
 
-			//TODO: check params within limits
-			if(g._sampleDeviance < Ogre::Degree(0) || g._sampleDeviance > Ogre::Degree(44))
-			{
-				//alert user
-				wxMessageBox(_T("Invalid 'sample deviance' value entered, a value between 0-44 is required."),
-						_("Validation Failed"), wxICON_EXCLAMATION);
+		//restore value
+		update();
 
-				//restore value
-				update();
-
-				//exit
-				return;
-			}
-
-			if(samples < 1)
-			{
-				wxMessageBox(_T("Invalid 'Number of Samples' value entered, a greater than 0 is required."),
-						_("Validation Failed"), wxICON_EXCLAMATION);
-
-				update();
-				return;
-			}
-			else
-				g._numOfSamples = static_cast<Ogre::uint16>(samples);
-
-
-			if(drawSz < 0.5)
-			{
-				wxMessageBox(_T("Invalid 'Segment Draw Size' value entered, a greater than 0.5 is required."),
-						_("Validation Failed"), wxICON_EXCLAMATION);
-
-				update();
-				return;
-			}
-			else
-				g._segmentDrawSize = static_cast<Ogre::Real>(drawSz);
-
-			wr->setGenParams(g);
-			_worldFrame->update();
-		}
+		//exit
+		return;
 	}
 
+	if(samples < 1)
+	{
+		wxMessageBox(_T("Invalid 'Number of Samples' value entered, a greater than 0 is required."),
+				_("Validation Failed"), wxICON_EXCLAMATION);
+
+		update();
+		return;
+	}
+	else
+		g._numOfSamples = static_cast<Ogre::uint16>(samples);
+
+
+	if(drawSz < 0.5)
+	{
+		wxMessageBox(_T("Invalid 'Segment Draw Size' value entered, a greater than 0.5 is required."),
+				_("Validation Failed"), wxICON_EXCLAMATION);
+
+		update();
+		return;
+	}
+	else
+		g._segmentDrawSize = static_cast<Ogre::Real>(drawSz);
+
+
+	if(wr)
+	{
+		wr->setGenParams(g);
+		_worldFrame->update();
+	}
+	else
+	{
+		WorldRoad::setDefaultGenParams(g);
+		_worldFrame->update();
+	}
+	update();
+
     // Get resulting value - wxVariant is convenient here.
-    wxVariant value = event.GetPropertyValue();
+    //wxVariant value = event.GetPropertyValue();
 }
 
 
@@ -108,28 +113,16 @@ void RoadPropertyPage::update()
 {
 	RoadGenParams rp;
 	WorldRoad *wr = _worldFrame->getSelectedRoad();
-	if(wr)
-	{
-		rp = wr->getGenParams();
-		/*
-		typedef struct {
-			RoadPlotAlgorithm algorithm;
-			Ogre::Real sampleSize;
-			Ogre::Degree sampleDeviance;
-			Ogre::Real roadWidth;
-			Ogre::uint16 numOfSamples;
-			bool debug;
-			Ogre::Real segmentDrawSize;
-		} RoadGenParams;
-		*/
-		SetPropertyValue(_plotAlgorProp, rp._algorithm);
-		SetPropertyValue(_sampleSizeProp, rp._sampleSize);
-		SetPropertyValue(_sampleDevianceProp, rp._sampleDeviance.valueDegrees());
-		SetPropertyValue(_roadWidthProp, rp._roadWidth);
-		SetPropertyValue(_samplesProp, static_cast<int>(rp._numOfSamples));
-		SetPropertyValue(_plotDebugProp, rp._debug);
-		SetPropertyValue(_segmentDrawSizeProp, static_cast<float>(rp._segmentDrawSize));
-	}
+	if(wr) rp = wr->getGenParams();
+	else rp = WorldRoad::getDefaultGenParams();
+
+	SetPropertyValue(_plotAlgorProp, rp._algorithm);
+	SetPropertyValue(_sampleSizeProp, static_cast<double>(rp._sampleSize));
+	SetPropertyValue(_sampleDevianceProp, rp._sampleDeviance.valueDegrees());
+	SetPropertyValue(_roadWidthProp, rp._roadWidth);
+	SetPropertyValue(_samplesProp, static_cast<int>(rp._numOfSamples));
+	SetPropertyValue(_plotDebugProp, rp._debug);
+	SetPropertyValue(_segmentDrawSizeProp, static_cast<float>(rp._segmentDrawSize));
 
 	RefreshProperty(_plotAlgorProp);
 	RefreshProperty(_sampleSizeProp);

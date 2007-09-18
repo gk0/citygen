@@ -26,12 +26,24 @@ struct RoadGenParams
 	Ogre::uint16		_numOfSamples;
 	bool				_debug;
 	Ogre::Real			_segmentDrawSize;
+
+	RoadGenParams()
+	{
+		_algorithm = EvenElevationDiff;
+		_sampleSize = 7.0;
+		_sampleDeviance = 25;
+		_roadWidth = 1.0;
+		_numOfSamples = 5;
+		_debug = false;
+		_segmentDrawSize = 2;
+	}
 };
 
 class WorldRoad : public WorldObject, public RoadInterface
 {
 private:
 	static unsigned int		_instanceCount;
+	static RoadGenParams	_defaultGenParams;
 
 	RoadId					_simpleRoadId;
 
@@ -80,8 +92,11 @@ public:
 		invalidate();
 	}
 
-	const RoadGenParams& getGenParams();
+	static RoadGenParams getDefaultGenParams();
+	RoadGenParams getGenParams();
+	static void setDefaultGenParams(const RoadGenParams& g);
 	void setGenParams(const RoadGenParams& g);
+
 	void setWidth(const Ogre::Real& w);
 
 	bool loadXML(const TiXmlHandle& roadRoot);

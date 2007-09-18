@@ -42,7 +42,7 @@ bool Application::OnInit()
 	
 	loadResources();
 
-	_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\messinok5.cgx"));
+	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\messinok5.cgx"));
 	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\trouble2.cgx"));
 	
 	// All clear!

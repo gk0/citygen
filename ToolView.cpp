@@ -6,7 +6,7 @@ using namespace Ogre;
 ToolView::ToolView(WorldFrame* wf)
 {
 	_worldFrame = wf;
-	_moveSpeed = 4.0;
+	_moveSpeed = 0.7;
 }
 
 void ToolView::activate()

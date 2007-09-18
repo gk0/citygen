@@ -334,17 +334,17 @@ void WorldNode::createTerminus()
 	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(_nodeId); 
 	if(rIt2 != rEnd2)
 	{		
-		Real h = getPosition3D().y + 0.4;
-		Vector2 p1, p2, offset;
+		Real h = getPosition3D().y + 0.3;
+		Vector2 p1, p2, offset, roadVec;
 		p1 = _roadGraph.getSrcNode(*rIt2)->getPosition2D();
 		p2 = _roadGraph.getDstNode(*rIt2)->getPosition2D();
-		offset = (p2 - p1).perpendicular();
-		offset.normalise();
-		offset *= _roadGraph.getRoad(*rIt2)->getWidth();;
-
-
-		_roadJunction[*rIt2] = std::make_pair(Vector3(p1.x - offset.x, h, p1.y - offset.y),
-						Vector3(p1.x + offset.x, h, p1.y + offset.y));
+		roadVec = (p1-p2);
+		roadVec.normalise();
+		offset = roadVec.perpendicular();
+		offset *= _roadGraph.getRoad(*rIt2)->getWidth();
+		roadVec *= _roadGraph.getRoad(*rIt2)->getWidth();
+		_roadJunction[*rIt2] = std::make_pair(Vector3(p1.x + offset.x + roadVec.x, h, p1.y + offset.y + roadVec.y),
+			Vector3(p1.x - offset.x + roadVec.x, h, p1.y - offset.y + roadVec.y));
 	}
 }
 
@@ -356,10 +356,9 @@ std::pair<Vector3, Vector3> WorldNode::getRoadJunction(RoadId rd)
 	{
 		//size_t degree = _roadGraph.getDegree(mNodeId);
 		//throw new Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "WorldNode::getRoadJunction");
-		LogManager::getSingleton().logMessage("Node "+getLabel()+" road not found.", LML_CRITICAL);
+		//LogManager::getSingleton().logMessage("Node "+getLabel()+" road not found.", LML_CRITICAL);
 		return std::make_pair(getPosition3D(), getPosition3D());
 	}
-
 	return rIt->second;
 }
 
@@ -456,7 +455,7 @@ bool WorldNode::createTJunction()
 	_roadJunction[throughRoads[0]] = std::make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 	_roadJunction[throughRoads[1]] = std::make_pair(Vector3(p2.x, h, p2.y), Vector3(p1.x, h, p1.y));
 
-	// create the juntion for the joining road
+	// create the junction for the joining road
 	NodeId ccwNd;
 	_roadGraph.getCounterClockwiseMostFromPrev(_roadGraph.getDst(joiningRoad), _nodeId, ccwNd);
 	if(_roadGraph.getDst(throughRoads[0]) == ccwNd)

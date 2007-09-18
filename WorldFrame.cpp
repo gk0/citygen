@@ -6,6 +6,7 @@
 #include "WorldRoad.h"
 #include "WorldCell.h"
 #include "PerformanceTimer.h"
+#include "Geometry.h"
 
 //tools
 #include "ToolView.h"
@@ -972,17 +973,16 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 		_simpleRoadGraph.extractPrimitives(filaments, nodeCycles);
 
 		// DEBUG
-		stringstream os;
-		size_t f = 0;
-		os << "Filaments:\n";
-		BOOST_FOREACH(vector<NodeInterface*> &filament, filaments)
-		{
-			os << "F" << f++ << ":";
-			BOOST_FOREACH(NodeInterface* fn, filament) os << *fn;
-			os << "\n";
-		}
-
-		LogManager::getSingleton().logMessage(os.str());
+//		stringstream os;
+//		size_t f = 0;
+//		os << "Filaments:\n";
+//		BOOST_FOREACH(vector<NodeInterface*> &filament, filaments)
+//		{
+//			os << "F" << f++ << ":";
+//			BOOST_FOREACH(NodeInterface* fn, filament) os << *fn;
+//			os << "\n";
+//		}
+//		LogManager::getSingleton().logMessage(os.str());
 
 		// if the number of cycles is greater than the number of cells
 		// then we have most definitely made a new cell
@@ -1142,9 +1142,10 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 		{
 			// could be a boundary edge or a filament
 			const vector<RoadInterface*> &boundary(aCells[0]->getBoundaryRoads());
+
+			// search for boundary cycle
 			size_t i;
-			for(i=0; i<boundary.size(); i++)
-				if(boundary[i] == wr) break;
+			for(i=0; i<boundary.size() && boundary[i] != wr; i++);
 
 			// if found on the boundary cycle
 			if(i<boundary.size())
@@ -1189,12 +1190,12 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			_simpleRoadGraph.extractPrimitives(filaments, nodeCycles);
 
 			// find the new cell if there is one
-			bool newCell = true;
-			for(size_t i = 0; i < nodeCycles.size(); i++)
+			BOOST_FOREACH(vector<NodeInterface*> &cycle, nodeCycles)
 			{
+				bool newCell = true;
 				BOOST_FOREACH(WorldCell* c, _cellSet)
 				{
-					if(c->compareBoundary(nodeCycles[i]))
+					if(c->compareBoundary(cycle))
 					{
 						newCell = false;
 						break;
@@ -1203,7 +1204,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 				// create the new cell and break
 				if(newCell)
 				{
-					WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[i]);
+					WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, cycle);
 					_sceneCellMap[wc->getSceneNode()] = wc;
 					_cellSet.insert(wc);
 					wc->setGenParams(gp);
@@ -1307,20 +1308,16 @@ void WorldFrame::moveSelectedNode(const Vector3& pos)
 
 bool WorldFrame::pickCell(wxMouseEvent& e, WorldCell *&wc)
 {
-	// Setup the ray scene query
-	float mouseX = float(1.0f/_viewport->getActualWidth()) * e.GetX();
-	float mouseY = float(1.0f/_viewport->getActualHeight()) * e.GetY();
-	Ray mouseRay = _camera->getCameraToViewportRay(mouseX, mouseY);
-
-	_raySceneQuery->setRay(mouseRay);
-    _raySceneQuery->setSortByDistance(true);
-	RaySceneQueryResult result = _raySceneQuery->execute();
-	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
+	Vector3 pos3D;
+	if(pickTerrainIntersection(e, pos3D)) 
 	{
-		if (itr->movable && itr->movable->getName().substr(0, 4) == "cell")
+		BOOST_FOREACH(WorldCell* c, _cellSet)
 		{
-			wc = _sceneCellMap[itr->movable->getParentSceneNode()];
-    		return true;
+			if(c->isInside(Geometry::V2(pos3D)))
+			{
+				wc = c;
+				return true;
+			}
 		}
 	}
 	return false;

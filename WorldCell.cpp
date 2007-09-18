@@ -16,6 +16,8 @@
 using namespace Ogre;
 using namespace std;
 int WorldCell::_instanceCount = 0;
+CellGenParams WorldCell::_defaultGenParams;
+
 
 WorldCell::WorldCell(const RoadGraph &p, const RoadGraph &s)
  : 	_parentRoadGraph(p),
@@ -40,22 +42,7 @@ void WorldCell::init()
 	_showBuildings = true;
 
 	// set up some default growth gen params
-	_genParams._seed = 1;
-	_genParams._type = 0;
-	_genParams._segmentSize = 5;
-	_genParams._segmentDeviance = 0.2;
-	_genParams._degree = 4;
-	_genParams._degreeDeviance = 0.01;
-	_genParams._snapSize = 2.4;
-	_genParams._snapDeviance = 0.1;
-	_genParams._buildingHeight = 1.4;
-	_genParams._buildingDeviance = 0.7;
-	_genParams._connectivity = 1.0;
-	_genParams._roadWidth = 0.45;
-	_genParams._lotSize = 0.7;
-	_genParams._lotDeviance = 0.4;
-	_genParams._roadLimit = 0;
-	_genParams._debug = false;
+	_genParams = _defaultGenParams;
 
 	_roadNetworkMO = 0;
 	_roadJunctionsMO = 0;
@@ -727,10 +714,21 @@ CellGenParams WorldCell::getGenParams() const
 {
 	return _genParams;
 }
+
+CellGenParams WorldCell::getDefaultGenParams()
+{
+	return _defaultGenParams;
+}
+
 void WorldCell::setGenParams(const CellGenParams &g)
 {
 	_genParams = g;
 	invalidate();
+}
+
+void WorldCell::setDefaultGenParams(const CellGenParams &g)
+{
+	_defaultGenParams = g;
 }
 
 const vector<RoadInterface*>& WorldCell::getBoundaryRoads() const

@@ -334,21 +334,6 @@ public:
 	true if the inset is successful, false if it is not successful for
 	example in the event that the polygon is too small to be inset
 	*/
-	static bool polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints);
-
-	/** Insets a polygon
-	@remarks
-	This function returns a polygon that is inset
-	@param 
-	inset a Ogre::Real that specifies the amount to inset the polygon
-	@param
-	polyPoints a std::vector that defines the polygon in the
-	form of ordered points.
-
-	@returns
-	true if the inset is successful, false if it is not successful for
-	example in the event that the polygon is too small to be inset
-	*/
 	static bool polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector3> &polyPoints);
 
 	/** Insets a line
@@ -405,16 +390,30 @@ public:
 
 	void static polygonInsetFFast(Ogre::Real inset, std::vector<Ogre::Vector3> &poly);
 
-	static bool polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAhead);
+	static bool polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAheadMax);
+	static void polyRepairCycle(std::vector<Ogre::Vector3> &poly, size_t lookAhead);
 
-	static std::vector<std::pair<Ogre::Vector3, Ogre::Vector2>>  
+	static std::vector< std::pair<Ogre::Vector3, Ogre::Vector2> >  
 		calcInsetVectors(const Ogre::Real inset, std::vector<Ogre::Vector3> &poly);
 
-	static std::vector<std::pair<Ogre::Vector3, Ogre::Vector2>>  
+	static std::vector< std::pair<Ogre::Vector3, Ogre::Vector2> >  
 	calcInsetVectors(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector3> &poly);
 
 	static void 
-	processInsetVectors(const std::vector<std::pair<Ogre::Vector3, Ogre::Vector2>> &iv, std::vector<Ogre::Vector3> &poly);
+	processInsetVectors(const std::vector< std::pair<Ogre::Vector3, Ogre::Vector2> > &iv, std::vector<Ogre::Vector3> &poly);
+
+
+	// 2D insets
+	static std::vector< std::pair<Ogre::Vector2, Ogre::Vector2> >  
+		calcInsetVectors(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector2> &poly);
+
+	static void 
+		processInsetVectors(const std::vector< std::pair<Ogre::Vector2, Ogre::Vector2> > &iv, std::vector<Ogre::Vector2> &poly);
+
+
+	static void polygonInset(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector2> &poly);
+
+
 };
 
 

@@ -358,6 +358,21 @@ bool WorldLot::buildHousey(const std::vector<Ogre::Vector2> &footprint,
 }
 
 LotBoundary WorldLot::insetBoundary(const LotBoundary &b, const Real &roadInset, const Real &standardInset)
+/*{
+	LotBoundary boundary(b);
+	vector<Vector2> poly;
+	vector<Real> insets;
+	poly.reserve(b.size());
+	insets.reserve(b.size());
+	BOOST_FOREACH(LotBoundaryPoint& p, b)
+	{
+		poly.push_back(p._pos);
+		insets.push_back(p._roadAccess ? roadInset : standardInset);
+	}
+	Geometry::polygonInset(insets, poly);
+	for(size_t i=0; i<)
+	BOOST_FOREACH(LotBoundaryPoint& p, boundary)
+}*/
 {
 	// get size
 	size_t i, j, N = b.size();

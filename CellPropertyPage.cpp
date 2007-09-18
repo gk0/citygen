@@ -96,73 +96,65 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	//const wxId& id = event.GetId();
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
+
+	CellGenParams g;
+	WorldCell *wc = _worldFrame->getSelectedCell();
+	if(wc) g = wc->getGenParams();
+	else g = WorldCell::getDefaultGenParams();
+
 	if(eventProp == _presetProp)
 	{
-		WorldCell *wc = _worldFrame->getSelectedCell();
-		if(wc)
+		switch(GetPropertyValueAsInt(_presetProp))
 		{
-			CellGenParams g = wc->getGenParams();
-			switch(GetPropertyValueAsInt(_presetProp))
-			{
-			// Manhattan
-			case 1:
-				g._seed = 1;
-				g._type = 0;
-				g._segmentSize = 5;
-				g._segmentDeviance = 0.2;
-				g._degree = 4;
-				g._degreeDeviance = 0.01;
-				g._snapSize = 2.4;
-				g._snapDeviance = 0.1;
-				g._buildingHeight = 1.4;
-				g._buildingDeviance = 0.7;
-				g._connectivity = 1.0;
-				g._roadWidth = 0.45;
-				g._lotSize = 0.7;
-				g._lotDeviance = 0.4;
-				wc->setGenParams(g);
-				_worldFrame->update();
-				update();
-				break;
-			case 2:
-				g._seed = 1;
-				g._type = 1;
-				g._segmentSize = 4;
-				g._segmentDeviance = 0.2;
-				g._degree = 4;
-				g._degreeDeviance = 0.01;
-				g._snapSize = 2.4;
-				g._snapDeviance = 0.1;
-				g._buildingHeight = 0.7;
-				g._buildingDeviance = 0.3;
-				g._connectivity = 0.3;
-				g._roadWidth = 0.40;
-				g._lotSize = 2.0;
-				g._lotDeviance = 0.7;
-				wc->setGenParams(g);
-				_worldFrame->update();
-				update();
-				break;
-			case 3:
-				g._seed = 1;
-				g._type = 2;
-				g._segmentSize = 3.8;
-				g._segmentDeviance = 0.6;
-				g._degree = 9;
-				g._degreeDeviance = 0.6;
-				g._snapSize = 2.8;
-				g._snapDeviance = 0.1;
-				g._buildingHeight = 0.4;
-				g._buildingDeviance = 0.1;
-				g._connectivity = 0.0;
-				g._roadWidth = 0.3;
-				g._lotSize = 0.8;
-				g._lotDeviance = 0.2;
-				wc->setGenParams(g);
-				_worldFrame->update();
-				update();
-				break;
-			}
+		// Manhattan
+		case 1:
+			g._seed = 1;
+			g._type = 0;
+			g._segmentSize = 5;
+			g._segmentDeviance = 0.2;
+			g._degree = 4;
+			g._degreeDeviance = 0.01;
+			g._snapSize = 2.4;
+			g._snapDeviance = 0.1;
+			g._buildingHeight = 1.4;
+			g._buildingDeviance = 0.7;
+			g._connectivity = 1.0;
+			g._roadWidth = 0.45;
+			g._lotSize = 0.7;
+			g._lotDeviance = 0.4;
+			break;
+		case 2:
+			g._seed = 1;
+			g._type = 1;
+			g._segmentSize = 4;
+			g._segmentDeviance = 0.2;
+			g._degree = 4;
+			g._degreeDeviance = 0.01;
+			g._snapSize = 2.4;
+			g._snapDeviance = 0.1;
+			g._buildingHeight = 0.7;
+			g._buildingDeviance = 0.3;
+			g._connectivity = 0.3;
+			g._roadWidth = 0.40;
+			g._lotSize = 2.0;
+			g._lotDeviance = 0.7;
+			break;
+		case 3:
+			g._seed = 1;
+			g._type = 2;
+			g._segmentSize = 3.8;
+			g._segmentDeviance = 0.6;
+			g._degree = 9;
+			g._degreeDeviance = 0.6;
+			g._snapSize = 2.8;
+			g._snapDeviance = 0.1;
+			g._buildingHeight = 0.4;
+			g._buildingDeviance = 0.1;
+			g._connectivity = 0.0;
+			g._roadWidth = 0.3;
+			g._lotSize = 0.8;
+			g._lotDeviance = 0.2;
+			break;
 		}
 	}
 	else /*if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) 
@@ -175,32 +167,31 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		if(GetPropertyValueAsLong(_seedProp)==0)
 			update();
 
-		WorldCell *wc = _worldFrame->getSelectedCell();
-		if(wc)
-		{
-			CellGenParams g;
-			g._seed = GetPropertyValueAsLong(_seedProp);
-			g._type = GetPropertyValueAsInt(_typeProp);
-			g._segmentSize = GetPropertyValueAsDouble(_segmentSizeProp);
-			g._segmentDeviance = GetPropertyValueAsDouble(_segmentDevianceProp);
-			g._degree = GetPropertyValueAsInt(_degreeProp);
-			g._degreeDeviance = GetPropertyValueAsDouble(_degreeDevianceProp);
-			g._snapSize = GetPropertyValueAsDouble(_snapSizeProp);
-			g._snapDeviance = GetPropertyValueAsDouble(_snapDevianceProp);
-			g._roadWidth = GetPropertyValueAsDouble(_roadWidthProp);
-			g._buildingHeight = GetPropertyValueAsDouble(_buildingHeightProp);
-			g._buildingDeviance = GetPropertyValueAsDouble(_buildingDevianceProp);
-			g._roadLimit = GetPropertyValueAsInt(_roadLimitProp);
-			g._connectivity = GetPropertyValueAsDouble(_connectivityProp);
-			g._lotSize = GetPropertyValueAsDouble(_lotSizeProp);
-			g._lotDeviance = GetPropertyValueAsDouble(_lotDevianceProp);
-			g._debug = GetPropertyValueAsBool(_debugProp);
-			
-			wc->setGenParams(g);
-			_worldFrame->update();
-			update();
-		}
+		g._seed = GetPropertyValueAsLong(_seedProp);
+		g._type = GetPropertyValueAsInt(_typeProp);
+		g._segmentSize = GetPropertyValueAsDouble(_segmentSizeProp);
+		g._segmentDeviance = GetPropertyValueAsDouble(_segmentDevianceProp);
+		g._degree = GetPropertyValueAsInt(_degreeProp);
+		g._degreeDeviance = GetPropertyValueAsDouble(_degreeDevianceProp);
+		g._snapSize = GetPropertyValueAsDouble(_snapSizeProp);
+		g._snapDeviance = GetPropertyValueAsDouble(_snapDevianceProp);
+		g._roadWidth = GetPropertyValueAsDouble(_roadWidthProp);
+		g._buildingHeight = GetPropertyValueAsDouble(_buildingHeightProp);
+		g._buildingDeviance = GetPropertyValueAsDouble(_buildingDevianceProp);
+		g._roadLimit = GetPropertyValueAsInt(_roadLimitProp);
+		g._connectivity = GetPropertyValueAsDouble(_connectivityProp);
+		g._lotSize = GetPropertyValueAsDouble(_lotSizeProp);
+		g._lotDeviance = GetPropertyValueAsDouble(_lotDevianceProp);
+		g._debug = GetPropertyValueAsBool(_debugProp);
 	}
+
+	if(wc)
+	{
+		wc->setGenParams(g);
+		_worldFrame->update();
+	}
+	else WorldCell::setDefaultGenParams(g);
+	update();
 
     // Get resulting value - wxVariant is convenient here.
     wxVariant value = event.GetPropertyValue();
@@ -210,39 +201,37 @@ void CellPropertyPage::update()
 {
 	CellGenParams g;
 	WorldCell *wc = _worldFrame->getSelectedCell();
-	if(wc)
-	{
-		g = wc->getGenParams();
-		/*
-		typedef struct {
-			int seed;
-			Ogre::Real segmentSize;
-			Ogre::Real segmentDeviance;
-			unsigned int degree;
-			Ogre::Real degreeDeviance;
-			Ogre::Real snapSize;
-			Ogre::Real snapDeviance;
-		} CellGenParams;
-		*/
-		SetPropertyValue(_presetProp, 0);
-		SetPropertyValue(_seedProp, g._seed);
-		SetPropertyValue(_typeProp, (int) g._type);
-		SetPropertyValue(_segmentSizeProp, g._segmentSize);
-		SetPropertyValue(_segmentDevianceProp, g._segmentDeviance);
-		SetPropertyValue(_degreeProp, (int) g._degree);
-		SetPropertyValue(_degreeDevianceProp, g._degreeDeviance);
-		SetPropertyValue(_snapSizeProp, g._snapSize);
-		SetPropertyValue(_snapDevianceProp, g._snapDeviance);
-		SetPropertyValue(_roadWidthProp, g._roadWidth);
-		SetPropertyValue(_buildingHeightProp, g._buildingHeight);
-		SetPropertyValue(_buildingDevianceProp, g._buildingDeviance);
-		SetPropertyValue(_roadLimitProp, (int) g._roadLimit);
-		SetPropertyValue(_connectivityProp, g._connectivity);
-		SetPropertyValue(_lotSizeProp, g._lotSize);
-		SetPropertyValue(_lotDevianceProp, g._lotDeviance);
-		SetPropertyValue(_debugProp, g._debug);
+	if(wc) g = wc->getGenParams();
+	else g = WorldCell::getDefaultGenParams();
+	/*
+	typedef struct {
+		int seed;
+		Ogre::Real segmentSize;
+		Ogre::Real segmentDeviance;
+		unsigned int degree;
+		Ogre::Real degreeDeviance;
+		Ogre::Real snapSize;
+		Ogre::Real snapDeviance;
+	} CellGenParams;
+	*/
+	SetPropertyValue(_presetProp, 0);
+	SetPropertyValue(_seedProp, g._seed);
+	SetPropertyValue(_typeProp, (int) g._type);
+	SetPropertyValue(_segmentSizeProp, g._segmentSize);
+	SetPropertyValue(_segmentDevianceProp, g._segmentDeviance);
+	SetPropertyValue(_degreeProp, (int) g._degree);
+	SetPropertyValue(_degreeDevianceProp, g._degreeDeviance);
+	SetPropertyValue(_snapSizeProp, g._snapSize);
+	SetPropertyValue(_snapDevianceProp, g._snapDeviance);
+	SetPropertyValue(_roadWidthProp, g._roadWidth);
+	SetPropertyValue(_buildingHeightProp, g._buildingHeight);
+	SetPropertyValue(_buildingDevianceProp, g._buildingDeviance);
+	SetPropertyValue(_roadLimitProp, (int) g._roadLimit);
+	SetPropertyValue(_connectivityProp, g._connectivity);
+	SetPropertyValue(_lotSizeProp, g._lotSize);
+	SetPropertyValue(_lotDevianceProp, g._lotDeviance);
+	SetPropertyValue(_debugProp, g._debug);
 
-	}
 	RefreshProperty(_presetProp);
 	RefreshProperty(_seedProp);
 	RefreshProperty(_segmentSizeProp);

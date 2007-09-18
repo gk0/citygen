@@ -11,6 +11,8 @@
 
 
 unsigned int WorldRoad::_instanceCount = 0;
+RoadGenParams WorldRoad::_defaultGenParams;
+
 using namespace Ogre;
 using namespace std;
 
@@ -19,13 +21,7 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	: _roadGraph(g),
 	  _simpleRoadGraph(s)
 {
-	_genParams._algorithm = EvenElevationDiff;
-	_genParams._sampleSize = 8; //DEBUG: set to v. big 50 normal is 10
-	_genParams._roadWidth = 1.0;
-	_genParams._sampleDeviance= 25;
-	_genParams._numOfSamples = 5;
-	_genParams._debug = false;
-	_genParams._segmentDrawSize = 2;
+	_genParams = _defaultGenParams;
 
 	_selected = false;
 	_length = 0;
@@ -61,6 +57,9 @@ WorldRoad::~WorldRoad()
 
 void WorldRoad::build()
 {
+	Vector2 tmper(getSrcNode()->getPosition2D() - getDstNode()->getPosition2D());
+	if(tmper.length() < 0.3)
+		return;
 	std::vector<Vector3> interpolatedList;
 
 #ifdef FINEGRAIN
@@ -732,7 +731,12 @@ bool WorldRoad::rayCross(const Ogre::Vector2& loc)
 	return rayCross;
 }
 
-const RoadGenParams& WorldRoad::getGenParams()
+RoadGenParams WorldRoad::getDefaultGenParams()
+{
+	return _defaultGenParams;
+}
+
+RoadGenParams WorldRoad::getGenParams()
 {
 	return _genParams;
 }
@@ -920,6 +924,11 @@ Vector3 WorldRoad::selectMinElevation(const Vector3 &lastSample, const std::vect
 	return lowestPoint;
 }
 
+void WorldRoad::setDefaultGenParams(const RoadGenParams& g)
+{
+	_defaultGenParams = g;
+}
+
 void WorldRoad::setGenParams(const RoadGenParams& g)
 {
 	_genParams = g;
@@ -950,25 +959,33 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 		Real l = (src-dst).length();
 		if(l<len) len = l;
 	}
-	snapSz = std::min((len-0.01f), snapSz);
-	Real snapSzSq(Math::Sqr(snapSz));
+	Real minSnapSize = std::min((len/2), snapSz);
+	Real snapSzSq(Math::Sqr(minSnapSize));
+	//snapSzSq = 0;
 
 	for(i=0; i<(_roadSegmentList.size()-1); i++) 
 	{
 		NodeId srcNd = _roadGraph.getSrc(_roadSegmentList[i]);
 		NodeId dstNd = _roadGraph.getDst(_roadSegmentList[i]);
-		intersection = _roadGraph.findClosestIntscnConnected(srcNd, dstNd, snapSz, pos, rd);
+		intersection = _roadGraph.findClosestIntscnConnected(srcNd, dstNd, minSnapSize, pos, rd);
 		if(intersection) break;
 	}
 	if(!intersection)
 	{
 		NodeId srcNd = _roadGraph.getSrc(_roadSegmentList[i]);
 		Vector2 dstPos = _roadGraph.getDstNode(_roadSegmentList[i])->getPosition2D();
-		intersection = _roadGraph.findClosestIntscn(srcNd, dstPos, snapSz, pos, rd);
+		intersection = _roadGraph.findClosestIntscn(srcNd, dstPos, minSnapSize, pos, rd);
 	}
+
+	//TODO: actually it might be an idea to have a full exclude list for 
+	// this segment and to gradually increase the minimized snap size to
+	// the original size as the check progresses from src to dst
+	// maybe???
+
 
 	if(!intersection) pos = getDstNode()->getPosition2D();
 
+	snapSzSq = Math::Sqr(snapSz);		// give node snap full snapSz
 	Real closestDistanceSq = std::numeric_limits<Real>::max();
 	NodeIterator nIt, nEnd;
 	for(boost::tie(nIt, nEnd) = _simpleRoadGraph.getNodes();  nIt != nEnd; nIt++)
@@ -991,6 +1008,9 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 	else if(intersection == true)
 	{
 		//TODO: interpolate point on spline
+		RoadInterface* ri = _roadGraph.getRoad(rd);
+		assert(typeid(*ri) == typeid(WorldRoad));
+		wr = static_cast<WorldRoad*>(_roadGraph.getRoad(rd));
 		return 1;
 	}
 	else return 0;

@@ -19,6 +19,7 @@ private:
 	bool				_busy;
 
 	static int			_instanceCount;
+	static CellGenParams _defaultGenParams;
 
 	Ogre::String		_name;
 	Ogre::Vector2		_centre;
@@ -50,7 +51,9 @@ public:
 	virtual ~WorldCell();
 
 	CellGenParams getGenParams() const;
+	static CellGenParams getDefaultGenParams();
 	void setGenParams(const CellGenParams &g);
+	static void setDefaultGenParams(const CellGenParams &g);
 
 	const std::vector<RoadInterface*>& getBoundaryRoads() const;
 	const std::vector<NodeInterface*>& getBoundaryCycle() const;

@@ -16,7 +16,6 @@ private:
 	std::vector<size_t>							_footpathPolys;	
 
 public:
-	WorldBlock(const std::vector<Ogre::Vector2> &boundary, const CellGenParams &gp, rando rg, bool debug=false);
 	WorldBlock(const std::vector<Ogre::Vector3> &boundary, const CellGenParams &gp, rando rg, bool debug=false);
 
 	void build(Ogre::ManualObject* m1, Ogre::ManualObject* m2, Ogre::ManualObject* m3);

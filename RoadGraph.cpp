@@ -180,7 +180,7 @@ void RoadGraph::extractFilament(NodeId v0, NodeId v1, Graph &g, list<NodeId>& he
 {
 	//assert(out_degree(v0, g) != 2); // trouble
 	if(out_degree(v0, g) == 2) {
-		throw Exception(Exception::ERR_ITEM_NOT_FOUND, "ERROR: incorrect filament degree", "RoadGraph::extractFilament");
+	//	throw Exception(Exception::ERR_ITEM_NOT_FOUND, "ERROR: incorrect filament degree", "RoadGraph::extractFilament");
 	}
 
 	if(g[edge(v0, v1, g).first]->isRoadCycle())

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Geometry.h"
+#include "Triangulate.h"
 #include "skeleton.h"
 
 using namespace Ogre;
@@ -68,117 +69,6 @@ bool Geometry::isInside(const Ogre::Vector2 &loc, const std::vector<Ogre::Vector
 	return bRayCross;
 }
 
-
-bool Geometry::polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints)
-{
-	// get size
-	size_t i, j, N = polyPoints.size();
-
-	// check cycle
-	if(N < 3)
-		throw Exception(Exception::ERR_INVALIDPARAMS, 
-		"Invalid number of points in polygon", "Geometry::polygonInsetFast");
-
-	// create footprint edge structure
-	vector< pair<Vector2, Vector2> > edges;
-	edges.reserve(N);
-	vector<Vector2> newFootprint;
-	newFootprint.reserve(N);
-
-	// get footprint edge vectors
-	for(i=0; i<N; i++)
-	{
-		j = (i+1)%N;
-		Vector2 dir(polyPoints[j] - polyPoints[i]);
-		dir = dir.perpendicular();
-		dir.normalise();
-		dir *= inset;
-		edges.push_back(make_pair(polyPoints[i] + dir, polyPoints[j] + dir));
-	}
-
-	// calculate footprint points from edges
-	for(i=0; i<N; i++)
-	{
-		j = (i+1)%N;
-		// get edge intersection point
-		Ogre::Real r,s;
-		Vector2 intscn;
-		if(Geometry::lineIntersect(edges[i].first, edges[i].second, 
-			edges[j].first, edges[j].second, intscn, r, s) && r >= 0 && s <= 1)
-		{
-			newFootprint.push_back(intscn);
-		}
-		else
-		{
-			// no intersection, could be parallel could be mad lets average the pair
-			newFootprint.push_back((edges[i].second + edges[j].first)/2);
-		}
-	}
-	polyPoints.swap(newFootprint);
-	return true;
-}
-
-/*
-bool Geometry::polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector3> &polyPoints)
-{
-	// get size
-	size_t i, j, N = polyPoints.size();
-
-	// negate inset
-	inset = -inset;
-
-	// check cycle
-	if(N < 3)
-		throw Exception(Exception::ERR_INVALIDPARAMS, 
-		"Invalid number of points in polygon", "Geometry::polygonInsetFast");
-
-	// create footprint edge structure
-	vector< pair<Vector2, Vector2> > edges;
-	edges.reserve(N);
-	vector<Vector2> newFootprint;
-	newFootprint.reserve(N);
-
-	// get footprint edge vectors
-	for(i=0; i<N; i++)
-	{
-		j = (i+1)%N;
-		Vector2 dir(polyPoints[i].x - polyPoints[j].x, polyPoints[i].z - polyPoints[j].z);
-		dir = dir.perpendicular();
-		dir.normalise();
-		dir *= inset;
-		edges.push_back(make_pair(
-			Vector2(polyPoints[i].x + dir.x, polyPoints[i].z + dir.y), 
-			Vector2(polyPoints[j].x + dir.x, polyPoints[j].z + dir.y)));
-	}
-
-	// calculate footprint points from edges
-	for(i=0; i<N; i++)
-	{
-		j = (i+1)%N;
-		// get edge intersection point
-		Ogre::Real r,s;
-		Vector2 intscn;
-		if(Geometry::lineIntersect(edges[i].first, edges[i].second, 
-			edges[j].first, edges[j].second, intscn, r, s) && r >= 0 && s <= 1)
-		{
-			newFootprint.push_back(intscn);
-		}
-		else
-		{
-			// no intersection, could be parallel could be mad lets average the pair
-			newFootprint.push_back((edges[i].second + edges[j].first)/2);
-		}
-	}
-
-	assert(newFootprint.size() == N);
-	for(size_t i=0; i<N; i++)
-	{
-		j = (i+1)%N;
-		polyPoints[j].x = newFootprint[i].x;
-		polyPoints[j].z = newFootprint[i].y;
-	}
-	return true;
-}*/
 
 bool Geometry::polygonInset(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints)
 {
@@ -413,11 +303,11 @@ bool Geometry::unionPolyAndLine(std::vector<Ogre::Vector2> &polyPoints, std::vec
 	return true;
 }
 
-vector<pair<Vector3, Vector2>>  
+vector< pair<Vector3, Vector2> >  
 Geometry::calcInsetVectors(const vector<Real>& insets, vector<Vector3> &poly)
 {
 	size_t i,j,N = poly.size();
-	vector<pair<Vector3, Vector2>> iv;
+	vector< pair<Vector3, Vector2> > iv;
 	iv.reserve(N);
 
 	Vector2 prevPolyi2D(poly[N-1].x, poly[N-1].z);
@@ -472,11 +362,11 @@ Geometry::calcInsetVectors(const vector<Real>& insets, vector<Vector3> &poly)
 }
 
 
-vector<pair<Vector3, Vector2>>  
+vector< pair<Vector3, Vector2> >  
 Geometry::calcInsetVectors(const Real inset, vector<Vector3> &poly)
 {
 	size_t i,j,N = poly.size();
-	vector<pair<Vector3, Vector2>> iv;
+	vector< pair<Vector3, Vector2> > iv;
 	iv.reserve(N);
 
 	Vector2 prevPolyi2D(poly[N-1].x, poly[N-1].z);
@@ -530,7 +420,7 @@ Geometry::calcInsetVectors(const Real inset, vector<Vector3> &poly)
 	return iv;
 }
 
-void Geometry::processInsetVectors(const vector<pair<Vector3, Vector2>> &iv, vector<Vector3>& poly)
+void Geometry::processInsetVectors(const vector< pair<Vector3, Vector2> > &iv, vector<Vector3> &poly)
 {
 	size_t i, j, offset = 0, N=iv.size();
 	if(poly.size() != 0) poly.clear();
@@ -632,18 +522,25 @@ void Geometry::processInsetVectors(const vector<pair<Vector3, Vector2>> &iv, vec
 					Vector2 polyk2D = V2(iv[k].first);
 					if(lineSegmentIntersect(polyj2D, iv[j].second, polyk2D, iv[k].second, interscn))
 					{
+						LogManager::getSingleton().logMessage("Bla!!");
+						Vector2 tmp((iv[i].second+iv[k].second)/2);
+						poly.push_back(Vector3(tmp.x, (iv[i].first.y + iv[k].first.y)/2, tmp.y));
 						if(i>=(N-k))
 							offset = N - k + 1;
 						i += k;
+						breaker = true;
 						break;
 					}
 				}
 				if(breaker) break;
+				breaker = true;
+				Vector2 tmp((iv[i].second+iv[j].second)/2);
+				poly.push_back(Vector3(tmp.x, (iv[i].first.y + iv[j].first.y)/2, tmp.y));
 				if(i>=(N-j))
 					offset = N - j + 1;
 				i += j;
+				break;
 			}
-
 		}
 		if(!breaker)
 		{
@@ -672,7 +569,7 @@ void Geometry::processInsetVectors(const vector<pair<Vector3, Vector2>> &iv, vec
 void Geometry::polygonInset(const vector<Real>& insets, vector<Vector3> &poly)
 {
 	// get the inset vectors
-	vector<pair<Vector3, Vector2>> iv(calcInsetVectors(insets, poly));
+	vector< pair<Vector3, Vector2> > iv(calcInsetVectors(insets, poly));
 	// process them for anomalies
 	processInsetVectors(iv, poly);
 }
@@ -680,7 +577,7 @@ void Geometry::polygonInset(const vector<Real>& insets, vector<Vector3> &poly)
 bool Geometry::polygonInsetFast(Real inset, vector<Vector3> &poly)
 {
 	// get the inset vectors
-	vector<pair<Vector3, Vector2>> iv(calcInsetVectors(inset, poly));
+	vector< pair<Vector3, Vector2> > iv(calcInsetVectors(inset, poly));
 	// process them for anomalies
 	processInsetVectors(iv, poly);
 
@@ -718,20 +615,46 @@ void Geometry::polygonInsetFFast(Real inset, vector<Vector3> &poly)
 	}
 }
 
-bool Geometry::polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAhead)
+bool Geometry::polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAheadMax)
 {
-	size_t i,j,k,l,N = poly.size();
+	size_t lookAhead,N = poly.size();
 	if(N < 3) return false;
-	if((N-lookAhead) < 3) return false;
+	bool repaired = false;
+	lookAheadMax = std::min(N-3, lookAheadMax);
+	for(lookAhead=1; lookAhead<=lookAheadMax && !repaired; lookAhead++)
+	{
+		Geometry::polyRepairCycle(poly, lookAhead);
+		if(poly.size() != N)
+		{
+			N = poly.size();
+			lookAheadMax = std::min(N-3, lookAheadMax);
+			vector<size_t> tmp; 
+			if(Triangulate::Process(poly, tmp))
+			{
+				//LogManager::getSingleton().logMessage("Poly Repaired: "+StringConverter::toString(lookAhead));
+				repaired = true;
+			}
+			//else
+			//	LogManager::getSingleton().logMessage("Poly Attempted Repair: "+StringConverter::toString(lookAhead));
+		}
+	}
+	return repaired;
+}
+
+void Geometry::polyRepairCycle(std::vector<Ogre::Vector3> &poly, size_t lookAhead)
+{
+	size_t i,j,k,l,clipFront=0,N = poly.size();
+	assert(N >= 3);
+	assert((N-lookAhead) > 2);
 	vector<Vector3> tmpPoly;
 	tmpPoly.reserve(N);
 
 	Vector2 prevPolyi2D(poly[N-1].x, poly[N-1].z);
 	Vector2 prevSegInsetVec(calcNormVec2D(poly[N-1], poly[0]).perpendicular());
-
-	for(i=0; i<N;)
+	
+	for(j=0; j<N;)
 	{
-		j = (i+1)%N;
+		i = (j+(N-1))%N;
 		k = (j+lookAhead)%N;
 		l = (k+1)%N;
 
@@ -739,20 +662,30 @@ bool Geometry::polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAhead)
 		Vector2 inscn;
 		Real r,s;
 		if(lineIntersect(V2(poly[i]),V2(poly[j]),V2(poly[k]),V2(poly[l]),inscn,r,s)
-			&& r >= 0 && r <= 1 && s >= 0 && s <= 1)
+		&& r >= 0 && r <= 1 && s >= 0 && s <= 1)
 		{
 			Real height = poly[i].y + r*(poly[j].y - poly[i].y);
 			tmpPoly.push_back(Vector3(inscn.x, height, inscn.y));
-			i = l;
+
+			// gotta check this is right
+			if(j >= (N-lookAhead))
+				clipFront = lookAhead - (N-j) + 1;
+
+			j += (lookAhead + 1); 
 		}
 		else
 		{
 			tmpPoly.push_back(poly[j]);
-			i++;
+			j++;
 		}
 	}
-	poly.swap(tmpPoly);
-	return true;
+	if(clipFront != 0)
+	{
+		poly.clear();
+		poly.reserve(N-lookAhead);
+		for(size_t i=clipFront; i<tmpPoly.size(); i++) poly.push_back(tmpPoly[i]);
+	}
+	else poly.swap(tmpPoly);
 }
 
 //
@@ -885,3 +818,143 @@ bool Geometry::polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAhead)
 //}
 //}
 
+
+
+vector< pair<Vector2, Vector2> >  
+Geometry::calcInsetVectors(const vector<Real>& insets, vector<Vector2> &poly)
+{
+	size_t i,j,N = poly.size();
+	vector< pair<Vector2, Vector2> > iv;
+	iv.reserve(N);
+
+	Vector2 prevPolyi2D(poly[N-1]);
+	Vector2 prevSegInsetVec(calcNormVec2D(poly[N-1], poly[0]).perpendicular());
+	Real prevInset = insets[N-1];
+
+	for(i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		Vector2 polyi2D(poly[i]);
+		Vector2 polyj2D(poly[j]);
+		Vector2 segVec(calcNormVec2D(polyi2D, polyj2D));
+		Vector2 segInsetVec(segVec.perpendicular());
+
+		if(polyj2D == prevPolyi2D)
+			// Back track check for terminal segments
+		{
+			Vector2 segmentPerpInset(segInsetVec * insets[i]);
+			Vector2 segmentDirInset(segVec * -insets[i]);
+			iv.push_back(make_pair(polyi2D, polyi2D-segmentPerpInset+segmentDirInset));
+			iv.push_back(make_pair(polyi2D, polyi2D+segmentPerpInset+segmentDirInset));
+		}
+		else if(insets[i] == prevInset)
+			// Bisector method 2, fine for constant inset
+		{
+			Vector2 bisectorVector2(polyi2D + calcInsetVector(prevSegInsetVec, segInsetVec, insets[i]));
+			iv.push_back(make_pair(polyi2D, bisectorVector2));
+		}
+		else
+			// Bisector method 3
+		{
+			Vector2 prevSegmentInset(prevSegInsetVec * prevInset);
+			Vector2 segmentInset(segInsetVec * insets[i]);
+
+			Vector2 bisectorVector3;
+			if(!Geometry::lineIntersect(prevPolyi2D + prevSegmentInset, polyi2D+prevSegmentInset, 
+				polyi2D+segmentInset, polyj2D+segmentInset, bisectorVector3))
+			{
+				// parallel so intersection point is the minimum inset perpendicular
+				bisectorVector3 = prevInset < insets[i] ?  prevSegInsetVec : segInsetVec;
+				iv.push_back(make_pair(polyi2D, polyi2D + bisectorVector3));
+			}
+			else
+				iv.push_back(make_pair(polyi2D, bisectorVector3));
+		}
+		// update prev vars
+		prevPolyi2D = polyi2D;
+		prevInset = insets[i];
+		prevSegInsetVec = segInsetVec;
+	}
+	return iv;
+}
+
+void Geometry::processInsetVectors(const vector< pair<Vector2, Vector2> > &iv, vector<Vector2> &poly)
+{
+	size_t i, j, offset = 0, N=iv.size();
+	if(poly.size() != 0) poly.clear();
+	poly.reserve(N);
+
+	for(i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		size_t k = (i+2)%N;
+		Vector2 polyi2D(iv[i].first);
+		Vector2 polyj2D(iv[j].first);
+		Vector2 polyk2D(iv[k].first);
+
+		// check if the bisectors intersect with their immediate neighbors
+		Vector2 interscn;
+		if(Geometry::lineSegmentIntersect(polyi2D, iv[i].second, polyk2D, iv[k].second, interscn))
+		{
+			size_t l = (i+2)%N;
+			Vector2 polyl2D(iv[l].first);
+			if(Geometry::lineSegmentIntersect(polyi2D, iv[i].second, polyl2D, iv[l].second, interscn))
+			{
+				Vector2 tmp((iv[i].second+iv[l].second)/2);
+				poly.push_back(tmp);
+				if(i>=(N-3))
+					offset = N - i + 1;
+				i += 3;
+			}
+			else
+			{
+				Vector2 tmp((iv[i].second+iv[k].second)/2);
+				poly.push_back(tmp);
+				if(i>=(N-2))
+					offset = N - i + 1;
+				i += 2;
+			}
+		}
+		else if(Geometry::lineSegmentIntersect(polyi2D, iv[i].second, polyj2D, iv[j].second, interscn))
+		{
+			if(Geometry::lineSegmentIntersect(polyj2D, iv[j].second, polyk2D, iv[k].second, interscn))
+			{
+				Vector2 tmp((iv[j].second+iv[k].second)/2);
+				poly.push_back(tmp);
+				if(i>=(N-2)) 
+					offset = N - i + 1;
+				i+=2;
+			}
+			else
+			{
+				Vector2 tmp((iv[i].second+iv[j].second)/2);
+				poly.push_back(tmp);
+				if(i==(N-1)) 
+					offset = 1;
+				i++;
+			}
+		}
+		else
+		{
+			// pretend its ok, could be intersecting with other less immediate neighbors
+			poly.push_back(iv[i].second);
+		}
+	}
+
+	if(!offset)
+	{
+		vector<Vector2> tmpPoly;
+		tmpPoly.reserve(N - offset);
+		for(size_t i=offset; i<poly.size(); i++) tmpPoly.push_back(poly[i]);
+		poly.swap(tmpPoly);
+	}
+}
+
+
+void Geometry::polygonInset(const vector<Real>& insets, vector<Vector2> &poly)
+{
+	// get the inset vectors
+	vector< pair<Vector2, Vector2> > iv(calcInsetVectors(insets, poly));
+	// process them for anomalies
+	processInsetVectors(iv, poly);
+}

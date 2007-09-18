@@ -3,7 +3,7 @@
 
 #include <OgrePrerequisites.h>
 
-typedef struct
+struct CellGenParams
 {
 	unsigned int	_type;
 	int				_seed;
@@ -21,8 +21,28 @@ typedef struct
 	Ogre::Real		_lotSize;
 	Ogre::Real		_lotDeviance;
 	bool			_debug;
-}
-CellGenParams;
+
+	CellGenParams()
+	{
+		_type = 0;
+		_seed = 1;
+		_segmentSize = 5;
+		_segmentDeviance = 0.2;
+		_degree = 4;
+		_degreeDeviance = 0.01;
+		_snapSize = 2.4;
+		_snapDeviance =0.1;
+		_buildingHeight = 1.4;
+		_buildingDeviance = 0.7;
+		_roadWidth = 0.45;
+		_roadLimit = 0;
+		_connectivity = 1.0;
+		_lotSize = 0.7;
+		_lotDeviance = 0.4;
+		_debug = false;
+	}
+};
+
 
 
 // TODO: should have a number of random generators defined and maybe a 

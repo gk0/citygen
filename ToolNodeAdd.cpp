@@ -6,7 +6,7 @@
 
 using namespace Ogre;
 
-#define SNAP_SZ 3
+#define SNAP_SZ 10
 
 
 ToolNodeAdd::ToolNodeAdd(WorldFrame* wf, SceneManager* sm, RoadGraph &g, RoadGraph &s)
@@ -36,6 +36,7 @@ void ToolNodeAdd::deactivate()
 		delete _proposedRoad;
 		_proposedRoad = 0;
 	}
+	_worldFrame->selectNode(0);
 	_worldFrame->deleteNode(_proposedNode);
 	_worldFrame->update();
 }
@@ -85,7 +86,9 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 				_proposedRoad = new WorldRoad(_worldFrame->getSelected(), 
 						_proposedNode, _roadGraph, _simpleRoadGraph, _sceneManager);
 			
+			_intersectingRoad = 0;
 			_snapState = _proposedRoad->snapInfo(SNAP_SZ, newPos, _snapNode, _intersectingRoad);
+
 			//LogManager::getSingleton().logMessage("State: "+StringConverter::toString(mSnapState));
 			//mSnapState = 0;
 		}
@@ -113,7 +116,7 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 			_proposedNode->setPosition2D(newPos);
 			_worldFrame->highlightNode(_snapNode);
 			_proposedNode->setVisible(false);
-			_proposedNode->setLabel(" ");	// HACK: setVisible doesn't work when a road is connected,
+			_proposedNode->setLabel("-");	// HACK: setVisible doesn't work when a road is connected,
 											// it maybe to do with the building of junctions.
 		}
 	}
@@ -176,7 +179,7 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 			case 1:		// road intersection
 				dstNode = _worldFrame->createNode();
 				dstNode->setPosition2D(_proposedNode->getPosition2D());
-				_worldFrame->insertNodeOnRoad(dstNode, _intersectingRoad);			// TODO: this can be a simpleroad for some reason
+				_worldFrame->insertNodeOnRoad(dstNode, _intersectingRoad);
 				break;
 			case 2:		// node snapped
 				dstNode = _snapNode;
