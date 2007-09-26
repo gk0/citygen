@@ -26,6 +26,7 @@ private:
 	Ogre::RenderWindow* _renderWindow;
 	Ogre::SceneManager* _sceneManager;
 	Ogre::Viewport*		_viewport;
+	Ogre::SceneNode*	_cameraNode;
 
 	bool				_isDocOpen;
 
@@ -62,6 +63,11 @@ protected:
 	void OnFocusSet(wxFocusEvent& e);
 	void OnMouseMove(wxMouseEvent &e);
 	void OnLeftPressed(wxMouseEvent &e);
+	void OnLeftReleased(wxMouseEvent &e);
+	void OnMiddlePressed(wxMouseEvent &e);
+	void OnMiddleReleased(wxMouseEvent &e);
+	void OnRightPressed(wxMouseEvent &e);
+	void OnRightReleased(wxMouseEvent &e);
 	void OnMouseWheel(wxMouseEvent &e);
 	void OnPaint(wxPaintEvent &WXUNUSED(e));
 	void OnSize(wxSizeEvent &e);
@@ -113,7 +119,6 @@ public:
 	bool plotPointOnTerrain(const Ogre::Vector2& pos2D, Ogre::Vector3& pos3D);
 	void selectNode(WorldNode* wn);
 	void highlightNode(WorldNode* wn);
-	bool highlightNodeFromLoc(const Ogre::Vector2 &loc);
 	void moveSelectedNode(const Ogre::Vector3& pos);
 
 	bool pickCell(wxMouseEvent& e, WorldCell *&wc);
@@ -129,6 +134,15 @@ public:
 	Ogre::Camera* getCamera()
 	{
 		return _camera;
+	}
+
+	/**
+	* Get a pointer to the camera
+	* @return mCamera
+	*/
+	Ogre::SceneNode* getCameraNode()
+	{
+		return _cameraNode;
 	}
 
 	/**
@@ -192,6 +206,11 @@ public:
 	 * @return true if pick is successful
 	 */
 	bool pickNode(wxMouseEvent &e, WorldNode *&wn);
+
+	const Ogre::Viewport* getViewport()
+	{
+		return _viewport;
+	}
 
 
 	void modify(bool b);

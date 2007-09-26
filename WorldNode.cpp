@@ -94,7 +94,7 @@ void WorldNode::showHighlighted(bool highlighted)
 
 void WorldNode::showSelected(bool selected)
 {
-	_selected->setVisible(selected && _degree < 2);
+	_selected->setVisible(selected);
 	_mesh->setVisible(!selected && _degree < 2);
 }
 

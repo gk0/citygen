@@ -8,9 +8,9 @@
 struct LotBoundaryPoint
 {
 	bool			_roadAccess;
-	Ogre::Vector2	_pos;
+	Ogre::Vector3	_pos;
 
-	LotBoundaryPoint(const bool ra, const Ogre::Vector2 &p)
+	LotBoundaryPoint(const bool ra, const Ogre::Vector3 &p)
 		: _roadAccess(ra), _pos(p) {}
 };
 typedef std::vector<LotBoundaryPoint> LotBoundary;
@@ -27,11 +27,11 @@ private:
 
 	Ogre::Real					_height;
 	Ogre::Real					_foundation;
-	std::vector<Ogre::Vector2>	_footprint;
+	std::vector<Ogre::Vector3>	_footprint;
 
 public:
 	//WorldLot(const LotBoundary &footprint, const CellGenParams &gp);
-	WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const Ogre::Real fnd, const Ogre::Real ht);
+	WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const Ogre::Real ht);
 
 	bool hasError() { return _error; }
 
@@ -49,6 +49,10 @@ public:
 
 	static LotBoundary insetBoundary(const LotBoundary &b, const Ogre::Real &roadInset, 
 		const Ogre::Real &standardInset);
+
+	void addVertexData(Ogre::ManualObject* m);
+
+	Ogre::uint16 addIndexData(Ogre::ManualObject* m, Ogre::uint16 offset);
 
 };
 

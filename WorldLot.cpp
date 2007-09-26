@@ -8,7 +8,7 @@
 using namespace Ogre;
 using namespace std;
 
-WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const Real fnd, const Real ht)
+WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const Real ht)
 {
 	// Note: gp._lotSize is desired lot size not actual
 	LotBoundary b;
@@ -29,8 +29,12 @@ WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const 
 		b = footprint;
 	}
 
-	_height = ht;
-	_foundation = fnd;
+	// find the minimum y value for foundation
+	_foundation = numeric_limits<Real>::max();
+	BOOST_FOREACH(const LotBoundaryPoint &bp, footprint)
+		if(bp._pos.y < _foundation) _foundation = bp._pos.y;
+
+	_height = _foundation + ht;
 	
 	_footprint.reserve(b.size());
 	BOOST_FOREACH(const LotBoundaryPoint &p, b) _footprint.push_back(p._pos);
@@ -52,25 +56,25 @@ WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const 
 		//ok life might be ok
 
 		//load in the roof footprint into vertices
-		BOOST_FOREACH(Vector2 &fp, _footprint)
-			_vertices.push_back(Vector3(fp.x, ht, fp.y));
+		BOOST_FOREACH(Vector3 &fp, _footprint)
+			_vertices.push_back(Vector3(fp.x, _height, fp.z));
 	
 		//load in the base footprint into vertices
-		BOOST_FOREACH(Vector2 &fp, _footprint)
-			_vertices.push_back(Vector3(fp.x, fnd, fp.y));
+		BOOST_FOREACH(Vector3 &fp, _footprint)
+			_vertices.push_back(Vector3(fp.x, _foundation, fp.z));
 
 		// add zero texCoord
 		_texCoords.push_back(Vector2(0,0));
 
 		// sides
-		size_t i, j, N = footprint.size();
+		size_t i, j, N = _footprint.size();
 		for(i = 0; i < N; i++)
 		{
 			j = (i + 1) % N;
 
 			// calc texCoords
 			Real uMax =	Math::Floor((_footprint[i] - _footprint[j]).length() * 4) / 5;		//horiz
-			Real vMax =	Math::Floor((ht - fnd) * 4) / 4;		//vert
+			Real vMax =	Math::Floor((_height - _foundation) * 4) / 4;		//vert
 			_texCoords.push_back(Vector2(0,vMax));
 			_texCoords.push_back(Vector2(uMax,vMax));
 			_texCoords.push_back(Vector2(0,0));
@@ -78,8 +82,7 @@ WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const 
 			size_t texIndex = _texCoords.size() - 4;
 
 			//calc normal
-			Ogre::Vector2 perp((_footprint[i] - _footprint[j]).perpendicular());
-			Ogre::Vector3 normal(perp.x, 0, perp.y);
+			Ogre::Vector3 normal(-_footprint[i].z + _footprint[j].z, 0, _footprint[i].x - _footprint[j].x);
 			normal.normalise();
 			_vertices.push_back(normal);
 
@@ -132,6 +135,61 @@ WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const 
 
 #define RAND_MAX_THRD RAND_MAX/3
 #define RAND_MAX_2THRD RAND_MAX_THRD*2
+
+
+void WorldLot::addVertexData(ManualObject* m)
+{
+	size_t i,N=_sidePolys.size();
+	for(i=0; i<N; i+=7)
+	{
+		m->position(_vertices[_sidePolys[i]]);
+		m->normal(_vertices[_sidePolys[i+6]]);
+		m->textureCoord(_texCoords[_sidePolys[i+1]]);
+		m->position(_vertices[_sidePolys[i+2]]);
+		m->normal(_vertices[_sidePolys[i+6]]);
+		m->textureCoord(_texCoords[_sidePolys[i+3]]);
+		m->position(_vertices[_sidePolys[i+4]]);
+		m->normal(_vertices[_sidePolys[i+6]]);
+		m->textureCoord(_texCoords[_sidePolys[i+5]]);
+	}
+
+	//roof
+	N=_roofPolys.size();
+	for(i=0; i<N; i+=3)
+	{
+		m->position(_vertices[_roofPolys[i]]);
+		m->normal(Vector3::UNIT_Y);
+		m->textureCoord(Vector2::ZERO);
+		m->position(_vertices[_roofPolys[i+1]]);
+		m->normal(Vector3::UNIT_Y);
+		m->textureCoord(Vector2::ZERO);
+		m->position(_vertices[_roofPolys[i+2]]);
+		m->normal(Vector3::UNIT_Y);
+		m->textureCoord(Vector2::ZERO);
+	}
+}
+
+Ogre::uint16 WorldLot::addIndexData(ManualObject* m, Ogre::uint16 offset)
+{
+	size_t i,N=_sidePolys.size();
+	for(i=0; i<N; i+=7, offset+= 3)
+	{
+		m->index(offset);
+		m->index(offset+1);
+		m->index(offset+2);
+	}
+
+	//roof
+	N=_roofPolys.size();
+	for(i=0; i<N; i+=3, offset+= 3)
+	{
+		m->index(offset);
+		m->index(offset+1);
+		m->index(offset+2);
+	}
+	return offset;
+}
+
 
 bool WorldLot::build(ManualObject* m)
 {
@@ -358,22 +416,25 @@ bool WorldLot::buildHousey(const std::vector<Ogre::Vector2> &footprint,
 }
 
 LotBoundary WorldLot::insetBoundary(const LotBoundary &b, const Real &roadInset, const Real &standardInset)
-/*{
+{
 	LotBoundary boundary(b);
-	vector<Vector2> poly;
+	vector<Vector3> poly;
 	vector<Real> insets;
 	poly.reserve(b.size());
 	insets.reserve(b.size());
-	BOOST_FOREACH(LotBoundaryPoint& p, b)
+	BOOST_FOREACH(const LotBoundaryPoint& p, b)
 	{
 		poly.push_back(p._pos);
 		insets.push_back(p._roadAccess ? roadInset : standardInset);
 	}
+
 	Geometry::polygonInset(insets, poly);
-	for(size_t i=0; i<)
-	BOOST_FOREACH(LotBoundaryPoint& p, boundary)
-}*/
-{
+	LotBoundary newBoundary;
+	newBoundary.reserve(poly.size());
+	BOOST_FOREACH(Vector3& p, poly) newBoundary.push_back(LotBoundaryPoint(true, p));
+	return newBoundary;
+}
+/*{
 	// get size
 	size_t i, j, N = b.size();
 
@@ -419,4 +480,4 @@ LotBoundary WorldLot::insetBoundary(const LotBoundary &b, const Real &roadInset,
 	}
 
 	return newBoundary;
-}
+}*/

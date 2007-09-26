@@ -14,6 +14,8 @@
 #include "ToolNodeAdd.h"
 #include "ToolNodeDelete.h"
 #include "ToolRoadSelect.h"
+#include "ToolRoadAdd.h"
+#include "ToolRoadDelete.h"
 #include "ToolCellSelect.h"
 
 #include <boost/thread/thread.hpp>
@@ -49,6 +51,11 @@ BEGIN_EVENT_TABLE(WorldFrame, wxControl)
 	EVT_SET_FOCUS(WorldFrame::OnFocusSet)
 	EVT_MOTION(WorldFrame::OnMouseMove)
 	EVT_LEFT_DOWN(WorldFrame::OnLeftPressed)
+	EVT_LEFT_UP(WorldFrame::OnLeftReleased)
+	EVT_MIDDLE_DOWN(WorldFrame::OnMiddlePressed)
+	EVT_MIDDLE_UP(WorldFrame::OnMiddleReleased)
+	EVT_RIGHT_DOWN(WorldFrame::OnRightPressed)
+	EVT_RIGHT_UP(WorldFrame::OnRightReleased)
 	EVT_MOUSEWHEEL(WorldFrame::OnMouseWheel)
 //	EVT_PAINT(WorldFrame::OnPaint)
 	EVT_SIZE(WorldFrame::OnSize)
@@ -154,6 +161,8 @@ void WorldFrame::init()
 	_tools.push_back(new ToolNodeAdd(this, _sceneManager, _roadGraph, _simpleRoadGraph));
 	_tools.push_back(new ToolNodeDelete(this));
 	_tools.push_back(new ToolRoadSelect(this));
+	_tools.push_back(new ToolRoadAdd(this, _sceneManager, _roadGraph, _simpleRoadGraph));
+	_tools.push_back(new ToolRoadDelete(this));
 	_tools.push_back(new ToolCellSelect(this));
 	_activeTool = MainWindow::viewTool;
 }
@@ -204,16 +213,16 @@ void WorldFrame::destroyViewport()
 }
 
 void WorldFrame::createCamera(void)
-{    
+{   
 	// Create the camera
     _camera = _sceneManager->createCamera("PlayerCam");
 
     // Position it at 500 in Z direction
-    _camera->setPosition(825,175,825);
-    _camera->setOrientation(Quaternion(-0.49f, 0.17f, 0.81f, 0.31f));
-
-    // Look back along -Z
-    //mCamera->lookAt(Vector3(0,-10,0));
+    _camera->setPosition(50, 0, 0);
+    //_camera->setOrientation(Quaternion(-0.49f, 0.17f, 0.81f, 0.31f));
+	//Quaternion q(&v);
+	//_camera->setOrientation(q);
+	_camera->lookAt(1041.25f, 0.1f, 965.25f);
 	_camera->setNearClipDistance(1);
     _camera->setFarClipDistance(1000);
 }
@@ -221,21 +230,37 @@ void WorldFrame::createCamera(void)
 
 void WorldFrame::createScene(void) 
 {	
+	// First check that vertex programs and dot3 or fragment programs are supported
+	const RenderSystemCapabilities* caps = Root::getSingleton().getRenderSystem()->getCapabilities();
+	if (!caps->hasCapability(RSC_VERTEX_PROGRAM))
+	{
+		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex programs, so cannot "
+			"run this demo. Sorry!", 
+			"Dot3Bump::createScene");
+	}
+	if (!(caps->hasCapability(RSC_FRAGMENT_PROGRAM) 
+		|| caps->hasCapability(RSC_DOT3)) )
+	{
+		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support dot3 blending or fragment programs, so cannot "
+			"run this demo. Sorry!", 
+			"Dot3Bump::createScene");
+	}
+
     // Set ambient light
     _sceneManager->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
 
-    // Create a light
-    Light* l = _sceneManager->createLight("MainLight");
-    // Accept default settings: point light, white diffuse, just set position
-    // NB I could attach the light to a SceneNode if I wanted it to move automatically with
-    //  other objects, but I don't
-    l->setPosition(20,180,50);
+	// Create a light
+	Light* l = _sceneManager->createLight("MainLight");
+	// Accept default settings: point light, white diffuse, just set position
+	// NB I could attach the light to a SceneNode if I wanted it to move automatically with
+	//  other objects, but I don't
+	l->setPosition(20,180,50);
 
     // Fog
     // NB it's VERY important to set this before calling setWorldGeometry 
     // because the vertex program picked will be different
 	ColourValue fadeColour(0.76f, 0.86f, 0.93f);
-	_sceneManager->setFog(FOG_LINEAR, fadeColour, .001f, 500, 1000);
+	//_sceneManager->setFog(FOG_LINEAR, fadeColour, .001f, 500, 1000);
 	_renderWindow->getViewport(0)->setBackgroundColour(fadeColour);
 
     string terrain_cfg("terrain.cfg");
@@ -262,6 +287,147 @@ void WorldFrame::createScene(void)
 
 	// Create our ray query
 	_raySceneQuery = _sceneManager->createRayQuery(Ray());
+
+	// Set up the camera
+	// Create the camera node	
+	_cameraNode = _sceneManager->createSceneNode("cameraNode");
+	_cameraNode->setPosition(1041.25f, 0.1f, 965.25f);
+	_cameraNode->attachObject(_camera);
+	_camera->setPosition(177, 0, 0);
+	_camera->lookAt(1041.25f, 0.1f, 965.25f);
+	_cameraNode->setOrientation(-0.267156, -0.236617, -0.931684, -0.067849);
+
+/*
+	// create me a normal cube
+	SceneNode* sn = _sceneManager->getRootSceneNode()->createChildSceneNode();
+	//SceneNode* sn = _sceneManager->createSceneNode();
+	//_cameraNode->addChild(sn);
+	sn->setPosition(_cameraNode->getPosition());
+
+	//LOT TEST
+	LotBoundary lotboundary;
+	lotboundary.push_back(LotBoundaryPoint(true, Vector3(0,0,0)));
+	lotboundary.push_back(LotBoundaryPoint(true, Vector3(1.0,0,0)));
+	lotboundary.push_back(LotBoundaryPoint(true, Vector3(1.0,0,1.0)));
+	lotboundary.push_back(LotBoundaryPoint(true, Vector3(0,0,1.0)));
+
+	LotBoundary lotboundary2;
+	lotboundary2.push_back(LotBoundaryPoint(true, Vector3(1.1,0,0)));
+	lotboundary2.push_back(LotBoundaryPoint(true, Vector3(2.1,0,0)));
+	lotboundary2.push_back(LotBoundaryPoint(true, Vector3(2.1,0,1.0)));
+	lotboundary2.push_back(LotBoundaryPoint(true, Vector3(1.1,0,1.0)));
+
+	CellGenParams gp;
+	vector<WorldLot> lots;
+	//lots.push_back(WorldLot(lotboundary, gp, 2.0f));
+	lots.push_back(WorldLot(lotboundary2, gp, 3.0f));
+
+
+	ManualObject* lotMo = _sceneManager->createManualObject("lotto");
+	lotMo->begin("gk/Building3WNormalMap");
+	//lot.build(lotMo);
+	BOOST_FOREACH(WorldLot& l, lots) l.addVertexData(lotMo);
+
+	uint16 offset = 0;
+	BOOST_FOREACH(WorldLot& l, lots)
+	{
+		offset = l.addIndexData(lotMo, offset);
+	}
+	lotMo->end();
+
+	//// convert to mesh
+	MeshPtr pMesh2 = lotMo->convertToMesh("lotMesh");
+
+	//// build tangent vectors
+	unsigned short src, dest;
+	if (!pMesh2->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+	{
+		pMesh2->buildTangentVectors(VES_TANGENT, src, dest);
+	}
+
+	//// create entity
+	Entity* ent2 = _sceneManager->createEntity("Ent2", "lotMesh");
+	////delete mo;
+
+	//// attach object
+	sn->attachObject(ent2);
+*/
+
+
+	//// create manual object using indexed geometry
+	//ManualObject* mo = _sceneManager->createManualObject("urmudder");
+	//mo->begin("Examples/OffsetMapping/Specular");
+	//mo->position(0,0,0);
+	//mo->normal(0,0,-1);
+	//mo->textureCoord(0,0);
+	//mo->position(0,50,0);
+	//mo->normal(0,0,-1);
+	//mo->textureCoord(0,1);
+	//mo->position(50,50,0);
+	//mo->normal(0,0,-1);
+	//mo->textureCoord(1,1);
+	//mo->position(50,0,0);
+	//mo->normal(0,0,-1);
+	//mo->textureCoord(1,0);
+	//mo->index(0);
+	//mo->index(1);
+	//mo->index(2);
+	//mo->index(2);
+	//mo->index(3);
+	//mo->index(0);
+	//mo->end();
+
+	//// convert to mesh
+	//MeshPtr pMesh2 = mo->convertToMesh("muddermesh");
+
+	//// build tangent vectors
+	//unsigned short src, dest;
+	//if (!pMesh2->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+	//{
+	//	pMesh2->buildTangentVectors(VES_TANGENT, src, dest);
+	//}
+
+	//// create entity
+	//Entity* ent2 = _sceneManager->createEntity("Ent2", "muddermesh");
+	////delete mo;
+
+	//// attach object
+	//sn->attachObject(ent2);
+
+
+	//// Load the meshes with non-default HBU options
+	//MeshPtr pMesh = MeshManager::getSingleton().load("knot.mesh",
+	//	ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,    
+	//	HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, 
+	//	HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
+	//	true, true); //so we can still read it
+	//// Build tangent vectors, all our meshes use only 1 texture coordset 
+	//// Note we can build into VES_TANGENT now (SM2+)
+	////unsigned short src, dest;
+	////if (!pMesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+	////{
+	////	pMesh->buildTangentVectors(VES_TANGENT, src, dest);
+	////}
+	//// Create entity
+	//Entity* ent = _sceneManager->createEntity("Ent", "knot.mesh");
+
+
+	//// Attach to child of root node
+
+	//sn->attachObject(ent);
+	///*
+	//"Examples/BumpMapping/SingleLight",
+	//"Examples/BumpMapping/MultiLight",
+	//"Examples/BumpMapping/MultiLightSpecular",
+	//"Examples/OffsetMapping/Specular"
+	//*/
+	//ent->setMaterialName("Examples/BumpMapping/SingleLight");
+	// Make invisible, except for index 0
+	//if (mn == 0)
+	//	mEntities[mn]->setMaterialName(mMaterialNames[mCurrentEntity][mCurrentMaterial]);
+	//else
+	//	mEntities[mn]->setVisible(false);
+
 }
 
 void WorldFrame::createViewport(void)
@@ -305,8 +471,27 @@ void WorldFrame::destroyScene(void)
 	}
 	_sceneNodeMap.clear();
 
-
-	_sceneManager->clearScene();
+	//if(_cameraNode)
+	//{
+	//	_cameraNode->detachAllObjects();
+	//	delete _cameraNode;
+	//	_cameraNode = 0;
+	//}
+	//_sceneManager->destroyAllManualObjects();
+	//_sceneManager->destroyAllEntities();
+	//_sceneManager->destroyAllInstancedGeometry();
+	try
+	{
+		_sceneManager->clearScene();
+	}
+	catch(Ogre::Exception &e)
+	{
+		LogManager::getSingleton().logMessage(e.getFullDescription());
+	}
+	catch(std::exception &e)
+	{
+		LogManager::getSingleton().logMessage(e.what());
+	}
 }
 
 // Moves the view
@@ -329,20 +514,6 @@ void WorldFrame::cameraRotate(Real yaw, Real pitch)
 
 	if(_toolsetMode == MainWindow::view)
 		updateProperties();
-}
-
-bool WorldFrame::highlightNodeFromLoc(const Vector2 &loc)
-{
-	//TODO: 
-	#define HIGHLIGHTNODELOCSNAPSQ 16
-	NodeId nd;
-	if(_simpleRoadGraph.snapToNode(loc, HIGHLIGHTNODELOCSNAPSQ, nd))
-	{
-		highlightNode(static_cast<WorldNode*>(_simpleRoadGraph.getNode(nd)));
-		return true;
-	}
-	else
-		return false;
 }
 
 void WorldFrame::OnChar(wxKeyEvent& e)
@@ -374,6 +545,45 @@ void WorldFrame::OnLeftPressed(wxMouseEvent &e)
 	this->SetFocus();
 
 	_tools[_activeTool]->OnLeftPressed(e);
+}
+
+void WorldFrame::OnLeftReleased(wxMouseEvent &e)
+{
+	if(!_isDocOpen) return;
+	_tools[_activeTool]->OnLeftReleased(e);
+}
+
+void WorldFrame::OnMiddlePressed(wxMouseEvent &e)
+{
+	if(!_isDocOpen) return;
+	// if you click on me get back focus
+	// focus should really be assigned by what your mouse is over but until then...
+	this->SetFocusFromKbd();
+	this->SetFocus();
+
+	_tools[_activeTool]->OnMiddlePressed(e);
+}
+
+void WorldFrame::OnMiddleReleased(wxMouseEvent &e)
+{
+	if(!_isDocOpen) return;
+	_tools[_activeTool]->OnMiddleReleased(e);
+}
+
+void WorldFrame::OnRightPressed(wxMouseEvent &e)
+{
+	if(!_isDocOpen) return;
+	// if you click on me get back focus
+	// focus should really be assigned by what your mouse is over but until then...
+	this->SetFocusFromKbd();
+	this->SetFocus();
+	_tools[_activeTool]->OnRightPressed(e);
+}
+
+void WorldFrame::OnRightReleased(wxMouseEvent &e)
+{
+	if(!_isDocOpen) return;
+	_tools[_activeTool]->OnRightReleased(e);
 }
 
 
@@ -521,6 +731,8 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 	onNewDoc();
 
 	// Load Camera
+	string camId = worldRoot.FirstChild("camera").Element()->Attribute("id");
+	if(camId == "edit_cam")
 	{
 		TiXmlElement *cameraChild = worldRoot.FirstChild("camera").FirstChild().Element();
 
@@ -535,13 +747,22 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 				cameraChild->QueryFloatAttribute("z", &z);
 				_camera->setPosition(x, y, z);
 			}
-			else if(key == "direction")
+			else if(key == "camOrientation")
+			{
+				Quaternion nodeOrient;
+				cameraChild->QueryFloatAttribute("w", &nodeOrient.w);
+				cameraChild->QueryFloatAttribute("x", &nodeOrient.x);
+				cameraChild->QueryFloatAttribute("y", &nodeOrient.y);
+				cameraChild->QueryFloatAttribute("z", &nodeOrient.z);
+				_cameraNode->setOrientation(nodeOrient);
+			}
+			else if(key == "nodePosition")
 			{
 				Real x, y, z;
 				cameraChild->QueryFloatAttribute("x", &x);
 				cameraChild->QueryFloatAttribute("y", &y);
 				cameraChild->QueryFloatAttribute("z", &z);
-				_camera->setDirection(x, y, z);
+				_cameraNode->setPosition(x, y, z);
 			}
 		}
 	}
@@ -669,9 +890,9 @@ TiXmlElement* WorldFrame::saveXML()
 	// Save Camera
 	{
 		TiXmlElement *camera = new TiXmlElement("camera"); 
-		camera->SetAttribute("id", "1");
-		root->LinkEndChild(camera);
-		
+		camera->SetAttribute("id", "edit_cam");
+		root->LinkEndChild(camera); 
+
 		const Vector3 &camPos(_camera->getPosition());
 		TiXmlElement *position = new TiXmlElement("position");
 		position->SetDoubleAttribute("x", camPos.x);
@@ -679,12 +900,20 @@ TiXmlElement* WorldFrame::saveXML()
 		position->SetDoubleAttribute("z", camPos.z);
 		camera->LinkEndChild(position);
 
-		const Vector3 &camDir(_camera->getDirection());
-		TiXmlElement *direction = new TiXmlElement("direction");
-		direction->SetDoubleAttribute("x", camDir.x);
-		direction->SetDoubleAttribute("y", camDir.y);
-		direction->SetDoubleAttribute("z", camDir.z);
+		Quaternion camOrient = _cameraNode->getOrientation();
+		TiXmlElement *direction = new TiXmlElement("camOrientation");
+		direction->SetDoubleAttribute("w", camOrient.w);
+		direction->SetDoubleAttribute("x", camOrient.x);
+		direction->SetDoubleAttribute("y", camOrient.y);
+		direction->SetDoubleAttribute("z", camOrient.z);
 		camera->LinkEndChild(direction);
+
+		const Vector3 &camNodePos(_cameraNode->getPosition());
+		TiXmlElement *position2 = new TiXmlElement("nodePosition");
+		position2->SetDoubleAttribute("x", camNodePos.x);
+		position2->SetDoubleAttribute("y", camNodePos.y);
+		position2->SetDoubleAttribute("z", camNodePos.z);
+		camera->LinkEndChild(position2);
 	}
 
 	//<graph id="roadgraph" edgedefault="undirected">

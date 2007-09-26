@@ -25,10 +25,18 @@ private:
 	Ogre::Vector2		_centre;
 	Ogre::ManualObject* _roadNetworkMO;
 	Ogre::ManualObject* _roadJunctionsMO;
+	Ogre::ManualObject* _blockMO;
 	Ogre::ManualObject* _buildingsMO;
 	Ogre::ManualObject* _buildingsMO1;
 	Ogre::ManualObject* _buildingsMO2;
 	Ogre::ManualObject* _debugMO;
+
+	Ogre::MeshPtr		_buildingsMesh;
+	Ogre::MeshPtr		_buildingsMesh1;
+
+	Ogre::Entity*		_buildingsEnt;
+	Ogre::Entity*		_buildingsEnt1;
+
 	bool				_showRoads;			
 	bool				_showBuildings;
 	size_t				_roadLimit;

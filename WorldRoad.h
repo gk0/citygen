@@ -30,7 +30,7 @@ struct RoadGenParams
 	RoadGenParams()
 	{
 		_algorithm = EvenElevationDiff;
-		_sampleSize = 7.0;
+		_sampleSize = 7;
 		_sampleDeviance = 25;
 		_roadWidth = 1.0;
 		_numOfSamples = 5;

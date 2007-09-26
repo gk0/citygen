@@ -19,6 +19,9 @@ int WorldCell::_instanceCount = 0;
 CellGenParams WorldCell::_defaultGenParams;
 
 
+#define USENORMALS 1
+
+
 WorldCell::WorldCell(const RoadGraph &p, const RoadGraph &s)
  : 	_parentRoadGraph(p),
 	_simpleRoadGraph(s)
@@ -46,9 +49,12 @@ void WorldCell::init()
 
 	_roadNetworkMO = 0;
 	_roadJunctionsMO = 0;
+	_blockMO = 0;
 	_buildingsMO = 0;
 	_buildingsMO1 = 0;
 	_buildingsMO2 = 0;
+	_buildingsEnt = 0;
+	_buildingsEnt1 = 0;
 	_debugMO = 0;
 
 	_name = "cell"+StringConverter::toString(_instanceCount++);
@@ -76,47 +82,62 @@ void WorldCell::clear()
 
 void WorldCell::destroySceneObject()
 {
+	_sceneNode->detachAllObjects();
 	if(_roadNetworkMO) {
-		_sceneNode->detachObject(_roadNetworkMO->getName());
 		_sceneNode->getCreator()->destroyManualObject(_roadNetworkMO);
 		delete _roadNetworkMO;
 		_roadNetworkMO = 0;
 	}
 	if(_roadJunctionsMO) {
-		_sceneNode->detachObject(_roadJunctionsMO->getName());
 		_sceneNode->getCreator()->destroyManualObject(_roadJunctionsMO);
 		delete _roadJunctionsMO;
 		_roadJunctionsMO = 0;
 	}
 
+	if(_blockMO) {
+		_sceneNode->getCreator()->destroyManualObject(_blockMO);
+		delete _blockMO;
+		_blockMO = 0;
+	}
+
 	if(_buildingsMO) {
-		_sceneNode->detachObject(_buildingsMO->getName());
 		_sceneNode->getCreator()->destroyManualObject(_buildingsMO);
 		delete _buildingsMO;
 		_buildingsMO = 0;
 	}
 
 	if(_buildingsMO1) {
-		_sceneNode->detachObject(_buildingsMO1->getName());
 		_sceneNode->getCreator()->destroyManualObject(_buildingsMO1);
 		delete _buildingsMO1;
 		_buildingsMO1 = 0;
 	}
 
 	if(_buildingsMO2) {
-		_sceneNode->detachObject(_buildingsMO2->getName());
 		_sceneNode->getCreator()->destroyManualObject(_buildingsMO2);
 		delete _buildingsMO2;
 		_buildingsMO2 = 0;
 	}
 
-
 	if(_debugMO) {
-		_sceneNode->detachObject(_debugMO->getName());
 		_sceneNode->getCreator()->destroyManualObject(_debugMO);
 		delete _debugMO;
 		_debugMO = 0;
 	}
+
+	if(_buildingsEnt) {
+		_sceneNode->getCreator()->destroyEntity(_buildingsEnt);
+		//delete _buildingsEnt;
+		_buildingsEnt = 0;
+	}
+
+	if(_buildingsEnt1) {
+		_sceneNode->getCreator()->destroyEntity(_buildingsEnt1);
+		//delete _buildingsEnt1;
+		_buildingsEnt1 = 0;
+	}
+
+	MeshManager::getSingleton().remove(_name+"b0Mesh");
+	MeshManager::getSingleton().remove(_name+"b1Mesh");
 }
 
 void WorldCell::update()
@@ -315,12 +336,13 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 		for(unsigned int i=0; i < _genParams._degree; i++)
 		{
 			if(_genParams._roadLimit != 0 && roadCount++ >= _genParams._roadLimit)
+			//if(roadCount++ >= 29)
 			{
 				while(!q.empty()) q.pop();
 				break;
 			}
 
-			if(roadCount >= 187)
+			if(roadCount >= 29)
 			{
 				size_t z = 0;
 			}
@@ -465,7 +487,13 @@ void WorldCell::prebuild()
 
 	clearRoadGraph();
 	installGraph();
+
+	//PerformanceTimer gpt("Generation_"+StringConverter::toString((int)this));
 	generateRoadNetwork(rg);
+	//gpt.stop();
+	//LogManager::getSingleton().logMessage(gpt.toString());
+
+
 	vector< vector<NodeInterface*> > cycles;
 	_roadGraph.extractFootprints(cycles, _genParams._lotSize);
 
@@ -503,37 +531,87 @@ void WorldCell::build()
 	_debugMO->begin("gk/Hilite/Red2", Ogre::RenderOperation::OT_LINE_LIST);
 
 	//// declare the manual object
+	_blockMO = new ManualObject(_name+"block");
 	_buildingsMO = new ManualObject(_name+"b");
 	_buildingsMO1 = new ManualObject(_name+"b1");
 	_buildingsMO2 = new ManualObject(_name+"b2");
-
+#ifndef USENORMALS
 	// "Examples/BumpMapping/SingleLight"
+	_blockMO->begin("gk/Building2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 	_buildingsMO->begin("gk/Building2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 	_buildingsMO1->begin("gk/Building3", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 	_buildingsMO2->begin("gk/Building4", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
+	uint16 o0=0,o1=0,o2=0;
 	if(_genParams._debug)
 	{
 		BOOST_FOREACH(WorldBlock &block, _blocks)
-			block.build(_buildingsMO, _buildingsMO1, _buildingsMO2, _debugMO);
+			block.build(_blockMO, _buildingsMO, _buildingsMO1, _buildingsMO2, _debugMO, o0, o1, o2);
 	}
 	else
 	{
 		BOOST_FOREACH(WorldBlock &block, _blocks)
-			block.build(_buildingsMO, _buildingsMO1, _buildingsMO2);
+			block.build(_blockMO, _buildingsMO, _buildingsMO1, _buildingsMO2, o0, o1, o2);
 	} 
-
+	_blockMO->end();
 	_buildingsMO->end();
 	_buildingsMO1->end();
 	_buildingsMO2->end();
+
+	_sceneNode->attachObject(_blockMO);
+	_sceneNode->attachObject(_buildingsMO);
+	_sceneNode->attachObject(_buildingsMO1);
+	_sceneNode->attachObject(_buildingsMO2);
+
+#else
+	// "Examples/BumpMapping/SingleLight"
+	_blockMO->begin("gk/Building2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	_buildingsMO->begin("gk/Building2WNormalMap", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	_buildingsMO1->begin("gk/Building3WNormalMap", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	_buildingsMO2->begin("gk/Building4", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+	uint16 o0=0,o1=0,o2=0;
+	if(_genParams._debug)
+	{
+		BOOST_FOREACH(WorldBlock &block, _blocks)
+			block.build(_blockMO, _buildingsMO, _buildingsMO1, _buildingsMO2, _debugMO, o0, o1, o2);
+	}
+	else
+	{
+		BOOST_FOREACH(WorldBlock &block, _blocks)
+			block.build(_blockMO, _buildingsMO, _buildingsMO1, _buildingsMO2, o0, o1, o2);
+	} 
+
+	_blockMO->end();
+	_buildingsMO->end();
+	_buildingsMO1->end();
+	_buildingsMO2->end();
+
+	//// convert to mesh
+	MeshPtr pMesh = _buildingsMO->convertToMesh(_name+"b0Mesh", ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+	MeshPtr pMesh1 = _buildingsMO1->convertToMesh(_name+"b1Mesh", ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+
+	//// build tangent vectors
+	unsigned short src, dest;
+	if (!pMesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+		pMesh->buildTangentVectors(VES_TANGENT, src, dest);
+	if (!pMesh1->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+		pMesh1->buildTangentVectors(VES_TANGENT, src, dest);
+
+	//// create entity
+	_buildingsEnt = _sceneNode->getCreator()->createEntity(_name+"b0Ent", _name+"b0Mesh");
+	_buildingsEnt1 = _sceneNode->getCreator()->createEntity(_name+"b1Ent", _name+"b1Mesh");
+
+	//// attach object
+	_sceneNode->attachObject(_blockMO);
+	_sceneNode->attachObject(_buildingsEnt);
+	_sceneNode->attachObject(_buildingsEnt1);
+	_sceneNode->attachObject(_buildingsMO2);
+#endif
 	_buildingsMO->setVisible(_showBuildings);
 	_buildingsMO1->setVisible(_showBuildings);
 	_buildingsMO2->setVisible(_showBuildings);
 
-
-	_sceneNode->attachObject(_buildingsMO);
-	_sceneNode->attachObject(_buildingsMO1);
-	_sceneNode->attachObject(_buildingsMO2);
 
 	_debugMO->end();
 	_sceneNode->attachObject(_debugMO);

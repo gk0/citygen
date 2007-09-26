@@ -11,6 +11,7 @@ protected:
 
 public:
 	NodeId _nodeId;
+	Ogre::Real _r,_s;
 	NodeInterface(RoadGraph& g) : _roadGraph(g)
 	{
 	}
@@ -27,6 +28,11 @@ public:
 	virtual std::pair<Ogre::Vector3, Ogre::Vector3> getRoadJunction(RoadId rd)
 	{
 		return std::make_pair(Ogre::Vector3(), Ogre::Vector3());
+	}
+
+	virtual size_t getDegree()
+	{
+		return _roadGraph.getDegree(_nodeId);
 	}
 
 	friend RoadInterface* getRoad(NodeInterface* n1, NodeInterface* n2)

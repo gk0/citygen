@@ -83,6 +83,35 @@ void WorldRoad::build()
 	// always destroy previous
 	destroyRoadObject();
 
+#ifdef DEBUGSEGS
+	if(_debugMOObject)
+	{
+		_sceneNode->detachObject(_debugMOObject);
+		delete _debugMOObject;
+		_debugMOObject = 0;
+	}
+	_debugMOObject = new ManualObject(_name+"Debug");
+	_debugMOObject->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
+
+	size_t i,j,N = interpolatedList.size();
+	for(i=0; i<(N-1); i++)
+	{
+		j = (i+1)%N;
+		_debugMOObject->position(interpolatedList[i]+Vector3(0,0.3,0));
+		_debugMOObject->position(interpolatedList[j]+Vector3(0,0.3,0));
+
+		Vector2 seg(Geometry::V2(interpolatedList[i])-Geometry::V2(interpolatedList[j]));
+		Vector2 segNorm = seg.perpendicular().normalisedCopy();
+		segNorm /= 3;
+		_debugMOObject->position(interpolatedList[i]+Vector3(0,0.3,0) - Vector3(segNorm.x, 0, segNorm.y));
+		_debugMOObject->position(interpolatedList[i]+Vector3(0,0.3,0) + Vector3(segNorm.x, 0, segNorm.y));
+	}
+
+	_debugMOObject->end();
+	_sceneNode->attachObject(_debugMOObject);
+	return;
+#endif
+
 	// declare the manual object
 	_manualObject = new ManualObject(_name); 
 	if(_selected) _manualObject->begin("gk/YellowBrickRoad", Ogre::RenderOperation::OT_TRIANGLE_LIST);
@@ -151,7 +180,6 @@ void WorldRoad::build()
 				break;
 			}
 		}
-
 
 		for(size_t i=start; i<end; i++)
 		{
@@ -975,6 +1003,17 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 		NodeId srcNd = _roadGraph.getSrc(_roadSegmentList[i]);
 		Vector2 dstPos = _roadGraph.getDstNode(_roadSegmentList[i])->getPosition2D();
 		intersection = _roadGraph.findClosestIntscn(srcNd, dstPos, minSnapSize, pos, rd);
+		if(intersection)
+		{
+			if(dstPos == getDstNode()->getPosition2D())
+				intersection = false;
+			else
+			{
+				stringstream oss;
+				oss << pos << " dest:"<<getDstNode()->getPosition2D();
+				LogManager::getSingleton().logMessage("Intscn on final segment pos:"+oss.str());
+			}
+		}
 	}
 
 	//TODO: actually it might be an idea to have a full exclude list for 

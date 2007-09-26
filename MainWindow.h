@@ -32,8 +32,8 @@ public:
 		addNode,
 		delNode,
 		selRoad,
-		/*addRoad,
-		delRoad,*/
+		addRoad,
+		delRoad,
 		selCell
 	};
 
@@ -94,6 +94,10 @@ protected:
 	void onSelectNodeAdd(wxCommandEvent &e);
 	void onSelectNodeDel(wxCommandEvent &e);
 
+	void onSelectRoad(wxCommandEvent &e);
+	void onSelectRoadAdd(wxCommandEvent &e);
+	void onSelectRoadDel(wxCommandEvent &e);
+
 	DECLARE_EVENT_TABLE();
 
 public:
@@ -106,6 +110,10 @@ public:
 	bool isModified();
 	void updateProperties();
 	void openFile(const wxString& filename) { doOpen(filename); }
+	void donew() { 
+		wxCommandEvent e;
+		onNew(e); 
+	}
 
 };
 

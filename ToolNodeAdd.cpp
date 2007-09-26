@@ -87,7 +87,31 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 						_proposedNode, _roadGraph, _simpleRoadGraph, _sceneManager);
 			
 			_intersectingRoad = 0;
+/*
+			NodeId nd;
+			RoadId rd;
+
+			_snapState = _roadGraph.findClosestIntscnOrNode(_worldFrame->getSelected()->_nodeId, _proposedNode->getPosition2D(),15, 
+				newPos, nd, rd);
+
+
+			if(_snapState == 2)
+			{
+				NodeInterface* ni = _roadGraph.getNode(nd);
+				_snapNode = static_cast<WorldNode*>(ni);
+				if(typeid(*ni) == typeid(WorldNode))
+					LogManager::getSingleton().logMessage("Snap to Node: "+static_cast<WorldNode*>(_roadGraph.getNode(nd))->getLabel());
+				else
+					LogManager::getSingleton().logMessage("Snap to Node: !WN.");
+			}
+			else if(_snapState == 1)
+				_intersectingRoad = static_cast<WorldRoad*>(_roadGraph.getRoad(rd));
+			else
+				LogManager::getSingleton().logMessage("State: "+StringConverter::toString(_snapState));
+*/
+
 			_snapState = _proposedRoad->snapInfo(SNAP_SZ, newPos, _snapNode, _intersectingRoad);
+			//_snapState = 0;
 
 			//LogManager::getSingleton().logMessage("State: "+StringConverter::toString(mSnapState));
 			//mSnapState = 0;

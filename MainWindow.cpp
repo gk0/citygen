@@ -41,9 +41,9 @@ enum
 	IDM_NODE_ADD,
 	IDM_NODE_DELETE,
 
-	IDM_GRAPH_SELEDGE,
-	IDM_GRAPH_ADDEDGE,
-	IDM_GRAPH_DELEDGE,
+	IDM_ROAD_SELECT,
+	IDM_ROAD_ADD,
+	IDM_ROAD_DELETE,
 
 	IDM_GRAPH_ADD,
 	IDM_GRAPH_DEL,
@@ -113,6 +113,10 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_MENU(IDM_NODE_ADD, MainWindow::onSelectNodeAdd)
 	EVT_MENU(IDM_NODE_DELETE, MainWindow::onSelectNodeDel)
 
+	EVT_MENU(IDM_ROAD_SELECT, MainWindow::onSelectRoad)
+	EVT_MENU(IDM_ROAD_ADD, MainWindow::onSelectRoadAdd)
+	EVT_MENU(IDM_ROAD_DELETE, MainWindow::onSelectRoadDel)
+
 END_EVENT_TABLE()
 
 
@@ -146,13 +150,17 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	wxMenu *menuTemplate = new wxMenu();
 
-	// graph menu
-	wxMenu *menuGraph = new wxMenu();
-	menuGraph->Append(IDM_NODE_ADD, _("Add Node"), _("Add a node to the graph"));
-	menuGraph->Append(IDM_NODE_DELETE, _("Delete Node"), _("Delete a node from the graph"));
-	menuGraph->AppendSeparator();
-	menuGraph->Append(IDM_GRAPH_ADDEDGE, _("Add Edge"), _("Add an edge to the graph"));
-	menuGraph->Append(IDM_GRAPH_DELEDGE, _("Delete Edge"), _("Delete an edge from the graph"));
+	// tool menu
+	wxMenu *toolGraph = new wxMenu();
+	toolGraph->Append(IDM_NODE_SELECT, _("Select Node"), _("Select a node from the graph"));
+	toolGraph->Append(IDM_NODE_ADD, _("Add Node"), _("Add a node to the graph"));
+	toolGraph->Append(IDM_NODE_DELETE, _("Delete Node"), _("Delete a node from the graph"));
+	toolGraph->AppendSeparator();
+	toolGraph->Append(IDM_ROAD_SELECT, _("Select Road"), _("Select an road from the graph"));
+	toolGraph->Append(IDM_ROAD_ADD, _("Add Road"), _("Add an road to the graph"));
+	toolGraph->Append(IDM_ROAD_DELETE, _("Delete Road"), _("Delete an road from the graph"));
+	toolGraph->AppendSeparator();
+	toolGraph->Append(IDM_VIEW_CELL, _("Select Cell"), _("Select a cell from the graph"));
 
 	// help menu
 	wxMenu *menuHelp = new wxMenu();
@@ -163,7 +171,7 @@ MainWindow::MainWindow(wxWindow* parent)
 	menuBar->Append(menuFile, _("&File"));
 	menuBar->Append(menuView, _("&View"));
 	menuBar->Append(menuTemplate, _("&Template"));
-	menuBar->Append(menuGraph, _("&Graph"));
+	menuBar->Append(toolGraph, _("&Tool"));
 	menuBar->Append(menuHelp, _("&Help"));
 	SetMenuBar(menuBar);
 
@@ -527,9 +535,10 @@ void MainWindow::onChangeToolsetMode()
 		break;
 	case node:
 		initNodeEdit();
+		_worldFrame->setActiveTool(selNode);
 		break;
 	case road:
-		//initRoadEdit();
+		initRoadEdit();
 		_worldFrame->setActiveTool(selRoad);
 		break;
 	case cell:
@@ -556,22 +565,20 @@ void MainWindow::initNodeEdit()
 	_frameManager.AddPane(_nodeEditToolBar,  wxAuiPaneInfo().Name(_("NodeEditTb")).
 		Caption(_("Node Edit ToolBar")).ToolbarPane().Top().Row(0).Position(3).LeftDockable(false).
 		RightDockable(false).Resizable(false)); 
-
-	_worldFrame->setActiveTool(selNode);
 }
 
 void MainWindow::initRoadEdit()
 {
 	// create a toolbar and add them to it
 	_roadEditToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	_roadEditToolBar->AddTool(IDM_GRAPH_SELEDGE, _("Select Road"), TOOL_BMP(selnode), _("Select road"), wxITEM_RADIO);
-	_roadEditToolBar->AddTool(IDM_GRAPH_ADDEDGE, _("Add Road"), TOOL_BMP(addedge), _("Add road"), wxITEM_RADIO);
-	_roadEditToolBar->AddTool(IDM_GRAPH_DELEDGE, _("Delete Road"), TOOL_BMP(deledge), _("Delete road"), wxITEM_RADIO);
+	_roadEditToolBar->AddTool(IDM_ROAD_SELECT, _("Select Road"), TOOL_BMP(selnode), _("Select road"), wxITEM_RADIO);
+	_roadEditToolBar->AddTool(IDM_ROAD_ADD, _("Add Road"), TOOL_BMP(addedge), _("Add road"), wxITEM_RADIO);
+	_roadEditToolBar->AddTool(IDM_ROAD_DELETE, _("Delete Road"), TOOL_BMP(deledge), _("Delete road"), wxITEM_RADIO);
 	_roadEditToolBar->Realize();
 
 	_frameManager.AddPane(_roadEditToolBar,  wxAuiPaneInfo().Name(_("RoadEditTb")).
 		Caption(_("Road Edit ToolBar")).ToolbarPane().Top().Row(0).Position(4).LeftDockable(false).
-		RightDockable(false).Resizable(false)); 
+		RightDockable(false).Resizable(false));
 }
 
 void MainWindow::onSelectNode(wxCommandEvent &e)
@@ -588,6 +595,22 @@ void MainWindow::onSelectNodeDel(wxCommandEvent &e)
 {
 	_worldFrame->setActiveTool(delNode);
 }
+
+void MainWindow::onSelectRoad(wxCommandEvent &e)
+{
+	_worldFrame->setActiveTool(selRoad);
+}
+
+void MainWindow::onSelectRoadAdd(wxCommandEvent &e)
+{
+	_worldFrame->setActiveTool(addRoad);
+}
+
+void MainWindow::onSelectRoadDel(wxCommandEvent &e)
+{
+	_worldFrame->setActiveTool(delRoad);
+}
+
 
 void MainWindow::updateProperties()
 {

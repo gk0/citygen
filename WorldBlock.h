@@ -18,14 +18,10 @@ private:
 public:
 	WorldBlock(const std::vector<Ogre::Vector3> &boundary, const CellGenParams &gp, rando rg, bool debug=false);
 
-	void build(Ogre::ManualObject* m1, Ogre::ManualObject* m2, Ogre::ManualObject* m3);
-	void build(Ogre::ManualObject* m1, Ogre::ManualObject* m2, Ogre::ManualObject* m3, Ogre::ManualObject* dob);
-
-	static bool getLongestSideAboveLimit(const LotBoundary &b, 
-		const Ogre::Real limitSq, size_t &index);
-
-	static bool getLongestRoadSideAboveLimit(const LotBoundary &b, 
-		const Ogre::Real limitSq, size_t &index);
+	void build(Ogre::ManualObject* f1, Ogre::ManualObject* m1, Ogre::ManualObject* m2, Ogre::ManualObject* m3, 
+		Ogre::uint16 &o0, Ogre::uint16 &o1, Ogre::uint16 &o2);
+	void build(Ogre::ManualObject* f1, Ogre::ManualObject* m1, Ogre::ManualObject* m2, Ogre::ManualObject* m3,
+		Ogre::ManualObject* dob, Ogre::uint16 &o0, Ogre::uint16 &o1, Ogre::uint16 &o2);
 
 	static bool getLongestSideIndex(const LotBoundary &b, 
 		const Ogre::Real limitSq, size_t &index);
