@@ -62,7 +62,7 @@
 </toolChain>
 <resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.44593271./citygen/Ogre.log" name="Ogre.log" rcbsApplicability="disable" resourcePath="/citygen/Ogre.log" toolsToInvoke=""/>
 </configuration>
-<configuration artifactExtension="exe" artifactName="citygen" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1311200916" name="Release MinGW" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
+<configuration artifactExtension="exe" artifactName="citygen" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1311200916" name="Release MinGW" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug" postbuildStep="strip --strip-unneeded citygen.exe">
 <toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.202492693" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug">
 <builder arguments="-j 2 -k" command="mingw32-make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.1147843333" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.995697276" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug">
@@ -84,7 +84,7 @@
 <listOptionValue builtIn="false" value="UNICODE"/>
 <listOptionValue builtIn="false" value="_UNICODE"/>
 </option>
-<option id="gnu.cpp.compiler.option.other.other.225279377" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fexceptions -fident -mwindows" valueType="string"/>
+<option id="gnu.cpp.compiler.option.other.other.225279377" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fexceptions -fident -mwindows " valueType="string"/>
 <option id="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level.43596995" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level.794525831" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 </tool>
@@ -119,6 +119,9 @@
 <listOptionValue builtIn="false" value="../../tinyxml/Release"/>
 </option>
 <option id="gnu.cpp.link.option.flags.336226238" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mwindows" valueType="string"/>
+<option id="gnu.cpp.link.option.userobjs.1247742489" superClass="gnu.cpp.link.option.userobjs" valueType="userObjs">
+<listOptionValue builtIn="false" value="../citygen.o"/>
+</option>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.1274164927" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug"/>
 <macros/>

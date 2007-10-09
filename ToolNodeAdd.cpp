@@ -17,6 +17,7 @@ ToolNodeAdd::ToolNodeAdd(WorldFrame* wf, SceneManager* sm, RoadGraph &g, RoadGra
 	_sceneManager = sm;
 }
 
+
 void ToolNodeAdd::activate()
 {
 	//
@@ -44,27 +45,42 @@ void ToolNodeAdd::deactivate()
 
 void ToolNodeAdd::OnChar(wxKeyEvent& e)
 {
-	int key = e.GetKeyCode();
-	switch(key)
+	if(e.GetKeyCode() == WXK_ESCAPE)
 	{
-	case WXK_ESCAPE:
 		_worldFrame->selectNode(0);
 		if(_proposedRoad)
 		{
 			delete _proposedRoad;
 			_proposedRoad = 0;
 		}
+		_proposedNode->setVisible(false);
 		_worldFrame->update();
-		break;
-	default:
-		ToolView::OnChar(e);
-		break;
 	}
 }
 
+bool ToolNodeAdd::alternate(wxMouseEvent &e)
+{
+	if(e.ControlDown())
+	{
+		if(_proposedRoad)
+		{
+			delete _proposedRoad;
+			_proposedRoad = 0;
+		}
+		_worldFrame->selectNode(0);
+		_proposedNode->setVisible(false);
+		return true;
+	}
+	return false;
+}
 
 void ToolNodeAdd::OnMouseMove(wxMouseEvent &e)
 {
+	if(alternate(e) == true)
+	{
+		ToolView::OnMouseMove(e);
+		return;
+	}
 	updateState(e);
 	_worldFrame->update();
 }
@@ -166,6 +182,12 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 
 void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 {
+	if(alternate(e))
+	{
+		ToolView::OnLeftPressed(e);
+		return;
+	}
+
 	try
 	{
 		updateState(e);
@@ -255,6 +277,6 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 	catch(...)
 	{
 		LogManager::getSingleton().logMessage(
-			"ToolNodeAdd::OnLeftPressed() unkown exception");
+			"ToolNodeAdd::OnLeftPressed() unknown exception");
 	}
 }

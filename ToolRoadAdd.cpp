@@ -15,7 +15,12 @@ _simpleRoadGraph(s)
 
 void ToolRoadAdd::OnMouseMove(wxMouseEvent &e)
 {
-	ToolView::OnMouseMove(e);
+	if(alternate(e) == true)
+	{
+		_worldFrame->highlightNode(0);
+		ToolView::OnMouseMove(e);
+		return;
+	}
 
 	WorldNode *wn;
 	if(_worldFrame->pickNode(e, 7, wn)) _worldFrame->highlightNode(wn);
@@ -25,6 +30,13 @@ void ToolRoadAdd::OnMouseMove(wxMouseEvent &e)
 
 void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 {
+	if(alternate(e) == true)
+	{
+		_worldFrame->highlightNode(0);
+		ToolView::OnLeftPressed(e);
+		return;
+	}
+
 	//TODO: 
 	if(_worldFrame->getSelected())
 	{
@@ -80,3 +92,10 @@ void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 		}
 	}
 }
+
+bool ToolRoadAdd::alternate(wxMouseEvent &e)
+{
+	if(e.ControlDown()) return true;
+	else return false;
+}
+

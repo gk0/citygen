@@ -7,8 +7,6 @@
 
 // fine grain roads currently cause problems due to simple insets
 #define FINEGRAIN 1
-#define GROUNDCLEARANCE Ogre::Vector3(0,0.3,0)
-
 
 unsigned int WorldRoad::_instanceCount = 0;
 RoadGenParams WorldRoad::_defaultGenParams;
@@ -281,7 +279,7 @@ void WorldRoad::buildSampleFan(const Vector2& cursor, const Vector2& direction, 
 
 	if(_genParams._numOfSamples < 2)
 	{
-		// single sample case is a straight forward centre sample
+		// single sample case is a straight forward center sample
 		if(_genParams._numOfSamples == 1) {
 			samples.reserve(_genParams._numOfSamples);
 			Vector2 sample2D = cursor + (direction * _genParams._sampleSize);

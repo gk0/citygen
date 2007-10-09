@@ -8,10 +8,10 @@ using namespace Ogre;
 using namespace std;
 
 //THIS CLASS IS FUCKING HORRIBLE
-
+// BUT ITS GETTING BETTER
+#define FOOTPATHWIDTH 0.2f
 
 WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp, rando rg, bool debug)
-//  : _randGen(rg)  // not assignable see docs, maybe can be
 {
 	// 
 	size_t i,j,N = boundary.size(), N2 = N * 2;
@@ -19,83 +19,127 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 	innerBoundary.reserve(N);
 	vector<Vector3> outerBoundary(boundary);
 
-	// build a footpath
-	_vertices.reserve(3*N);
-	_normals.reserve(N);
-	_footpathPolys.reserve(12*N);
+	_footpathVertexData.reserve(N * 8 * 8);
+	_footpathPolys.reserve(N * 4 * 3);
 
 	// raise footpath
 	// footpath does not support inset properly
 	// different number of vertices is possible
 	for(i=0; i<N; i++) outerBoundary[i].y += 0.035; 
-	//_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
 	innerBoundary.insert(innerBoundary.end(), outerBoundary.begin(), outerBoundary.end());
 
-	if(Geometry::polygonInsetFast(0.2, innerBoundary))
+	if(Geometry::polygonInsetFast(FOOTPATHWIDTH, innerBoundary))
 	{
-		//Geometry::polyRepair(innerBoundary, N/2);
+		// if the inner boundary has a different number of vertices
 		if(innerBoundary.size() != N)
 		{
+			// try and create an outer boundary with the same number of vertices
 			N = innerBoundary.size();
 			N2 = N * 2;
 			vector<Vector3> tmp;
 			tmp.insert(tmp.end(), innerBoundary.begin(), innerBoundary.end());
-			if(!Geometry::polygonInsetFast(-0.2, tmp)) return;
-			//Geometry::polygonInsetFFast(-0.2, tmp);
+			if(!Geometry::polygonInsetFast(-FOOTPATHWIDTH, tmp)) return;
 			if(tmp.size() != N)
 			{
 				//LogManager::getSingleton().logMessage("Outset Fail!!");
 				return;
 			}
-			//else
-			//	LogManager::getSingleton().logMessage("Outset Pass.");
-
-			_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
-			BOOST_FOREACH(Vector3 &v, _vertices) v.y -= 0.05;
-			_vertices.insert(_vertices.end(), tmp.begin(), tmp.end());
+			outerBoundary = tmp;
 		}
-		else
-		{
-			_vertices.insert(_vertices.end(), boundary.begin(), boundary.end());
-			_vertices.insert(_vertices.end(), outerBoundary.begin(), outerBoundary.end());
-		}
-		_vertices.insert(_vertices.end(), innerBoundary.begin(), innerBoundary.end());
 
-
+		Real uMinInside = 0, uMinOutside = 0, uMaxInside = 0, uMaxOutside = 0;
+		bool texCoordsDirection = false;
 		for(i=0; i<N; i++)
 		{
 			j = (i+1)%N;
-			
-			// build polygons for footpath
 
 			// get normal for side
-			_normals.push_back((innerBoundary[i]-innerBoundary[j]).perpendicular().normalisedCopy());
+			Vector3 innerB(innerBoundary[i]-innerBoundary[j]);
+			Vector3 outerB(outerBoundary[i]-outerBoundary[j]);
+			Vector3 normal(innerB.perpendicular().normalisedCopy());
 
+			// we need to offset uMinInside to keep set the texture straight
+			Vector2 adjacent(innerBoundary[j].x - innerBoundary[i].x, innerBoundary[j].z- innerBoundary[i].z);
+			Vector2 hypotenuse(outerBoundary[i].x - innerBoundary[i].x, outerBoundary[i].z- innerBoundary[i].z);
+			adjacent.normalise();
+			Real coso = Math::Abs(adjacent.dotProduct(hypotenuse.normalisedCopy()));
 
-			// side
-			_footpathPolys.push_back(j);
-			_footpathPolys.push_back(i);
-			_footpathPolys.push_back(N+i);
-			_footpathPolys.push_back(j);
-			_footpathPolys.push_back(N+i);
-			_footpathPolys.push_back(N+j);
+			// reverse the direction of the texture coordinates for 
+			// each boundary segment, so that the mitered edges match
+			if(texCoordsDirection)
+			{
+				uMinInside = uMinOutside - hypotenuse.length() * coso;
+				uMaxInside = uMinInside - innerB.length();
+				uMaxOutside = uMinOutside - outerB.length();
+			}
+			else
+			{
+				uMinInside = uMinOutside + hypotenuse.length() * coso;
+				uMaxInside = uMinInside + innerB.length();
+				uMaxOutside = uMinOutside + outerB.length();
+			}
+			texCoordsDirection = !texCoordsDirection;
 
-			// top
-			_footpathPolys.push_back(N+j);
-			_footpathPolys.push_back(N+i);
-			_footpathPolys.push_back(N2+i);
-			_footpathPolys.push_back(N+j);
-			_footpathPolys.push_back(N2+i);
-			_footpathPolys.push_back(N2+j);
+			//build sides
+			uint16 offset = static_cast<uint16>(_footpathVertexData.size()/8);
+			appendVector3(_footpathVertexData, outerBoundary[i]);
+			appendVector3(_footpathVertexData, normal);
+			appendVector2(_footpathVertexData, uMinOutside, 0.05f);
+
+			appendVector3(_footpathVertexData, outerBoundary[j]);
+			appendVector3(_footpathVertexData, normal);
+			appendVector2(_footpathVertexData, uMaxOutside, 0.05f);
+
+			appendVector3(_footpathVertexData, outerBoundary[i].x, outerBoundary[i].y - 0.05f, outerBoundary[i].z);
+			appendVector3(_footpathVertexData, normal);
+			appendVector2(_footpathVertexData, uMinOutside, 0);
+
+			appendVector3(_footpathVertexData, outerBoundary[j].x, outerBoundary[j].y - 0.05f, outerBoundary[j].z);
+			appendVector3(_footpathVertexData, normal);
+			appendVector2(_footpathVertexData, uMaxOutside, 0);
+
+			appendPoly(_footpathPolys, offset, offset + 1, offset + 2);
+			appendPoly(_footpathPolys, offset + 2, offset + 1, offset+3);
+
+			// build top
+			offset = static_cast<uint16>(_footpathVertexData.size()/8);
+			appendVector3(_footpathVertexData, innerBoundary[i]);
+			appendVector3(_footpathVertexData, 0.0f, 1.0f, 0.0f);
+			appendVector2(_footpathVertexData, uMinInside, 0);
+
+			appendVector3(_footpathVertexData, innerBoundary[j]);
+			appendVector3(_footpathVertexData, 0.0f, 1.0f, 0.0f);
+			appendVector2(_footpathVertexData, uMaxInside, 0);
+
+			appendVector3(_footpathVertexData, outerBoundary[i]);
+			appendVector3(_footpathVertexData, 0.0f, 1.0f, 0.0f);
+			appendVector2(_footpathVertexData, uMinOutside, FOOTPATHWIDTH);
+
+			appendVector3(_footpathVertexData, outerBoundary[j]);
+			appendVector3(_footpathVertexData, 0.0f, 1.0f, 0.0f);
+			appendVector2(_footpathVertexData, uMaxOutside, FOOTPATHWIDTH);
+
+			appendPoly(_footpathPolys, offset, offset + 1, offset + 2);
+			appendPoly(_footpathPolys, offset + 2, offset + 1, offset+3);
+			/*
+			// TODO: could use two vertices less here
+			uint16 zeebo = innerBoundary.size() * 6;
+			appendPoly(_footpathPolys, offset, (zeebo + offset - 6)%zeebo, offset + 1);
+			appendPoly(_footpathPolys, offset + 1, (zeebo + offset - 6)%zeebo, (zeebo + offset - 5)%zeebo);
+			*/
+
+			// update outside texture coordinates
+			uMinOutside = uMaxOutside;
 		}
 	}
 
-	vector<size_t> tmp;
+	vector<uint16> tmp;
 	if(!Triangulate::Process(innerBoundary, tmp))
 	{
 		//LogManager::getSingleton().logMessage("Boundary Fail!!"+StringConverter::toString(N));
 		if(!Geometry::polyRepair(innerBoundary, 100))
 		{
+			_footpathVertexData.clear();
 			_footpathPolys.clear();
 			return;
 		}
@@ -105,10 +149,6 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 			N2 = N * 2;
 		}
 	}
-
-//	vector<Vector2> innerBoundary2;
-//	innerBoundary2.reserve(innerBoundary.size());
-//	BOOST_FOREACH(Vector3 &v, innerBoundary) innerBoundary2.push_back(Geometry::V2(v));
 
 	// Do something to extract lots
 	queue< LotBoundary > q;
@@ -186,87 +226,57 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 	Real buildingDeviance = gp._buildingHeight * gp._buildingDeviance;
 
 	size_t fail = 0;
+	_lots.reserve(lotBoundaries.size());
 	BOOST_FOREACH(LotBoundary &b, lotBoundaries)
 	{
 		Real buildingHeight = gp._buildingHeight - (buildingDeviance / 2);
-		WorldLot lot(b, gp, buildingHeight + (buildingDeviance * rg()));
-		if(lot.hasError())
+		WorldLot* lot = new WorldLot(b, gp, buildingHeight + (buildingDeviance * rg()));
+		if(lot->hasError())
 			fail++;
 		else
+		{	
 			_lots.push_back(lot);
+			// lets assign the lot to a pointer array
+			// here for building material type
+		}
 	}
+
+	// also calculate vertex & index counts for all material types
+	// store in public vars
+
 }
 
 #define RAND_MAX_THRD RAND_MAX/3
 #define RAND_MAX_2THRD RAND_MAX_THRD*2
 
-void WorldBlock::build(ManualObject* f1, ManualObject* m1, ManualObject* m2, 
-					   ManualObject* m3, uint16 &o0, uint16 &o1, uint16 &o2)
+
+void WorldBlock::build(MeshBuilder& meshBuilder, vector<Material*> &materials)
 {
-	// footpath
-	size_t i, normIndex = 0, N=_footpathPolys.size();
-	for(i=0; i<N; i+=12)
-	{
-		// side
-		f1->position(_vertices[_footpathPolys[i]]);
-		f1->normal(_normals[normIndex]);
-		f1->position(_vertices[_footpathPolys[i+1]]);
-		f1->normal(_normals[normIndex]);
-		f1->position(_vertices[_footpathPolys[i+2]]);
-		f1->normal(_normals[normIndex]);
-		f1->position(_vertices[_footpathPolys[i+3]]);
-		f1->normal(_normals[normIndex]);
-		f1->position(_vertices[_footpathPolys[i+4]]);
-		f1->normal(_normals[normIndex]);
-		f1->position(_vertices[_footpathPolys[i+5]]);
-		f1->normal(_normals[normIndex]);
-
-		// top
-		f1->position(_vertices[_footpathPolys[i+6]]);
-		f1->normal(Vector3::UNIT_Y);
-		f1->position(_vertices[_footpathPolys[i+7]]);
-		f1->normal(Vector3::UNIT_Y);
-		f1->position(_vertices[_footpathPolys[i+8]]);
-		f1->normal(Vector3::UNIT_Y);
-		f1->position(_vertices[_footpathPolys[i+9]]);
-		f1->normal(Vector3::UNIT_Y);
-		f1->position(_vertices[_footpathPolys[i+10]]);
-		f1->normal(Vector3::UNIT_Y);
-		f1->position(_vertices[_footpathPolys[i+11]]);
-		f1->normal(Vector3::UNIT_Y);
-
-		normIndex++;
-	}
-	// WARNING: don't do m->begin m->end too much it makes it *very* slow to render
-
+	// Mesh Builder
 	// shit rand in the  build
-	BOOST_FOREACH(WorldLot& lot, _lots) 
+	BOOST_FOREACH(WorldLot* lot, _lots) 
 	{
 		int rnd = rand();
 		if(rnd < RAND_MAX_THRD)
 		{
-			lot.addVertexData(m1);
-			o0 = lot.addIndexData(m1, o0);
+			meshBuilder.registerData(materials[0], lot->getVertexData(), lot->getIndexData());
 		}
 		else if(rnd < RAND_MAX_2THRD)
 		{
-			lot.addVertexData(m2);
-			o1 = lot.addIndexData(m2, o1);
+			meshBuilder.registerData(materials[1], lot->getVertexData(), lot->getIndexData());
 		}
 		else
 		{
-			lot.addVertexData(m3);
-			o2 = lot.addIndexData(m3, o2);
+			meshBuilder.registerData(materials[2], lot->getVertexData(), lot->getIndexData());
 		}
-
-		
 	}
+
+	meshBuilder.registerData(materials[3], _footpathVertexData, _footpathPolys);
 }
 
-void WorldBlock::build(ManualObject* f1, ManualObject* m1, ManualObject* m2, 
-					   ManualObject* m3,  ManualObject* dob, uint16 &o0, uint16 &o1, uint16 &o2)
+void WorldBlock::build(MeshBuilder& meshBuilder, vector<Material*> &materials, ManualObject* dob)
 {
-	build(f1, m1, m2, m3, o0, o1, o2);
+	build(meshBuilder, materials);
 
 	//
 	for(size_t i=0; i<_debugLots.size(); i++)
@@ -473,21 +483,9 @@ bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, rando 
 						//break segment link
 						first->_nextIndex = numeric_limits<size_t>::max();
 
-						try
-						{
-							// add second to boundary
-							lotBoundary.push_back(LotBoundaryPoint(
-								input[inscns[inscnIndex]._boundaryIndex]._roadAccess, inscns[inscnIndex]._pos)); //error
-						}
-						catch (Exception* e)
-						{
-							int z = 0;
-						}
-						catch(...)
-						{
-							int z = 1;
-						}
-
+						// add second to boundary
+						lotBoundary.push_back(LotBoundaryPoint(
+							input[inscns[inscnIndex]._boundaryIndex]._roadAccess, inscns[inscnIndex]._pos)); //error
 
 						// advance index vars
 						boundaryIndex = (inscns[inscnIndex]._boundaryIndex + 1) % N;

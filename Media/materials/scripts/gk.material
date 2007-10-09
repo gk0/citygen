@@ -42,6 +42,27 @@ material gk/Building2
 	}
 } 
 
+material gk/Paving
+{
+   technique
+   {
+		pass
+		{
+			// lighting on
+			// Base Pass
+			ambient 1 1 1
+			diffuse 1 1 1
+			texture_unit
+			{
+				// Base Texture
+				scale 0.3 0.3
+				texture paving.jpg
+			}
+		}  
+	}
+} 
+
+
 material gk/Building3
 {
    technique

@@ -13,13 +13,8 @@ void ToolCellSelect::OnChar(wxKeyEvent &e)
 {
 	int key = e.GetKeyCode();
 	WorldCell* wc = _worldFrame->getSelectedCell();
-	switch(key)
-	{
-	// cell decomposition was here
-	default:
-		ToolView::OnChar(e);
-		break;
-	}
+	ToolView::OnChar(e);
+	
 	_worldFrame->update();
 }
 

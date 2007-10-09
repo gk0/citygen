@@ -7,6 +7,9 @@
 #include "WorldCell.h"
 #include "PerformanceTimer.h"
 #include "Geometry.h"
+#include "MeshBuilder.h"
+#include "Statistics.h"
+size_t Statistics::_buildingCount = 0;
 
 //tools
 #include "ToolView.h"
@@ -30,7 +33,7 @@
 #include <GL/glx.h> 
 #endif
 
-//#define THREADME 1
+#define THREADME 1
 
 
 // Namespace 
@@ -296,138 +299,6 @@ void WorldFrame::createScene(void)
 	_camera->setPosition(177, 0, 0);
 	_camera->lookAt(1041.25f, 0.1f, 965.25f);
 	_cameraNode->setOrientation(-0.267156, -0.236617, -0.931684, -0.067849);
-
-/*
-	// create me a normal cube
-	SceneNode* sn = _sceneManager->getRootSceneNode()->createChildSceneNode();
-	//SceneNode* sn = _sceneManager->createSceneNode();
-	//_cameraNode->addChild(sn);
-	sn->setPosition(_cameraNode->getPosition());
-
-	//LOT TEST
-	LotBoundary lotboundary;
-	lotboundary.push_back(LotBoundaryPoint(true, Vector3(0,0,0)));
-	lotboundary.push_back(LotBoundaryPoint(true, Vector3(1.0,0,0)));
-	lotboundary.push_back(LotBoundaryPoint(true, Vector3(1.0,0,1.0)));
-	lotboundary.push_back(LotBoundaryPoint(true, Vector3(0,0,1.0)));
-
-	LotBoundary lotboundary2;
-	lotboundary2.push_back(LotBoundaryPoint(true, Vector3(1.1,0,0)));
-	lotboundary2.push_back(LotBoundaryPoint(true, Vector3(2.1,0,0)));
-	lotboundary2.push_back(LotBoundaryPoint(true, Vector3(2.1,0,1.0)));
-	lotboundary2.push_back(LotBoundaryPoint(true, Vector3(1.1,0,1.0)));
-
-	CellGenParams gp;
-	vector<WorldLot> lots;
-	//lots.push_back(WorldLot(lotboundary, gp, 2.0f));
-	lots.push_back(WorldLot(lotboundary2, gp, 3.0f));
-
-
-	ManualObject* lotMo = _sceneManager->createManualObject("lotto");
-	lotMo->begin("gk/Building3WNormalMap");
-	//lot.build(lotMo);
-	BOOST_FOREACH(WorldLot& l, lots) l.addVertexData(lotMo);
-
-	uint16 offset = 0;
-	BOOST_FOREACH(WorldLot& l, lots)
-	{
-		offset = l.addIndexData(lotMo, offset);
-	}
-	lotMo->end();
-
-	//// convert to mesh
-	MeshPtr pMesh2 = lotMo->convertToMesh("lotMesh");
-
-	//// build tangent vectors
-	unsigned short src, dest;
-	if (!pMesh2->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
-	{
-		pMesh2->buildTangentVectors(VES_TANGENT, src, dest);
-	}
-
-	//// create entity
-	Entity* ent2 = _sceneManager->createEntity("Ent2", "lotMesh");
-	////delete mo;
-
-	//// attach object
-	sn->attachObject(ent2);
-*/
-
-
-	//// create manual object using indexed geometry
-	//ManualObject* mo = _sceneManager->createManualObject("urmudder");
-	//mo->begin("Examples/OffsetMapping/Specular");
-	//mo->position(0,0,0);
-	//mo->normal(0,0,-1);
-	//mo->textureCoord(0,0);
-	//mo->position(0,50,0);
-	//mo->normal(0,0,-1);
-	//mo->textureCoord(0,1);
-	//mo->position(50,50,0);
-	//mo->normal(0,0,-1);
-	//mo->textureCoord(1,1);
-	//mo->position(50,0,0);
-	//mo->normal(0,0,-1);
-	//mo->textureCoord(1,0);
-	//mo->index(0);
-	//mo->index(1);
-	//mo->index(2);
-	//mo->index(2);
-	//mo->index(3);
-	//mo->index(0);
-	//mo->end();
-
-	//// convert to mesh
-	//MeshPtr pMesh2 = mo->convertToMesh("muddermesh");
-
-	//// build tangent vectors
-	//unsigned short src, dest;
-	//if (!pMesh2->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
-	//{
-	//	pMesh2->buildTangentVectors(VES_TANGENT, src, dest);
-	//}
-
-	//// create entity
-	//Entity* ent2 = _sceneManager->createEntity("Ent2", "muddermesh");
-	////delete mo;
-
-	//// attach object
-	//sn->attachObject(ent2);
-
-
-	//// Load the meshes with non-default HBU options
-	//MeshPtr pMesh = MeshManager::getSingleton().load("knot.mesh",
-	//	ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,    
-	//	HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY, 
-	//	HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
-	//	true, true); //so we can still read it
-	//// Build tangent vectors, all our meshes use only 1 texture coordset 
-	//// Note we can build into VES_TANGENT now (SM2+)
-	////unsigned short src, dest;
-	////if (!pMesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
-	////{
-	////	pMesh->buildTangentVectors(VES_TANGENT, src, dest);
-	////}
-	//// Create entity
-	//Entity* ent = _sceneManager->createEntity("Ent", "knot.mesh");
-
-
-	//// Attach to child of root node
-
-	//sn->attachObject(ent);
-	///*
-	//"Examples/BumpMapping/SingleLight",
-	//"Examples/BumpMapping/MultiLight",
-	//"Examples/BumpMapping/MultiLightSpecular",
-	//"Examples/OffsetMapping/Specular"
-	//*/
-	//ent->setMaterialName("Examples/BumpMapping/SingleLight");
-	// Make invisible, except for index 0
-	//if (mn == 0)
-	//	mEntities[mn]->setMaterialName(mMaterialNames[mCurrentEntity][mCurrentMaterial]);
-	//else
-	//	mEntities[mn]->setVisible(false);
-
 }
 
 void WorldFrame::createViewport(void)
@@ -492,6 +363,11 @@ void WorldFrame::destroyScene(void)
 	{
 		LogManager::getSingleton().logMessage(e.what());
 	}
+
+	// reset counts
+	WorldNode::resetInstanceCount();
+	WorldRoad::resetInstanceCount();
+	WorldCell::resetInstanceCount();
 }
 
 // Moves the view
@@ -664,6 +540,7 @@ void prebuild(pair< set<WorldCell*>::iterator, set<WorldCell*>::iterator > *cIt)
 void WorldFrame::update()
 {
 	//wxControl::update();
+	Statistics::resetBuildingCount();
 
 	// render nodes
 	map< Ogre::SceneNode*, WorldNode* >::iterator nIt, nEnd;
@@ -720,6 +597,7 @@ void WorldFrame::update()
 	}catch(...)
 	{
 	}
+	//LogManager::getSingleton().logMessage("Building Count: "+StringConverter::toString(Statistics::getBuildingCount()));
 
 	if(_camera) Root::getSingleton().renderOneFrame();
 }
@@ -814,10 +692,12 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 		// if source node and target node can be found
 		if(sourceIt != nodeIdTranslation.end() && targetIt != nodeIdTranslation.end()) 
 		{
-			if(!_simpleRoadGraph.testRoad(sourceIt->second->mSimpleNodeId, targetIt->second->mSimpleNodeId))
+			if(!_simpleRoadGraph.testRoad(sourceIt->second->mSimpleNodeId, 
+				targetIt->second->mSimpleNodeId))
 			{
 				// create the road in the scene
-				WorldRoad* wr = new WorldRoad(sourceIt->second, targetIt->second, _roadGraph, _simpleRoadGraph, _sceneManager);
+				WorldRoad* wr = new WorldRoad(sourceIt->second, targetIt->second, 
+										_roadGraph, _simpleRoadGraph, _sceneManager);
 				_sceneRoadMap[wr->getSceneNode()] = wr;
 				const TiXmlHandle roadRoot(edgeElements[i]);
 				wr->loadXML(roadRoot);

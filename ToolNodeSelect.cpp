@@ -9,6 +9,11 @@ ToolNodeSelect::ToolNodeSelect(WorldFrame* wf)
 
 void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 {
+	if(alternate(e) == true) 
+	{
+		ToolView::OnMouseMove(e);
+		return;
+	}
 	// Compute deltas
 	_mouseDeltaX = e.m_x - _mouseX;
 	_mouseDeltaY = e.m_y - _mouseY;
@@ -24,11 +29,6 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 		if(_worldFrame->pickTerrainIntersection(e, pos))
 			_worldFrame->moveSelectedNode(pos);
 	}
-	else if(e.m_rightDown)
-	{
-		_worldFrame->cameraMove((Ogre::Real)(-_mouseDeltaX) * (_moveSpeed / 4), (Ogre::Real)_mouseDeltaY * (_moveSpeed / 4), 0.0f);
-		_worldFrame->update();
-	}
 	else if(_worldFrame->pickNode(e, HIGHLIGHTNODESNAPSQ, wn))
 		_worldFrame->highlightNode(wn);
 
@@ -41,6 +41,11 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 
 void ToolNodeSelect::OnLeftPressed(wxMouseEvent &e)
 {
+	if(alternate(e) == true) 
+	{
+		ToolView::OnLeftPressed(e);
+		return;
+	}
 	//TODO: 
 	#define SELECTNODESNAPSQ 16
 
@@ -52,4 +57,15 @@ void ToolNodeSelect::OnLeftPressed(wxMouseEvent &e)
 
 	_worldFrame->update();
 }
+
+bool ToolNodeSelect::alternate(wxMouseEvent &e)
+{
+	if(e.ControlDown())
+	{
+		_worldFrame->highlightNode(0);
+		return true;
+	}
+	else return false;
+}
+
 

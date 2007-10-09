@@ -10,6 +10,8 @@ private:
 	Ogre::Vector3 _position;
 	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > _roadJunction;
 
+	std::vector<RoadId> getClockwiseVecOfRoads();
+	std::vector<NodeId> getClockwiseVecOfNodes(const std::vector<RoadId>& roads);
 
 public:
 	SimpleNode(RoadGraph &g);

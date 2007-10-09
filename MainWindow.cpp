@@ -12,7 +12,11 @@
 // ----------------------------------------------------------------------------
 const int ID_TOOLBAR = 500;
 
-static const long TOOLBAR_STYLE = wxNO_BORDER | wxTB_NODIVIDER | wxTB_HORIZONTAL | wxTB_FLAT | wxTB_TEXT /* | wxTB_HORZ_LAYOUT*/;
+#ifdef WIN32
+static const long TOOLBAR_STYLE = wxNO_BORDER | wxTB_NODIVIDER | wxTB_HORIZONTAL | wxTB_FLAT | wxTB_TEXT | wxTB_NO_TOOLTIPS;
+#else
+static const long TOOLBAR_STYLE = wxNO_BORDER | wxTB_NODIVIDER | wxTB_HORIZONTAL | wxTB_FLAT | wxTB_TEXT;
+#endif
 
 enum
 {
@@ -254,8 +258,6 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	// init doc stuff
 	modify(false);
-
-	//this->onNew(wxCommandEvent());
 }
 
 void MainWindow::init()

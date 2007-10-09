@@ -15,7 +15,11 @@ public:
 	//void OnChar(wxKeyEvent& e);
 	void OnMouseMove(wxMouseEvent &e);
 	void OnLeftPressed(wxMouseEvent &e);
+	void OnMiddlePressed(wxMouseEvent &e) {}
+	void OnRightPressed(wxMouseEvent &e) {}
 	//void OnMouseWheel(wxMouseEvent &e);
+	bool alternate(wxMouseEvent &e);
+
 };
 
 #endif

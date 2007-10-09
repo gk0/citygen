@@ -48,45 +48,51 @@ void ToolView::OnChar(wxKeyEvent& e)
 		_moveSpeed -= 0.1f;
 		LogManager::getSingleton().logMessage("Move Speed: "+StringConverter::toString(_moveSpeed), LML_CRITICAL);
 		break;
-/*	case WXK_PAGEUP:
+	case WXK_PAGEUP:
 	case WXK_NUMPAD_PAGEUP:
-		_worldFrame->cameraMove(0.0f, _moveSpeed, 0.0f);
+		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
+			_worldFrame->getCameraNode()->getOrientation() * Vector3(0.0f,_moveSpeed,0.0f));
 		_worldFrame->update();
 		break;
 	case WXK_PAGEDOWN:
 	case WXK_NUMPAD_PAGEDOWN:
-		_worldFrame->cameraMove(0.0f, -_moveSpeed, 0.0f);
+		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
+			_worldFrame->getCameraNode()->getOrientation() * Vector3(0.0f,-_moveSpeed,0.0f));
 		_worldFrame->update();
 		break;
 	case 'w':
 	case 'W':
 	case WXK_UP:
 	case WXK_NUMPAD_UP:
-		_worldFrame->cameraMove(0.0f, 0.0f, -_moveSpeed);
+		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
+			_worldFrame->getCameraNode()->getOrientation() * Vector3(-_moveSpeed, 0.0f, 0.0f));
 		_worldFrame->update();
 		break;
 	case 's':
 	case 'S':
 	case WXK_DOWN:
 	case WXK_NUMPAD_DOWN:
-		_worldFrame->cameraMove(0.0f, 0.0f, _moveSpeed);
+		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
+			_worldFrame->getCameraNode()->getOrientation() * Vector3(_moveSpeed, 0.0f, 0.0f));
 		_worldFrame->update();
 		break;
 	case 'a':
 	case 'A':
 	case WXK_LEFT:
 	case WXK_NUMPAD_LEFT:
-		_worldFrame->cameraMove(-_moveSpeed, 0.0f, 0.0f);
+		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
+			_worldFrame->getCameraNode()->getOrientation() * Vector3(0.0f, 0.0f, _moveSpeed));
 		_worldFrame->update();
 		break;
 	case 'd':
 	case 'D':
 	case WXK_RIGHT:
 	case WXK_NUMPAD_RIGHT:
-		_worldFrame->cameraMove(_moveSpeed, 0.0f, 0.0f);
+		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
+			_worldFrame->getCameraNode()->getOrientation() * Vector3(0.0f, 0.0f, -_moveSpeed));
 		_worldFrame->update();
 		break;
-*/
+
 	default:
 		e.Skip();
 		break;

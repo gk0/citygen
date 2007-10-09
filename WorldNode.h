@@ -8,6 +8,8 @@
 #include "RoadGraph.h"
 #include "WorldRoad.h"
 
+#define GROUNDCLEARANCE Ogre::Vector3(0,0.3,0)
+
 class WorldNode : public WorldObject, public NodeInterface
 {
 
@@ -27,6 +29,9 @@ private:
 
 	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
 	void onMove();
+
+	std::vector<RoadId> getClockwiseVecOfRoads();
+	std::vector<NodeId> getClockwiseVecOfNodes(const std::vector<RoadId>& roads);
 
 public:
 	NodeId mSimpleNodeId;
@@ -98,6 +103,8 @@ public:
 	}
 
 	std::vector<WorldRoad*> getWorldRoads() const;
+
+	static void resetInstanceCount() { _instanceCount = 0; }
 
 }; 
 

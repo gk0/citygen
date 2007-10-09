@@ -121,13 +121,17 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm196"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="&quot;../proarc-ogre/include&quot;;..\boost_1_34_0;&quot;..\wxWidgets-2.8.3\include&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswu\wx\msw&quot;;&quot;..\wxWidgets-2.8.3\contrib\include&quot;;&quot;..\wxWidgets-2.8.3\lib\vc_lib\mswu&quot;;..\tinyxml;..\OgreSDK_VS80\include"
 				PreprocessorDefinitions="WIN32;__WXMSW__;NDEBUG;_WINDOWS;"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="true"
-				EnableEnhancedInstructionSet="2"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -154,6 +158,7 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
+				Profile="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -207,6 +212,10 @@
 			</File>
 			<File
 				RelativePath=".\MainWindow.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MeshBuilder.cpp"
 				>
 			</File>
 			<File
@@ -341,6 +350,10 @@
 			</File>
 			<File
 				RelativePath=".\MainWindow.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MeshBuilder.h"
 				>
 			</File>
 			<File

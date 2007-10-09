@@ -12,7 +12,7 @@ class NodeInterface;
 class RoadInterface;
 
 
-class WorldCell : public WorldObject
+class WorldCell : public WorldObject, public Ogre::ManualResourceLoader
 {
 
 private:
@@ -25,17 +25,9 @@ private:
 	Ogre::Vector2		_centre;
 	Ogre::ManualObject* _roadNetworkMO;
 	Ogre::ManualObject* _roadJunctionsMO;
-	Ogre::ManualObject* _blockMO;
-	Ogre::ManualObject* _buildingsMO;
-	Ogre::ManualObject* _buildingsMO1;
-	Ogre::ManualObject* _buildingsMO2;
 	Ogre::ManualObject* _debugMO;
 
-	Ogre::MeshPtr		_buildingsMesh;
-	Ogre::MeshPtr		_buildingsMesh1;
-
 	Ogre::Entity*		_buildingsEnt;
-	Ogre::Entity*		_buildingsEnt1;
 
 	bool				_showRoads;			
 	bool				_showBuildings;
@@ -50,7 +42,7 @@ private:
 	std::vector<NodeInterface*> _boundaryCycle;
 	std::vector<RoadInterface*> _filamentRoads;
 
-	std::vector<WorldBlock>		_blocks;
+	std::vector<WorldBlock*>	_blocks;
 
 
 public:
@@ -95,6 +87,13 @@ public:
 	Ogre::Real calcArea2D();
 	void extractPolygon(std::vector<NodeInterface*> &cycle, std::vector<Ogre::Vector3> &poly);
 
+	void loadResource(Ogre::Resource* r)
+	{
+		//prebuild();
+		//build();
+	}
+
+	static void resetInstanceCount() { _instanceCount = 0; }
 
 private:
 	void clearRoadGraph();
@@ -126,6 +125,7 @@ private:
 
 	void generateRoadNetwork(rando genRandom);
 	void buildRoadNetwork();
+
 };
 
 #endif

@@ -9,27 +9,20 @@ ToolRoadSelect::ToolRoadSelect(WorldFrame* wf)
 
 void ToolRoadSelect::OnMouseMove(wxMouseEvent &e)
 {
-	ToolView::OnMouseMove(e);
-
-	// Compute deltas
-	_mouseDeltaX = e.m_x - _mouseX;
-	_mouseDeltaY = e.m_y - _mouseY;
-/*
-	//TODO: 
-	#define HIGHLIGHTNODESNAPSQ 16
-	WorldRoad *wn;
-
-	// if left drag
-	if(mWorldFrame->pickRoad(e, HIGHLIGHTNODESNAPSQ, c))
-		mWorldFrame->highlightRoad(c);
-*/
-	// save for calc of next deltas
-	_mouseX = e.m_x;
-	_mouseY = e.m_y;
+	if(alternate(e) == true)
+	{
+		ToolView::OnMouseMove(e);
+		return;
+	}
 }
 
 void ToolRoadSelect::OnLeftPressed(wxMouseEvent &e)
 {
+	if(alternate(e) == true)
+	{
+		ToolView::OnLeftPressed(e);
+		return;
+	}
 	WorldRoad *c;
 	if(_worldFrame->pickRoad(e, c))
 		_worldFrame->selectRoad(c);
@@ -38,3 +31,11 @@ void ToolRoadSelect::OnLeftPressed(wxMouseEvent &e)
 
 	_worldFrame->update();
 }
+
+bool ToolRoadSelect::alternate(wxMouseEvent &e)
+{
+	if(e.ControlDown()) return true;
+	else return false;
+}
+
+

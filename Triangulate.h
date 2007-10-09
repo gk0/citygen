@@ -48,8 +48,14 @@ public:
   static bool Process(const std::vector<Ogre::Vector2> &contour,
 						std::vector<size_t> &result);
 
+  static bool Process(const std::vector<Ogre::Vector2> &contour, 
+	  std::vector<Ogre::uint16> &result);
+
   static bool Process(const std::vector<Ogre::Vector3> &contour,
 	  std::vector<size_t> &result);
+
+  static bool Process(const std::vector<Ogre::Vector3> &contour, 
+	  std::vector<Ogre::uint16> &result);
 
   // compute area of a contour/polygon
   static float Area(const std::vector<Ogre::Vector2> &contour);

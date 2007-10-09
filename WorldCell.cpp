@@ -11,6 +11,7 @@
 #include "Triangulate.h"
 #include "PerformanceTimer.h"
 #include "WorldBlock.h"
+#include "MeshBuilder.h"
 
 
 using namespace Ogre;
@@ -49,12 +50,7 @@ void WorldCell::init()
 
 	_roadNetworkMO = 0;
 	_roadJunctionsMO = 0;
-	_blockMO = 0;
-	_buildingsMO = 0;
-	_buildingsMO1 = 0;
-	_buildingsMO2 = 0;
 	_buildingsEnt = 0;
-	_buildingsEnt1 = 0;
 	_debugMO = 0;
 
 	_name = "cell"+StringConverter::toString(_instanceCount++);
@@ -94,30 +90,6 @@ void WorldCell::destroySceneObject()
 		_roadJunctionsMO = 0;
 	}
 
-	if(_blockMO) {
-		_sceneNode->getCreator()->destroyManualObject(_blockMO);
-		delete _blockMO;
-		_blockMO = 0;
-	}
-
-	if(_buildingsMO) {
-		_sceneNode->getCreator()->destroyManualObject(_buildingsMO);
-		delete _buildingsMO;
-		_buildingsMO = 0;
-	}
-
-	if(_buildingsMO1) {
-		_sceneNode->getCreator()->destroyManualObject(_buildingsMO1);
-		delete _buildingsMO1;
-		_buildingsMO1 = 0;
-	}
-
-	if(_buildingsMO2) {
-		_sceneNode->getCreator()->destroyManualObject(_buildingsMO2);
-		delete _buildingsMO2;
-		_buildingsMO2 = 0;
-	}
-
 	if(_debugMO) {
 		_sceneNode->getCreator()->destroyManualObject(_debugMO);
 		delete _debugMO;
@@ -126,14 +98,8 @@ void WorldCell::destroySceneObject()
 
 	if(_buildingsEnt) {
 		_sceneNode->getCreator()->destroyEntity(_buildingsEnt);
-		//delete _buildingsEnt;
+		MeshManager::getSingleton().remove(_name+"Buildings");
 		_buildingsEnt = 0;
-	}
-
-	if(_buildingsEnt1) {
-		_sceneNode->getCreator()->destroyEntity(_buildingsEnt1);
-		//delete _buildingsEnt1;
-		_buildingsEnt1 = 0;
 	}
 
 	MeshManager::getSingleton().remove(_name+"b0Mesh");
@@ -503,9 +469,9 @@ void WorldCell::prebuild()
 		extractPolygon(cycle, poly);
 	
 		if(_genParams._debug)
-			_blocks.push_back(WorldBlock(poly, _genParams, rg, true));
+			_blocks.push_back(new WorldBlock(poly, _genParams, rg, true));
 		else
-			_blocks.push_back(WorldBlock(poly, _genParams, rg));
+			_blocks.push_back(new WorldBlock(poly, _genParams, rg));
 	}
 	_busy = false;
 }
@@ -530,93 +496,43 @@ void WorldCell::build()
 	_debugMO = new ManualObject(_name+"do");
 	_debugMO->begin("gk/Hilite/Red2", Ogre::RenderOperation::OT_LINE_LIST);
 
-	//// declare the manual object
-	_blockMO = new ManualObject(_name+"block");
-	_buildingsMO = new ManualObject(_name+"b");
-	_buildingsMO1 = new ManualObject(_name+"b1");
-	_buildingsMO2 = new ManualObject(_name+"b2");
-#ifndef USENORMALS
-	// "Examples/BumpMapping/SingleLight"
-	_blockMO->begin("gk/Building2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-	_buildingsMO->begin("gk/Building2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-	_buildingsMO1->begin("gk/Building3", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-	_buildingsMO2->begin("gk/Building4", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	// set up materials
+	vector<Material*> materials(4);
+	materials[0] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building2WNormalMap")).get();
+	materials[1] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building3WNormalMap")).get();
+	materials[2] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building4")).get();
+	materials[3] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Paving")).get();
 
-	uint16 o0=0,o1=0,o2=0;
+	MeshBuilder meshBuilder(_name+"Buildings", "custom", this);
 	if(_genParams._debug)
 	{
-		BOOST_FOREACH(WorldBlock &block, _blocks)
-			block.build(_blockMO, _buildingsMO, _buildingsMO1, _buildingsMO2, _debugMO, o0, o1, o2);
+		BOOST_FOREACH(WorldBlock* block, _blocks)
+			block->build(meshBuilder, materials, _debugMO);
 	}
 	else
 	{
-		BOOST_FOREACH(WorldBlock &block, _blocks)
-			block.build(_blockMO, _buildingsMO, _buildingsMO1, _buildingsMO2, o0, o1, o2);
-	} 
-	_blockMO->end();
-	_buildingsMO->end();
-	_buildingsMO1->end();
-	_buildingsMO2->end();
-
-	_sceneNode->attachObject(_blockMO);
-	_sceneNode->attachObject(_buildingsMO);
-	_sceneNode->attachObject(_buildingsMO1);
-	_sceneNode->attachObject(_buildingsMO2);
-
-#else
-	// "Examples/BumpMapping/SingleLight"
-	_blockMO->begin("gk/Building2", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-	_buildingsMO->begin("gk/Building2WNormalMap", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-	_buildingsMO1->begin("gk/Building3WNormalMap", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-	_buildingsMO2->begin("gk/Building4", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
-	uint16 o0=0,o1=0,o2=0;
-	if(_genParams._debug)
-	{
-		BOOST_FOREACH(WorldBlock &block, _blocks)
-			block.build(_blockMO, _buildingsMO, _buildingsMO1, _buildingsMO2, _debugMO, o0, o1, o2);
-	}
-	else
-	{
-		BOOST_FOREACH(WorldBlock &block, _blocks)
-			block.build(_blockMO, _buildingsMO, _buildingsMO1, _buildingsMO2, o0, o1, o2);
+		BOOST_FOREACH(WorldBlock* block, _blocks)
+			block->build(meshBuilder, materials);
 	} 
 
-	_blockMO->end();
-	_buildingsMO->end();
-	_buildingsMO1->end();
-	_buildingsMO2->end();
 
-	//// convert to mesh
-	MeshPtr pMesh = _buildingsMO->convertToMesh(_name+"b0Mesh", ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
-	MeshPtr pMesh1 = _buildingsMO1->convertToMesh(_name+"b1Mesh", ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+	meshBuilder.build();
 
-	//// build tangent vectors
-	unsigned short src, dest;
-	if (!pMesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
-		pMesh->buildTangentVectors(VES_TANGENT, src, dest);
-	if (!pMesh1->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
-		pMesh1->buildTangentVectors(VES_TANGENT, src, dest);
+	// create entity
+	_buildingsEnt = _sceneNode->getCreator()->createEntity(_name+"Entity",_name+"Buildings");
 
-	//// create entity
-	_buildingsEnt = _sceneNode->getCreator()->createEntity(_name+"b0Ent", _name+"b0Mesh");
-	_buildingsEnt1 = _sceneNode->getCreator()->createEntity(_name+"b1Ent", _name+"b1Mesh");
-
-	//// attach object
-	_sceneNode->attachObject(_blockMO);
+	// attach object
 	_sceneNode->attachObject(_buildingsEnt);
-	_sceneNode->attachObject(_buildingsEnt1);
-	_sceneNode->attachObject(_buildingsMO2);
-#endif
-	_buildingsMO->setVisible(_showBuildings);
-	_buildingsMO1->setVisible(_showBuildings);
-	_buildingsMO2->setVisible(_showBuildings);
+
+	_buildingsEnt->setVisible(_showBuildings);
+
 
 
 	_debugMO->end();
 	_sceneNode->attachObject(_debugMO);
 
 	// am done with blocks now.
+	BOOST_FOREACH(WorldBlock* b, _blocks) delete b;
 	_blocks.clear();
 
 
@@ -1056,9 +972,7 @@ void WorldCell::showRoads(bool show)
 void WorldCell::showBuildings(bool show)
 {
 	_showBuildings = show;
-	if(_buildingsMO) _buildingsMO->setVisible(_showBuildings);
-	if(_buildingsMO1) _buildingsMO1->setVisible(_showBuildings);
-	if(_buildingsMO2) _buildingsMO2->setVisible(_showBuildings);
+	if(_buildingsEnt) _buildingsEnt->setVisible(_showBuildings);
 }
 
 vector<Vector3> WorldCell::getBoundaryPoints3D()

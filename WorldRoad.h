@@ -120,6 +120,8 @@ public:
 		return left.getLength() < right.getLength();
 	}
 
+	static void resetInstanceCount() { _instanceCount = 0; }
+
 private:
 	void build();
 	void destroyRoadObject();

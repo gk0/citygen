@@ -20,14 +20,12 @@ class WorldLot
 {
 private:
 	bool						_error;
-	std::vector<Ogre::Vector3>	_vertices;
-	std::vector<Ogre::Vector2>	_texCoords;
-	std::vector<size_t>			_sidePolys;		
-	std::vector<size_t>			_roofPolys;
 
 	Ogre::Real					_height;
 	Ogre::Real					_foundation;
-	std::vector<Ogre::Vector3>	_footprint;
+
+	std::vector<Ogre::Real>		_vertexData;
+	std::vector<Ogre::uint16>	_indexData;
 
 public:
 	//WorldLot(const LotBoundary &footprint, const CellGenParams &gp);
@@ -35,24 +33,44 @@ public:
 
 	bool hasError() { return _error; }
 
-	static bool build(const LotBoundary &footprint, const CellGenParams &gp,
-		const Ogre::Real fnd, const Ogre::Real ht, Ogre::ManualObject* m);
-
-	bool build(Ogre::ManualObject* m);
-	void build2(Ogre::ManualObject* m);
-
-	static bool buildHousey(const std::vector<Ogre::Vector2> &footprint, 
-		const Ogre::Real foundation, const Ogre::Real height, Ogre::ManualObject* m);
-
-	static bool buildCube(const std::vector<Ogre::Vector2> &footprint, 
-		const Ogre::Real foundation, const Ogre::Real height, Ogre::ManualObject* m);
-
 	static LotBoundary insetBoundary(const LotBoundary &b, const Ogre::Real &roadInset, 
 		const Ogre::Real &standardInset);
 
-	void addVertexData(Ogre::ManualObject* m);
+	const std::vector<Ogre::Real>& getVertexData() { return _vertexData; }
+	const std::vector<Ogre::uint16>& getIndexData() { return _indexData; }
+	//void installVertexData(float*& vPtr);
+	//void installIndexData(Ogre::uint16*& iPtr, size_t& voffset);
 
-	Ogre::uint16 addIndexData(Ogre::ManualObject* m, Ogre::uint16 offset);
+private:
+	inline void appendVector3(std::vector<Ogre::Real> &vertexData, const Ogre::Vector3& v)
+	{
+		vertexData.push_back(v.x);
+		vertexData.push_back(v.y);
+		vertexData.push_back(v.z);
+	}
+
+	inline void appendVector3(std::vector<Ogre::Real> &vertexData, 
+		const Ogre::Real &x, const Ogre::Real &y, const Ogre::Real &z)
+	{
+		vertexData.push_back(x);
+		vertexData.push_back(y);
+		vertexData.push_back(z);
+	}
+
+	inline void appendVector2(std::vector<Ogre::Real> &vertexData, 
+		const Ogre::Real &x, const Ogre::Real &y)
+	{
+		vertexData.push_back(x);
+		vertexData.push_back(y);
+	}
+
+	inline void appendPoly(std::vector<Ogre::uint16> &indexData, 
+		const Ogre::uint16 &a, const Ogre::uint16 &b, const Ogre::uint16 &c)
+	{
+		indexData.push_back(a);
+		indexData.push_back(b);
+		indexData.push_back(c);
+	}
 
 };
 
