@@ -4,6 +4,7 @@
 #include "WorldFrame.h"
 #include "SimpleNode.h"
 #include "Geometry.h"
+#include "MeshBuilder.h"
 
 // fine grain roads currently cause problems due to simple insets
 #define FINEGRAIN 1
@@ -24,7 +25,7 @@ WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g,
 	_selected = false;
 	_length = 0;
 	
-	_manualObject = 0;
+	_entity = 0;
 	_debugMOObject = 0;
 	
 	_simpleRoadGraph.addRoad(src->mSimpleNodeId, dst->mSimpleNodeId, _simpleRoadId);
@@ -53,7 +54,19 @@ WorldRoad::~WorldRoad()
 	destroyer->destroySceneNode(_sceneNode->getName());
 }
 
-void WorldRoad::build()
+
+void WorldRoad::addVertexData(const Vector3 &p1, const Vector3 &p2, const Vector3 &norm, Real uTex)
+{
+	MeshBuilder::addVData3(_vertexData, p1);
+	MeshBuilder::addVData3(_vertexData, norm);
+	MeshBuilder::addVData2(_vertexData, uTex, 0);
+	MeshBuilder::addVData3(_vertexData, p2);
+	MeshBuilder::addVData3(_vertexData, norm);
+	MeshBuilder::addVData2(_vertexData, uTex, 1);
+}
+
+
+void WorldRoad::prebuild()
 {
 	Vector2 tmper(getSrcNode()->getPosition2D() - getDstNode()->getPosition2D());
 	if(tmper.length() < 0.3)
@@ -77,9 +90,6 @@ void WorldRoad::build()
 		interpolatedList.push_back(_spline.interpolate(t));
 	}
 #endif
-
-	// always destroy previous
-	destroyRoadObject();
 
 #ifdef DEBUGSEGS
 	if(_debugMOObject)
@@ -109,20 +119,16 @@ void WorldRoad::build()
 	_sceneNode->attachObject(_debugMOObject);
 	return;
 #endif
-
-	// declare the manual object
-	_manualObject = new ManualObject(_name); 
-	if(_selected) _manualObject->begin("gk/YellowBrickRoad", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-	else _manualObject->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
-	//_debugMOObject = new ManualObject(_name+"do");
+	_vertexData.reserve(interpolatedList.size() * 16);
+	_indexData.reserve(interpolatedList.size() * 6);
 
 	// vars
 	Vector3 currRoadSegNormal, nextRoadSegNormal, nextRoadSegVector;
 	Vector2 currRoadSegPerp, nextRoadSegPerp, nextRoadSegVector2D;
 	Real currRoadSegLength, nextRoadSegLength;
-	Real uMin = 0, uMax = 0;
-	Vector3 a, a1, a2, aNormal, b, b1, b2, bNormal, c;
+	Real uTex = 0;
+	uint16 voffset;
+	Vector3 b, b1, b2, bNormal, c;
 
 	// init
 	if(interpolatedList.size() >= 2)
@@ -147,6 +153,9 @@ void WorldRoad::build()
 		//get the first b from the node
 		b = interpolatedList[0];
 		boost::tie(b1, b2) = getSrcNode()->getRoadJunction(_roadSegmentList[0]);
+
+		// vertex data
+		addVertexData(b1, b2, bNormal, uTex);
 
 		//
 		size_t start=0,end=(interpolatedList.size()-2);
@@ -182,7 +191,6 @@ void WorldRoad::build()
 		for(size_t i=start; i<end; i++)
 		{
 			// for a road segment pointA -> pointB
-			a = b;
 			b = interpolatedList[i+1], c = interpolatedList[i+2];
 
 			// get current from last runs next vars
@@ -190,14 +198,11 @@ void WorldRoad::build()
 			currRoadSegNormal = nextRoadSegNormal;
 			currRoadSegLength = nextRoadSegLength;
 
-			// advance A to previous B
-			a1 = b1;
-			a2 = b2;
-			aNormal = bNormal;
-
 			// calculate next road segment vectors to get b normal
 			nextRoadSegVector = c - b;
+
 			nextRoadSegVector2D.x = nextRoadSegVector.x;
+
 			nextRoadSegVector2D.y = nextRoadSegVector.z;
 
 			// use the 3D road segment vector to calculate length for accuracy
@@ -225,45 +230,66 @@ void WorldRoad::build()
 
 			// calculate b normal 
 			bNormal = (currRoadSegNormal + nextRoadSegNormal) / 2;
+			uTex += currRoadSegLength;
 
-			// create road segment
-			uMax += currRoadSegLength;
-			buildSegment(a1, a2, aNormal, b1, b2, bNormal, uMin, uMax);
-			uMin += currRoadSegLength;
+			// vertex data
+			addVertexData(b1, b2, bNormal, uTex);
+
+			// index data
+			voffset = static_cast<uint16>(_vertexData.size() >> 3);
+			MeshBuilder::addIData3(_indexData, voffset - 4, voffset - 3, voffset - 2);
+			MeshBuilder::addIData3(_indexData, voffset - 3, voffset - 1, voffset - 2);
 		}
 
 		// finish end
 		size_t i = interpolatedList.size() - 2;
 
 		// for a road segment pointA -> pointB
-		a = interpolatedList[i], b = interpolatedList[i+1];
+		b = interpolatedList[i+1];
 
 		// get current from last runs next vars
 		currRoadSegNormal = nextRoadSegNormal;
 		currRoadSegLength = nextRoadSegLength;
-
-		// advance A to previous B
-		a1 = b1;
-		a2 = b2;
-		aNormal = bNormal;
 
 		size_t lastSeg = _roadSegmentList.size()-1;
 		boost::tie(b2, b1) = getDstNode()->getRoadJunction(_roadSegmentList[lastSeg]);
 
 		// calculate b normal 
 		bNormal = (currRoadSegNormal + Vector3::UNIT_Y) / 2;
+		uTex += currRoadSegLength;
 
-		// create road segment
-		uMax += currRoadSegLength;
-		buildSegment(a1, a2, aNormal, b1, b2, bNormal, uMin, uMax);
-		uMin += currRoadSegLength;
+		// vertex data
+		addVertexData(b1, b2, bNormal, uTex);
+
+		// index data
+		voffset = static_cast<uint16>(_vertexData.size() >> 3);
+		MeshBuilder::addIData3(_indexData, voffset - 4, voffset - 3, voffset - 2);
+		MeshBuilder::addIData3(_indexData, voffset - 3, voffset - 1, voffset - 2);
 	}
+}
 
-	_manualObject->end();
-	_sceneNode->attachObject(_manualObject);
+void WorldRoad::build()
+{
+	// always destroy previous
+	destroyRoadObject();
+
+	prebuild();
+
+	MaterialPtr mat;
+	if(_selected) mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/YellowBrickRoad"));
+	else mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Road"));
+
+	// build new
+	MeshBuilder meshBuilder(_name+"Mesh", "custom", this);
+	meshBuilder.registerData(mat.get(), _vertexData, _indexData);
+	meshBuilder.build();
+	_vertexData.clear();
+	_indexData.clear();
+	_entity = _sceneNode->getCreator()->createEntity(_name+"Entity",_name+"Mesh");
+	_sceneNode->attachObject(_entity);
  }
 
- void WorldRoad::buildDebugSegments(const Vector3 &pos, const std::vector<Vector3> &samples)
+void WorldRoad::buildDebugSegments(const Vector3 &pos, const std::vector<Vector3> &samples)
 {
 	Vector3 offset(0,3,0);
 	for(size_t i=0; i<samples.size(); i++)
@@ -675,41 +701,12 @@ void WorldRoad::destroyRoadGraph()
 	_roadSegmentList.clear();
 }
 
-
-
-void WorldRoad::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3 &aNorm,
-			const Vector3 &b1, const Vector3 &b2, const Vector3 &bNorm, Real uMin, Real uMax)
-{
-	// create road segment
-	_manualObject->position(a1);
-	_manualObject->normal(aNorm);
-	_manualObject->textureCoord(uMin, 0);
-	_manualObject->position(a2);
-	_manualObject->normal(aNorm);
-	_manualObject->textureCoord(uMin, 1);
-	_manualObject->position(b1);
-	_manualObject->normal(bNorm);
-	_manualObject->textureCoord(uMax, 0);
-
-	_manualObject->position(a2);
-	_manualObject->normal(aNorm);
-	_manualObject->textureCoord(uMin, 1);
-	_manualObject->position(b2);
-	_manualObject->normal(bNorm);
-	_manualObject->textureCoord(uMax, 1);
-	_manualObject->position(b1);
-	_manualObject->normal(bNorm);
-	_manualObject->textureCoord(uMax, 0);
-}
-
 void WorldRoad::destroyRoadObject()
 {
-	// delete our manual object
-	if(_manualObject) {
-		_sceneNode->detachObject(_manualObject->getName());
-		_sceneNode->getCreator()->destroyManualObject(_manualObject);
-		delete _manualObject;
-		_manualObject = 0;
+	if(_entity) {
+		_sceneNode->getCreator()->destroyEntity(_entity);
+		MeshManager::getSingleton().remove(_name+"Mesh");
+		_entity = 0;
 	}
 }
 /*
@@ -1076,4 +1073,10 @@ void WorldRoad::getMidPointAndDirection(Ogre::Vector2 &pos, Ogre::Vector2 &dir) 
 Ogre::Vector3 WorldRoad::getMidPoint()
 {
 	return _spline.interpolate(0.5f);
+}
+
+
+void WorldRoad::exportObject(ExportDoc &doc)
+{
+	doc.addMesh(_entity->getMesh());
 }

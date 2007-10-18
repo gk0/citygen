@@ -1,12 +1,13 @@
 #include "stdafx.h"
 #include "SimpleRoad.h"
 #include "Geometry.h"
+#include "MeshBuilder.h"
 
 using namespace Ogre;
 
 
-SimpleRoad::SimpleRoad(NodeInterface *src, NodeInterface *dst)
- : _roadWidth(0.4)
+SimpleRoad::SimpleRoad(NodeInterface *src, NodeInterface *dst, RoadId rd)
+ : _roadWidth(0.4), _roadId(rd)
 {
 	_srcNode = src;
 	_dstNode = dst;
@@ -50,4 +51,41 @@ Ogre::Real SimpleRoad::getWidth() const
 void SimpleRoad::setWidth(const Ogre::Real& w)
 {
 	_roadWidth = w;
+}
+
+void SimpleRoad::prebuild()
+{
+	_vertexData.clear();
+	_indexData.clear();
+	_vertexData.reserve(32);
+	_indexData.reserve(6);
+
+	Vector3 a1,a2, b1, b2;
+	//RoadInterface* rd = getRoad(_srcNode, _dstNode);
+	boost::tie(a1,a2) = _srcNode->getRoadJunction(_roadId);
+	boost::tie(b2,b1) = _dstNode->getRoadJunction(_roadId);
+	//buildSegment(a1, a2, Vector3::UNIT_Y, b1, b2, Vector3::UNIT_Y, 0, 4);
+	Real uMin = 0, uMax = 4;
+
+	MeshBuilder::addVData3(_vertexData, a1);
+	MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+	MeshBuilder::addVData2(_vertexData, uMin, 0);
+	MeshBuilder::addVData3(_vertexData, a2);
+	MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+	MeshBuilder::addVData2(_vertexData, uMin, 1);
+
+	MeshBuilder::addVData3(_vertexData, b2);
+	MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+	MeshBuilder::addVData2(_vertexData, uMax, 1);
+	MeshBuilder::addVData3(_vertexData, b1);
+	MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+	MeshBuilder::addVData2(_vertexData, uMax, 0);
+
+	MeshBuilder::addIData3(_indexData, 0, 1, 3);
+	MeshBuilder::addIData3(_indexData, 1, 2, 3);
+}
+
+void SimpleRoad::build(MeshBuilder& meshBuilder, Material* mat)
+{
+	meshBuilder.registerData(mat, _vertexData, _indexData);
 }

@@ -39,7 +39,7 @@ void RoadPropertyPage::Init()
 void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 {
 	//const wxId& id = event.GetId();
-	const wxPGProperty* eventProp = event.GetPropertyPtr();
+	//const wxPGProperty* eventProp = event.GetPropertyPtr();
 
 	WorldRoad* wr = _worldFrame->getSelectedRoad();
 	RoadGenParams g;

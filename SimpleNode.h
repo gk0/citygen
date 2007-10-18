@@ -4,9 +4,13 @@
 #include "stdafx.h"
 #include "NodeInterface.h"
 
+class MeshBuilder;
+
 class SimpleNode : public NodeInterface
 {
 private:
+	std::vector<Ogre::Real> _vertexData;
+	std::vector<Ogre::uint16> _indexData;
 	Ogre::Vector3 _position;
 	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > _roadJunction;
 
@@ -24,7 +28,6 @@ public:
 		return Ogre::Vector2(_position.x, _position.z);
 	}
 
-
 	Ogre::Vector3 getPosition3D() const
 	{
 		return _position;
@@ -32,6 +35,8 @@ public:
 
 	bool setPosition2D(Ogre::Real x, Ogre::Real y);
 
+	void prebuild();
+	void build(MeshBuilder &meshBuilder, Ogre::Material* mat);
 	void createJunction(Ogre::ManualObject* junctionPlate);
 	
 	std::pair<Ogre::Vector3, Ogre::Vector3> getRoadJunction(RoadId rd);

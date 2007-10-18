@@ -9,6 +9,7 @@
 #include "Geometry.h"
 #include "MeshBuilder.h"
 #include "Statistics.h"
+#include "ExportDoc.h"
 size_t Statistics::_buildingCount = 0;
 
 //tools
@@ -24,6 +25,8 @@ size_t Statistics::_buildingCount = 0;
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/bind.hpp>
+
+
 
 #ifdef __WXGTK__
 #include <gdk/gdk.h>
@@ -193,7 +196,7 @@ WorldFrame::~WorldFrame()
 
 	// delete tools
 	vector<Tool*>::iterator tIt, tEnd;
-	for(uint32 i=0; i<_tools.size(); i++) 
+	for(Ogre::uint32 i=0; i<_tools.size(); i++) 
 		delete _tools[i];
 }
 
@@ -253,11 +256,11 @@ void WorldFrame::createScene(void)
     _sceneManager->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
 
 	// Create a light
-	Light* l = _sceneManager->createLight("MainLight");
+	_mainLight = _sceneManager->createLight("MainLight");
 	// Accept default settings: point light, white diffuse, just set position
 	// NB I could attach the light to a SceneNode if I wanted it to move automatically with
 	//  other objects, but I don't
-	l->setPosition(20,180,50);
+	_mainLight->setPosition(20,180,50);
 
     // Fog
     // NB it's VERY important to set this before calling setWorldGeometry 
@@ -291,14 +294,42 @@ void WorldFrame::createScene(void)
 	// Create our ray query
 	_raySceneQuery = _sceneManager->createRayQuery(Ray());
 
-	// Set up the camera
-	// Create the camera node	
+	// Set up the camera	
 	_cameraNode = _sceneManager->createSceneNode("cameraNode");
 	_cameraNode->setPosition(1041.25f, 0.1f, 965.25f);
 	_cameraNode->attachObject(_camera);
-	_camera->setPosition(177, 0, 0);
-	_camera->lookAt(1041.25f, 0.1f, 965.25f);
-	_cameraNode->setOrientation(-0.267156, -0.236617, -0.931684, -0.067849);
+	_camera->setPosition(0, 0, 177);  // zoom on z axis, look down -z
+	_camera->lookAt(_cameraNode->getPosition());
+	_cameraNode->setOrientation(0.631968, -0.163438, -0.733434, -0.189679);
+}
+
+void WorldFrame::exportScene(ExportDoc& doc)
+{
+	// add the camera
+	doc.addCamera(_camera, _cameraNode);
+
+	// add the light
+	doc.addLight(_mainLight);
+
+	// add nodes
+	map< Ogre::SceneNode*, WorldNode* >::iterator nIt, nEnd;
+	for(nIt = _sceneNodeMap.begin(), nEnd = _sceneNodeMap.end(); nIt != nEnd; nIt++)
+		nIt->second->exportObject(doc);
+
+	// add roads
+	map< Ogre::SceneNode*, WorldRoad* >::iterator rIt, rEnd;
+	for(rIt = _sceneRoadMap.begin(), rEnd = _sceneRoadMap.end(); rIt != rEnd; rIt++)
+		rIt->second->exportObject(doc);
+
+	// give it a cell
+	BOOST_FOREACH(WorldCell* c, _cellSet) c->exportObject(doc);
+
+	// build a test mesh
+	//Entity* ent = _sceneManager->createEntity("mcube", "cube.mesh");
+	//ent->getMesh()->getSubMesh(0)->setMaterialName("gk/Building3");
+	//doc.addMesh(ent->getMesh());
+	//_sceneManager->destroyEntity(ent);
+	//doc.exportMesh();
 }
 
 void WorldFrame::createViewport(void)
@@ -516,6 +547,29 @@ void WorldFrame::toggleTimerRendering()
 
 boost::mutex cit_mutex;
 
+void prebuild2(pair< map< SceneNode*, WorldRoad* >::iterator, map< SceneNode*, WorldRoad* >::iterator > *cIt)
+{
+	while(true)
+	{	
+		WorldRoad* wc = 0;
+		{
+			boost::mutex::scoped_lock lock(cit_mutex);
+			if(cIt->first != cIt->second)
+			{
+				wc = &(*(cIt->first->second));
+				cIt->first++;
+			}
+			else break;
+		}
+
+		if(wc && !wc->isValid())
+		{
+			wc->prebuild(); 
+			//wc->build();
+		}
+	}
+}
+
 void prebuild(pair< set<WorldCell*>::iterator, set<WorldCell*>::iterator > *cIt)
 {
 	while(true)
@@ -536,7 +590,6 @@ void prebuild(pair< set<WorldCell*>::iterator, set<WorldCell*>::iterator > *cIt)
 	}
 }
 
-
 void WorldFrame::update()
 {
 	//wxControl::update();
@@ -546,11 +599,31 @@ void WorldFrame::update()
 	map< Ogre::SceneNode*, WorldNode* >::iterator nIt, nEnd;
 	for(nIt = _sceneNodeMap.begin(), nEnd = _sceneNodeMap.end(); nIt != nEnd; nIt++)
 		nIt->second->validate();
-
+//
+//#ifdef THREADME
+//	pair< map< SceneNode*, WorldRoad* >::iterator, map< SceneNode*, WorldRoad* >::iterator > rpIt;
+//	rpIt.first = _sceneRoadMap.begin();
+//	rpIt.second = _sceneRoadMap.end();
+//
+//	boost::thread roadThrd1(
+//		boost::bind(&prebuild2, &rpIt));
+//	boost::thread roadThrd2(
+//		boost::bind(&prebuild2, &rpIt));
+//
+//	roadThrd1.join();
+//	roadThrd2.join();
+//
+//	// render roads
+//	//map< Ogre::SceneNode*, WorldRoad* >::iterator rIt, rEnd;
+//	//for(rIt = _sceneRoadMap.begin(), rEnd = _sceneRoadMap.end(); rIt != rEnd; rIt++)
+//	//	rIt->second->validate();
+//
+//#else
 	// render roads
 	map< Ogre::SceneNode*, WorldRoad* >::iterator rIt, rEnd;
 	for(rIt = _sceneRoadMap.begin(), rEnd = _sceneRoadMap.end(); rIt != rEnd; rIt++)
 		rIt->second->validate();
+//#endif
 
 	// render cells
 	//map< Ogre::SceneNode*, WorldCell* >::iterator cIt, cEnd;
@@ -1477,7 +1550,7 @@ void WorldFrame::selectRoad(WorldRoad* wr)
 
 void  WorldFrame::setViewMode(MainWindow::ViewMode mode)
 {
-	bool showRoads, showBuildings;
+	bool showRoads = true, showBuildings = true;
 	switch(mode)
 	{
 	case MainWindow::view_primary:
@@ -1485,21 +1558,16 @@ void  WorldFrame::setViewMode(MainWindow::ViewMode mode)
 		showBuildings = false;
 		break;
 	case MainWindow::view_cell:
-		showRoads = true;
 		showBuildings = false;
 		break;
 	case MainWindow::view_box:
-		showRoads = true;
-		showBuildings = true;
-		break;
 	case MainWindow::view_building:
 		break;
 	}
-	set<WorldCell*>::iterator cIt,cEnd;
-	for(cIt = _cellSet.begin(), cEnd = _cellSet.end(); cIt != cEnd; cIt++)
+	BOOST_FOREACH(WorldCell* cell, _cellSet)
 	{
-		(*cIt)->showRoads(showRoads);
-		(*cIt)->showBuildings(showBuildings);
+		cell->showRoads(showRoads);
+		cell->showBuildings(showBuildings);
 	}
 	_viewMode = mode;
 	update();

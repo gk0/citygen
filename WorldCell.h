@@ -6,6 +6,7 @@
 #include "WorldBlock.h"
 #include "RoadGraph.h"
 #include "CellGenParams.h"
+#include "ExportDoc.h"
 
 class WorldRoad;
 class NodeInterface;
@@ -23,11 +24,10 @@ private:
 
 	Ogre::String		_name;
 	Ogre::Vector2		_centre;
-	Ogre::ManualObject* _roadNetworkMO;
-	Ogre::ManualObject* _roadJunctionsMO;
 	Ogre::ManualObject* _debugMO;
 
 	Ogre::Entity*		_buildingsEnt;
+	Ogre::Entity*		_roadsEnt;
 
 	bool				_showRoads;			
 	bool				_showBuildings;
@@ -94,6 +94,8 @@ public:
 	}
 
 	static void resetInstanceCount() { _instanceCount = 0; }
+
+	void exportObject(ExportDoc &doc);
 
 private:
 	void clearRoadGraph();

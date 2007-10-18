@@ -94,8 +94,21 @@
 #include <wx/propgrid/manager.h>
 #include <wx/propgrid/advprops.h>
 #include <wx/aui/aui.h>
+#include <wx/datetime.h>
+
+// wxString
+#if wxUSE_UNICODE
+	#define _UU(x,y) wxString((x),(y))
+	#define _CC(x,y) (x).mb_str((y))
+#else
+	#define _UU(x,y) (x)
+	#define _CC(x,y) (x)
+#endif
+
+#define _U(x) _UU((x),wxConvUTF8)
+#define _C(x) _CC((x),wxConvUTF8)
+
 
 //TinyXML Includes
 #include <tinyxml.h>
-
 #include <OgreMemoryMacros.h>

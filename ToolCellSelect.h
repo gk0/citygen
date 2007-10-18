@@ -12,7 +12,6 @@ public:
 
 	//void activate();
 	//void deactivate();
-	void OnChar(wxKeyEvent& e);
 	void OnMouseMove(wxMouseEvent &e);
 	void OnLeftPressed(wxMouseEvent &e);
 	//void OnMouseWheel(wxMouseEvent &e);

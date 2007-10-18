@@ -9,15 +9,6 @@ ToolCellSelect::ToolCellSelect(WorldFrame* wf)
 {
 }
 
-void ToolCellSelect::OnChar(wxKeyEvent &e)
-{
-	int key = e.GetKeyCode();
-	WorldCell* wc = _worldFrame->getSelectedCell();
-	ToolView::OnChar(e);
-	
-	_worldFrame->update();
-}
-
 void ToolCellSelect::OnMouseMove(wxMouseEvent &e)
 {
 	ToolView::OnMouseMove(e);

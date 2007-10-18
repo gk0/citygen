@@ -6,6 +6,7 @@
 #include "RoadInterface.h"
 #include "RoadGraph.h"
 #include "MovableText.h"
+#include "ExportDoc.h"
 
 class WorldNode;
 class WorldCanvas;
@@ -39,7 +40,7 @@ struct RoadGenParams
 	}
 };
 
-class WorldRoad : public WorldObject, public RoadInterface
+class WorldRoad : public WorldObject, public RoadInterface, public Ogre::ManualResourceLoader
 {
 private:
 	static unsigned int		_instanceCount;
@@ -47,7 +48,7 @@ private:
 
 	RoadId					_simpleRoadId;
 
-	Ogre::ManualObject*		_manualObject;
+	Ogre::Entity*			_entity;
 	Ogre::ManualObject*		_debugMOObject;
 	Ogre::MovableText*		_label;
 	Ogre::String			_name;
@@ -64,6 +65,9 @@ private:
 	std::vector<RoadId>		_roadSegmentList;
 	Ogre::SimpleSpline		_spline;
 	std::vector<Ogre::Vector3> _plotList;
+
+	std::vector<Ogre::Real> _vertexData;
+	std::vector<Ogre::uint16> _indexData;
 
 public:
 	WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
@@ -122,8 +126,13 @@ public:
 
 	static void resetInstanceCount() { _instanceCount = 0; }
 
-private:
+	void exportObject(ExportDoc &doc);
+	void loadResource(Ogre::Resource* r) {}
+	void prebuild();
 	void build();
+
+private:
+
 	void destroyRoadObject();
 
 	void createRoadGraph();
@@ -146,6 +155,8 @@ private:
 
 	void buildSegment(const Ogre::Vector3 &a1, const Ogre::Vector3 &a2, const Ogre::Vector3 &aNorm,
 		const Ogre::Vector3 &b1, const Ogre::Vector3 &b2, const Ogre::Vector3 &bNorm, Ogre::Real uMin, Ogre::Real uMax);
+
+	void addVertexData(const Ogre::Vector3 &p1, const Ogre::Vector3 &p2, const Ogre::Vector3 &norm, Ogre::Real uTex);
 
 };
 

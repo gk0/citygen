@@ -1125,10 +1125,6 @@ void RoadGraph::extractFootprints(std::vector< std::vector<NodeInterface*> > &po
 	size_t i;
 	for(i=0; i<1000 && heap.size() != 0; i++)
 	{
-		//if(i<num)
-		if(i>=10)
-			int z=0;
-
 		//Vertex v0 = heap.GetMin();
 		NodeId v0 = *(heap.begin());
 

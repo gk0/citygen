@@ -4,6 +4,7 @@
 #include "RoadGraph.h"
 #include "Triangulate.h"
 #include "RoadInterface.h"
+#include "MeshBuilder.h"
 
 using namespace Ogre;
 using namespace std;
@@ -40,6 +41,78 @@ bool SimpleNode::setPosition2D(Ogre::Real x, Ogre::Real z)
 		return true;
 	}
 	return false;
+}
+
+void SimpleNode::prebuild()
+{
+	// how many roads connect here
+	size_t degree = _roadGraph.getDegree(_nodeId);
+	switch(degree)
+	{
+	case 0:
+		return;
+	case 1:
+		createTerminus();
+		return;
+	case 2:
+		// use generic
+		break;
+	case 3:
+		if(createTJunction()) return;
+		break;
+	default:
+		//maybe should try
+		break;
+	}
+
+	Vector2 nodePos2D = getPosition2D();
+	Real height = getPosition3D().y;
+
+	// get a clockwise list of road intersections
+	vector<Vector2> pointlist;
+	vector<RoadId> roadCWVec(getClockwiseVecOfRoads());
+	for(size_t j,i=0; i < degree; i++)
+	{
+		j = (i+1)%degree;
+		Vector2 tmp = _roadGraph.getRoadBounaryIntersection(roadCWVec[i], roadCWVec[j]);
+		pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
+	}
+
+	// fill the junction data for use by roads
+	_roadJunction.clear();
+	_vertexData.clear();
+	_indexData.clear();
+	_vertexData.reserve(degree * 8 * 3);
+	_indexData.reserve(degree * 3);
+	for(size_t i=0; i < degree; i++)
+	{
+		size_t j = (i + 1) % degree;
+
+		//
+		pair<Vector3, Vector3> roadPair(Vector3(pointlist[j].x, height, pointlist[j].y), 
+			Vector3(pointlist[i].x, height, pointlist[i].y));
+
+		// create a junction -> road join pair
+		_roadJunction[roadCWVec[j]] = roadPair;
+
+		uint16 offset = static_cast<uint16>(_vertexData.size()>>3);
+		MeshBuilder::addVData3(_vertexData, roadPair.second);
+		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+		MeshBuilder::addVData2(_vertexData, 0, 0);
+		MeshBuilder::addVData3(_vertexData, roadPair.first);
+		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+		MeshBuilder::addVData2(_vertexData, 1, 0);
+		MeshBuilder::addVData3(_vertexData, getPosition3D());
+		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+		MeshBuilder::addVData2(_vertexData, 0.5, 0.5);
+
+		MeshBuilder::addIData3(_indexData, offset, offset + 1, offset + 2);
+	}
+}
+
+void SimpleNode::build(MeshBuilder& meshBuilder, Material* mat)
+{
+	meshBuilder.registerData(mat, _vertexData, _indexData);
 }
 
 void SimpleNode::createJunction(ManualObject* junctionPlate)

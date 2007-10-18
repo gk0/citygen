@@ -10,6 +10,8 @@
 class WorldNode;
 class WorldRoad;
 class WorldCell;
+class FCDocument;
+class ExportDoc;
 
 
 
@@ -23,6 +25,7 @@ private:
 
 	/* Ogre members */
 	Ogre::Camera*		_camera;
+	Ogre::Light*		_mainLight;
 	Ogre::RenderWindow* _renderWindow;
 	Ogre::SceneManager* _sceneManager;
 	Ogre::Viewport*		_viewport;
@@ -108,6 +111,8 @@ public:
 	void update();
 	bool loadXML(const TiXmlHandle& worldRoot);
 	TiXmlElement* saveXML();
+
+	void exportScene(ExportDoc& doc);
 
 	void setViewMode(MainWindow::ViewMode mode);
 	void setToolsetMode(MainWindow::ToolsetMode mode);

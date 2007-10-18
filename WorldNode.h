@@ -7,17 +7,21 @@
 #include "MovableText.h"
 #include "RoadGraph.h"
 #include "WorldRoad.h"
+#include "ExportDoc.h"
 
 #define GROUNDCLEARANCE Ogre::Vector3(0,0.3,0)
 
-class WorldNode : public WorldObject, public NodeInterface
+class WorldNode : public WorldObject, public NodeInterface, public Ogre::ManualResourceLoader
 {
 
 private:
+	std::vector<Ogre::Real> _vertexData;
+	std::vector<Ogre::uint16> _indexData;
+
 	size_t				_degree;
 	RoadGraph&			_simpleRoadGraph;
 	static int			_instanceCount;
-	Ogre::ManualObject* _junctionPlate;
+	Ogre::Entity*		_junctionEntity;
 	Ogre::Entity*		_mesh;
 	Ogre::Entity*		_highlight;
 	Ogre::Entity*		_selected;
@@ -105,6 +109,10 @@ public:
 	std::vector<WorldRoad*> getWorldRoads() const;
 
 	static void resetInstanceCount() { _instanceCount = 0; }
+
+	void exportObject(ExportDoc &doc);
+
+	void loadResource(Ogre::Resource* r) {}
 
 }; 
 

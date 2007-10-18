@@ -6,6 +6,9 @@
 #include "RoadPropertyPage.h"
 #include "CellPropertyPage.h"
 
+#include "ColladaDoc.h"
+
+
 
 // ----------------------------------------------------------------------------
 // constants
@@ -57,6 +60,7 @@ enum
 	IDM_VIEW_BOX,
 	IDM_VIEW_BUILDING,
 
+	IDM_EXPORT,
 
     IDM_OTHER_1,
     IDM_OTHER_2,
@@ -99,6 +103,7 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_MENU(wxID_NEW,  MainWindow::onNew)
     EVT_MENU(wxID_OPEN,  MainWindow::onOpen)
     EVT_MENU(wxID_CLOSE, MainWindow::onClose)
+	EVT_MENU(IDM_EXPORT, MainWindow::onExport)
     EVT_MENU(wxID_SAVE, MainWindow::onSave)
     EVT_MENU(wxID_SAVEAS, MainWindow::onSaveAs)
 
@@ -139,6 +144,9 @@ MainWindow::MainWindow(wxWindow* parent)
 	menuFile->Append(wxID_NEW, _("&New..."));
     menuFile->Append(wxID_OPEN, _("&Open..."));
     menuFile->Append(wxID_CLOSE, _("&Close"));
+	menuFile->AppendSeparator();
+	menuFile->Append(IDM_EXPORT, _("&Export"));
+	menuFile->AppendSeparator();
     menuFile->Append(wxID_SAVE, _("&Save"));
     menuFile->Append(wxID_SAVEAS, _("Save &As..."));
 	menuFile->AppendSeparator();
@@ -306,7 +314,7 @@ void MainWindow::doOpen(const wxString& filename)
 	{
 		// TODO
 		TiXmlDocument doc;
-		if(doc.LoadFile(filename.mb_str(wxCSConv(wxLocale::GetSystemEncoding())), TIXML_DEFAULT_ENCODING))
+		if(doc.LoadFile(_C(filename)))
 		{
 			TiXmlHandle hDoc(&doc);
 			TiXmlElement* pElem = hDoc.FirstChildElement("WorldDocument").Element();
@@ -350,6 +358,18 @@ void MainWindow::onClose(wxCommandEvent &e)
 	_worldFrame->onCloseDoc();
 }
 
+void MainWindow::onExport(wxCommandEvent &e)
+{
+	//TODO: file save as
+	wxString filename = wxFileSelector(_("Choose a file to export"), _(""), _(""),  
+		_(""), _("COLLADA files (*.dae)|*.dae"), wxSAVE);
+	if(!filename.empty())
+	{
+		doExport(filename); //return
+	}
+	//return false;
+}
+
 void MainWindow::onSave(wxCommandEvent &e)
 {
 	save();
@@ -375,7 +395,7 @@ bool MainWindow::save()
 
 bool MainWindow::saveAs()
 {
-	//TODO: file save as
+	//TODO: file save as !!!CAUSES a memory leak; is within wxFileSelector
 	wxString filename = wxFileSelector(_("Choose a file to save"), _(""), _(""),  
 		_(""), _("Citygen XML files (*.cgx)|*.cgx|GIF files (*.gif)|*.gif"), wxSAVE);
 	if(!filename.empty())
@@ -383,6 +403,28 @@ bool MainWindow::saveAs()
 		return doSave(filename);
 	}
 	return false;
+}
+
+bool MainWindow::doExport(const wxString &file)
+{
+	//FCDocument doc;  
+	//_worldFrame->exportScene(doc);
+
+	// Save and load this document.
+	//if(!FCollada::SaveDocument(&doc, file))
+	std::string fileStr(_C(file));
+#ifdef WIN32
+	replace(fileStr.begin(), fileStr.end(), '\\', '/');
+#endif
+	ColladaDoc doc(fileStr);
+	_worldFrame->exportScene(doc);
+	if(!doc.save())
+	{
+		(void)wxMessageBox(_("Sorry, could not save this file."), _("File error"),
+			wxOK | wxICON_EXCLAMATION, this);
+		return false;
+	}
+	return true;
 }
 
 bool MainWindow::doSave(const wxString &file)

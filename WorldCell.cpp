@@ -48,8 +48,7 @@ void WorldCell::init()
 	// set up some default growth gen params
 	_genParams = _defaultGenParams;
 
-	_roadNetworkMO = 0;
-	_roadJunctionsMO = 0;
+	_roadsEnt = 0;
 	_buildingsEnt = 0;
 	_debugMO = 0;
 
@@ -79,16 +78,7 @@ void WorldCell::clear()
 void WorldCell::destroySceneObject()
 {
 	_sceneNode->detachAllObjects();
-	if(_roadNetworkMO) {
-		_sceneNode->getCreator()->destroyManualObject(_roadNetworkMO);
-		delete _roadNetworkMO;
-		_roadNetworkMO = 0;
-	}
-	if(_roadJunctionsMO) {
-		_sceneNode->getCreator()->destroyManualObject(_roadJunctionsMO);
-		delete _roadJunctionsMO;
-		_roadJunctionsMO = 0;
-	}
+
 
 	if(_debugMO) {
 		_sceneNode->getCreator()->destroyManualObject(_debugMO);
@@ -96,12 +86,18 @@ void WorldCell::destroySceneObject()
 		_debugMO = 0;
 	}
 
+	if(_roadsEnt) {
+		_sceneNode->getCreator()->destroyEntity(_roadsEnt);
+		MeshManager::getSingleton().remove(_name+"Roads");
+		_roadsEnt = 0;
+	}
+
 	if(_buildingsEnt) {
 		_sceneNode->getCreator()->destroyEntity(_buildingsEnt);
 		MeshManager::getSingleton().remove(_name+"Buildings");
 		_buildingsEnt = 0;
 	}
-
+	// TODO ?
 	MeshManager::getSingleton().remove(_name+"b0Mesh");
 	MeshManager::getSingleton().remove(_name+"b1Mesh");
 }
@@ -402,34 +398,35 @@ void WorldCell::buildRoadNetwork()
 {
 	
 	// Create the Road Junctions
-	_roadJunctionsMO = new ManualObject(_name+"Junc");
-	_roadJunctionsMO->begin("gk/RoadJunction", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
+	Material* mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/RoadJunction")).get();
+	Material* mat2 = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Road")).get();
+	MeshBuilder roadBuilder(_name+"Roads", "custom", this);
 	NodeIterator nIt, nEnd;
 	for(boost::tie(nIt, nEnd) = _roadGraph.getNodes(); nIt != nEnd; nIt++)
 	{
 		NodeInterface* ni = _roadGraph.getNode(*nIt);
 		if(typeid(*ni) == typeid(SimpleNode))
 		{
-			static_cast<SimpleNode*>(ni)->createJunction(_roadJunctionsMO);
+			static_cast<SimpleNode*>(ni)->prebuild();
+			static_cast<SimpleNode*>(ni)->build(roadBuilder, mat);
 		}
 	}
 
-	_roadJunctionsMO->end();
-	_sceneNode->attachObject(_roadJunctionsMO);
-
-	// Create the Road Network
-	_roadNetworkMO = new ManualObject(_name+"Road");
-	_roadNetworkMO->begin("gk/Road", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
-	// Road Segments
 	RoadIterator rIt, rEnd;
 	for(boost::tie(rIt, rEnd) = _roadGraph.getRoads(); rIt != rEnd; rIt++)
-		createRoad(*rIt, _roadNetworkMO);
+	{
+		RoadInterface* ri = _roadGraph.getRoad(*rIt);
+		if(typeid(*ri) == typeid(SimpleRoad))
+		{
+			static_cast<SimpleRoad*>(ri)->prebuild();
+			static_cast<SimpleRoad*>(ri)->build(roadBuilder, mat2);
+		}
+	}
 
-	_roadNetworkMO->end();
-	_roadNetworkMO->setVisible(_showRoads);
-	_sceneNode->attachObject(_roadNetworkMO);
+	roadBuilder.build();
+	_roadsEnt = _sceneNode->getCreator()->createEntity(_name+"RoadsEntity",_name+"Roads");
+	_roadsEnt->setVisible(_showRoads);
+	_sceneNode->attachObject(_roadsEnt);
 }
 
 
@@ -753,7 +750,7 @@ RoadInterface* WorldCell::createRoad(NodeInterface *n1, NodeInterface *n2)
 	RoadId rd;
 	if(_roadGraph.addRoad(n1->_nodeId, n2->_nodeId, rd))
 	{
-		SimpleRoad *sr = new SimpleRoad(n1, n2);
+		SimpleRoad *sr = new SimpleRoad(n1, n2, rd);
 		sr->setWidth(_genParams._roadWidth);
 		_roadGraph.setRoad(rd, sr);
 		return sr;
@@ -817,45 +814,6 @@ RoadInterface* WorldCell::getRoad(NodeInterface* n1, NodeInterface* n2)
 {
 	return _roadGraph.getRoad(_roadGraph.getRoad(n1->_nodeId, n2->_nodeId));
 }
-
-
-void WorldCell::buildSegment(const Vector3 &a1, const Vector3 &a2, const Vector3 &aNorm,
-			const Vector3 &b1, const Vector3 &b2, const Vector3 &bNorm, Real uMin, Real uMax)
-{
-	// create road segment
-	_roadNetworkMO->position(a1);
-	_roadNetworkMO->normal(aNorm);
-	_roadNetworkMO->textureCoord(uMin, 0);
-	_roadNetworkMO->position(a2);
-	_roadNetworkMO->normal(aNorm);
-	_roadNetworkMO->textureCoord(uMin, 1);
-	_roadNetworkMO->position(b1);
-	_roadNetworkMO->normal(bNorm);
-	_roadNetworkMO->textureCoord(uMax, 0);
-
-	_roadNetworkMO->position(a2);
-	_roadNetworkMO->normal(aNorm);
-	_roadNetworkMO->textureCoord(uMin, 1);
-	_roadNetworkMO->position(b2);
-	_roadNetworkMO->normal(bNorm);
-	_roadNetworkMO->textureCoord(uMax, 1);
-	_roadNetworkMO->position(b1);
-	_roadNetworkMO->normal(bNorm);
-	_roadNetworkMO->textureCoord(uMax, 0);
-}
-
-void WorldCell::createRoad(const RoadId rd, ManualObject *m)
-{
-	RoadInterface* r = _roadGraph.getRoad(rd);
-	if(typeid(*r) != typeid(WorldRoad))
-	{
-		Vector3 a1,a2, b1, b2;
-		boost::tie(a1,a2) = _roadGraph.getSrcNode(rd)->getRoadJunction(rd);
-		boost::tie(b2,b1) = _roadGraph.getDstNode(rd)->getRoadJunction(rd);
-		buildSegment(a1, a2, Vector3::UNIT_Y, b1, b2, Vector3::UNIT_Y, 0, 4);
-	}
-}
-
 void WorldCell::showSelected(bool show)
 {
 	std::vector<RoadInterface*>::iterator bIt, bEnd;
@@ -965,8 +923,7 @@ TiXmlElement* WorldCell::saveXML()
 void WorldCell::showRoads(bool show)
 {
 	_showRoads = show;
-	if(_roadNetworkMO) _roadNetworkMO->setVisible(_showRoads);
-	if(_roadJunctionsMO) _roadJunctionsMO->setVisible(_showRoads);
+	if(_roadsEnt) _roadsEnt->setVisible(_showRoads);
 }
 
 void WorldCell::showBuildings(bool show)
@@ -1013,4 +970,10 @@ void WorldCell::extractPolygon(vector<NodeInterface*> &cycle, vector<Vector3> &p
 	}
 
 	Geometry::polygonInset(insets, poly);
+}
+
+void WorldCell::exportObject(ExportDoc &doc)
+{
+	doc.addMesh(_buildingsEnt->getMesh());
+	doc.addMesh(_roadsEnt->getMesh());
 }

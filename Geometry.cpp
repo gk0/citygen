@@ -203,105 +203,15 @@ bool Geometry::lineInset(Ogre::Real inset, std::vector<Ogre::Vector2> &linePoint
 		// get edge intersection point
 		Ogre::Real r,s;
 		if(!Geometry::lineIntersect(edges[i].first, edges[i].second, edges[i+1].first, 
-			edges[i+1].second, insetLinePoints[i+1], r, s) && r >= 0 && s <= 1)
-		{
-			insetLinePoints[i+1] = (edges[i].second + edges[i+1].first) / 2;
-		}
+			edges[i+1].second, insetLinePoints[i+1], r, s))
+			if(r >= 0 && s <= 1)
+				insetLinePoints[i+1] = (edges[i].second + edges[i+1].first) / 2;
 	}
 
 	linePoints = insetLinePoints;
 	return true;
 }
 
-
-bool Geometry::unionPolyAndLine(std::vector<Ogre::Vector2> &polyPoints, std::vector<Ogre::Vector2> &linePoints)
-{
-	size_t i, j, k, polyN = polyPoints.size(), lineN = linePoints.size();
-
-	size_t polyTailIndex, polyHeadIndex, lineTailIndex, lineHeadIndex;
-	Ogre::Vector2 intscn, dist, shortestDist, polyTailIntscn, polyHeadIntscn;
-	bool intscnFound = false;
-	Ogre::Real r,s;
-
-
-	//find the location of the line head intersection
-	for(i=0; i<(lineN-1); i++)
-	{
-		for(j=0; j<polyN; j++)
-		{
-			k = (j+1)%polyN;
-			if(Geometry::lineIntersect(linePoints[i], linePoints[i+1], polyPoints[j], 
-				polyPoints[k], intscn, r, s) && s > 0 && s < 1 && r <= 1)  // must be on poly segment and be on extension of ba
-			{
-				if(!intscnFound)
-				{
-					shortestDist = (intscn - linePoints[i]).squaredLength();
-					intscnFound = true;
-					polyHeadIndex = j;
-					polyHeadIntscn = intscn;
-				}
-				else
-				{
-					dist = (intscn - linePoints[i]).squaredLength();
-					if(dist < shortestDist)
-					{
-						shortestDist = dist;
-						polyHeadIndex = j;
-						polyHeadIntscn = intscn;
-					}
-				}
-			}
-		}
-		if(intscnFound) break;
-	}
-	if(!intscnFound) return false;
-	lineHeadIndex = i;
-
-	//find the location of the line tail intersection
-	intscnFound = false;
-	for(i=(lineN-2); i<lineN; i--)
-	{
-		for(j=0; j<polyN; j++)
-		{
-			k = (j+1)%polyN;
-			if(Geometry::lineIntersect(linePoints[i], linePoints[i+1], polyPoints[j], polyPoints[k], intscn, r, s)
-				&& s > 0 && s < 1 && r >= 0) // must be on poly segment and be on extension of ab
-			{
-				if(!intscnFound)
-				{
-					shortestDist = (intscn - linePoints[i+1]).squaredLength();
-					intscnFound = true;
-					polyTailIndex = j;
-					polyTailIntscn = intscn;
-				}
-				else
-				{
-					dist = (intscn - linePoints[i+1]).squaredLength();
-					if(dist < shortestDist)
-					{
-						shortestDist = dist;
-						polyTailIndex = j;
-						polyTailIntscn = intscn;
-					}
-				}
-			}
-		}
-		if(intscnFound) break;
-	}
-	if(!intscnFound) return false;
-	lineTailIndex = i;
-
-	// merge the two
-	vector<Ogre::Vector2> newPoly;
-	newPoly.push_back(polyHeadIntscn);
-	for(i=polyHeadIndex; i!=polyTailIndex; i=(i+1)%polyN) 
-		newPoly.push_back(polyPoints[(i+1)%polyN]);
-	newPoly.push_back(polyTailIntscn);
-	for(i=lineTailIndex; i>lineHeadIndex; i--) newPoly.push_back(linePoints[i]);
-
-	polyPoints = newPoly;
-	return true;
-}
 
 vector< pair<Vector3, Vector2> >  
 Geometry::calcInsetVectors(const vector<Real>& insets, vector<Vector3> &poly)

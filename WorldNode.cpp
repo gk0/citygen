@@ -5,6 +5,7 @@
 #include "MovableText.h"
 #include "Triangulate.h"
 #include "Geometry.h"
+#include "MeshBuilder.h"
 
 using namespace Ogre;
 using namespace std;
@@ -28,7 +29,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 	// create our scene node
 	_sceneNode = _creator->getRootSceneNode()->createChildSceneNode(_name);
 
-	_junctionPlate = 0;
+	_junctionEntity = 0;
 	_degree = 0;
 
 	// create mesh
@@ -69,10 +70,11 @@ WorldNode::~WorldNode()
 	_creator->destroyEntity(_highlight);
 	_creator->destroyEntity(_selected);
 	delete _label;
-	if(_junctionPlate)
+	if(_junctionEntity)
 	{
-		delete _junctionPlate;
-		_junctionPlate = 0;
+		_sceneNode->getCreator()->destroyEntity(_junctionEntity);
+		MeshManager::getSingleton().remove(_name+"Mesh");
+		_junctionEntity = 0;
 	}
 	_creator->destroySceneNode(_sceneNode->getName());
 }
@@ -158,7 +160,7 @@ Vector2 WorldNode::getPosition2D() const
 	return Vector2(pos.x, pos.z);
 }
 
-/* this function should return false if the current posiotion 
+/* this function should return false if the current position 
 */
 bool WorldNode::hasRoadIntersection()
 {
@@ -211,10 +213,11 @@ bool WorldNode::move(Ogre::Vector2 pos)
 
 void WorldNode::build()
 {
-	if(_junctionPlate)
+	if(_junctionEntity)
 	{
-		delete _junctionPlate;
-		_junctionPlate = 0;
+		_sceneNode->getCreator()->destroyEntity(_junctionEntity);
+		MeshManager::getSingleton().remove(_name+"Mesh");
+		_junctionEntity = 0;
 	}
 
 	// how many roads connect here
@@ -260,11 +263,12 @@ void WorldNode::build()
 	}
 
 	// declare the manual object
-	_junctionPlate = new ManualObject(_name+"j");
-	_junctionPlate->begin("gk/RoadJunction", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+	MaterialPtr mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/RoadJunction"));
 
 	// fill the junction data for use by roads
 	_roadJunction.clear();
+	_vertexData.reserve(_degree * 8 * 3);
+	_indexData.reserve(_degree * 3);
 	for(size_t i=0; i < _degree; i++)
 	{
 		size_t j = (i + 1) % _degree;
@@ -276,20 +280,110 @@ void WorldNode::build()
 		// create a junction -> road join pair
 		_roadJunction[roadCWVec[j]] = roadPair;
 
+		uint16 offset = static_cast<uint16>(_vertexData.size()>>3);
+		MeshBuilder::addVData3(_vertexData, roadPair.second - getPosition3D());
+		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+		MeshBuilder::addVData2(_vertexData, 0, 0);
+		MeshBuilder::addVData3(_vertexData, roadPair.first - getPosition3D());
+		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+		MeshBuilder::addVData2(_vertexData, 1, 0);
+		MeshBuilder::addVData3(_vertexData, 0.0f, GROUNDCLEARANCE.y - 0.1f, 0.0f);
+		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+		MeshBuilder::addVData2(_vertexData, 0.5, 0.5);
 
-		_junctionPlate->position(roadPair.second - getPosition3D());
-		_junctionPlate->normal(Vector3::UNIT_Y);
-		_junctionPlate->textureCoord(0,0);
-		_junctionPlate->position(roadPair.first - getPosition3D());
-		_junctionPlate->normal(Vector3::UNIT_Y);
-		_junctionPlate->textureCoord(1,0);
-		_junctionPlate->position(0.0f,  GROUNDCLEARANCE.y - 0.1f, 0.0f);
-		_junctionPlate->normal(Vector3::UNIT_Y);
-		_junctionPlate->textureCoord(0.5, 0.5);
+		MeshBuilder::addIData3(_indexData, offset, offset + 1, offset + 2);
 	}
-	_junctionPlate->end();
-	_sceneNode->attachObject(_junctionPlate);
+	MeshBuilder meshBuilder(_name+"Mesh", "custom", this);
+	meshBuilder.registerData(mat.get(), _vertexData, _indexData);
+	meshBuilder.build();
+	_vertexData.clear();
+	_indexData.clear();
+	_junctionEntity = _sceneNode->getCreator()->createEntity(_name+"Entity",_name+"Mesh");
+	_sceneNode->attachObject(_junctionEntity);
+	meshBuilder.registerData(mat.get(), _vertexData, _indexData);
 }
+
+/*void WorldNode::build()
+{
+if(_junctionPlate)
+{
+delete _junctionPlate;
+_junctionPlate = 0;
+}
+
+// how many roads connect here
+switch(_degree)
+{
+case 0:
+_label->setVisible(true);
+_mesh->setVisible(true);
+return;
+case 1:
+_label->setVisible(true);
+_mesh->setVisible(true);
+createTerminus();
+return;
+case 2:
+_label->setVisible(false);
+_mesh->setVisible(false);
+break;
+case 3:
+_label->setVisible(false);
+_mesh->setVisible(false);
+if(createTJunction()) return;
+break;
+default:
+// try it
+_label->setVisible(false);
+_mesh->setVisible(false);
+break;
+}
+
+
+Vector2 nodePos2D = getPosition2D();
+Real height = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
+
+// get a clockwise list of road intersections
+vector<Vector2> pointlist;
+vector<RoadId> roadCWVec(getClockwiseVecOfRoads());
+for(size_t j,i=0; i < _degree; i++)
+{
+j = (i+1)%_degree;
+Vector2 tmp = _roadGraph.getRoadBounaryIntersection(roadCWVec[i], roadCWVec[j]);
+pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
+}
+
+// declare the manual object
+_junctionPlate = new ManualObject(_name+"j");
+_junctionPlate->begin("gk/RoadJunction", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+// fill the junction data for use by roads
+_roadJunction.clear();
+for(size_t i=0; i < _degree; i++)
+{
+size_t j = (i + 1) % _degree;
+
+//
+pair<Vector3, Vector3> roadPair(Vector3(pointlist[j].x, height, pointlist[j].y), 
+Vector3(pointlist[i].x, height, pointlist[i].y));
+
+// create a junction -> road join pair
+_roadJunction[roadCWVec[j]] = roadPair;
+
+
+_junctionPlate->position(roadPair.second - getPosition3D());
+_junctionPlate->normal(Vector3::UNIT_Y);
+_junctionPlate->textureCoord(0,0);
+_junctionPlate->position(roadPair.first - getPosition3D());
+_junctionPlate->normal(Vector3::UNIT_Y);
+_junctionPlate->textureCoord(1,0);
+_junctionPlate->position(0.0f,  GROUNDCLEARANCE.y - 0.1f, 0.0f);
+_junctionPlate->normal(Vector3::UNIT_Y);
+_junctionPlate->textureCoord(0.5, 0.5);
+}
+_junctionPlate->end();
+_sceneNode->attachObject(_junctionPlate);
+}*/
 
 void WorldNode::createTerminus()
 {
@@ -532,3 +626,8 @@ vector<NodeId> WorldNode::getClockwiseVecOfNodes(const vector<RoadId>& roads)
 	return nodeClockwiseVec;
 }
 
+void WorldNode::exportObject(ExportDoc &doc)
+{
+	if(_junctionEntity)
+		doc.addMesh(_sceneNode, _junctionEntity->getMesh());
+}

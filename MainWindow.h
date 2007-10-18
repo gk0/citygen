@@ -66,6 +66,7 @@ private:
 	bool saveAs();
 	void doOpen(const wxString &file);
 	bool doSave(const wxString &file);
+	bool doExport(const wxString &file);
 	bool onSaveModified();
 	void initToolsetModeToolBar();
 	void onChangeToolsetMode();
@@ -77,6 +78,7 @@ protected:
 	void onOpen(wxCommandEvent &e);
 	void onClose(wxCommandEvent &e);
 	void onNew(wxCommandEvent &e);
+	//void onExport(wxCommandEvent &e);
 	void onSave(wxCommandEvent &e);
 	void onSaveAs(wxCommandEvent &e);
 
@@ -114,6 +116,8 @@ public:
 		wxCommandEvent e;
 		onNew(e); 
 	}
+
+	void onExport(wxCommandEvent &e);
 
 };
 

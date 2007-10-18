@@ -9,12 +9,12 @@
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1192952860" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
 <tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1174602629" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
 <option id="gnu.cpp.compiler.option.include.paths.653474482" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;../../boost_1_34_0&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../boost_1_34_1&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../OgreSDK_mingw/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswud/wx/msw&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswud&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/contrib/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/lib/gcc_lib/mswud/wx/msw&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/lib/gcc_lib/mswud&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/contrib/include&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../tinyxml&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.preprocessor.def.958259935" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -29,7 +29,8 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.1751892586" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
 <option id="gnu.cpp.link.option.libs.299027777" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="wxmsw28ud_propgrid"/>
-<listOptionValue builtIn="false" value="boost_thread-mgw34-mt-sd-1_34"/>
+<listOptionValue builtIn="false" value="boost_thread-mgw34-mt-sd-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_filesystem-mgw34-mt-sd-1_34_1"/>
 <listOptionValue builtIn="false" value="wxmsw28ud_aui"/>
 <listOptionValue builtIn="false" value="wxmsw28ud_core"/>
 <listOptionValue builtIn="false" value="wxbase28ud"/>
@@ -51,8 +52,8 @@
 </option>
 <option id="gnu.cpp.link.option.paths.1101656634" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
 <listOptionValue builtIn="false" value="../../OgreSDK_mingw/bin/debug"/>
-<listOptionValue builtIn="false" value="../../boost_1_34_0/lib"/>
-<listOptionValue builtIn="false" value="../../wxWidgets-2.8.3/lib/gcc_lib"/>
+<listOptionValue builtIn="false" value="../../boost_1_34_1/lib"/>
+<listOptionValue builtIn="false" value="../../wxWidgets-2.8.6/lib/gcc_lib"/>
 <listOptionValue builtIn="false" value="../../tinyxml/Debug"/>
 </option>
 <option id="gnu.cpp.link.option.flags.1932105262" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
@@ -70,12 +71,12 @@
 </tool>
 <tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.900807029" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
 <option id="gnu.cpp.compiler.option.include.paths.1787406454" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;../../boost_1_34_0&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../boost_1_34_1&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../OgreSDK_mingw/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswu/wx/msw&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/lib/gcc_lib/mswu&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.3/contrib/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/lib/gcc_lib/mswu/wx/msw&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/lib/gcc_lib/mswu&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/contrib/include&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../tinyxml&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.preprocessor.def.1594479197" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -84,7 +85,7 @@
 <listOptionValue builtIn="false" value="UNICODE"/>
 <listOptionValue builtIn="false" value="_UNICODE"/>
 </option>
-<option id="gnu.cpp.compiler.option.other.other.225279377" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fexceptions -fident -mwindows " valueType="string"/>
+<option id="gnu.cpp.compiler.option.other.other.225279377" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -mwindows " valueType="string"/>
 <option id="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level.43596995" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
 <option id="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level.794525831" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 </tool>
@@ -92,7 +93,8 @@
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.680368779" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
 <option id="gnu.cpp.link.option.libs.755953000" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="wxmsw28u_propgrid"/>
-<listOptionValue builtIn="false" value="boost_thread-mgw34-mt-s-1_34"/>
+<listOptionValue builtIn="false" value="boost_thread-mgw42-mt-s-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_filesystem-mgw42-mt-s-1_34_1"/>
 <listOptionValue builtIn="false" value="wxmsw28u_aui"/>
 <listOptionValue builtIn="false" value="wxmsw28u_core"/>
 <listOptionValue builtIn="false" value="wxbase28u"/>
@@ -114,8 +116,8 @@
 </option>
 <option id="gnu.cpp.link.option.paths.180063672" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
 <listOptionValue builtIn="false" value="../../OgreSDK_mingw/bin/release"/>
-<listOptionValue builtIn="false" value="../../boost_1_34_0/lib"/>
-<listOptionValue builtIn="false" value="../../wxWidgets-2.8.3/lib/gcc_lib"/>
+<listOptionValue builtIn="false" value="../../boost_1_34_1/lib"/>
+<listOptionValue builtIn="false" value="../../wxWidgets-2.8.6/lib/gcc_lib"/>
 <listOptionValue builtIn="false" value="../../tinyxml/Release"/>
 </option>
 <option id="gnu.cpp.link.option.flags.336226238" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-mwindows" valueType="string"/>
