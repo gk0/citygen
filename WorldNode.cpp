@@ -66,6 +66,8 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 
 WorldNode::~WorldNode()
 {
+	_simpleRoadGraph.removeNode(mSimpleNodeId);
+	_roadGraph.removeNode(_nodeId);
 	_creator->destroyEntity(_mesh);
 	_creator->destroyEntity(_highlight);
 	_creator->destroyEntity(_selected);

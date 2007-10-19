@@ -92,9 +92,7 @@ void RoadGraph::extractPrimitives(vector< vector<NodeInterface*> > &filaments,
 	oss << " ";
 
 	//init roads
-	RoadIterator rIt, rEnd;
-	for(tie(rIt, rEnd) = edges(g); rIt != rEnd; rIt++)
-		g[*rIt]->setRoadCycle(false);
+	BOOST_FOREACH(RoadId rd, edges(g)) g[rd]->setRoadCycle(false);
 
 	//set<NodeId> heap = vertices; 
 	//gk: at the moment I'm using a vertex to store vertices so they are already sorted
@@ -310,9 +308,7 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 		nodeCycles.push_back(nodeCycle);
 
 		// mark every edge in the cycle as a cycle edge
-		vector< RoadInterface* >::iterator rIt, rEnd;
-		for(rIt = roadCycle.begin(), rEnd = roadCycle.end(); rIt != rEnd; rIt++)
-			(*rIt)->setRoadCycle(true);
+		BOOST_FOREACH(RoadInterface* ri, roadCycle) ri->setRoadCycle(true);
 
 		remove_edge(v0, v1, g);
 
@@ -362,10 +358,9 @@ bool RoadGraph::getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g)
 	Vector2 vcurr_pos(g[vcurr]->getPosition2D());
 
 	//for each adjacent vertex vadj of vcurr do
-	graph_traits<Graph>::out_edge_iterator ei, ei_end;
-	for (tie(ei, ei_end) = out_edges(vcurr, g); ei != ei_end; ++ei)
+	BOOST_FOREACH(RoadId rd, out_edges(vcurr, g))
 	{
-		NodeId vadj = target(*ei, g);
+		NodeId vadj = target(rd, g);
 		
 		NodeInterface* ni = g[vadj];
 		Vector2 dadj = ni->getPosition2D()  - vcurr_pos;	//error void ptr
@@ -412,10 +407,9 @@ bool RoadGraph::getCounterClockwiseMostFromPrev(NodeId vprev, NodeId vcurr, Node
 	Vector2 dnext;
 
 	//for each adjacent vertex vadj of vcurr do
-	graph_traits<Graph>::out_edge_iterator ei, ei_end;
-	for (tie(ei, ei_end) = out_edges(vcurr, g); ei != ei_end; ++ei)
+	BOOST_FOREACH(RoadId rd, out_edges(vcurr, g))
 	{
-		NodeId vadj = target(*ei, g);
+		NodeId vadj = target(rd, g);
 
 		//No going back :)
 		if(vadj == vprev) continue;
@@ -456,14 +450,8 @@ bool RoadGraph::getCounterClockwiseMostFromPrev(NodeId vprev, NodeId vcurr, Node
 
 void RoadGraph::removeFromHeap(NodeId v0, std::list<NodeId>& heap)
 {
-	std::list<NodeId>::iterator pos = heap.begin();
-	for(; pos != heap.end(); pos++)
-	{
-		if(*pos == v0) {
-			heap.erase(pos);
-			break;
-		}
-	}
+	std::list<NodeId>::iterator hIt = find(heap.begin(), heap.end(), v0);
+	if(hIt != heap.end()) heap.erase(hIt);
 }
 
 RoadId RoadGraph::getFirstRoad(NodeId nd, const Graph &g)
@@ -548,10 +536,9 @@ bool RoadGraph::getNodeClosestSq(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Rea
 bool RoadGraph::hasIntersection(const Vector2& a, const Vector2& b, Vector2& pos) const
 {
 	Vector2 currentIntersection;
-	RoadIterator rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
+	BOOST_FOREACH(RoadId rd, edges(_graph))
 	{
-		if(roadIntersection(a, b, *rIt, currentIntersection))
+		if(roadIntersection(a, b, rd, currentIntersection))
 		{
 			pos = currentIntersection;
 			return true;
@@ -560,30 +547,29 @@ bool RoadGraph::hasIntersection(const Vector2& a, const Vector2& b, Vector2& pos
 	return false;
 }
 
-bool RoadGraph::hasIntersection(const RoadId rd)
+bool RoadGraph::hasIntersection(const RoadId roadId)
 {
 	// prepare the ignore list used to avoid returning 
 	//  intersections to properly connected roads
 	std::set<RoadId, road_less_than> ignoreList;
 	RoadIterator2 riIt, riEnd;
 
-	// add roads connected to the src node
-	tie(riIt, riEnd) = getRoadsFromNode(getSrc(rd));
+	// add roads connected to the source node
+	tie(riIt, riEnd) = getRoadsFromNode(getSrc(roadId));
 	ignoreList.insert(riIt, riEnd);
 
-	// add roads connected to the dst node
-	tie(riIt, riEnd) = getRoadsFromNode(getDst(rd));
+	// add roads connected to the destination node
+	tie(riIt, riEnd) = getRoadsFromNode(getDst(roadId));
 	ignoreList.insert(riIt, riEnd);
 
-	RoadIterator rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
+	BOOST_FOREACH(RoadId rd, edges(_graph))
 	{
 		// if road is not in the ignore list
-		std::set<RoadId, road_less_than>::iterator ignoreIt = ignoreList.find(*rIt);
+		std::set<RoadId, road_less_than>::iterator ignoreIt = ignoreList.find(rd);
 		if(ignoreIt == ignoreList.end())
 		{
 			Vector2 intersection;
-			if(roadIntersection(rd, *rIt, intersection))
+			if(roadIntersection(roadId, rd, intersection))
 				return true;
 		}
 	}
@@ -624,19 +610,18 @@ Vector2 RoadGraph::getRoadBounaryIntersection(const RoadId leftR, const RoadId r
 		return l1;
 }
 
-bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq, NodeId& nd) const
+bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq, NodeId& nodeId) const
 {
 	Ogre::Real closestDistSq = snapSzSq;
 	bool success = false;
-	NodeIterator nIt, nEnd;
-	for(boost::tie(nIt, nEnd) = vertices(_graph); nIt != nEnd; nIt++)
+	BOOST_FOREACH(NodeId nd, vertices(_graph))
 	{
-		Vector2 nodePos(_graph[*nIt]->getPosition2D());
+		Vector2 nodePos(_graph[nd]->getPosition2D());
 		Real currDistSq =(nodePos - pos).squaredLength();
 		if(currDistSq < closestDistSq) 
 		{
 			closestDistSq = currDistSq;
-			nd = *nIt;
+			nodeId = nd;
 			success = true;
 		}
 	}
@@ -874,7 +859,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 }
 
 bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const Vector2& b, const Real snapSz, 
-							  Vector2& pos, RoadId& rd) const
+							  Vector2& pos, RoadId& roadId) const
 {
 	// function vars
 	Real bR, bS, cR, cS, dR, dS, lowestR=std::numeric_limits<Real>::max();
@@ -887,10 +872,9 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 	Real Labsq = BminusA.squaredLength();
 	Real Lab = Math::Sqrt(Labsq);
 
-	RoadIterator rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
+	BOOST_FOREACH(RoadId rd, edges(_graph))
 	{
-		NodeId cNode(getSrc(*rIt)), dNode(getDst(*rIt));
+		NodeId cNode(getSrc(rd)), dNode(getDst(rd));
 		bool skip = false;
 
 		// skip can lead to dangers, this func is only used by the gui so is not too bad
@@ -918,7 +902,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 					if(bR < lowestR)
 					{
 						bestPoint = p;
-						intersectingRoad = (*rIt);
+						intersectingRoad = rd;
 						lowestR = bR;
 					}
 				}
@@ -933,7 +917,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 		{
 			lowestR = cR;
 			bestPoint = c; 
-			intersectingRoad = (*rIt);
+			intersectingRoad = rd;
 		}
 
 		//
@@ -944,7 +928,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 		{
 			lowestR = dR;
 			bestPoint = d;
-			intersectingRoad = (*rIt);
+			intersectingRoad = rd;
 		}
 	
 
@@ -968,7 +952,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 		{
 			Vector2 p(a.x + r * (BminusA.x), a.y + r * (BminusA.y));
 			bestPoint = p;
-			intersectingRoad = (*rIt);
+			intersectingRoad = rd;
 			lowestR = r;
 		}
 	}
@@ -977,7 +961,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 	if(lowestR < std::numeric_limits<Real>::max())
 	{
 		pos = bestPoint;
-		rd = intersectingRoad;
+		roadId = intersectingRoad;
 		return true;
 	}
 	return false;
@@ -986,7 +970,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 
 
 bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz, 
-							  Vector2& pos, RoadId& rd) const
+							  Vector2& pos, RoadId& roadId) const
 {
 	// function vars
 	Real currentDistance, closestDistanceSq=std::numeric_limits<Real>::max();
@@ -994,10 +978,9 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 	RoadId intersectingRoad;
 	Real snapSzSq = Math::Sqr(snapSz);
 
-	RoadIterator rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = getRoads(); rIt != rEnd; rIt++)
+	BOOST_FOREACH(RoadId rd, edges(_graph))
 	{
-		NodeId cNode(getSrc(*rIt)), dNode(getDst(*rIt));
+		NodeId cNode(getSrc(rd)), dNode(getDst(rd));
 		Vector2 c(getNode(cNode)->getPosition2D());
 		Vector2 d(getNode(dNode)->getPosition2D());
 
@@ -1016,7 +999,7 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 				if(currentDistance < closestDistanceSq)
 				{ 
 					closestDistanceSq = currentDistance;
-					intersectingRoad = (*rIt);
+					intersectingRoad = (rd);
 					bestPoint = Vector2(c.x + aR*DminusC.x, c.y + aR*DminusC.y);
 				}
 			}
@@ -1030,7 +1013,7 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 				{
 					closestDistanceSq = LacSq;
 					bestPoint = c;
-					intersectingRoad = (*rIt);
+					intersectingRoad = rd;
 				}
 			}
 			else
@@ -1041,7 +1024,7 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 				{
 					closestDistanceSq = LadSq;
 					bestPoint = d;
-					intersectingRoad = (*rIt);
+					intersectingRoad = rd;
 				}
 			}
 		}
@@ -1050,7 +1033,7 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 	if(closestDistanceSq < std::numeric_limits<Real>::max())
 	{
 		pos = bestPoint;
-		rd = intersectingRoad;
+		roadId = intersectingRoad;
 		return true;
 	}
 	return false;

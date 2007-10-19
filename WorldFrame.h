@@ -43,16 +43,15 @@ private:
 	RoadGraph			_simpleRoadGraph;
 
 	WorldTerrain		_worldTerrain;
-	std::map< Ogre::SceneNode*, WorldNode* > _sceneNodeMap;
-	std::map< Ogre::SceneNode*, WorldRoad* > _sceneRoadMap;
-	std::map< Ogre::SceneNode*, WorldCell* > _sceneCellMap;
+
+	std::vector<WorldNode*> _nodeVec;
+	std::vector<WorldRoad*> _roadVec;
+	std::vector<WorldCell*> _cellVec;
 
 	WorldNode*			_highlightedNode;
 	WorldNode*			_selectedNode;
 	WorldRoad*			_selectedRoad;
 	WorldCell*			_selectedCell;
-
-	std::set<WorldCell*> _cellSet;
 
 	bool				_intersectionPresent;
 	RoadId				_roadIntersection;
@@ -61,9 +60,9 @@ private:
 
 protected:
 	void OnChar(wxKeyEvent& e);
-	void OnEraseBackground(wxEraseEvent &e);
-	void OnFocusLost(wxFocusEvent& e);	
-	void OnFocusSet(wxFocusEvent& e);
+	void OnEraseBackground(wxEraseEvent &e) { update(); }
+	void OnFocusLost(wxFocusEvent& e) {}
+	void OnFocusSet(wxFocusEvent& e) {}
 	void OnMouseMove(wxMouseEvent &e);
 	void OnLeftPressed(wxMouseEvent &e);
 	void OnLeftReleased(wxMouseEvent &e);
@@ -204,13 +203,6 @@ public:
 	 */
 	bool pickTerrainIntersection(wxMouseEvent& e, Ogre::Vector3& pos);
 
-	/**
-	 * Pick a node from the scene using a mouse event with coordinates
-	 * @param e an wxMouseEvent.
-	 * @param wn a WorldNode pointer reference that can be used to store the picked node.
-	 * @return true if pick is successful
-	 */
-	bool pickNode(wxMouseEvent &e, WorldNode *&wn);
 
 	const Ogre::Viewport* getViewport()
 	{

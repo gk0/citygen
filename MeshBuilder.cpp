@@ -139,9 +139,9 @@ void MeshBuilder::build()
 	mesh->_setBoundingSphereRadius((aabox.getMaximum()-aabox.getMinimum()).length()/2.0); 
 
 	// build tangent vectors
-	unsigned short src, dest;
-	if (!mesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
-		mesh->buildTangentVectors(VES_TANGENT, src, dest);
+	//unsigned short src, dest;
+	//if (!mesh->suggestTangentVectorBuildParams(VES_TANGENT, src, dest))
+	//	mesh->buildTangentVectors(VES_TANGENT, src, dest);
 
 	// And we load the mesh
 	mesh->load();

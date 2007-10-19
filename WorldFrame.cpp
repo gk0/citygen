@@ -1,13 +1,10 @@
 // Includes
 #include "stdafx.h"
 #include "WorldFrame.h"
-#include "SimpleNode.h"
 #include "WorldNode.h"
 #include "WorldRoad.h"
 #include "WorldCell.h"
 #include "PerformanceTimer.h"
-#include "Geometry.h"
-#include "MeshBuilder.h"
 #include "Statistics.h"
 #include "ExportDoc.h"
 size_t Statistics::_buildingCount = 0;
@@ -25,7 +22,6 @@ size_t Statistics::_buildingCount = 0;
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/bind.hpp>
-
 
 
 #ifdef __WXGTK__
@@ -195,9 +191,7 @@ WorldFrame::~WorldFrame()
 	_renderWindow = 0;
 
 	// delete tools
-	vector<Tool*>::iterator tIt, tEnd;
-	for(Ogre::uint32 i=0; i<_tools.size(); i++) 
-		delete _tools[i];
+	BOOST_FOREACH(Tool* tool, _tools) delete tool;
 }
 
 void WorldFrame::destroyCamera() 
@@ -222,15 +216,10 @@ void WorldFrame::createCamera(void)
 {   
 	// Create the camera
     _camera = _sceneManager->createCamera("PlayerCam");
-
-    // Position it at 500 in Z direction
-    _camera->setPosition(50, 0, 0);
-    //_camera->setOrientation(Quaternion(-0.49f, 0.17f, 0.81f, 0.31f));
-	//Quaternion q(&v);
-	//_camera->setOrientation(q);
-	_camera->lookAt(1041.25f, 0.1f, 965.25f);
 	_camera->setNearClipDistance(1);
     _camera->setFarClipDistance(1000);
+
+	// camera is positioned in createScene - not here
 }
 
 
@@ -241,15 +230,15 @@ void WorldFrame::createScene(void)
 	if (!caps->hasCapability(RSC_VERTEX_PROGRAM))
 	{
 		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex programs, so cannot "
-			"run this demo. Sorry!", 
-			"Dot3Bump::createScene");
+			"run this application. Sorry!", 
+			"WorldFrame::createScene");
 	}
 	if (!(caps->hasCapability(RSC_FRAGMENT_PROGRAM) 
 		|| caps->hasCapability(RSC_DOT3)) )
 	{
 		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support dot3 blending or fragment programs, so cannot "
-			"run this demo. Sorry!", 
-			"Dot3Bump::createScene");
+			"run this application. Sorry!", 
+			"WorldFrame::createScene");
 	}
 
     // Set ambient light
@@ -275,6 +264,7 @@ void WorldFrame::createScene(void)
 #endif
     _sceneManager -> setWorldGeometry(terrain_cfg);
 
+	//TODO terrain
 	//mWorldTerrain.load();
 
     // Infinite far plane?
@@ -311,18 +301,10 @@ void WorldFrame::exportScene(ExportDoc& doc)
 	// add the light
 	doc.addLight(_mainLight);
 
-	// add nodes
-	map< Ogre::SceneNode*, WorldNode* >::iterator nIt, nEnd;
-	for(nIt = _sceneNodeMap.begin(), nEnd = _sceneNodeMap.end(); nIt != nEnd; nIt++)
-		nIt->second->exportObject(doc);
-
-	// add roads
-	map< Ogre::SceneNode*, WorldRoad* >::iterator rIt, rEnd;
-	for(rIt = _sceneRoadMap.begin(), rEnd = _sceneRoadMap.end(); rIt != rEnd; rIt++)
-		rIt->second->exportObject(doc);
-
-	// give it a cell
-	BOOST_FOREACH(WorldCell* c, _cellSet) c->exportObject(doc);
+	// export nodes, road and cells
+	BOOST_FOREACH(WorldNode* wn, _nodeVec) wn->exportObject(doc);
+	BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->exportObject(doc);
+	BOOST_FOREACH(WorldCell* c, _cellVec) c->exportObject(doc);
 
 	// build a test mesh
 	//Entity* ent = _sceneManager->createEntity("mcube", "cube.mesh");
@@ -351,49 +333,16 @@ void WorldFrame::destroyScene(void)
 	// destroy ray
 	delete _raySceneQuery;
 
-	// Remove Cells
-	set<WorldCell*>::iterator cIt, cEnd;
-	for(cIt = _cellSet.begin(), cEnd = _cellSet.end(); cIt != cEnd; cIt++)
-		delete (*cIt);
-	_cellSet.clear();
+	// Delete cells, road and nodes
+	BOOST_FOREACH(WorldCell* c, _cellVec) delete c;
+	BOOST_FOREACH(WorldRoad* wr, _roadVec) delete wr;
+	BOOST_FOREACH(WorldNode* wn, _nodeVec) delete wn;
+	_cellVec.clear();
+	_roadVec.clear();
+	_nodeVec.clear();
 
-	// Remove roads from the scene
-	map<SceneNode*, WorldRoad*>::const_iterator ri, rend;
-	for (ri = _sceneRoadMap.begin(), rend = _sceneRoadMap.end(); ri != rend; ++ri)
-	{
-		delete ri->second;
-	}
-	_sceneRoadMap.clear();
-
-	// Remove nodes from the scene
-	map<SceneNode*, WorldNode*>::const_iterator ni, nend;
-	for (ni = _sceneNodeMap.begin(), nend = _sceneNodeMap.end(); ni != nend; ++ni)
-	{
-		delete ni->second;
-	}
-	_sceneNodeMap.clear();
-
-	//if(_cameraNode)
-	//{
-	//	_cameraNode->detachAllObjects();
-	//	delete _cameraNode;
-	//	_cameraNode = 0;
-	//}
-	//_sceneManager->destroyAllManualObjects();
-	//_sceneManager->destroyAllEntities();
-	//_sceneManager->destroyAllInstancedGeometry();
-	try
-	{
-		_sceneManager->clearScene();
-	}
-	catch(Ogre::Exception &e)
-	{
-		LogManager::getSingleton().logMessage(e.getFullDescription());
-	}
-	catch(std::exception &e)
-	{
-		LogManager::getSingleton().logMessage(e.what());
-	}
+	// clear anything else
+	_sceneManager->clearScene();
 
 	// reset counts
 	WorldNode::resetInstanceCount();
@@ -428,20 +377,6 @@ void WorldFrame::OnChar(wxKeyEvent& e)
 	if(!_isDocOpen) return;
 	_tools[_activeTool]->OnChar(e);
 }
-
-void WorldFrame::OnEraseBackground(wxEraseEvent &e)
-{
-	update();
-}
-
-void WorldFrame::OnFocusSet(wxFocusEvent& e)
-{
-}
-
-void WorldFrame::OnFocusLost(wxFocusEvent& e)
-{
-}
-
 
 void WorldFrame::OnLeftPressed(wxMouseEvent &e)
 {
@@ -547,30 +482,7 @@ void WorldFrame::toggleTimerRendering()
 
 boost::mutex cit_mutex;
 
-void prebuild2(pair< map< SceneNode*, WorldRoad* >::iterator, map< SceneNode*, WorldRoad* >::iterator > *cIt)
-{
-	while(true)
-	{	
-		WorldRoad* wc = 0;
-		{
-			boost::mutex::scoped_lock lock(cit_mutex);
-			if(cIt->first != cIt->second)
-			{
-				wc = &(*(cIt->first->second));
-				cIt->first++;
-			}
-			else break;
-		}
-
-		if(wc && !wc->isValid())
-		{
-			wc->prebuild(); 
-			//wc->build();
-		}
-	}
-}
-
-void prebuild(pair< set<WorldCell*>::iterator, set<WorldCell*>::iterator > *cIt)
+void prebuild(pair< vector<WorldCell*>::iterator, vector<WorldCell*>::iterator > *cIt)
 {
 	while(true)
 	{	
@@ -590,89 +502,65 @@ void prebuild(pair< set<WorldCell*>::iterator, set<WorldCell*>::iterator > *cIt)
 	}
 }
 
+void prebuild2(vector<WorldCell*> &cells)
+{
+	BOOST_FOREACH(WorldCell* c, cells)
+	{	
+		if(c && !c->isValid())
+			/*DEBUG: for(size_t i=0; i<100; i++)*/ c->prebuild(); //do it 100 times
+	}
+}
+
 void WorldFrame::update()
 {
-	//wxControl::update();
 	Statistics::resetBuildingCount();
 
-	// render nodes
-	map< Ogre::SceneNode*, WorldNode* >::iterator nIt, nEnd;
-	for(nIt = _sceneNodeMap.begin(), nEnd = _sceneNodeMap.end(); nIt != nEnd; nIt++)
-		nIt->second->validate();
-//
-//#ifdef THREADME
-//	pair< map< SceneNode*, WorldRoad* >::iterator, map< SceneNode*, WorldRoad* >::iterator > rpIt;
-//	rpIt.first = _sceneRoadMap.begin();
-//	rpIt.second = _sceneRoadMap.end();
-//
-//	boost::thread roadThrd1(
-//		boost::bind(&prebuild2, &rpIt));
-//	boost::thread roadThrd2(
-//		boost::bind(&prebuild2, &rpIt));
-//
-//	roadThrd1.join();
-//	roadThrd2.join();
-//
-//	// render roads
-//	//map< Ogre::SceneNode*, WorldRoad* >::iterator rIt, rEnd;
-//	//for(rIt = _sceneRoadMap.begin(), rEnd = _sceneRoadMap.end(); rIt != rEnd; rIt++)
-//	//	rIt->second->validate();
-//
-//#else
-	// render roads
-	map< Ogre::SceneNode*, WorldRoad* >::iterator rIt, rEnd;
-	for(rIt = _sceneRoadMap.begin(), rEnd = _sceneRoadMap.end(); rIt != rEnd; rIt++)
-		rIt->second->validate();
-//#endif
+	// render nodes, roads ...
+	PerformanceTimer npf("Nodes");
+	BOOST_FOREACH(WorldNode* wn, _nodeVec) wn->validate();
+	npf.stop();
 
-	// render cells
-	//map< Ogre::SceneNode*, WorldCell* >::iterator cIt, cEnd;
-	set<WorldCell*>::iterator cIt, cEnd;
+	PerformanceTimer rpf("Roads");
+	BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->validate();
+	rpf.stop();
 
-	//PerformanceTimer genPT("Generate");
+	PerformanceTimer cpf("Cells 1");
+	pair<vector<WorldCell*>::iterator, vector<WorldCell*>::iterator> cPIt;
+	cPIt.first = _cellVec.begin();
+	cPIt.second = _cellVec.end();
 
-	// NON THREADED
-	//pair<set<WorldCell*>::iterator, set<WorldCell*>::iterator> cPIt;
-	//cPIt.first = mCells.begin();
-	//cPIt.second = mCells.end();
-	//prebuild2(cPIt);
-
-	//THREADED
-	//
-	pair<set<WorldCell*>::iterator, set<WorldCell*>::iterator> cPIt;
-	cPIt.first = _cellSet.begin();
-	cPIt.second = _cellSet.end();
-
+//#undef THREADME
 #ifdef THREADME
-	boost::thread thrd1(
-		boost::bind(&prebuild, &cPIt));
-	boost::thread thrd2(
-		boost::bind(&prebuild, &cPIt));
+	//size_t i=0, N = _cellVec.size(), N2 = N/2;
+	//vector<WorldCell*> a, b;
+	//for(; i<N2; i++) a.push_back(_cellVec[i]);
+	//for(; i<N; i++) b.push_back(_cellVec[i]);
+
+	//boost::thread thrd1(
+	//	boost::bind(&prebuild2, a));
+	//boost::thread thrd2(
+	//	boost::bind(&prebuild2, b));
+
+	boost::thread thrd1(boost::bind(&prebuild, &cPIt));
+	boost::thread thrd2(boost::bind(&prebuild, &cPIt));
 
 	thrd1.join();
 	thrd2.join();
 #else
 	prebuild(&cPIt);
 #endif
+	cpf.stop();
 
-	//genPT.stop();
+	PerformanceTimer cpf2("Cells 2");
+	BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
+	cpf2.stop();
 
-	try {
-
-	//PerformanceTimer buildPT("Build");
-	for(cIt = _cellSet.begin(), cEnd = _cellSet.end(); cIt != cEnd; cIt++)
-	{
-		(*cIt)->validate();
-	}
-	//buildPT.stop();
-	//LogManager::getSingleton().logMessage(genPT.toString()+" "+buildPT.toString());
-
-	}catch(...)
-	{
-	}
-	//LogManager::getSingleton().logMessage("Building Count: "+StringConverter::toString(Statistics::getBuildingCount()));
-
+	PerformanceTimer renpf("Render");
 	if(_camera) Root::getSingleton().renderOneFrame();
+	renpf.stop();
+
+	LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
+		+" - "+cpf2.toString()+" - "+renpf.toString());
 }
 
 bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
@@ -771,7 +659,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 				// create the road in the scene
 				WorldRoad* wr = new WorldRoad(sourceIt->second, targetIt->second, 
 										_roadGraph, _simpleRoadGraph, _sceneManager);
-				_sceneRoadMap[wr->getSceneNode()] = wr;
+				_roadVec.push_back(wr);
 				const TiXmlHandle roadRoot(edgeElements[i]);
 				wr->loadXML(roadRoot);
 			}
@@ -820,8 +708,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 			if(nodeCycle.size() > 2)
 			{
 				WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycle);
-				_sceneCellMap[wc->getSceneNode()] = wc;
-				_cellSet.insert(wc);
+				_cellVec.push_back(wc);
 				BOOST_FOREACH(WorldRoad* wr, filaments) wc->addFilament(wr);
 				const TiXmlHandle cellRoot(pElem);
 				wc->loadXML(pElem);
@@ -880,8 +767,6 @@ TiXmlElement* WorldFrame::saveXML()
 	{
 		NodeInterface* ni = _simpleRoadGraph.getNode(*nIt);
 		Vector2 loc(ni->getPosition2D());
-		//string id(pointerToString(*vi));
-		//string id
 	
 		TiXmlElement * node;
 		node = new TiXmlElement("node");  
@@ -903,34 +788,16 @@ TiXmlElement* WorldFrame::saveXML()
 	cells->SetAttribute("id", "cellset0");
 	root->LinkEndChild(cells);
 
-	set<WorldCell*>::iterator cIt,cEnd;
-	for(cIt = _cellSet.begin(), cEnd = _cellSet.end(); cIt != cEnd; cIt++)
-	{
-		cells->LinkEndChild((*cIt)->saveXML());
-	}
+	BOOST_FOREACH(WorldCell* c, _cellVec)
+		cells->LinkEndChild(c->saveXML());
+
 	return root;
 }
 
 void WorldFrame::setToolsetMode(MainWindow::ToolsetMode mode) 
 {
-	/*
-	switch(mode) {
-	case MainWindow::view:
-		endNodeMode();
-		break;
-	case MainWindow::node:
-		beginNodeMode();
-		break;
-	case MainWindow::road:
-		endNodeMode();
-		selectRoad(0);
-		break;
-	case MainWindow::cell:
-		endNodeMode();
-		selectCell(0);
-		break;
-	}*/
 	selectNode(0);
+	highlightNode(0);
 	selectRoad(0);
 	selectCell(0);
 	_toolsetMode = mode;
@@ -996,27 +863,6 @@ bool WorldFrame::pickTerrainIntersection(wxMouseEvent& e, Vector3& pos)
 	return false;
 }
 
-bool WorldFrame::pickNode(wxMouseEvent& e, WorldNode *&wn)
-{
-	// Setup the ray scene query
-	float mouseX = float(1.0f/_viewport->getActualWidth()) * e.GetX();
-	float mouseY = float(1.0f/_viewport->getActualHeight()) * e.GetY();
-	Ray mouseRay = _camera->getCameraToViewportRay(mouseX, mouseY);
-
-	_raySceneQuery->setRay(mouseRay);
-    _raySceneQuery->setSortByDistance(true);
-	RaySceneQueryResult result = _raySceneQuery->execute();
-	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
-	{
-		if (itr->movable && itr->movable->getName().substr(0, 4) == "node")
-		{
-			wn = _sceneNodeMap[itr->movable->getParentSceneNode()];
-    		return true;
-		}
-	}
-	return false;
-}
-
 bool WorldFrame::pickNode(wxMouseEvent &e, Real snapSq, WorldNode *&wn)
 {
 	Vector3 pos3D;
@@ -1039,10 +885,7 @@ bool WorldFrame::pickNode(wxMouseEvent &e, Real snapSq, WorldNode *&wn)
 WorldNode* WorldFrame::createNode()
 {
 	WorldNode* wn = new WorldNode(_roadGraph, _simpleRoadGraph, _sceneManager);
-	//wn->mSimpleNodeId = _simpleRoadGraph.addNode(wn);
-	//wn->mNodeId = _roadGraph.addNode(wn);
-	_sceneNodeMap[wn->getSceneNode()] = wn;
-
+	_nodeVec.push_back(wn);
 	modify(true);
 	return wn;
 }
@@ -1082,14 +925,15 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 	}
 
 	// delete road node
-	_sceneRoadMap.erase(wr->getSceneNode());
+	vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
+	if(rIt != _roadVec.end()) _roadVec.erase(rIt);
 	delete wr;
 
 	// create replacement roads
 	WorldRoad* wr1 = new WorldRoad(wn1, wn, _roadGraph, _simpleRoadGraph, _sceneManager);
-	_sceneRoadMap[wr1->getSceneNode()] = wr1;
 	WorldRoad* wr2 = new WorldRoad(wn, wn2, _roadGraph, _simpleRoadGraph, _sceneManager);
-	_sceneRoadMap[wr2->getSceneNode()] = wr2;
+	_roadVec.push_back(wr1);
+	_roadVec.push_back(wr2);
 
 	// update cell boundaries
 	size_t numOfCells = attachedCells.size();
@@ -1131,10 +975,8 @@ void WorldFrame::deleteNode(WorldNode* wn)
 	if(_selectedNode == wn) selectNode(0);
 
 	//Delete the Node
-	_simpleRoadGraph.removeNode(wn->mSimpleNodeId);
-	_roadGraph.removeNode(wn->_nodeId);
-	_sceneNodeMap.erase(wn->getSceneNode());
-
+	vector<WorldNode*>::iterator nIt = find(_nodeVec.begin(), _nodeVec.end(), wn);
+	if(nIt != _nodeVec.end()) _nodeVec.erase(nIt);
 	delete wn;
 }
 
@@ -1147,32 +989,20 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 	{
 		// create the road in the scene
 		WorldRoad* wr = new WorldRoad(wn1, wn2, _roadGraph, _simpleRoadGraph, _sceneManager);
-		_sceneRoadMap[wr->getSceneNode()] = wr;
+		_roadVec.push_back(wr);
 
 		// check the road graph to get a count of the number of cycles
 		vector< vector<NodeInterface*> > nodeCycles;
 		vector< vector<NodeInterface*> > filaments;
 		_simpleRoadGraph.extractPrimitives(filaments, nodeCycles);
 
-		// DEBUG
-//		stringstream os;
-//		size_t f = 0;
-//		os << "Filaments:\n";
-//		BOOST_FOREACH(vector<NodeInterface*> &filament, filaments)
-//		{
-//			os << "F" << f++ << ":";
-//			BOOST_FOREACH(NodeInterface* fn, filament) os << *fn;
-//			os << "\n";
-//		}
-//		LogManager::getSingleton().logMessage(os.str());
-
 		// if the number of cycles is greater than the number of cells
 		// then we have most definitely made a new cell
-		if(nodeCycles.size() > _cellSet.size())
+		if(nodeCycles.size() > _cellVec.size())
 		{
 			// find the new cycles
 			WorldCell* alteredCell = 0;
-			BOOST_FOREACH(WorldCell* wc, _cellSet)
+			BOOST_FOREACH(WorldCell* wc, _cellVec)
 			{
 				bool cellFound = false;
 
@@ -1202,11 +1032,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 			{
 			// 1: created a new cell
 			case 1:
-				{
-					WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0]);
-					_sceneCellMap[wc->getSceneNode()] = wc;
-					_cellSet.insert(wc);
-				}
+				_cellVec.push_back(new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0]));
 				break;
 			// 2: divided an existing cell into two
 			case 2:
@@ -1216,21 +1042,18 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 					// get old cell params
 					CellGenParams g = alteredCell->getGenParams();
 					// delete old cell
-					_cellSet.erase(alteredCell);
-					_sceneCellMap.erase(alteredCell->getSceneNode());
+					vector<WorldCell*>::iterator cIt = find(_cellVec.begin(), _cellVec.end(), alteredCell);
+					if(cIt != _cellVec.end()) _cellVec.erase(cIt);
 					delete alteredCell;
 
 
 					// create 2 new cells in place of old cell with old cell params
 					WorldCell* wc0 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0]); 
-					_sceneCellMap[wc0->getSceneNode()] = wc0;
 					WorldCell* wc1 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[1]);
-					_sceneCellMap[wc1->getSceneNode()] = wc1;
-
 					wc0->setGenParams(g);
 					wc1->setGenParams(g);
-					_cellSet.insert(wc0);
-					_cellSet.insert(wc1);
+					_cellVec.push_back(wc0);
+					_cellVec.push_back(wc1);
 				}
 				break;
 			default:
@@ -1240,37 +1063,8 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 		}
 		else
 		{
-			//TODO: sort out filaments
-/*
-			// find out which filament wr is part of
-			vector<NodeInterface*> *wrFilament = 0;
-			BOOST_FOREACH(vector<NodeInterface*> &filament, filaments)
-			{
-				WorldRoad* wrF = 0;
-				for(size_t i=0; i<(filament.size()-1) && wr != wrF; i++)
-					wrF = getWorldRoad(static_cast<WorldNode*>(filament[i]), 
-										static_cast<WorldNode*>(filament[i+1]));
-
-				// if wr found in filament, store filament
-				if(wr == wrF) 
-				{
-					wrFilament = &filament;
-					break;
-				}
-			}
-			// better find it!
-			assert(wrFilament != 0);
-
-			// get the set of cells the filament could belong to.
-			set<WorldCell*> possibleCells;
-			BOOST_FOREACH(WorldRoad* w, static_cast<WorldNode*>((*wrFilament)[0])->getWorldRoads())
-			{
-			
-			}
-*/
-
 			// road is probably a filament, if its in a cell add it
-			BOOST_FOREACH(WorldCell* wc, _cellSet)
+			BOOST_FOREACH(WorldCell* wc, _cellVec)
 			{
 				if(wc->isInside(wr->getSrcNode()->getPosition2D())) 
 				{
@@ -1304,36 +1098,32 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 	// get cells attached to this road
 	vector<WorldCell*> aCells;
 	set<WorldObject*> attachments(wr->getAllAttachments());
-	set<WorldObject*>::iterator aIt, aEnd;
-	for(aIt = attachments.begin(), aEnd = attachments.end(); aIt != aEnd; aIt++)
+	BOOST_FOREACH(WorldObject* wo, attachments)
 	{
 		// if attachment is a cell
-		if(typeid(*(*aIt)) == typeid(WorldCell))
-		{
-			aCells.push_back(static_cast<WorldCell*>(*aIt));
-		}
+		if(typeid(*wo) == typeid(WorldCell))
+			aCells.push_back(static_cast<WorldCell*>(wo));
 	}
 
 	switch(aCells.size())
 	{
 	case 0:
-		_sceneRoadMap.erase(wr->getSceneNode());
-		delete wr;
-		break;
+		{
+			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
+			if(rIt != _roadVec.end()) _roadVec.erase(rIt);
+			delete wr;
+			break;
+		}
 	case 1:
 		{
 			// could be a boundary edge or a filament
 			const vector<RoadInterface*> &boundary(aCells[0]->getBoundaryRoads());
 
-			// search for boundary cycle
-			size_t i;
-			for(i=0; i<boundary.size() && boundary[i] != wr; i++);
-
 			// if found on the boundary cycle
-			if(i<boundary.size())
+			if(find(boundary.begin(), boundary.end(), wr) != boundary.end())
 			{
-				_sceneCellMap.erase(aCells[0]->getSceneNode());
-				_cellSet.erase(aCells[0]);
+				vector<WorldCell*>::iterator cIt = find(_cellVec.begin(), _cellVec.end(), aCells[0]);
+				if(cIt != _cellVec.end()) _cellVec.erase(cIt);
 				delete aCells[0];
 			}
 			else
@@ -1342,13 +1132,14 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			}
 
 			// delete road
-			_sceneRoadMap.erase(wr->getSceneNode());
+			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
+			if(rIt != _roadVec.end()) _roadVec.erase(rIt);
 			delete wr;
 		}
 		break;
 	case 2:
 		{
-			// should favour one - can do a vector swap to set preference
+			// should favor one - can do a vector swap to set preference
 
 			// save params from the biggest attached cell by area
 			CellGenParams gp = aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? 
@@ -1357,13 +1148,14 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			// delete cells
 			BOOST_FOREACH(WorldCell* c, aCells)
 			{
-				_sceneCellMap.erase(c->getSceneNode());
-				_cellSet.erase(c);
+				vector<WorldCell*>::iterator cIt = find(_cellVec.begin(), _cellVec.end(), c);
+				if(cIt != _cellVec.end()) _cellVec.erase(cIt);
 				delete c;
 			}
 
 			// delete road
-			_sceneRoadMap.erase(wr->getSceneNode());
+			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
+			if(rIt != _roadVec.end()) _roadVec.erase(rIt);
 			delete wr;
 
 			// run cell decomposition
@@ -1375,7 +1167,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			BOOST_FOREACH(vector<NodeInterface*> &cycle, nodeCycles)
 			{
 				bool newCell = true;
-				BOOST_FOREACH(WorldCell* c, _cellSet)
+				BOOST_FOREACH(WorldCell* c, _cellVec)
 				{
 					if(c->compareBoundary(cycle))
 					{
@@ -1387,9 +1179,8 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 				if(newCell)
 				{
 					WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, cycle);
-					_sceneCellMap[wc->getSceneNode()] = wc;
-					_cellSet.insert(wc);
 					wc->setGenParams(gp);
+					_cellVec.push_back(wc);
 					break;
 				}
 			}
@@ -1409,7 +1200,6 @@ void WorldFrame::onNewDoc()
 	_selectedRoad = 0;
 	_intersectionPresent = false;
 
-	
 	onCloseDoc();
 	createScene();
 	_tools[_activeTool]->activate();
@@ -1493,9 +1283,9 @@ bool WorldFrame::pickCell(wxMouseEvent& e, WorldCell *&wc)
 	Vector3 pos3D;
 	if(pickTerrainIntersection(e, pos3D)) 
 	{
-		BOOST_FOREACH(WorldCell* c, _cellSet)
+		BOOST_FOREACH(WorldCell* c, _cellVec)
 		{
-			if(c->isInside(Geometry::V2(pos3D)))
+			if(c->isInside(Vector2(pos3D.x, pos3D.z)))
 			{
 				wc = c;
 				return true;
@@ -1509,10 +1299,7 @@ void WorldFrame::selectCell(WorldCell* wn)
 {
 	if(_selectedCell) _selectedCell->showSelected(false);
 	_selectedCell = wn;
-	if(_selectedCell)
-	{
-		_selectedCell->showSelected(true);
-	}
+	if(_selectedCell) _selectedCell->showSelected(true);
 	updateProperties();
 }
 
@@ -1530,8 +1317,15 @@ bool WorldFrame::pickRoad(wxMouseEvent& e, WorldRoad *&wr)
 	{
 		if (itr->movable && itr->movable->getName().substr(0, 4) == "road")
 		{
-			wr = _sceneRoadMap[itr->movable->getParentSceneNode()];
-    		return true;
+			vector<WorldRoad*>::iterator rIt, rEnd = _roadVec.end();
+			for(rIt=_roadVec.begin(); rIt != rEnd; rIt++)
+			{
+				if((*rIt)->getSceneNode() == itr->movable->getParentSceneNode())
+				{
+					wr = (*rIt);
+					return true;
+				}
+			}
 		}
 	}
 	return false;
@@ -1541,10 +1335,7 @@ void WorldFrame::selectRoad(WorldRoad* wr)
 {
 	if(_selectedRoad) _selectedRoad->showSelected(false);
 	_selectedRoad = wr;
-	if(_selectedRoad)
-	{
-		_selectedRoad->showSelected(true);
-	}
+	if(_selectedRoad) _selectedRoad->showSelected(true);
 	updateProperties();
 }
 
@@ -1564,7 +1355,7 @@ void  WorldFrame::setViewMode(MainWindow::ViewMode mode)
 	case MainWindow::view_building:
 		break;
 	}
-	BOOST_FOREACH(WorldCell* cell, _cellSet)
+	BOOST_FOREACH(WorldCell* cell, _cellVec)
 	{
 		cell->showRoads(showRoads);
 		cell->showBuildings(showBuildings);

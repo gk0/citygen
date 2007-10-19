@@ -478,6 +478,7 @@ void Geometry::processInsetVectors(const vector<pair<Vector3, Vector2>> &iv, vec
 
 void Geometry::polygonInset(const vector<Real>& insets, vector<Vector3> &poly)
 {
+	if(poly.size() < 3) return;
 	// get the inset vectors
 	vector< pair<Vector3, Vector2> > iv(calcInsetVectors(insets, poly));
 	// process them for anomalies
@@ -486,6 +487,7 @@ void Geometry::polygonInset(const vector<Real>& insets, vector<Vector3> &poly)
 
 bool Geometry::polygonInsetFast(Real inset, vector<Vector3> &poly)
 {
+	if(poly.size() < 3) return false;
 	// get the inset vectors
 	vector< pair<Vector3, Vector2> > iv(calcInsetVectors(inset, poly));
 	// process them for anomalies
