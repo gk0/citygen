@@ -226,17 +226,17 @@ bool SimpleNode::createTJunction()
 		roadVec0.normalise();
 		roadVec1.normalise();
 		roadVec2.normalise();
-		Real cos0 = Math::Abs(roadVec1.dotProduct(roadVec2));
-		Real cos1 = Math::Abs(roadVec0.dotProduct(roadVec2));
-		Real cos2 = Math::Abs(roadVec0.dotProduct(roadVec1));
-		if(cos0 > cos1)
+		Real cos0 = roadVec1.dotProduct(roadVec2);
+		Real cos1 = roadVec0.dotProduct(roadVec2);
+		Real cos2 = roadVec0.dotProduct(roadVec1);
+		if(cos0 < cos1)
 		{
-			if(cos0 > cos2) joiningRoadInd = 0;
+			if(cos0 < cos2) joiningRoadInd = 0;
 			else joiningRoadInd = 2;
 		}
 		else
 		{
-			if(cos1 > cos2) joiningRoadInd = 1;
+			if(cos1 < cos2) joiningRoadInd = 1;
 			else joiningRoadInd = 2;
 		}
 	}

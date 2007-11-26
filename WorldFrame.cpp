@@ -32,7 +32,7 @@ size_t Statistics::_buildingCount = 0;
 #include <GL/glx.h> 
 #endif
 
-#define THREADME 1
+//#define THREADME 1
 
 
 // Namespace 
@@ -513,18 +513,21 @@ void prebuild2(vector<WorldCell*> &cells)
 
 void WorldFrame::update()
 {
-	Statistics::resetBuildingCount();
+	//Statistics::resetBuildingCount();
 
 	// render nodes, roads ...
-	PerformanceTimer npf("Nodes");
+	//PerformanceTimer npf("Nodes");
 	BOOST_FOREACH(WorldNode* wn, _nodeVec) wn->validate();
-	npf.stop();
+	//npf.stop();
 
-	PerformanceTimer rpf("Roads");
+	//PerformanceTimer rpf("Roads");
 	BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->validate();
-	rpf.stop();
+	//rpf.stop();
 
-	PerformanceTimer cpf("Cells 1");
+	//if(_camera) Root::getSingleton().renderOneFrame();
+	//return;
+
+	//PerformanceTimer cpf("Cells 1");
 	pair<vector<WorldCell*>::iterator, vector<WorldCell*>::iterator> cPIt;
 	cPIt.first = _cellVec.begin();
 	cPIt.second = _cellVec.end();
@@ -549,18 +552,18 @@ void WorldFrame::update()
 #else
 	prebuild(&cPIt);
 #endif
-	cpf.stop();
+	//cpf.stop();
 
-	PerformanceTimer cpf2("Cells 2");
+	//PerformanceTimer cpf2("Cells 2");
 	BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
-	cpf2.stop();
+	//cpf2.stop();
 
-	PerformanceTimer renpf("Render");
+	//PerformanceTimer renpf("Render");
 	if(_camera) Root::getSingleton().renderOneFrame();
-	renpf.stop();
+	//renpf.stop();
 
-	LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
-		+" - "+cpf2.toString()+" - "+renpf.toString());
+	//LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
+	//	+" - "+cpf2.toString()+" - "+renpf.toString());
 }
 
 bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
@@ -604,6 +607,14 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 				_cameraNode->setPosition(x, y, z);
 			}
 		}
+		// COMPATIBILITY HACK with old camera model
+		//Vector3 camPos = _camera->getPosition();
+		//if(camPos.x > camPos.z) 
+		//{
+		//	_camera->setPosition(0, camPos.y, camPos.x);
+		//	_cameraNode->rotate(Vector3::UNIT_Y, Degree(90),Node::TS_WORLD);
+		//}
+		//_camera->lookAt(_cameraNode->getPosition());
 	}
 
 
@@ -630,9 +641,10 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 			string strId = pElem->Attribute("id");
 			pElem->QueryFloatAttribute("x", &x);
 			pElem->QueryFloatAttribute("y", &y);
-
+			string label = pElem->Attribute("label");
 			WorldNode* wn = createNode();
 			wn->setPosition2D(x, y);
+			wn->setLabel(label);
 			nodeIdTranslation.insert(make_pair(strId, wn));
 		}
 		else if(key == "edge") 

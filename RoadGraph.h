@@ -182,6 +182,15 @@ public:
 	bool findClosestRoad(const NodeId aNode, const Ogre::Real snapSz, 
 							  Ogre::Vector2& pos, RoadId& rd) const;
 
+	inline static void createAABB(const Ogre::Vector2 &a, const Ogre::Vector2 &b, Ogre::Vector2 &P, Ogre::Vector2 &E)
+	{
+		Ogre::Vector2 halfVec((b-a)/2);
+		P = a + halfVec;
+		E.x = Ogre::Math::Abs(halfVec.x);
+		E.y = Ogre::Math::Abs(halfVec.y);
+	}
+
+
 //private:
 public:
 	static bool getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g);

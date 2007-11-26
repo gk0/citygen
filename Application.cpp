@@ -42,9 +42,9 @@ bool Application::OnInit()
 	
 	loadResources();
 
-	_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
-	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\um.cgx"));
-	//_window->donew();
+	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
+	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\testis.cgx"));
+	_window->donew();
 
 	//_window->onExport(wxCommandEvent());
 	

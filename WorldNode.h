@@ -4,10 +4,11 @@
 #include "stdafx.h"
 #include "WorldObject.h"
 #include "NodeInterface.h"
-#include "MovableText.h"
 #include "RoadGraph.h"
 #include "WorldRoad.h"
 #include "ExportDoc.h"
+
+class Ogre::MovableText;
 
 #define GROUNDCLEARANCE Ogre::Vector3(0,0.3,0)
 

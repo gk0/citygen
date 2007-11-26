@@ -297,7 +297,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 		// alter our direction vector 
 		for(unsigned int i=0; i < _genParams._degree; i++)
 		{
-			if(_genParams._roadLimit != 0 && roadCount++ >= _genParams._roadLimit)
+			if(_genParams._roadLimit != 0 && roadCount >= _genParams._roadLimit)
 			//if(roadCount++ >= 29)
 			{
 				while(!q.empty()) q.pop();
@@ -333,6 +333,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				{
 					NodeInterface *cursorNode = createNode(cursor);
 					createRoad(currentNode, cursorNode);
+					roadCount++;
 					q.push(make_pair<NodeInterface*, Vector2>(cursorNode, currentDirection)); // enqueue
 				}
 				break;
@@ -348,6 +349,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				NodeId cursorNodeId = _roadGraph.addNode(cursorNode);
 				cursorNode->_nodeId = cursorNodeId;
 				createRoad(currentNode, cursorNode);
+				roadCount++;
 
 				// get intersected source src and dst
 				RoadInterface *ri = _roadGraph.getRoad(rd);
@@ -385,13 +387,15 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 					break;
 				// MMM: dont snap to your self ass monkey
 				if(currentNode != _roadGraph.getNode(nd))
+				{
 					createRoad(currentNode, _roadGraph.getNode(nd));
+					roadCount++;
+				}
 				break;
 				
 			}
 		}
 	}
-	
 }
 
 void WorldCell::buildRoadNetwork()
@@ -407,7 +411,7 @@ void WorldCell::buildRoadNetwork()
 		NodeInterface* ni = _roadGraph.getNode(*nIt);
 		if(typeid(*ni) == typeid(SimpleNode))
 		{
-			static_cast<SimpleNode*>(ni)->prebuild();
+			//static_cast<SimpleNode*>(ni)->prebuild();
 			static_cast<SimpleNode*>(ni)->build(roadBuilder, mat);
 		}
 	}
@@ -418,7 +422,7 @@ void WorldCell::buildRoadNetwork()
 		RoadInterface* ri = _roadGraph.getRoad(*rIt);
 		if(typeid(*ri) == typeid(SimpleRoad))
 		{
-			static_cast<SimpleRoad*>(ri)->prebuild();
+			//static_cast<SimpleRoad*>(ri)->prebuild();
 			static_cast<SimpleRoad*>(ri)->build(roadBuilder, mat2);
 		}
 	}
@@ -456,6 +460,28 @@ void WorldCell::prebuild()
 	//gpt.stop();
 	//LogManager::getSingleton().logMessage(gpt.toString());
 
+	NodeIterator nIt, nEnd;
+	for(boost::tie(nIt, nEnd) = _roadGraph.getNodes(); nIt != nEnd; nIt++)
+	{
+		NodeInterface* ni = _roadGraph.getNode(*nIt);
+		if(typeid(*ni) == typeid(SimpleNode))
+		{
+			static_cast<SimpleNode*>(ni)->prebuild();
+			//static_cast<SimpleNode*>(ni)->build(roadBuilder, mat);
+		}
+	}
+
+	RoadIterator rIt, rEnd;
+	for(boost::tie(rIt, rEnd) = _roadGraph.getRoads(); rIt != rEnd; rIt++)
+	{
+		RoadInterface* ri = _roadGraph.getRoad(*rIt);
+		if(typeid(*ri) == typeid(SimpleRoad))
+		{
+			static_cast<SimpleRoad*>(ri)->prebuild();
+			//static_cast<SimpleRoad*>(ri)->build(roadBuilder, mat2);
+		}
+	}
+
 
 	vector< vector<NodeInterface*> > cycles;
 	_roadGraph.extractFootprints(cycles, _genParams._lotSize);
@@ -470,6 +496,7 @@ void WorldCell::prebuild()
 		else
 			_blocks.push_back(new WorldBlock(poly, _genParams, rg));
 	}
+
 	_busy = false;
 }
 
@@ -531,7 +558,6 @@ void WorldCell::build()
 	// am done with blocks now.
 	BOOST_FOREACH(WorldBlock* b, _blocks) delete b;
 	_blocks.clear();
-
 
 	//generateRoadNetwork();
 	buildRoadNetwork();

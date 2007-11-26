@@ -630,7 +630,276 @@ bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq, NodeId& nod
 
 
 int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, const Real snapSz, 
-									   Vector2& pos, NodeId &nd, RoadId& rd) const
+									   Vector2& pos, NodeId &nodeId, RoadId& roadId) const
+{
+
+	Vector2 a(_graph[aNode]->getPosition2D());
+
+	vector<RoadId> possibleSnapRoads;
+	vector<NodeId> possibleSnapNodes;
+	possibleSnapRoads.reserve(16);
+	possibleSnapNodes.reserve(32);
+
+	// create bounding box vectors for segment ab
+	Vector2 abP, abE;
+	createAABB(a, b, abP, abE);
+	abE.x += snapSz;
+	abE.y += snapSz;
+	//uint16 roundCount = 0;
+
+	BOOST_FOREACH(RoadId rd, edges(_graph))
+	{
+		// create bounding box for cd
+		Vector2 cdP, cdE;
+		createAABB(getSrcNode(rd)->getPosition2D(), getDstNode(rd)->getPosition2D(), cdP, cdE);
+
+		// check if they intersect
+		Vector2 T = cdP - abP;//vector from A to B
+		if(Math::Abs(T.x) <= (abE.x + cdE.x) && Math::Abs(T.y) <= (abE.y + cdE.y))
+		{
+			possibleSnapRoads.push_back(rd);
+			//possibleSnapNodes.insert(getSrc(rd));
+			//possibleSnapNodes.insert(getDst(rd));
+			possibleSnapNodes.push_back(getSrc(rd));
+			possibleSnapNodes.push_back(getDst(rd));
+		}
+		//roundCount++;
+	}
+	//LogManager::getSingleton().logMessage("BB filter: "+StringConverter::toString(possibleSnapRoads.size()) + "/" +StringConverter::toString(roundCount));
+
+	Real snapSzSq = Math::Sqr(snapSz);
+	Vector2 c,d;
+	Vector2 ab(b - a);
+	Real bxMinusAx(ab.x);
+	Real byMinusAy(ab.y);
+	Real Lsq = ab.squaredLength();
+	Real L = Math::Sqrt(Lsq);
+	Real lowestR(1.0f);
+	Real stretchR(lowestR + snapSz/L);
+	NodeId snapNode;
+	Real r,s;
+	RoadId intersectingRoad;
+	Real closestDistToBSq = snapSzSq;
+	bool nodeSnapped = false;
+
+	BOOST_FOREACH(NodeId nd, possibleSnapNodes)
+	{
+		NodeInterface* ni = _graph[nd];
+		Vector2 c(ni->getPosition2D());
+
+		//TEST HACK
+		//		if(c == b) 
+		//			continue;
+
+		// r = ((Cx-Ax)(Bx-Ax) + (Cy-Ay)(By-Ay)) / L^2
+		Ogre::Real cxMinusAx(c.x-a.x);
+		Ogre::Real cyMinusAy(c.y-a.y);
+		r = (cxMinusAx*bxMinusAx + cyMinusAy*byMinusAy) / Lsq;
+
+		// s = ((Ay-Cy)(Bx-Ax)-(Ax-Cx)(By-Ay)) / L^2
+		s = (-cyMinusAy*bxMinusAx+cxMinusAx*byMinusAy) / Lsq;
+
+		// install node data
+		ni->_r = r;
+		ni->_s = s;
+
+		if(r >= 0)
+		{
+			if(r <= lowestR)
+			{
+				Real distance = Ogre::Math::Abs(s) * L;
+				if(distance < snapSz && nd != aNode)
+				{
+					lowestR = r;
+					snapNode = nd;
+				}
+			}
+			else if(r < stretchR && lowestR == 1)
+			{
+				// test the region on the extension of ab
+				Real distSq = (c - b).squaredLength();
+				if(distSq < closestDistToBSq)
+				{
+					closestDistToBSq = distSq;
+					snapNode = nd;
+					nodeSnapped = true;
+				}
+			}
+		}
+	}
+
+	bool intersection = false;
+	//size_t count = 0, execcount = 0;
+	BOOST_FOREACH(RoadId rd, possibleSnapRoads)
+	{
+		//tc++;
+		NodeId cNd(source(rd,_graph));
+		NodeId dNd(target(rd,_graph));
+		NodeInterface* cNi = _graph[cNd];
+		NodeInterface* dNi = _graph[dNd];
+
+		// exclude r: outside segment ab or a(last snap point)
+		if(cNi->_r > lowestR && dNi->_r > lowestR) continue;
+		if(cNi->_r < 0 && dNi->_r < 0) continue;
+
+		// exclude s: on same side
+		if(cNi->_s > 1 && dNi->_s > 1) continue;
+		if(cNi->_s < 0 && dNi->_s < 0) continue;
+
+		//te++;
+
+		// perform intersection test
+		c = cNi->getPosition2D();
+		d = dNi->getPosition2D();
+		Real dxMinusCx(d.x - c.x);
+		Real dyMinusCy(d.y - c.y);
+		Ogre::Real denom = (bxMinusAx * dyMinusCy) - (byMinusAy * dxMinusCx);
+
+		// line are parallel
+		if(denom == 0) continue;
+
+		Real axMinusCx(a.x - c.x);
+		Real ayMinusCy(a.y - c.y);
+		r = ((ayMinusCy * dxMinusCx) - (axMinusCx * dyMinusCy)) / denom;
+		s = ((ayMinusCy * bxMinusAx) - (axMinusCx * byMinusAy)) / denom;
+
+		//if r and s are 0 then the line are coincident (on top of one another)
+		if(r == 0 && s == 0) continue;
+
+		// if outside segment cd
+		if(s < 0 || s > 1) continue;
+
+		if(r >= 0 && r < lowestR)
+		{
+			// skip connected segments
+			if(cNd == aNode || dNd == aNode) continue;
+
+			lowestR = r;
+
+			Vector2 p(a.x + bxMinusAx * r, a.y + byMinusAy * r);
+
+			if(s < 0.5)
+			{
+				if((c-p).squaredLength() < snapSzSq)
+				{
+					intersection = false;
+					snapNode = cNd;
+				}
+				else
+				{
+					intersection = true;
+					intersectingRoad = rd;
+				}
+			}
+			else
+			{
+				if((d-p).squaredLength() < snapSzSq)
+				{
+					intersection = false;
+					snapNode = dNd;
+				}
+				else
+				{
+					intersection = true;
+					intersectingRoad = rd;
+				}
+			}
+		}
+	}
+	//LogManager::getSingleton().logMessage("Test 2: "+StringConverter::toString(tc)+":"+StringConverter::toString(te));
+
+	if(intersection) 
+	{
+		pos.x = a.x + lowestR * bxMinusAx;			//lowestR: 0 ??
+		pos.y = a.y + lowestR * byMinusAy;
+		roadId = intersectingRoad;
+		return 1;
+	}
+	else if(lowestR < 1)
+	{
+		nodeId = snapNode;
+		pos = _graph[nodeId]->getPosition2D();
+		return 2;
+	}
+
+	// can i exclude this test like the other, using r
+
+	// shit no the bounds test can exclude this
+
+
+	// last test
+	RoadId snapRoad;
+	Vector2 snapPos;
+	Real closestDistToB = Math::Sqrt(closestDistToBSq);
+	BOOST_FOREACH(RoadId rd, possibleSnapRoads)
+	{
+		NodeId cNd(source(rd,_graph));
+		NodeId dNd(target(rd,_graph));
+		c = _graph[cNd]->getPosition2D();
+		d = _graph[dNd]->getPosition2D();
+		Vector2 cd(d - c);
+		Lsq = cd.squaredLength();
+		L = Math::Sqrt(Lsq);
+
+		//TESTHACK
+		//		if(c == b || d == b) 
+		//			continue;
+
+		Ogre::Real dxMinusCx(cd.x);
+		Ogre::Real dyMinusCy(cd.y);
+		Ogre::Real bxMinusCx(b.x-c.x);
+		Ogre::Real byMinusCy(b.y-c.y);
+
+		r = (bxMinusCx*dxMinusCx + byMinusCy*dyMinusCy) / Lsq;
+
+		if(r < 0 || r > 1) continue;
+
+		s = (-byMinusCy*dxMinusCx+bxMinusCx*dyMinusCy) / Lsq;
+
+		Real distance = Ogre::Math::Abs(s) * L;
+		if(distance < closestDistToB)
+		{
+			closestDistToB = distance;
+			Vector2 p(c.x + r*dxMinusCx, c.y + r*dyMinusCy);
+			if((p - c).squaredLength() < snapSzSq)
+			{
+				nodeSnapped = true;
+				snapNode = cNd;
+			}
+			else if((p - d).squaredLength() < snapSzSq)
+			{
+				nodeSnapped = true;
+				snapNode = dNd;
+			}
+			else
+			{
+				snapRoad = rd;
+				snapPos = p;
+				nodeSnapped = false;
+			}
+		}
+	}
+	if(closestDistToB < snapSz)
+	{
+		if(!nodeSnapped)
+		{
+			roadId = snapRoad;
+			pos = snapPos;
+			return 1;
+		}
+		else
+		{
+			nodeId = snapNode;
+			pos = _graph[nodeId]->getPosition2D();
+			return 2;
+		}
+	}
+	return 0;
+
+}
+/*
+int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, const Real snapSz, 
+									   Vector2& pos, NodeId &nodeId, RoadId& roadId) const
 {
 	Real snapSzSq = Math::Sqr(snapSz);
 	Vector2 c,d,a(_graph[aNode]->getPosition2D());
@@ -647,9 +916,9 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 	Real closestDistToBSq = snapSzSq;
 	bool nodeSnapped = false;
 	
-	BOOST_FOREACH(NodeId ind, vertices(_graph))
+	BOOST_FOREACH(NodeId nd, vertices(_graph))
 	{
-		NodeInterface* ni = _graph[ind];
+		NodeInterface* ni = _graph[nd];
 		Vector2 c(ni->getPosition2D());
 
 		//TEST HACK
@@ -673,10 +942,10 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 			if(r <= lowestR)
 			{
 				Real distance = Ogre::Math::Abs(s) * L;
-				if(distance < snapSz && ind != aNode)
+				if(distance < snapSz && nd != aNode)
 				{
 					lowestR = r;
-					snapNode = ind;
+					snapNode = nd;
 				}
 			}
 			else if(r < stretchR && lowestR == 1)
@@ -686,7 +955,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 				if(distSq < closestDistToBSq)
 				{
 					closestDistToBSq = distSq;
-					snapNode = ind;
+					snapNode = nd;
 					nodeSnapped = true;
 				}
 			}
@@ -694,12 +963,12 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 	}
 
 	bool intersection = false;
-	//size_t count = 0,execcount = 0;
-	BOOST_FOREACH(RoadId ird, edges(_graph))
+	//size_t count = 0, execcount = 0;
+	BOOST_FOREACH(RoadId rd, edges(_graph))
 	{
 		//count++;
-		NodeId cNd(source(ird,_graph));
-		NodeId dNd(target(ird,_graph));
+		NodeId cNd(source(rd,_graph));
+		NodeId dNd(target(rd,_graph));
 		NodeInterface* cNi = _graph[cNd];
 		NodeInterface* dNi = _graph[dNd];
 
@@ -753,7 +1022,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 				else
 				{
 					intersection = true;
-					intersectingRoad = ird;
+					intersectingRoad = rd;
 				}
 			}
 			else
@@ -766,7 +1035,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 				else
 				{
 					intersection = true;
-					intersectingRoad = ird;
+					intersectingRoad = rd;
 				}
 			}
 		}
@@ -777,25 +1046,29 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 	{
 		pos.x = a.x + lowestR * bxMinusAx;			//lowestR: 0 ??
 		pos.y = a.y + lowestR * byMinusAy;
-		rd = intersectingRoad;
+		roadId = intersectingRoad;
 		return 1;
 	}
 	else if(lowestR < 1)
 	{
-		nd = snapNode;
-		pos = _graph[nd]->getPosition2D();
+		nodeId = snapNode;
+		pos = _graph[nodeId]->getPosition2D();
 		return 2;
 	}
+
+// can i exclude this test like the other, using r
+
+// shit no the bounds test can exclude this
 
 
 	// last test
 	RoadId snapRoad;
 	Vector2 snapPos;
 	Real closestDistToB = Math::Sqrt(closestDistToBSq);
-	BOOST_FOREACH(RoadId ird, edges(_graph))
+	BOOST_FOREACH(RoadId rd, edges(_graph))
 	{
-		NodeId cNd(source(ird,_graph));
-		NodeId dNd(target(ird,_graph));
+		NodeId cNd(source(rd,_graph));
+		NodeId dNd(target(rd,_graph));
 		c = _graph[cNd]->getPosition2D();
 		d = _graph[dNd]->getPosition2D();
 		Vector2 cd(d - c);
@@ -834,7 +1107,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 			}
 			else
 			{
-				snapRoad = ird;
+				snapRoad = rd;
 				snapPos = p;
 				nodeSnapped = false;
 			}
@@ -844,19 +1117,20 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 	{
 		if(!nodeSnapped)
 		{
-			rd = snapRoad;
+			roadId = snapRoad;
 			pos = snapPos;
 			return 1;
 		}
 		else
 		{
-			nd = snapNode;
-			pos = _graph[nd]->getPosition2D();
+			nodeId = snapNode;
+			pos = _graph[nodeId]->getPosition2D();
 			return 2;
 		}
 	}
 	return 0;
 }
+*/
 
 bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const Vector2& b, const Real snapSz, 
 							  Vector2& pos, RoadId& roadId) const

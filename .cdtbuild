@@ -137,104 +137,7 @@
 </tool>
 </resourceConfiguration>
 </configuration>
-<configuration artifactExtension="bin" artifactName="citygen" cleanCommand="rm -rf" description="Debug on Ubuntu Feisty using gcc" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213" name="Debug GCC" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
-<toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.417609412" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug">
-<builder arguments="-j 2 -k" command="make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.983604903" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
-<tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1886762458" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
-<tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.2137126500" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
-<option id="gnu.cpp.compiler.option.include.paths.340771013" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/home/gk/ogre/include/OGRE"/>
-<listOptionValue builtIn="false" value="../../Ogre/include/OGRE"/>
-<listOptionValue builtIn="false" value="../../tinyxml"/>
-<listOptionValue builtIn="false" value="../../wxPropertyGrid"/>
-<listOptionValue builtIn="false" value="/usr/include/atk-1.0"/>
-<listOptionValue builtIn="false" value="/usr/include/cairo"/>
-<listOptionValue builtIn="false" value="/usr/include/pango-1.0"/>
-<listOptionValue builtIn="false" value="/usr/lib/glib-2.0/include"/>
-<listOptionValue builtIn="false" value="/usr/include/glib-2.0"/>
-<listOptionValue builtIn="false" value="/usr/lib/gtk-2.0/include"/>
-<listOptionValue builtIn="false" value="/usr/include/gtk-2.0"/>
-</option>
-<option id="gnu.cpp.compiler.option.preprocessor.def.725232939" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
-<listOptionValue builtIn="false" value="UNICODE"/>
-<listOptionValue builtIn="false" value="_UNICODE"/>
-</option>
-<option id="gnu.cpp.compiler.option.other.other.1844894720" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c `wx-config --cflags` -fmessage-length=0 -fexceptions -fident" valueType="string"/>
-</tool>
-<tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.1965985648" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug"/>
-<tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.1740266472" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
-<option id="gnu.cpp.link.option.libs.1669905160" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="OgreMain"/>
-<listOptionValue builtIn="false" value="tinyxml"/>
-<listOptionValue builtIn="false" value="wxPropertyGrid"/>
-<listOptionValue builtIn="false" value="X11"/>
-<listOptionValue builtIn="false" value="GL"/>
-<listOptionValue builtIn="false" value="Xaw"/>
-</option>
-<option id="gnu.cpp.link.option.paths.1200380566" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
-<listOptionValue builtIn="false" value="/home/gk/ogre/lib"/>
-<listOptionValue builtIn="false" value="../../Ogre/lib"/>
-<listOptionValue builtIn="false" value="&quot;../../tinyxml/Debug Ubuntu&quot;"/>
-<listOptionValue builtIn="false" value="../../wxPropertyGrid/Release"/>
-</option>
-<option id="gnu.cpp.link.option.flags.2037415617" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="`wx-config --libs`" valueType="string"/>
-</tool>
-<tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.1195283524" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug"/>
-<macros/>
-</toolChain>
-<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1902620213./citygen/Ogre.log" name="Ogre.log" rcbsApplicability="disable" resourcePath="/citygen/Ogre.log" toolsToInvoke=""/>
-</configuration>
-<configuration artifactExtension="bin" artifactName="citygen" cleanCommand="rm -rf" description="Release on Ubuntu Feisty using gcc" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.210259758" name="Release GCC" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
-<toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.454177146" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug">
-<builder command="make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.712643677" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
-<tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1943939505" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
-<tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1533604394" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
-<option id="gnu.cpp.compiler.option.include.paths.619245477" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="/home/gk/ogre/include/OGRE"/>
-<listOptionValue builtIn="false" value="../../Ogre/include/OGRE"/>
-<listOptionValue builtIn="false" value="../../tinyxml"/>
-<listOptionValue builtIn="false" value="../../wxPropertyGrid"/>
-<listOptionValue builtIn="false" value="/usr/include/atk-1.0"/>
-<listOptionValue builtIn="false" value="/usr/include/cairo"/>
-<listOptionValue builtIn="false" value="/usr/include/pango-1.0"/>
-<listOptionValue builtIn="false" value="/usr/lib/glib-2.0/include"/>
-<listOptionValue builtIn="false" value="/usr/include/glib-2.0"/>
-<listOptionValue builtIn="false" value="/usr/lib/gtk-2.0/include"/>
-<listOptionValue builtIn="false" value="/usr/include/gtk-2.0"/>
-</option>
-<option id="gnu.cpp.compiler.option.preprocessor.def.612481166" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
-<listOptionValue builtIn="false" value="UNICODE"/>
-<listOptionValue builtIn="false" value="_UNICODE"/>
-<listOptionValue builtIn="false" value="NDEBUG"/>
-</option>
-<option id="gnu.cpp.compiler.option.other.other.1674572736" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c `wx-config --cflags` -fmessage-length=0 -fexceptions -fident" valueType="string"/>
-<option id="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level.1949897983" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
-<option id="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level.169192999" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
-</tool>
-<tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.2032810906" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug"/>
-<tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.755812868" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
-<option id="gnu.cpp.link.option.libs.255003461" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="OgreMain"/>
-<listOptionValue builtIn="false" value="tinyxml"/>
-<listOptionValue builtIn="false" value="wxPropertyGrid"/>
-<listOptionValue builtIn="false" value="X11"/>
-<listOptionValue builtIn="false" value="GL"/>
-<listOptionValue builtIn="false" value="Xaw"/>
-</option>
-<option id="gnu.cpp.link.option.paths.1701853510" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
-<listOptionValue builtIn="false" value="/home/gk/ogre/lib"/>
-<listOptionValue builtIn="false" value="../../Ogre/lib"/>
-<listOptionValue builtIn="false" value="&quot;../../tinyxml/Release Ubuntu&quot;"/>
-<listOptionValue builtIn="false" value="../../wxPropertyGrid/Release"/>
-</option>
-<option id="gnu.cpp.link.option.flags.1505727997" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="`wx-config --libs`" valueType="string"/>
-</tool>
-<tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.1318921851" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug"/>
-<macros/>
-</toolChain>
-<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.210259758./citygen/Ogre.log" name="Ogre.log" rcbsApplicability="disable" resourcePath="/citygen/Ogre.log" toolsToInvoke=""/>
-</configuration>
-<configuration artifactExtension="bin" artifactName="citygen" cleanCommand="rm -rf" description="Debug GCC(Debug on Ubuntu Gutsy)" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1538353334" name="Debug Gutsy" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
+<configuration artifactExtension="bin" artifactName="citygen" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1538353334" name="Debug Gutsy" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
 <toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.1034036766" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug">
 <builder arguments="-j 2 -k" command="make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.2049460399" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.1073924450" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
@@ -266,6 +169,7 @@
 <listOptionValue builtIn="false" value="GL"/>
 <listOptionValue builtIn="false" value="Xaw"/>
 <listOptionValue builtIn="false" value="boost_thread-mt"/>
+<listOptionValue builtIn="false" value="boost_filesystem-mt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1044776159" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
 <listOptionValue builtIn="false" value="/usr/lib"/>
@@ -278,6 +182,55 @@
 <macros/>
 </toolChain>
 <resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.1538353334./citygen/Ogre.log" name="Ogre.log" rcbsApplicability="disable" resourcePath="/citygen/Ogre.log" toolsToInvoke=""/>
+</configuration>
+<configuration artifactExtension="bin" artifactName="citygen" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.28967003" name="Release Gutsy" parent="cdt.managedbuild.config.gnu.cygwin.exe.debug">
+<toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug.1611658302" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.exe.debug">
+<builder arguments="-j 2 -k" command="make" id="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug.2014761630" name="Gnu Make" superClass="cdt.managedbuild.target.gnu.builder.cygwin.exe.debug"/>
+<tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug.2050688243" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.exe.debug"/>
+<tool command="g++" id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug.1568169376" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.exe.debug">
+<option id="gnu.cpp.compiler.option.include.paths.1368158104" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+<listOptionValue builtIn="false" value="/usr/include/OGRE"/>
+<listOptionValue builtIn="false" value="../../tinyxml"/>
+<listOptionValue builtIn="false" value="../../wxPropertyGrid"/>
+<listOptionValue builtIn="false" value="/usr/include/atk-1.0"/>
+<listOptionValue builtIn="false" value="/usr/include/cairo"/>
+<listOptionValue builtIn="false" value="/usr/include/pango-1.0"/>
+<listOptionValue builtIn="false" value="/usr/lib/glib-2.0/include"/>
+<listOptionValue builtIn="false" value="/usr/include/glib-2.0"/>
+<listOptionValue builtIn="false" value="/usr/lib/gtk-2.0/include"/>
+<listOptionValue builtIn="false" value="/usr/include/gtk-2.0"/>
+</option>
+<option id="gnu.cpp.compiler.option.preprocessor.def.403568303" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+<listOptionValue builtIn="false" value="UNICODE"/>
+<listOptionValue builtIn="false" value="NDEBUG"/>
+<listOptionValue builtIn="false" value="_UNICODE"/>
+</option>
+<option id="gnu.cpp.compiler.option.other.other.324360393" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c `wx-config --cflags` -fmessage-length=0 -fexceptions -fident" valueType="string"/>
+<option id="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level.648044211" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
+<option id="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level.1687929671" superClass="gnu.cpp.compiler.cygwin.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
+</tool>
+<tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug.1946729066" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.exe.debug"/>
+<tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug.1466838522" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.exe.debug">
+<option id="gnu.cpp.link.option.libs.1769913615" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+<listOptionValue builtIn="false" value="tinyxml"/>
+<listOptionValue builtIn="false" value="wxPropertyGrid"/>
+<listOptionValue builtIn="false" value="X11"/>
+<listOptionValue builtIn="false" value="GL"/>
+<listOptionValue builtIn="false" value="Xaw"/>
+<listOptionValue builtIn="false" value="boost_thread-mt"/>
+<listOptionValue builtIn="false" value="boost_filesystem-mt"/>
+</option>
+<option id="gnu.cpp.link.option.paths.2026755586" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="stringList">
+<listOptionValue builtIn="false" value="/usr/lib"/>
+<listOptionValue builtIn="false" value="&quot;../../tinyxml/Release Ubuntu&quot;"/>
+<listOptionValue builtIn="false" value="../../wxPropertyGrid/Release"/>
+</option>
+<option id="gnu.cpp.link.option.flags.1871762187" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-lOgreMain `wx-config --libs`" valueType="string"/>
+</tool>
+<tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug.4230692" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.exe.debug"/>
+<macros/>
+</toolChain>
+<resourceConfiguration exclude="true" id="cdt.managedbuild.config.gnu.cygwin.exe.debug.28967003./citygen/Ogre.log" name="Ogre.log" rcbsApplicability="disable" resourcePath="/citygen/Ogre.log" toolsToInvoke=""/>
 </configuration>
 <macros/>
 </project>

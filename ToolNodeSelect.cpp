@@ -31,8 +31,12 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 	}
 	else if(_worldFrame->pickNode(e, HIGHLIGHTNODESNAPSQ, wn))
 		_worldFrame->highlightNode(wn);
+	else 
+		_worldFrame->highlightNode(0);
+	_worldFrame->update();
 
-	if(!_worldFrame->getSelected()) ToolView::OnMouseMove(e);
+	//TODO: take a good look at the number of update event we're causing 
+	// and see if WM_PAINT or some event shit can reduce this
 
 	// save for calc of next deltas
 	_mouseX = e.m_x;

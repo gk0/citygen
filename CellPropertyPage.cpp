@@ -27,19 +27,6 @@ void CellPropertyPage::Init()
     //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
 	_presetProp = Append( wxEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
 
-
-	wxPGChoices arrPlot2;
-	arrPlot2.Add(wxT("Downtown"), 0);
-	arrPlot2.Add(wxT("Industrial"), 1);
-	arrPlot2.Add(wxT("Suburbia"), 2);
-	_typeProp = Append( wxEnumProperty(wxT("Building Hint"), wxPG_LABEL, arrPlot2) );
-
-	/*const wxPGEditor* pdedit = GetGrid()->GetPropertyEditor(presetProp);
-    wxButton* but = (wxButton*) GetGrid()->GenerateEditorButton(wxDefaultPosition, wxDefaultSize);
-	pdedit->InsertItem((wxWindow*)but, "Test", 0);*/
-
-
-
     SetPropertyEditor(_presetProp,wxPG_EDITOR(ChoiceAndButton));
 	//presetProp
 
@@ -79,15 +66,31 @@ void CellPropertyPage::Init()
 	_buildingHeightProp = Append(wxFloatProperty(wxT("Building Height"), wxPG_LABEL, 0.));
 	_buildingDevianceProp = Append(wxFloatProperty(wxT("Building Deviance"), wxPG_LABEL, 0.));
 
-	_roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 4));
+	//_roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 4));
+
+	_roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 0));
+	SetPropertyEditor(wxT("Road Limit"), wxPG_EDITOR(SpinCtrl));
+
+	SetPropertyHelpString(wxT("SpinCtrl"),
+		wxT("This is regular wxIntProperty, which editor has been ")
+		wxT("changed to wxPG_EDITOR(SpinCtrl). Note however that ")
+		wxT("static wxPropertyGrid::RegisterAdditionalEditors() ")
+		wxT("needs to be called prior to using it."));
 
 	_connectivityProp = Append(wxFloatProperty(wxT("Connectivity"), wxPG_LABEL, 0));
 
 	_lotSizeProp = Append(wxFloatProperty(wxT("Lot Size"), wxPG_LABEL, 2));
 	_lotDevianceProp = Append(wxFloatProperty(wxT("Lot Deviance"), wxPG_LABEL, 0.2));
 
-	_debugProp =  Append(wxBoolProperty(wxT("View Debug Info"), wxPG_LABEL,0));
+	wxPGChoices arrPlot2;
+	arrPlot2.Add(wxT("Downtown"), 0);
+	arrPlot2.Add(wxT("Industrial"), 1);
+	arrPlot2.Add(wxT("Suburbia"), 2);
+	_typeProp = Append( wxEnumProperty(wxT("Building Hint"), wxPG_LABEL, arrPlot2) );
 
+	Append(wxPropertyCategory(wxT("Display Options")));
+
+	_debugProp =  Append(wxBoolProperty(wxT("View Debug Info"), wxPG_LABEL,0));
 }
 
 

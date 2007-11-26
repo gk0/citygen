@@ -102,6 +102,7 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 				_proposedRoad = new WorldRoad(_worldFrame->getSelected(), 
 						_proposedNode, _roadGraph, _simpleRoadGraph, _sceneManager);
 			
+			_proposedRoad->showSelected(true);
 			_intersectingRoad = 0;
 /*
 			NodeId nd;
@@ -125,9 +126,10 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 			else
 				LogManager::getSingleton().logMessage("State: "+StringConverter::toString(_snapState));
 */
-
-			_snapState = _proposedRoad->snapInfo(SNAP_SZ, newPos, _snapNode, _intersectingRoad);
-			//_snapState = 0;
+			if(!e.ShiftDown())
+				_snapState = _proposedRoad->snapInfo(SNAP_SZ, newPos, _snapNode, _intersectingRoad);
+			else
+				_snapState = 0;
 
 			//LogManager::getSingleton().logMessage("State: "+StringConverter::toString(mSnapState));
 			//mSnapState = 0;

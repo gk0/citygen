@@ -149,6 +149,7 @@ void WorldRoad::prebuild()
 		nextRoadSegNormal = Vector3(nextRoadSegPerp.x, 0, nextRoadSegPerp.y).crossProduct(nextRoadSegVector);
 		nextRoadSegNormal.normalise();
 		bNormal = (nextRoadSegNormal + Vector3::UNIT_Y) / 2;
+		bNormal.normalise();
 
 		//get the first b from the node
 		b = interpolatedList[0];
@@ -230,6 +231,7 @@ void WorldRoad::prebuild()
 
 			// calculate b normal 
 			bNormal = (currRoadSegNormal + nextRoadSegNormal) / 2;
+			bNormal.normalise();
 			uTex += currRoadSegLength;
 
 			// vertex data

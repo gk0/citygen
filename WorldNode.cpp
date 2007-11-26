@@ -53,7 +53,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 
 	// create moveable text label
 	_label = new MovableText("Label"+_name, nodeCount);
-	_label->setCharacterHeight(5);
+	_label->setCharacterHeight(4);
 	_label->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE); // Center horizontally and display above the node
 	_label->setAdditionalHeight(4.0f);
 
@@ -100,6 +100,7 @@ void WorldNode::showHighlighted(bool highlighted)
 void WorldNode::showSelected(bool selected)
 {
 	_selected->setVisible(selected);
+	_label->setVisible(selected || _degree < 2);
 	_mesh->setVisible(!selected && _degree < 2);
 }
 
@@ -249,6 +250,8 @@ void WorldNode::build()
 		_mesh->setVisible(false);
 		break;
 	}
+	//_label->setVisible(true);
+	//_mesh->setVisible(true);
 	
 
 	Vector2 nodePos2D = getPosition2D();
@@ -304,88 +307,6 @@ void WorldNode::build()
 	_sceneNode->attachObject(_junctionEntity);
 	meshBuilder.registerData(mat.get(), _vertexData, _indexData);
 }
-
-/*void WorldNode::build()
-{
-if(_junctionPlate)
-{
-delete _junctionPlate;
-_junctionPlate = 0;
-}
-
-// how many roads connect here
-switch(_degree)
-{
-case 0:
-_label->setVisible(true);
-_mesh->setVisible(true);
-return;
-case 1:
-_label->setVisible(true);
-_mesh->setVisible(true);
-createTerminus();
-return;
-case 2:
-_label->setVisible(false);
-_mesh->setVisible(false);
-break;
-case 3:
-_label->setVisible(false);
-_mesh->setVisible(false);
-if(createTJunction()) return;
-break;
-default:
-// try it
-_label->setVisible(false);
-_mesh->setVisible(false);
-break;
-}
-
-
-Vector2 nodePos2D = getPosition2D();
-Real height = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
-
-// get a clockwise list of road intersections
-vector<Vector2> pointlist;
-vector<RoadId> roadCWVec(getClockwiseVecOfRoads());
-for(size_t j,i=0; i < _degree; i++)
-{
-j = (i+1)%_degree;
-Vector2 tmp = _roadGraph.getRoadBounaryIntersection(roadCWVec[i], roadCWVec[j]);
-pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
-}
-
-// declare the manual object
-_junctionPlate = new ManualObject(_name+"j");
-_junctionPlate->begin("gk/RoadJunction", Ogre::RenderOperation::OT_TRIANGLE_LIST);
-
-// fill the junction data for use by roads
-_roadJunction.clear();
-for(size_t i=0; i < _degree; i++)
-{
-size_t j = (i + 1) % _degree;
-
-//
-pair<Vector3, Vector3> roadPair(Vector3(pointlist[j].x, height, pointlist[j].y), 
-Vector3(pointlist[i].x, height, pointlist[i].y));
-
-// create a junction -> road join pair
-_roadJunction[roadCWVec[j]] = roadPair;
-
-
-_junctionPlate->position(roadPair.second - getPosition3D());
-_junctionPlate->normal(Vector3::UNIT_Y);
-_junctionPlate->textureCoord(0,0);
-_junctionPlate->position(roadPair.first - getPosition3D());
-_junctionPlate->normal(Vector3::UNIT_Y);
-_junctionPlate->textureCoord(1,0);
-_junctionPlate->position(0.0f,  GROUNDCLEARANCE.y - 0.1f, 0.0f);
-_junctionPlate->normal(Vector3::UNIT_Y);
-_junctionPlate->textureCoord(0.5, 0.5);
-}
-_junctionPlate->end();
-_sceneNode->attachObject(_junctionPlate);
-}*/
 
 void WorldNode::createTerminus()
 {
@@ -466,6 +387,7 @@ bool WorldNode::createTJunction()
 
 	vector<RoadId> throughRoads(2);
 	size_t joiningRoadInd;
+	Vector2 pos2D(getPosition2D());
 
 	// get a clockwise list of road intersections
 	bool roadsAreEqualSize = false;
@@ -486,32 +408,39 @@ bool WorldNode::createTJunction()
 		else if(roadWidthVec[2] == roadWidthVec[1]) joiningRoadInd = 0;
 		else return false;
 	}
-
 	// distinction cannot be made by road width
 	if(roadsAreEqualSize)
 	{
 		vector<NodeId> nodeCWVec(getClockwiseVecOfNodes(roadCWVec));
-		Vector2 pos2D(getPosition2D());
-		Vector2 roadVec0(pos2D - _roadGraph.getNode(nodeCWVec[0])->getPosition2D());
-		Vector2 roadVec1(pos2D - _roadGraph.getNode(nodeCWVec[1])->getPosition2D());
-		Vector2 roadVec2(pos2D - _roadGraph.getNode(nodeCWVec[2])->getPosition2D());
+		Vector2 roadVec0(_roadGraph.getNode(nodeCWVec[0])->getPosition2D() - pos2D);
+		Vector2 roadVec1(_roadGraph.getNode(nodeCWVec[1])->getPosition2D() - pos2D);
+		Vector2 roadVec2(_roadGraph.getNode(nodeCWVec[2])->getPosition2D() - pos2D);
 		roadVec0.normalise();
 		roadVec1.normalise();
 		roadVec2.normalise();
-		Real cos0 = Math::Abs(roadVec1.dotProduct(roadVec2));
-		Real cos1 = Math::Abs(roadVec0.dotProduct(roadVec2));
-		Real cos2 = Math::Abs(roadVec0.dotProduct(roadVec1));
-		if(cos0 > cos1)
+
+		// get the angles between the other two roads
+		Real cos0 = roadVec1.dotProduct(roadVec2);
+		Real cos1 = roadVec0.dotProduct(roadVec2);
+		Real cos2 = roadVec0.dotProduct(roadVec1);
+
+		// choose the road with the least open angle to the others
+		if(cos0 < cos1)
 		{
-			if(cos0 > cos2) joiningRoadInd = 0;
+			if(cos0 < cos2) joiningRoadInd = 0;
 			else joiningRoadInd = 2;
 		}
 		else
 		{
-			if(cos1 > cos2) joiningRoadInd = 1;
+			if(cos1 < cos2) joiningRoadInd = 1;
 			else joiningRoadInd = 2;
 		}
 	}
+
+	//WorldRoad* wr = static_cast<WorldRoad*>(_roadGraph.getRoad(roadCWVec[joiningRoadInd]));
+	//WorldNode* ni1 = static_cast<WorldNode*>(wr->getSrcNode());
+	//WorldNode* ni2 = static_cast<WorldNode*>(wr->getDstNode());
+	//LogManager::getSingleton().logMessage("Road Pair: "+ni1->getLabel()+":"+ni2->getLabel());
 
 	// get height
 	Real h = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
@@ -525,6 +454,8 @@ bool WorldNode::createTJunction()
 		{
 			p1 = _roadGraph.getRoadBounaryIntersection(roadCWVec[j], roadCWVec[k]);
 			p2 = _roadGraph.getRoadBounaryIntersection(roadCWVec[i], roadCWVec[j]);
+			p1 = madnessCheck(pos2D, p1, 4.0f, 2.0f);
+			p2 = madnessCheck(pos2D, p2, 4.0f, 2.0f);
 			_roadJunction[roadCWVec[j]] = make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 		}
 		else
@@ -532,6 +463,8 @@ bool WorldNode::createTJunction()
 			if(k == joiningRoadInd) k = (i+3)%_degree;
 			p1 = _roadGraph.getRoadBounaryIntersection(roadCWVec[j], roadCWVec[k]);
 			p2 = _roadGraph.getRoadBounaryIntersection(roadCWVec[k], roadCWVec[j]);
+			p1 = madnessCheck(pos2D, p1, 4.0f, 2.0f);
+			p2 = madnessCheck(pos2D, p2, 4.0f, 2.0f);
 			_roadJunction[roadCWVec[j]] = make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
 		}
 	}

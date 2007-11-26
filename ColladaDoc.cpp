@@ -325,7 +325,7 @@ void ColladaDoc::addMeshToLibrary(MeshPtr mesh)
 	}
 }
 
-// <input semantic="TEXCOORD" source="#texture2" offset=”0”/>
+// <input semantic="TEXCOORD" source="#texture2" offset=ï¿½0ï¿½/>
 TiXmlElement* ColladaDoc::createInput(const char* semantic, string& source)
 {
 	TiXmlElement* input = new TiXmlElement("input");

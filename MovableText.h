@@ -51,7 +51,7 @@ protected:
 
     /******************************** public methods ******************************/
 public:
-	MovableText(const String &name, const String &caption, const String &fontName = "BlueHighway", Real charHeight = 1.0, const ColourValue &color = ColourValue::White);
+	MovableText(const String &name, const String &caption, const String &fontName = "DejaVuSans", Real charHeight = 1.0, const ColourValue &color = ColourValue::White);
 	virtual ~MovableText();
 
     // Set settings
