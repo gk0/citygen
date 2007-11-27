@@ -22,11 +22,12 @@ bool RoadGraph::addRoad(const NodeId nd1, const NodeId nd2, RoadId& rd)
 	return inserted;
 }
 
-bool RoadGraph::addRoad(const NodeId nd1, const NodeId nd2, RoadInterface* r, RoadId& rd)
+bool RoadGraph::addRoad(const NodeId nd1, const NodeId nd2, RoadInterface* r,
+		RoadId& rd)
 {
 	bool inserted = false;
 	tie(rd, inserted) = add_edge(nd1, nd2, r, _graph);
-	if(inserted) 
+	if (inserted)
 	{
 		getNode(nd1)->onAddRoad();
 		getNode(nd2)->onAddRoad();
@@ -39,7 +40,8 @@ bool RoadGraph::findRoad(const NodeId nd1, const NodeId nd2, RoadId& rd) const
 	RoadId r;
 	bool found = false;
 	tie(r, found) = edge(nd1, nd2, _graph);
-	if(found) rd = r;
+	if (found)
+		rd = r;
 	return found;
 }
 
@@ -56,7 +58,7 @@ void RoadGraph::removeRoad(const NodeId nd1, const NodeId nd2)
 	RoadId rd;
 	bool found = false;
 	tie(rd, found) = edge(nd1, nd2, _graph);
-	if(found)
+	if (found)
 	{
 		remove_edge(rd, _graph);
 		_graph[nd1]->onRemoveRoad();
@@ -74,21 +76,20 @@ void RoadGraph::removeRoad(const RoadId rd)
 	n2->onRemoveRoad();
 }
 
-
 bool RoadGraph::sortVertex(const NodeId& v0, const NodeId& v1) const
 {
 	Real x0 = _graph[v0]->getPosition2D().x;
 	Real x1 = _graph[v1]->getPosition2D().x;
 	return (x0 < x1);
 }
-    
-void RoadGraph::extractPrimitives(vector< vector<NodeInterface*> > &filaments, 
-								  vector< vector<NodeInterface*> > &nodeCycles)
+
+void RoadGraph::extractPrimitives(vector< vector<NodeInterface*> > &filaments,
+		vector< vector<NodeInterface*> > &nodeCycles)
 {
 	// create a copy of our road graph to work on
 	Graph g(_graph);
 
-	std::ostringstream oss; 
+	std::ostringstream oss;
 	oss << " ";
 
 	//init roads
@@ -99,7 +100,7 @@ void RoadGraph::extractPrimitives(vector< vector<NodeInterface*> > &filaments,
 	graph_traits<Graph>::vertex_iterator i, end;
 	tie(i, end) = vertices(g);
 	//set<NodeId> heap(i, end);
-	
+
 	//SET needs sort
 	//sort(heap.begin(), heap.end(), comp());
 	//it would be neater o use a comparator but our comparision isn't standalone
@@ -108,15 +109,16 @@ void RoadGraph::extractPrimitives(vector< vector<NodeInterface*> > &filaments,
 	//insert one
 	heap.push_back(*i++);
 
-	for(; i != end; ++i)
+	for (; i != end; ++i)
 	{
-		for(std::list<NodeId>::iterator tit = heap.begin(); true; tit++)
+		for (std::list<NodeId>::iterator tit = heap.begin(); true; tit++)
 		{
-			if(tit == heap.end()) {
+			if (tit == heap.end())
+			{
 				heap.push_back(*i);
 				break;
 			}
-			else if(sortVertex(*i, *tit))
+			else if (sortVertex(*i, *tit))
 			{
 				heap.insert(tit, *i);
 				break;
@@ -131,37 +133,38 @@ void RoadGraph::extractPrimitives(vector< vector<NodeInterface*> > &filaments,
 	//}	
 	//LogManager::getSingleton().logMessage(oss.str());
 
-	try {
-	
-	//while (heap is not empty) do
-	while(heap.size() != 0)
+	try
 	{
-		//Vertex v0 = heap.GetMin();
-		NodeId v0 = *(heap.begin());
 
-		switch(out_degree(v0, g))
+		//while (heap is not empty) do
+		while(heap.size() != 0)
 		{
-		case 0:
-			remove_vertex(v0, g);
-			removeFromHeap(v0, heap);
-			break;
-		case 1:
-			extractFilament(v0, getFirstAdjacent(v0, g), g, heap, filaments);
-			//oss<<"Filament: "<<graph[v0].getName()<<endl;
+			//Vertex v0 = heap.GetMin();
+			NodeId v0 = *(heap.begin());
 
-			//DEBUG
-			//heap.erase(v0);
-			break;
-		default:
-			 extractPrimitive(v0, g, heap, filaments, nodeCycles); // filament or minimal cycle
-			//oss<<"Cycle or Filament: "<<mGraph[v0].getName()<<endl;
+			switch(out_degree(v0, g))
+			{
+				case 0:
+				remove_vertex(v0, g);
+				removeFromHeap(v0, heap);
+				break;
+				case 1:
+				extractFilament(v0, getFirstAdjacent(v0, g), g, heap, filaments);
+				//oss<<"Filament: "<<graph[v0].getName()<<endl;
 
-			//DEBUG
+				//DEBUG
+				//heap.erase(v0);
+				break;
+				default:
+				extractPrimitive(v0, g, heap, filaments, nodeCycles); // filament or minimal cycle
+				//oss<<"Cycle or Filament: "<<mGraph[v0].getName()<<endl;
+
+				//DEBUG
+				//heap.erase(v0);
+				break;
+			}
 			//heap.erase(v0);
-			break;
 		}
-		//heap.erase(v0);
-	}
 
 	}
 	catch(Exception e)
@@ -173,31 +176,32 @@ void RoadGraph::extractPrimitives(vector< vector<NodeInterface*> > &filaments,
 	}
 }
 
-void RoadGraph::extractFilament(NodeId v0, NodeId v1, Graph &g, list<NodeId>& heap, 
-								vector< vector<NodeInterface*> > &filaments)
+void RoadGraph::extractFilament(NodeId v0, NodeId v1, Graph &g,
+		list<NodeId>& heap, vector< vector<NodeInterface*> > &filaments)
 {
 	//assert(out_degree(v0, g) != 2); // trouble
-	if(out_degree(v0, g) == 2) {
-	//	throw Exception(Exception::ERR_ITEM_NOT_FOUND, "ERROR: incorrect filament degree", "RoadGraph::extractFilament");
+	if (out_degree(v0, g) == 2)
+	{
+		//	throw Exception(Exception::ERR_ITEM_NOT_FOUND, "ERROR: incorrect filament degree", "RoadGraph::extractFilament");
 	}
 
-	if(g[edge(v0, v1, g).first]->isRoadCycle())
+	if (g[edge(v0, v1, g).first]->isRoadCycle())
 	{
-		if(out_degree(v0, g) >= 3)		
+		if (out_degree(v0, g) >= 3)
 		{
 			remove_edge(v0, v1, g);
 			v0 = v1;
-			if(out_degree(v0, g) == 1)
+			if (out_degree(v0, g) == 1)
 			{
 				v1 = getFirstAdjacent(v0, g);
 			}
 
 		}
-		while(out_degree(v0, g) == 1)
+		while (out_degree(v0, g) == 1)
 		{
-			v1 =  getFirstAdjacent(v0, g);
+			v1 = getFirstAdjacent(v0, g);
 
-			if(g[edge(v0, v1, g).first]->isRoadCycle())
+			if (g[edge(v0, v1, g).first]->isRoadCycle())
 			{
 				//heap.erase(v0);
 				removeFromHeap(v0, heap);
@@ -210,7 +214,7 @@ void RoadGraph::extractFilament(NodeId v0, NodeId v1, Graph &g, list<NodeId>& he
 				break;
 			}
 		}
-		if(out_degree(v0, g) == 0)
+		if (out_degree(v0, g) == 0)
 		{
 			//heap.erase(v0);
 			removeFromHeap(v0, heap);
@@ -221,20 +225,20 @@ void RoadGraph::extractFilament(NodeId v0, NodeId v1, Graph &g, list<NodeId>& he
 	{
 		vector<NodeInterface*> filament;
 
-		if(out_degree(v0, g) >= 3)
+		if (out_degree(v0, g) >= 3)
 		{
 			filament.push_back(g[v0]);
 			remove_edge(v0, v1, g);
 			v0 = v1;
-			if(out_degree(v0, g) == 1)
+			if (out_degree(v0, g) == 1)
 			{
-				v1 =  getFirstAdjacent(v0, g);
+				v1 = getFirstAdjacent(v0, g);
 			}
 		}
 
 		while (out_degree(v0, g) == 1)
 		{
-			v1 =  getFirstAdjacent(v0, g);
+			v1 = getFirstAdjacent(v0, g);
 			filament.push_back(g[v0]);
 
 			//heap.erase(v0);
@@ -246,7 +250,7 @@ void RoadGraph::extractFilament(NodeId v0, NodeId v1, Graph &g, list<NodeId>& he
 
 		filament.push_back(g[v0]);
 
-		if(out_degree(v0, g) == 0)
+		if (out_degree(v0, g) == 0)
 		{
 			//heap.erase(v0);
 			removeFromHeap(v0, heap);
@@ -257,9 +261,9 @@ void RoadGraph::extractFilament(NodeId v0, NodeId v1, Graph &g, list<NodeId>& he
 	}
 }
 
-void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap, 
-								 vector< vector<NodeInterface*> > &filaments, 
-								 vector< vector<NodeInterface*> > &nodeCycles)
+void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
+		vector< vector<NodeInterface*> > &filaments,
+		vector< vector<NodeInterface*> > &nodeCycles)
 {
 	set<NodeId> visited;
 	vector<NodeInterface*> nodeCycle;
@@ -269,11 +273,11 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 	bool vertexFound = getClockwiseMost(v0, v1, g);
 	//nodeCycle.push_back(g[v0]);
 	NodeId vprev = v0;
-	NodeId vcurr = v1;	
+	NodeId vcurr = v1;
 	NodeId vnext;
 
 	//while (vcurr is not nil) and (vcurr is not v0) and (vcurr is not visited) do
-	while(vertexFound && vcurr != v0 && visited.find(vcurr) == visited.end())
+	while (vertexFound && vcurr != v0 && visited.find(vcurr) == visited.end())
 	{
 		nodeCycle.push_back(g[vcurr]);
 		roadCycle.push_back(g[edge(vprev, vcurr, g).first]);
@@ -282,7 +286,7 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 		vprev = vcurr;
 		vcurr = vnext;
 	}
-	if(!vertexFound)
+	if (!vertexFound)
 	{
 		assert(out_degree(vprev, g) == 1);
 
@@ -296,7 +300,7 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 		//if(out_degree(v0, g) == 2) setEdgeColour(v0, getFirstAdjacent(v0, g), black_color);
 		//removeFromHeap(v0, heap);
 	}
-	else if(vcurr == v0)
+	else if (vcurr == v0)
 	{
 		// Minimal cycle found.
 
@@ -312,17 +316,17 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 
 		remove_edge(v0, v1, g);
 
-		if(out_degree(v0, g) == 1)
+		if (out_degree(v0, g) == 1)
 		{
 			// Remove the filament rooted at v0.
-			extractFilament(v0,  getFirstAdjacent(v0, g), g, heap, filaments);
+			extractFilament(v0, getFirstAdjacent(v0, g), g, heap, filaments);
 		}
 
 		// need to check if v1 is still there
-		if(out_degree(v1, g) == 1) //BUG: TODO: causes error sometimes
+		if (out_degree(v1, g) == 1) //BUG: TODO: causes error sometimes
 		{
 			// Remove the filament rooted at v1.
-			extractFilament(v1,  getFirstAdjacent(v1, g), g, heap, filaments);
+			extractFilament(v1, getFirstAdjacent(v1, g), g, heap, filaments);
 		}
 	}
 	else // vcurr was visited earlier
@@ -333,7 +337,7 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 		// from the initial v1.
 		while (out_degree(v0, g) == 2) // maybe try < 2
 		{
-			if(getFirstAdjacent(v0, g) != v1)
+			if (getFirstAdjacent(v0, g) != v1)
 			{
 				v1 = v0;
 				v0 = getFirstAdjacent(v0, g);
@@ -348,8 +352,7 @@ void RoadGraph::extractPrimitive(NodeId v0, Graph &g, list<NodeId>& heap,
 	}
 }
 
-
-bool RoadGraph::getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g) 
+bool RoadGraph::getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g)
 {
 	bool isConvex = false, success = false;
 
@@ -361,10 +364,10 @@ bool RoadGraph::getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g)
 	BOOST_FOREACH(RoadId rd, out_edges(vcurr, g))
 	{
 		NodeId vadj = target(rd, g);
-		
+
 		NodeInterface* ni = g[vadj];
-		Vector2 dadj = ni->getPosition2D()  - vcurr_pos;	//error void ptr
-		
+		Vector2 dadj = ni->getPosition2D() - vcurr_pos; //error void ptr
+
 		if(!success)
 		{
 			vnext = vadj;
@@ -396,8 +399,8 @@ bool RoadGraph::getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g)
 	return success;
 }
 
-
-bool RoadGraph::getCounterClockwiseMostFromPrev(NodeId vprev, NodeId vcurr, NodeId& vnext, const Graph& g) 
+bool RoadGraph::getCounterClockwiseMostFromPrev(NodeId vprev, NodeId vcurr,
+		NodeId& vnext, const Graph& g)
 {
 	bool isConvex = false, success = false;
 
@@ -414,9 +417,8 @@ bool RoadGraph::getCounterClockwiseMostFromPrev(NodeId vprev, NodeId vcurr, Node
 		//No going back :)
 		if(vadj == vprev) continue;
 
+		Vector2 dadj = g[vadj]->getPosition2D() - vcurr_pos; //error
 
-		Vector2 dadj = g[vadj]->getPosition2D() - vcurr_pos;	//error
-		
 		if(!success)
 		{
 			vnext = vadj;
@@ -451,7 +453,8 @@ bool RoadGraph::getCounterClockwiseMostFromPrev(NodeId vprev, NodeId vcurr, Node
 void RoadGraph::removeFromHeap(NodeId v0, std::list<NodeId>& heap)
 {
 	std::list<NodeId>::iterator hIt = find(heap.begin(), heap.end(), v0);
-	if(hIt != heap.end()) heap.erase(hIt);
+	if (hIt != heap.end())
+		heap.erase(hIt);
 }
 
 RoadId RoadGraph::getFirstRoad(NodeId nd, const Graph &g)
@@ -481,27 +484,26 @@ NodeId RoadGraph::getSecondAdjacent(NodeId nd, const Graph &g)
 	return target(getSecondRoad(nd, g), g);
 }
 
-
-bool RoadGraph::roadIntersection(const Vector2& a, const Vector2& b, const RoadId rd, 
-								 Vector2& intersection) const
+bool RoadGraph::roadIntersection(const Vector2& a, const Vector2& b,
+		const RoadId rd, Vector2& intersection) const
 {
 	// get some values for our points
-	return Geometry::lineSegmentIntersect(a, b, getNode(getSrc(rd))->getPosition2D(), 
-		getNode(getDst(rd))->getPosition2D(), intersection);
+	return Geometry::lineSegmentIntersect(a, b, getNode(getSrc(rd))->getPosition2D(), getNode(getDst(rd))->getPosition2D(), intersection);
 
 }
 
-bool RoadGraph::roadIntersection(const RoadId rd1, const RoadId rd2, Vector2& intersection) const
+bool RoadGraph::roadIntersection(const RoadId rd1, const RoadId rd2,
+		Vector2& intersection) const
 {
 	// get some values for our points
-	return Geometry::lineSegmentIntersect(getNode(getSrc(rd1))->getPosition2D(), getNode(getDst(rd1))->getPosition2D(),
-		getNode(getSrc(rd2))->getPosition2D(), getNode(getDst(rd2))->getPosition2D(), intersection);
+	return Geometry::lineSegmentIntersect(getNode(getSrc(rd1))->getPosition2D(), getNode(getDst(rd1))->getPosition2D(), getNode(getSrc(rd2))->getPosition2D(), getNode(getDst(rd2))->getPosition2D(), intersection);
 
 }
 
-bool RoadGraph::getNodeClosest(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Real &distance) const
+bool RoadGraph::getNodeClosest(const Ogre::Vector2 &loc, NodeId &nd,
+		Ogre::Real &distance) const
 {
-	if(getNodeClosestSq(loc, nd, distance)) 
+	if (getNodeClosestSq(loc, nd, distance))
 	{
 		distance = Math::Sqrt(distance);
 		return true;
@@ -510,7 +512,8 @@ bool RoadGraph::getNodeClosest(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Real 
 		return false;
 }
 
-bool RoadGraph::getNodeClosestSq(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Real &distance) const
+bool RoadGraph::getNodeClosestSq(const Ogre::Vector2 &loc, NodeId &nd,
+		Ogre::Real &distance) const
 {
 	Ogre::Real currDist = std::numeric_limits<Ogre::Real>::max();
 	NodeId currNode = 0;
@@ -518,14 +521,14 @@ bool RoadGraph::getNodeClosestSq(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Rea
 	BOOST_FOREACH(NodeId nd, vertices(_graph))
 	{
 		Vector2 temp(_graph[nd]->getPosition2D() - loc);
-		if(temp.squaredLength() < currDist) 
+		if(temp.squaredLength() < currDist)
 		{
 			currDist = temp.squaredLength();
 			currNode = nd;
 			success = true;
 		}
 	}
-	if(success) 
+	if (success)
 	{
 		nd = currNode;
 		distance = currDist;
@@ -570,13 +573,14 @@ bool RoadGraph::hasIntersection(const RoadId roadId)
 		{
 			Vector2 intersection;
 			if(roadIntersection(roadId, rd, intersection))
-				return true;
+			return true;
 		}
 	}
 	return false;
 }
 
-Vector2 RoadGraph::getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR)
+Vector2 RoadGraph::getRoadBounaryIntersection(const RoadId leftR,
+		const RoadId rightR)
 {
 	Real lWidth, rWidth;
 	Vector2 l1, l2, r1, r2, lOffset, rOffset;
@@ -604,13 +608,14 @@ Vector2 RoadGraph::getRoadBounaryIntersection(const RoadId leftR, const RoadId r
 
 	// if parallel, use l1 as pos
 	Vector2 pos;
-	if(Geometry::lineIntersect(l1, l2, r1, r2, pos))
+	if (Geometry::lineIntersect(l1, l2, r1, r2, pos))
 		return pos;
 	else
 		return l1;
 }
 
-bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq, NodeId& nodeId) const
+bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq,
+		NodeId& nodeId) const
 {
 	Ogre::Real closestDistSq = snapSzSq;
 	bool success = false;
@@ -618,7 +623,7 @@ bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq, NodeId& nod
 	{
 		Vector2 nodePos(_graph[nd]->getPosition2D());
 		Real currDistSq =(nodePos - pos).squaredLength();
-		if(currDistSq < closestDistSq) 
+		if(currDistSq < closestDistSq)
 		{
 			closestDistSq = currDistSq;
 			nodeId = nd;
@@ -628,9 +633,8 @@ bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq, NodeId& nod
 	return success;
 }
 
-
-int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, const Real snapSz, 
-									   Vector2& pos, NodeId &nodeId, RoadId& roadId) const
+int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
+		const Real snapSz, Vector2& pos, NodeId &nodeId, RoadId& roadId) const
 {
 
 	Vector2 a(_graph[aNode]->getPosition2D());
@@ -668,7 +672,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 	//LogManager::getSingleton().logMessage("BB filter: "+StringConverter::toString(possibleSnapRoads.size()) + "/" +StringConverter::toString(roundCount));
 
 	Real snapSzSq = Math::Sqr(snapSz);
-	Vector2 c,d;
+	Vector2 c, d;
 	Vector2 ab(b - a);
 	Real bxMinusAx(ab.x);
 	Real byMinusAy(ab.y);
@@ -677,7 +681,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 	Real lowestR(1.0f);
 	Real stretchR(lowestR + snapSz/L);
 	NodeId snapNode;
-	Real r,s;
+	Real r, s;
 	RoadId intersectingRoad;
 	Real closestDistToBSq = snapSzSq;
 	bool nodeSnapped = false;
@@ -703,22 +707,22 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 		ni->_r = r;
 		ni->_s = s;
 
-		if(r >= 0)
+		if (r >= 0)
 		{
-			if(r <= lowestR)
+			if (r <= lowestR)
 			{
 				Real distance = Ogre::Math::Abs(s) * L;
-				if(distance < snapSz && nd != aNode)
+				if (distance < snapSz && nd != aNode)
 				{
 					lowestR = r;
 					snapNode = nd;
 				}
 			}
-			else if(r < stretchR && lowestR == 1)
+			else if (r < stretchR && lowestR == 1)
 			{
 				// test the region on the extension of ab
 				Real distSq = (c - b).squaredLength();
-				if(distSq < closestDistToBSq)
+				if (distSq < closestDistToBSq)
 				{
 					closestDistToBSq = distSq;
 					snapNode = nd;
@@ -733,18 +737,22 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 	BOOST_FOREACH(RoadId rd, possibleSnapRoads)
 	{
 		//tc++;
-		NodeId cNd(source(rd,_graph));
-		NodeId dNd(target(rd,_graph));
+		NodeId cNd(source(rd, _graph));
+		NodeId dNd(target(rd, _graph));
 		NodeInterface* cNi = _graph[cNd];
 		NodeInterface* dNi = _graph[dNd];
 
 		// exclude r: outside segment ab or a(last snap point)
-		if(cNi->_r > lowestR && dNi->_r > lowestR) continue;
-		if(cNi->_r < 0 && dNi->_r < 0) continue;
+		if (cNi->_r > lowestR && dNi->_r > lowestR)
+			continue;
+		if (cNi->_r < 0 && dNi->_r < 0)
+			continue;
 
 		// exclude s: on same side
-		if(cNi->_s > 1 && dNi->_s > 1) continue;
-		if(cNi->_s < 0 && dNi->_s < 0) continue;
+		if (cNi->_s > 1 && dNi->_s > 1)
+			continue;
+		if (cNi->_s < 0 && dNi->_s < 0)
+			continue;
 
 		//te++;
 
@@ -756,7 +764,8 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 		Ogre::Real denom = (bxMinusAx * dyMinusCy) - (byMinusAy * dxMinusCx);
 
 		// line are parallel
-		if(denom == 0) continue;
+		if (denom == 0)
+			continue;
 
 		Real axMinusCx(a.x - c.x);
 		Real ayMinusCy(a.y - c.y);
@@ -764,10 +773,11 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 		s = ((ayMinusCy * bxMinusAx) - (axMinusCx * byMinusAy)) / denom;
 
 		//if r and s are 0 then the line are coincident (on top of one another)
-		if(r == 0 && s == 0) continue;
+		if (r == 0 && s == 0)
+			continue;
 
 		// if outside segment cd
-		if(s < 0 || s > 1) continue;
+		if (s< 0 || s> 1)continue ;
 
 		if(r >= 0 && r < lowestR)
 		{
@@ -808,9 +818,9 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 	}
 	//LogManager::getSingleton().logMessage("Test 2: "+StringConverter::toString(tc)+":"+StringConverter::toString(te));
 
-	if(intersection) 
+	if(intersection)
 	{
-		pos.x = a.x + lowestR * bxMinusAx;			//lowestR: 0 ??
+		pos.x = a.x + lowestR * bxMinusAx; //lowestR: 0 ??
 		pos.y = a.y + lowestR * byMinusAy;
 		roadId = intersectingRoad;
 		return 1;
@@ -898,242 +908,242 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, con
 
 }
 /*
-int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, const Real snapSz, 
-									   Vector2& pos, NodeId &nodeId, RoadId& roadId) const
-{
-	Real snapSzSq = Math::Sqr(snapSz);
-	Vector2 c,d,a(_graph[aNode]->getPosition2D());
-	Vector2 ab(b - a);
-	Real bxMinusAx(ab.x);
-	Real byMinusAy(ab.y);
-	Real Lsq = ab.squaredLength();
-	Real L = Math::Sqrt(Lsq);
-	Real lowestR(1.0f);
-	Real stretchR(lowestR + snapSz/L);
-	NodeId snapNode;
-	Real r,s;
-	RoadId intersectingRoad;
-	Real closestDistToBSq = snapSzSq;
-	bool nodeSnapped = false;
-	
-	BOOST_FOREACH(NodeId nd, vertices(_graph))
-	{
-		NodeInterface* ni = _graph[nd];
-		Vector2 c(ni->getPosition2D());
+ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b, const Real snapSz, 
+ Vector2& pos, NodeId &nodeId, RoadId& roadId) const
+ {
+ Real snapSzSq = Math::Sqr(snapSz);
+ Vector2 c,d,a(_graph[aNode]->getPosition2D());
+ Vector2 ab(b - a);
+ Real bxMinusAx(ab.x);
+ Real byMinusAy(ab.y);
+ Real Lsq = ab.squaredLength();
+ Real L = Math::Sqrt(Lsq);
+ Real lowestR(1.0f);
+ Real stretchR(lowestR + snapSz/L);
+ NodeId snapNode;
+ Real r,s;
+ RoadId intersectingRoad;
+ Real closestDistToBSq = snapSzSq;
+ bool nodeSnapped = false;
+ 
+ BOOST_FOREACH(NodeId nd, vertices(_graph))
+ {
+ NodeInterface* ni = _graph[nd];
+ Vector2 c(ni->getPosition2D());
 
-		//TEST HACK
-//		if(c == b) 
-//			continue;
-    
-		// r = ((Cx-Ax)(Bx-Ax) + (Cy-Ay)(By-Ay)) / L^2
-		Ogre::Real cxMinusAx(c.x-a.x);
-		Ogre::Real cyMinusAy(c.y-a.y);
-		r = (cxMinusAx*bxMinusAx + cyMinusAy*byMinusAy) / Lsq;
-   
-		// s = ((Ay-Cy)(Bx-Ax)-(Ax-Cx)(By-Ay)) / L^2
-		s = (-cyMinusAy*bxMinusAx+cxMinusAx*byMinusAy) / Lsq;
+ //TEST HACK
+ //		if(c == b) 
+ //			continue;
+ 
+ // r = ((Cx-Ax)(Bx-Ax) + (Cy-Ay)(By-Ay)) / L^2
+ Ogre::Real cxMinusAx(c.x-a.x);
+ Ogre::Real cyMinusAy(c.y-a.y);
+ r = (cxMinusAx*bxMinusAx + cyMinusAy*byMinusAy) / Lsq;
+ 
+ // s = ((Ay-Cy)(Bx-Ax)-(Ax-Cx)(By-Ay)) / L^2
+ s = (-cyMinusAy*bxMinusAx+cxMinusAx*byMinusAy) / Lsq;
 
-		// install node data
-		ni->_r = r;
-		ni->_s = s;
+ // install node data
+ ni->_r = r;
+ ni->_s = s;
 
-		if(r >= 0)
-		{
-			if(r <= lowestR)
-			{
-				Real distance = Ogre::Math::Abs(s) * L;
-				if(distance < snapSz && nd != aNode)
-				{
-					lowestR = r;
-					snapNode = nd;
-				}
-			}
-			else if(r < stretchR && lowestR == 1)
-			{
-				// test the region on the extension of ab
-				Real distSq = (c - b).squaredLength();
-				if(distSq < closestDistToBSq)
-				{
-					closestDistToBSq = distSq;
-					snapNode = nd;
-					nodeSnapped = true;
-				}
-			}
-		}
-	}
+ if(r >= 0)
+ {
+ if(r <= lowestR)
+ {
+ Real distance = Ogre::Math::Abs(s) * L;
+ if(distance < snapSz && nd != aNode)
+ {
+ lowestR = r;
+ snapNode = nd;
+ }
+ }
+ else if(r < stretchR && lowestR == 1)
+ {
+ // test the region on the extension of ab
+ Real distSq = (c - b).squaredLength();
+ if(distSq < closestDistToBSq)
+ {
+ closestDistToBSq = distSq;
+ snapNode = nd;
+ nodeSnapped = true;
+ }
+ }
+ }
+ }
 
-	bool intersection = false;
-	//size_t count = 0, execcount = 0;
-	BOOST_FOREACH(RoadId rd, edges(_graph))
-	{
-		//count++;
-		NodeId cNd(source(rd,_graph));
-		NodeId dNd(target(rd,_graph));
-		NodeInterface* cNi = _graph[cNd];
-		NodeInterface* dNi = _graph[dNd];
+ bool intersection = false;
+ //size_t count = 0, execcount = 0;
+ BOOST_FOREACH(RoadId rd, edges(_graph))
+ {
+ //count++;
+ NodeId cNd(source(rd,_graph));
+ NodeId dNd(target(rd,_graph));
+ NodeInterface* cNi = _graph[cNd];
+ NodeInterface* dNi = _graph[dNd];
 
-		// exclude r: outside segment ab or a(last snap point)
-		if(cNi->_r > lowestR && dNi->_r > lowestR) continue;
-		if(cNi->_r < 0 && dNi->_r < 0) continue;
+ // exclude r: outside segment ab or a(last snap point)
+ if(cNi->_r > lowestR && dNi->_r > lowestR) continue;
+ if(cNi->_r < 0 && dNi->_r < 0) continue;
 
-		// exclude s: on same side
-		if(cNi->_s > 1 && dNi->_s > 1) continue;
-		if(cNi->_s < 0 && dNi->_s < 0) continue;
+ // exclude s: on same side
+ if(cNi->_s > 1 && dNi->_s > 1) continue;
+ if(cNi->_s < 0 && dNi->_s < 0) continue;
 
-		//execcount++;
+ //execcount++;
 
-		// perform intersection test
-		c = cNi->getPosition2D();
-		d = dNi->getPosition2D();
-		Real dxMinusCx(d.x - c.x);
-		Real dyMinusCy(d.y - c.y);
-		Ogre::Real denom = (bxMinusAx * dyMinusCy) - (byMinusAy * dxMinusCx);
+ // perform intersection test
+ c = cNi->getPosition2D();
+ d = dNi->getPosition2D();
+ Real dxMinusCx(d.x - c.x);
+ Real dyMinusCy(d.y - c.y);
+ Ogre::Real denom = (bxMinusAx * dyMinusCy) - (byMinusAy * dxMinusCx);
 
-		// line are parallel
-		if(denom == 0) continue;
+ // line are parallel
+ if(denom == 0) continue;
 
-		Real axMinusCx(a.x - c.x);
-		Real ayMinusCy(a.y - c.y);
-		r = ((ayMinusCy * dxMinusCx) - (axMinusCx * dyMinusCy)) / denom;
-		s = ((ayMinusCy * bxMinusAx) - (axMinusCx * byMinusAy)) / denom;
+ Real axMinusCx(a.x - c.x);
+ Real ayMinusCy(a.y - c.y);
+ r = ((ayMinusCy * dxMinusCx) - (axMinusCx * dyMinusCy)) / denom;
+ s = ((ayMinusCy * bxMinusAx) - (axMinusCx * byMinusAy)) / denom;
 
-		//if r and s are 0 then the line are coincident (on top of one another)
-		if(r == 0 && s == 0) continue;
+ //if r and s are 0 then the line are coincident (on top of one another)
+ if(r == 0 && s == 0) continue;
 
-		// if outside segment cd
-		if(s < 0 || s > 1) continue;
+ // if outside segment cd
+ if(s < 0 || s > 1) continue;
 
-		if(r >= 0 && r < lowestR)
-		{
-			// skip connected segments
-			if(cNd == aNode || dNd == aNode) continue;
+ if(r >= 0 && r < lowestR)
+ {
+ // skip connected segments
+ if(cNd == aNode || dNd == aNode) continue;
 
-			lowestR = r;
+ lowestR = r;
 
-			Vector2 p(a.x + bxMinusAx * r, a.y + byMinusAy * r);
+ Vector2 p(a.x + bxMinusAx * r, a.y + byMinusAy * r);
 
-			if(s < 0.5)
-			{
-				if((c-p).squaredLength() < snapSzSq)
-				{
-					intersection = false;
-					snapNode = cNd;
-				}
-				else
-				{
-					intersection = true;
-					intersectingRoad = rd;
-				}
-			}
-			else
-			{
-				if((d-p).squaredLength() < snapSzSq)
-				{
-					intersection = false;
-					snapNode = dNd;
-				}
-				else
-				{
-					intersection = true;
-					intersectingRoad = rd;
-				}
-			}
-		}
-	}
-	//LogManager::getSingleton().logMessage("Test 2: "+StringConverter::toString(count)+":"+StringConverter::toString(execcount));
+ if(s < 0.5)
+ {
+ if((c-p).squaredLength() < snapSzSq)
+ {
+ intersection = false;
+ snapNode = cNd;
+ }
+ else
+ {
+ intersection = true;
+ intersectingRoad = rd;
+ }
+ }
+ else
+ {
+ if((d-p).squaredLength() < snapSzSq)
+ {
+ intersection = false;
+ snapNode = dNd;
+ }
+ else
+ {
+ intersection = true;
+ intersectingRoad = rd;
+ }
+ }
+ }
+ }
+ //LogManager::getSingleton().logMessage("Test 2: "+StringConverter::toString(count)+":"+StringConverter::toString(execcount));
 
-	if(intersection) 
-	{
-		pos.x = a.x + lowestR * bxMinusAx;			//lowestR: 0 ??
-		pos.y = a.y + lowestR * byMinusAy;
-		roadId = intersectingRoad;
-		return 1;
-	}
-	else if(lowestR < 1)
-	{
-		nodeId = snapNode;
-		pos = _graph[nodeId]->getPosition2D();
-		return 2;
-	}
+ if(intersection) 
+ {
+ pos.x = a.x + lowestR * bxMinusAx;			//lowestR: 0 ??
+ pos.y = a.y + lowestR * byMinusAy;
+ roadId = intersectingRoad;
+ return 1;
+ }
+ else if(lowestR < 1)
+ {
+ nodeId = snapNode;
+ pos = _graph[nodeId]->getPosition2D();
+ return 2;
+ }
 
-// can i exclude this test like the other, using r
+ // can i exclude this test like the other, using r
 
-// shit no the bounds test can exclude this
+ // shit no the bounds test can exclude this
 
 
-	// last test
-	RoadId snapRoad;
-	Vector2 snapPos;
-	Real closestDistToB = Math::Sqrt(closestDistToBSq);
-	BOOST_FOREACH(RoadId rd, edges(_graph))
-	{
-		NodeId cNd(source(rd,_graph));
-		NodeId dNd(target(rd,_graph));
-		c = _graph[cNd]->getPosition2D();
-		d = _graph[dNd]->getPosition2D();
-		Vector2 cd(d - c);
-		Lsq = cd.squaredLength();
-		L = Math::Sqrt(Lsq);
+ // last test
+ RoadId snapRoad;
+ Vector2 snapPos;
+ Real closestDistToB = Math::Sqrt(closestDistToBSq);
+ BOOST_FOREACH(RoadId rd, edges(_graph))
+ {
+ NodeId cNd(source(rd,_graph));
+ NodeId dNd(target(rd,_graph));
+ c = _graph[cNd]->getPosition2D();
+ d = _graph[dNd]->getPosition2D();
+ Vector2 cd(d - c);
+ Lsq = cd.squaredLength();
+ L = Math::Sqrt(Lsq);
 
-		//TESTHACK
-//		if(c == b || d == b) 
-//			continue;
+ //TESTHACK
+ //		if(c == b || d == b) 
+ //			continue;
 
-		Ogre::Real dxMinusCx(cd.x);
-		Ogre::Real dyMinusCy(cd.y);
-		Ogre::Real bxMinusCx(b.x-c.x);
-		Ogre::Real byMinusCy(b.y-c.y);
+ Ogre::Real dxMinusCx(cd.x);
+ Ogre::Real dyMinusCy(cd.y);
+ Ogre::Real bxMinusCx(b.x-c.x);
+ Ogre::Real byMinusCy(b.y-c.y);
 
-		r = (bxMinusCx*dxMinusCx + byMinusCy*dyMinusCy) / Lsq;
+ r = (bxMinusCx*dxMinusCx + byMinusCy*dyMinusCy) / Lsq;
 
-		if(r < 0 || r > 1) continue;
+ if(r < 0 || r > 1) continue;
 
-		s = (-byMinusCy*dxMinusCx+bxMinusCx*dyMinusCy) / Lsq;
+ s = (-byMinusCy*dxMinusCx+bxMinusCx*dyMinusCy) / Lsq;
 
-		Real distance = Ogre::Math::Abs(s) * L;
-		if(distance < closestDistToB)
-		{
-			closestDistToB = distance;
-			Vector2 p(c.x + r*dxMinusCx, c.y + r*dyMinusCy);
-			if((p - c).squaredLength() < snapSzSq)
-			{
-				nodeSnapped = true;
-				snapNode = cNd;
-			}
-			else if((p - d).squaredLength() < snapSzSq)
-			{
-				nodeSnapped = true;
-				snapNode = dNd;
-			}
-			else
-			{
-				snapRoad = rd;
-				snapPos = p;
-				nodeSnapped = false;
-			}
-		}
-	}
-	if(closestDistToB < snapSz)
-	{
-		if(!nodeSnapped)
-		{
-			roadId = snapRoad;
-			pos = snapPos;
-			return 1;
-		}
-		else
-		{
-			nodeId = snapNode;
-			pos = _graph[nodeId]->getPosition2D();
-			return 2;
-		}
-	}
-	return 0;
-}
-*/
+ Real distance = Ogre::Math::Abs(s) * L;
+ if(distance < closestDistToB)
+ {
+ closestDistToB = distance;
+ Vector2 p(c.x + r*dxMinusCx, c.y + r*dyMinusCy);
+ if((p - c).squaredLength() < snapSzSq)
+ {
+ nodeSnapped = true;
+ snapNode = cNd;
+ }
+ else if((p - d).squaredLength() < snapSzSq)
+ {
+ nodeSnapped = true;
+ snapNode = dNd;
+ }
+ else
+ {
+ snapRoad = rd;
+ snapPos = p;
+ nodeSnapped = false;
+ }
+ }
+ }
+ if(closestDistToB < snapSz)
+ {
+ if(!nodeSnapped)
+ {
+ roadId = snapRoad;
+ pos = snapPos;
+ return 1;
+ }
+ else
+ {
+ nodeId = snapNode;
+ pos = _graph[nodeId]->getPosition2D();
+ return 2;
+ }
+ }
+ return 0;
+ }
+ */
 
-bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const Vector2& b, const Real snapSz, 
-							  Vector2& pos, RoadId& roadId) const
+bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore,
+		const Vector2& b, const Real snapSz, Vector2& pos, RoadId& roadId) const
 {
 	// function vars
 	Real bR, bS, cR, cS, dR, dS, lowestR=std::numeric_limits<Real>::max();
@@ -1190,7 +1200,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 		if(cR >= 0 && cR < lowestR && cR <= 1 && (Math::Abs(cS) * Lab) < snapSz)
 		{
 			lowestR = cR;
-			bestPoint = c; 
+			bestPoint = c;
 			intersectingRoad = rd;
 		}
 
@@ -1204,7 +1214,6 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 			bestPoint = d;
 			intersectingRoad = rd;
 		}
-	
 
 		// if c and d are on the same side of line seg AB
 		//	- no chance of an intersection
@@ -1218,7 +1227,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 		// line intersection
 		Vector2 DminusC(d - c);
 		Real denom = (BminusA.x * DminusC.y) - (BminusA.y * DminusC.x);
-		if(denom == 0) continue;	// parallel		
+		if(denom == 0) continue; // parallel		
 		Real r = ((-CminusA.y * DminusC.x) + (CminusA.x * DminusC.y)) / denom;
 		Real s = ((-CminusA.y * BminusA.x) + (CminusA.x * BminusA.y)) / denom;
 		if(r == 0 && s == 0) continue; // coincident (on top of one another)
@@ -1232,7 +1241,7 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 	}
 
 	// Write back results if success
-	if(lowestR < std::numeric_limits<Real>::max())
+	if (lowestR < std::numeric_limits<Real>::max())
 	{
 		pos = bestPoint;
 		roadId = intersectingRoad;
@@ -1241,10 +1250,8 @@ bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore, const
 	return false;
 }
 
-
-
-bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz, 
-							  Vector2& pos, RoadId& roadId) const
+bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
+		Vector2& pos, RoadId& roadId) const
 {
 	// function vars
 	Real currentDistance, closestDistanceSq=std::numeric_limits<Real>::max();
@@ -1271,7 +1278,7 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 			{
 				currentDistance = Math::Sqr(currentDistance);
 				if(currentDistance < closestDistanceSq)
-				{ 
+				{
 					closestDistanceSq = currentDistance;
 					intersectingRoad = (rd);
 					bestPoint = Vector2(c.x + aR*DminusC.x, c.y + aR*DminusC.y);
@@ -1304,7 +1311,7 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 		}
 	}
 	// Write back results if success
-	if(closestDistanceSq < std::numeric_limits<Real>::max())
+	if (closestDistanceSq < std::numeric_limits<Real>::max())
 	{
 		pos = bestPoint;
 		roadId = intersectingRoad;
@@ -1313,8 +1320,9 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 	return false;
 }
 
-bool RoadGraph::findClosestIntscnConnected(const NodeId aNode, const NodeId bNode, const Ogre::Real snapSz, 
-	Ogre::Vector2& pos, RoadId& rd) const
+bool RoadGraph::findClosestIntscnConnected(const NodeId aNode,
+		const NodeId bNode, const Ogre::Real snapSz, Ogre::Vector2& pos,
+		RoadId& rd) const
 {
 	std::vector<NodeId> ignore(2);
 	ignore[0] = aNode;
@@ -1323,8 +1331,8 @@ bool RoadGraph::findClosestIntscnConnected(const NodeId aNode, const NodeId bNod
 	return findClosestIntersection(ignore, bPos, snapSz, pos, rd);
 }
 
-int RoadGraph::snapInfo(const NodeId srcNd, const Vector2& dstPos, const Real snapSzSquared,
-						NodeId& nd, RoadId& rd, Vector2& pos) const
+int RoadGraph::snapInfo(const NodeId srcNd, const Vector2& dstPos,
+		const Real snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos) const
 {
 	//Vector2 srcPos = getNode(srcNd)->getPosition2D();
 	//Vector2 dstPos = getNode(dstNd)->getPosition2D();
@@ -1332,7 +1340,8 @@ int RoadGraph::snapInfo(const NodeId srcNd, const Vector2& dstPos, const Real sn
 
 	//while(true)
 	//{
-		state = findClosestIntscnOrNode(srcNd, dstPos, Math::Sqrt(snapSzSquared), pos, nd, rd);
+	state = findClosestIntscnOrNode(srcNd, dstPos, Math::Sqrt(snapSzSquared),
+			pos, nd, rd);
 	//	
 	//	if(state < 2) break;
 	//	else if()
@@ -1343,30 +1352,35 @@ int RoadGraph::snapInfo(const NodeId srcNd, const Vector2& dstPos, const Real sn
 	return state;
 }
 
-struct NodeInfo {
+struct NodeInfo
+{
 	const NodeId _id;
 	const Vector2 _pos;
-	NodeInfo(const NodeId id, const Vector2& pos)
-			: _id(id), _pos(pos) {}
+	NodeInfo(const NodeId id, const Vector2& pos) :
+		_id(id), _pos(pos)
+	{
+	}
 };
 bool operator<(const NodeInfo &l, const NodeInfo &r)
-{  return l._pos.x < r._pos.x;  }
+{
+	return l._pos.x < r._pos.x;
+}
 
-
-void RoadGraph::extractFootprints(std::vector< std::vector<NodeInterface*> > &polys, Real num, ManualObject* dob)
+void RoadGraph::extractFootprints(
+		std::vector< std::vector<NodeInterface*> > &polys, Real num,
+		ManualObject* dob)
 {
 	// create a copy of our road graph to work on
 	Graph g(_graph);
 
 	//init roads
 	RoadIterator rIt, rEnd;
-	for(tie(rIt, rEnd) = edges(g); rIt != rEnd; rIt++)
+	for ( tie(rIt, rEnd) = edges(g); rIt != rEnd; rIt++)
 		g[*rIt]->setRoadCycle(false);
 
 	set<NodeInfo> heap2;
 	BOOST_FOREACH(NodeId nd, vertices(g))
-		heap2.insert(NodeInfo(nd, g[nd]->getPosition2D()));
-
+	heap2.insert(NodeInfo(nd, g[nd]->getPosition2D()));
 
 	//DEBUG:
 	//ostringstream oss;
@@ -1376,40 +1390,41 @@ void RoadGraph::extractFootprints(std::vector< std::vector<NodeInterface*> > &po
 	std::list<NodeId> heap;
 	BOOST_FOREACH(NodeInfo n, heap2) heap.insert(heap.end(), n._id);
 
-	try {
-
-	//while (heap is not empty) do
-	size_t i;
-	for(i=0; i<1000 && heap.size() != 0; i++)
+	try
 	{
-		//Vertex v0 = heap.GetMin();
-		NodeId v0 = *(heap.begin());
 
-		switch(out_degree(v0, g))
+		//while (heap is not empty) do
+		size_t i;
+		for(i=0; i<1000 && heap.size() != 0; i++)
 		{
-		case 0:
-			remove_vertex(v0, g);
-			removeFromHeap(v0, heap);
-			break;
-		case 1:
-			extractFilamentF(v0, getFirstAdjacent(v0, g), g, heap);
-			//oss<<"Filament: "<<graph[v0].getName()<<endl;
+			//Vertex v0 = heap.GetMin();
+			NodeId v0 = *(heap.begin());
 
-			//DEBUG
-			//heap.erase(v0);
-			break;
-		default:
-			 extractPrimitiveF(v0, g, heap, polys); // filament or minimal cycle
-			//oss<<"Cycle or Filament: "<<mGraph[v0].getName()<<endl;
+			switch(out_degree(v0, g))
+			{
+				case 0:
+				remove_vertex(v0, g);
+				removeFromHeap(v0, heap);
+				break;
+				case 1:
+				extractFilamentF(v0, getFirstAdjacent(v0, g), g, heap);
+				//oss<<"Filament: "<<graph[v0].getName()<<endl;
 
-			//DEBUG
+				//DEBUG
+				//heap.erase(v0);
+				break;
+				default:
+				extractPrimitiveF(v0, g, heap, polys); // filament or minimal cycle
+				//oss<<"Cycle or Filament: "<<mGraph[v0].getName()<<endl;
+
+				//DEBUG
+				//heap.erase(v0);
+				break;
+			}
 			//heap.erase(v0);
-			break;
 		}
-		//heap.erase(v0);
-	}
-	
-	if(i>=1000)
+
+		if(i>=1000)
 		LogManager::getSingleton().logMessage("Primitive Infinitum");
 
 	}
@@ -1418,17 +1433,19 @@ void RoadGraph::extractFootprints(std::vector< std::vector<NodeInterface*> > &po
 		LogManager::getSingleton().logMessage(e.getDescription());
 	}
 
-	if(dob==0) return;
+	if (dob==0)
+		return;
 	//RoadIterator rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = edges(g); rIt != rEnd; rIt++)
+	for ( boost::tie(rIt, rEnd) = edges(g); rIt != rEnd; rIt++)
 	{
-		dob->position(g[source(*rIt, g)]->getPosition3D() + Vector3(0,0.5,0));
-		dob->position(g[target(*rIt, g)]->getPosition3D() + Vector3(0,0.5,0));
+		dob->position(g[source(*rIt, g)]->getPosition3D() + Vector3(0, 0.5, 0));
+		dob->position(g[target(*rIt, g)]->getPosition3D() + Vector3(0, 0.5, 0));
 	}
 
 }
 
-void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vector< vector<NodeInterface*> > &polys)
+void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap,
+		vector< vector<NodeInterface*> > &polys)
 {
 	set<NodeId> visited;
 	vector<NodeId> nodeCycle;
@@ -1443,18 +1460,18 @@ void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vecto
 
 	//while (vcurr is not nil) and (vcurr is not v0) and (vcurr is not visited) do
 	size_t i;
-	for(i=0; i<1000; i++)
+	for (i=0; i<1000; i++)
 	{
 		nodeCycle.push_back(vcurr);
-		vertexFound = getCounterClockwiseMostFromPrev(vprev, vcurr, vnext, g);	// error
+		vertexFound = getCounterClockwiseMostFromPrev(vprev, vcurr, vnext, g); // error
 
 		// lets add a point here
-		if(vertexFound)
+		if (vertexFound)
 		{
 			// BAD KITTY: can't go backwards, esp at start, 
 			// am guessin v0-v1 should always be on a boundary of sorts
 			// so no start on a filament
-			if(vcurr == v1 && vnext == v0) 
+			if (vcurr == v1 && vnext == v0)
 			{
 				// bad kitty
 				removeFromHeap(v0, heap);
@@ -1462,7 +1479,7 @@ void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vecto
 			}
 
 			poly.push_back(g[vcurr]);
-			if(visited.find(vcurr) != visited.end()) 
+			if (visited.find(vcurr) != visited.end())
 			{
 				//snip vprev --> vcurr
 				remove_edge(vprev, vcurr, g);
@@ -1470,7 +1487,7 @@ void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vecto
 			else
 				g[edge(vprev, vcurr, g).first]->setRoadCycle(true);
 
-			if(vcurr == v0 && vnext == v1) 
+			if (vcurr == v0 && vnext == v1)
 			{
 				polys.push_back(poly);
 				break;
@@ -1489,57 +1506,59 @@ void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap, vecto
 			//extractFilamentF(vcurr, getFirstAdjacent(vcurr, g), g, heap, poly);
 		}
 	}
-	if(i>=1000)
+	if (i>=1000)
 		LogManager::getSingleton().logMessage("Infinitum");
 	else
 	{
 		// trash this bad monkey
-		
+
 		// snip it
 		remove_edge(v0, v1, g);
 
-		if(out_degree(v0, g) == 1)
+		if (out_degree(v0, g) == 1)
 		{
 			// Remove the filament rooted at v0.
-			extractFilamentF(v0,  getFirstAdjacent(v0, g), g, heap);
+			extractFilamentF(v0, getFirstAdjacent(v0, g), g, heap);
 		}
-		if(out_degree(v1, g) == 1) //TODO: causes error sometimes
+		if (out_degree(v1, g) == 1) //TODO: causes error sometimes
 		{
 			// Remove the filament rooted at v1.
-			extractFilamentF(v1,  getFirstAdjacent(v1, g), g, heap);		// error
+			extractFilamentF(v1, getFirstAdjacent(v1, g), g, heap); // error
 		}
 	}
 }
 
-void RoadGraph::extractFilamentF(NodeId v0, NodeId v1, Graph &g, list<NodeId>& heap)
+void RoadGraph::extractFilamentF(NodeId v0, NodeId v1, Graph &g,
+		list<NodeId>& heap)
 {
 	//assert(out_degree(v0, g) != 2); // trouble
-	if(out_degree(v0, g) == 2) {
+	if (out_degree(v0, g) == 2)
+	{
 		throw Exception(Exception::ERR_ITEM_NOT_FOUND, "ERROR: incorrect filament degree", "RoadGraph::extractFilament");
 	}
 
-	if(g[edge(v0, v1, g).first]->isRoadCycle())
+	if (g[edge(v0, v1, g).first]->isRoadCycle())
 	{
-		if(out_degree(v0, g) >= 3)		
+		if (out_degree(v0, g) >= 3)
 		{
 			remove_edge(v0, v1, g);
 			v0 = v1;
-			if(out_degree(v0, g) == 1)
+			if (out_degree(v0, g) == 1)
 			{
 				v1 = getFirstAdjacent(v0, g);
 			}
 
 		}
-		
-		while(out_degree(v0, g) == 1)
-		{
-			v1 =  getFirstAdjacent(v0, g);
 
-			if(g[edge(v0, v1, g).first]->isRoadCycle())
+		while (out_degree(v0, g) == 1)
+		{
+			v1 = getFirstAdjacent(v0, g);
+
+			if (g[edge(v0, v1, g).first]->isRoadCycle())
 			{
 				//heap.erase(v0);
 				removeFromHeap(v0, heap);
-				remove_edge(v0, v1, g);		//error
+				remove_edge(v0, v1, g); //error
 				remove_vertex(v0, g);
 				v0 = v1;
 			}
@@ -1548,8 +1567,8 @@ void RoadGraph::extractFilamentF(NodeId v0, NodeId v1, Graph &g, list<NodeId>& h
 				break;
 			}
 		}
-		
-		if(out_degree(v0, g) == 0)
+
+		if (out_degree(v0, g) == 0)
 		{
 			//heap.erase(v0);
 			removeFromHeap(v0, heap);
@@ -1558,27 +1577,27 @@ void RoadGraph::extractFilamentF(NodeId v0, NodeId v1, Graph &g, list<NodeId>& h
 	}
 	else
 	{
-		if(out_degree(v0, g) >= 3)
+		if (out_degree(v0, g) >= 3)
 		{
 			remove_edge(v0, v1, g);
 			v0 = v1;
-			if(out_degree(v0, g) == 1)
+			if (out_degree(v0, g) == 1)
 			{
-				v1 =  getFirstAdjacent(v0, g);
+				v1 = getFirstAdjacent(v0, g);
 			}
 		}
 
-		while(out_degree(v0, g) == 1)
+		while (out_degree(v0, g) == 1)
 		{
-			v1 =  getFirstAdjacent(v0, g);
-			
+			v1 = getFirstAdjacent(v0, g);
+
 			//heap.erase(v0)
 			removeFromHeap(v0, heap);
 			remove_edge(v0, v1, g);
 			remove_vertex(v0, g);
 			v0 = v1;
 		}
-		if(out_degree(v0, g) == 0)
+		if (out_degree(v0, g) == 0)
 		{
 			//heap.erase(v0);
 			removeFromHeap(v0, heap);

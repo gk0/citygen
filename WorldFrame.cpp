@@ -23,7 +23,6 @@ size_t Statistics::_buildingCount = 0;
 #include <boost/thread/mutex.hpp>
 #include <boost/bind.hpp>
 
-
 #ifdef __WXGTK__
 #include <gdk/gdk.h>
 #include <gtk/gtk.h> 
@@ -47,29 +46,29 @@ IMPLEMENT_CLASS(WorldFrame, wxControl)
 
 // Event Table
 BEGIN_EVENT_TABLE(WorldFrame, wxControl)
-	EVT_CHAR(WorldFrame::OnChar)
-	EVT_ERASE_BACKGROUND(WorldFrame::OnEraseBackground) 
-	EVT_KILL_FOCUS(WorldFrame::OnFocusLost)
-	EVT_SET_FOCUS(WorldFrame::OnFocusSet)
-	EVT_MOTION(WorldFrame::OnMouseMove)
-	EVT_LEFT_DOWN(WorldFrame::OnLeftPressed)
-	EVT_LEFT_UP(WorldFrame::OnLeftReleased)
-	EVT_MIDDLE_DOWN(WorldFrame::OnMiddlePressed)
-	EVT_MIDDLE_UP(WorldFrame::OnMiddleReleased)
-	EVT_RIGHT_DOWN(WorldFrame::OnRightPressed)
-	EVT_RIGHT_UP(WorldFrame::OnRightReleased)
-	EVT_MOUSEWHEEL(WorldFrame::OnMouseWheel)
+EVT_CHAR(WorldFrame::OnChar)
+EVT_ERASE_BACKGROUND(WorldFrame::OnEraseBackground)
+EVT_KILL_FOCUS(WorldFrame::OnFocusLost)
+EVT_SET_FOCUS(WorldFrame::OnFocusSet)
+EVT_MOTION(WorldFrame::OnMouseMove)
+EVT_LEFT_DOWN(WorldFrame::OnLeftPressed)
+EVT_LEFT_UP(WorldFrame::OnLeftReleased)
+EVT_MIDDLE_DOWN(WorldFrame::OnMiddlePressed)
+EVT_MIDDLE_UP(WorldFrame::OnMiddleReleased)
+EVT_RIGHT_DOWN(WorldFrame::OnRightPressed)
+EVT_RIGHT_UP(WorldFrame::OnRightReleased)
+EVT_MOUSEWHEEL(WorldFrame::OnMouseWheel)
 //	EVT_PAINT(WorldFrame::OnPaint)
-	EVT_SIZE(WorldFrame::OnSize)
-	EVT_TIMER(ID_RENDERTIMER, WorldFrame::OnTimer)
+EVT_SIZE(WorldFrame::OnSize)
+EVT_TIMER(ID_RENDERTIMER, WorldFrame::OnTimer)
 END_EVENT_TABLE()
 
 /** Brief description which ends at this dot. Details follow
  *  here.
  */
-WorldFrame::WorldFrame(wxFrame* parent) 
-	: wxControl(parent, -1),
-	  _timer(this, ID_RENDERTIMER)
+WorldFrame::WorldFrame(wxFrame* parent)
+: wxControl(parent, -1),
+_timer(this, ID_RENDERTIMER)
 {
 	_camera = 0;
 	_renderWindow = 0;
@@ -103,29 +102,30 @@ void WorldFrame::init()
 	GdkWindow* gdkWin = GTK_PIZZA(privHandle)->bin_window;
 	Display* display = GDK_WINDOW_XDISPLAY(gdkWin);
 	Window wid = GDK_WINDOW_XWINDOW(gdkWin);
-	
+
 	std::stringstream str;
-	
+
 	// display
 	str << (unsigned long)display << ':';
-	
+
 	// screen (returns "display.screen")
 	std::string screenStr = DisplayString(display);
 	std::string::size_type dotPos = screenStr.find(".");
 	screenStr = screenStr.substr(dotPos+1, screenStr.size());
 	str << screenStr << ':';
-	
+
 	// XID
 	str << wid << ':';
-	
+
 	// retrieve XVisualInfo
-	int attrlist[] = { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 16, GLX_STENCIL_SIZE, 8, None };
+	int attrlist[] =
+	{	GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 16, GLX_STENCIL_SIZE, 8, None};
 	XVisualInfo* vi = glXChooseVisual(display, DefaultScreen(display), attrlist);
 	str << (unsigned long)vi;
-	
+
 	handle = str.str();
 #else
-	#error Not supported on this platform.
+#error Not supported on this platform.
 #endif
 	params["externalWindowHandle"] = handle;
 
@@ -134,17 +134,18 @@ void WorldFrame::init()
 	GetSize(&width, &height);
 
 	// Create the render window
-	_renderWindow = Root::getSingleton().createRenderWindow("OgreRenderWindow", width, height, false, &params);
+	_renderWindow = Root::getSingleton().createRenderWindow("OgreRenderWindow", width, height, false,
+			&params);
 	_renderWindow->setActive(true);
 
 	// Create the SceneManager, in this case the terrainscenemanager
-    _sceneManager = Root::getSingleton().createSceneManager("TerrainSceneManager");
-    createCamera();
-    createViewport();
+	_sceneManager = Root::getSingleton().createSceneManager("TerrainSceneManager");
+	createCamera();
+	createViewport();
 
 	// Set default mipmap level (NB some APIs ignore this)
 	TextureManager::getSingleton().setDefaultNumMipmaps(5);
-	
+
 	// Desperate attempt to improve image quality on linux w/fglrx
 	MaterialManager::getSingleton().setDefaultTextureFiltering(TFO_ANISOTROPIC);
 	MaterialManager::getSingleton().setDefaultAnisotropy(8);
@@ -169,19 +170,18 @@ void WorldFrame::init()
 	_activeTool = MainWindow::viewTool;
 }
 
-
 // Destructor //
 WorldFrame::~WorldFrame()
 {
 	// destroy scene objects
-	if(_isDocOpen)
+	if (_isDocOpen)
 	{
 		_tools[_activeTool]->deactivate();
 		destroyScene();
 	}
 	destroyViewport();
 	destroyCamera();
-	
+
 	// destroy scene manager
 	Root::getSingleton().destroySceneManager(_sceneManager);
 
@@ -194,7 +194,7 @@ WorldFrame::~WorldFrame()
 	BOOST_FOREACH(Tool* tool, _tools) delete tool;
 }
 
-void WorldFrame::destroyCamera() 
+void WorldFrame::destroyCamera()
 {
 	if (_camera)
 	{
@@ -203,7 +203,7 @@ void WorldFrame::destroyCamera()
 	}
 }
 
-void WorldFrame::destroyViewport() 
+void WorldFrame::destroyViewport()
 {
 	if (_viewport)
 	{
@@ -213,73 +213,72 @@ void WorldFrame::destroyViewport()
 }
 
 void WorldFrame::createCamera(void)
-{   
+{
 	// Create the camera
-    _camera = _sceneManager->createCamera("PlayerCam");
+	_camera = _sceneManager->createCamera("PlayerCam");
 	_camera->setNearClipDistance(1);
-    _camera->setFarClipDistance(1000);
+	_camera->setFarClipDistance(1000);
 
 	// camera is positioned in createScene - not here
 }
 
-
-void WorldFrame::createScene(void) 
-{	
+void WorldFrame::createScene(void)
+{
 	// First check that vertex programs and dot3 or fragment programs are supported
 	const RenderSystemCapabilities* caps = Root::getSingleton().getRenderSystem()->getCapabilities();
 	if (!caps->hasCapability(RSC_VERTEX_PROGRAM))
 	{
-		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support vertex programs, so cannot "
-			"run this application. Sorry!", 
-			"WorldFrame::createScene");
+		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+				"Your card does not support vertex programs, so cannot "
+					"run this application. Sorry!", "WorldFrame::createScene");
 	}
-	if (!(caps->hasCapability(RSC_FRAGMENT_PROGRAM) 
-		|| caps->hasCapability(RSC_DOT3)) )
+	if (!(caps->hasCapability(RSC_FRAGMENT_PROGRAM)
+			|| caps->hasCapability(RSC_DOT3)))
 	{
-		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED, "Your card does not support dot3 blending or fragment programs, so cannot "
-			"run this application. Sorry!", 
-			"WorldFrame::createScene");
+		OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+				"Your card does not support dot3 blending or fragment programs, so cannot "
+					"run this application. Sorry!", "WorldFrame::createScene");
 	}
 
-    // Set ambient light
-    _sceneManager->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
+	// Set ambient light
+	_sceneManager->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
 
 	// Create a light
 	_mainLight = _sceneManager->createLight("MainLight");
 	// Accept default settings: point light, white diffuse, just set position
 	// NB I could attach the light to a SceneNode if I wanted it to move automatically with
 	//  other objects, but I don't
-	_mainLight->setPosition(20,180,50);
+	_mainLight->setPosition(20, 180, 50);
 
-    // Fog
-    // NB it's VERY important to set this before calling setWorldGeometry 
-    // because the vertex program picked will be different
+	// Fog
+	// NB it's VERY important to set this before calling setWorldGeometry 
+	// because the vertex program picked will be different
 	ColourValue fadeColour(0.76f, 0.86f, 0.93f);
 	//_sceneManager->setFog(FOG_LINEAR, fadeColour, .001f, 500, 1000);
 	_renderWindow->getViewport(0)->setBackgroundColour(fadeColour);
 
-    string terrain_cfg("terrain.cfg");
+	string terrain_cfg("terrain.cfg");
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-        terrain_cfg = mResourcePath + terrain_cfg;
+	terrain_cfg = mResourcePath + terrain_cfg;
 #endif
-    _sceneManager -> setWorldGeometry(terrain_cfg);
+	_sceneManager -> setWorldGeometry(terrain_cfg);
 
 	//TODO terrain
 	//mWorldTerrain.load();
 
-    // Infinite far plane?
-    if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
-    {
-        _camera->setFarClipDistance(0);
-    }
+	// Infinite far plane?
+	if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
+	{
+		_camera->setFarClipDistance(0);
+	}
 	_camera->setNearClipDistance(0.1);
 
-    // Define the required sky plane
-    Plane plane;
-    // 5000 world units from the camera
-    plane.d = 5000;
-    // Above the camera, facing down
-    plane.normal = -Vector3::UNIT_Y;
+	// Define the required sky plane
+	Plane plane;
+	// 5000 world units from the camera
+	plane.d = 5000;
+	// Above the camera, facing down
+	plane.normal = -Vector3::UNIT_Y;
 
 	// Create our ray query
 	_raySceneQuery = _sceneManager->createRayQuery(Ray());
@@ -288,7 +287,7 @@ void WorldFrame::createScene(void)
 	_cameraNode = _sceneManager->createSceneNode("cameraNode");
 	_cameraNode->setPosition(1041.25f, 0.1f, 965.25f);
 	_cameraNode->attachObject(_camera);
-	_camera->setPosition(0, 0, 177);  // zoom on z axis, look down -z
+	_camera->setPosition(0, 0, 177); // zoom on z axis, look down -z
 	_camera->lookAt(_cameraNode->getPosition());
 	_cameraNode->setOrientation(0.631968, -0.163438, -0.733434, -0.189679);
 }
@@ -316,18 +315,19 @@ void WorldFrame::exportScene(ExportDoc& doc)
 
 void WorldFrame::createViewport(void)
 {
-	if(_viewport) destroyViewport();
-    // Create one view port, entire window
-    _viewport = _renderWindow->addViewport(_camera);
-    _viewport->setBackgroundColour(ColourValue(0.5f,0.5f,0.5f));
+	if (_viewport)
+		destroyViewport();
+	// Create one view port, entire window
+	_viewport = _renderWindow->addViewport(_camera);
+	_viewport->setBackgroundColour(ColourValue(0.5f, 0.5f, 0.5f));
 
-    // Alter the camera aspect ratio to match the view port
-    _camera->setAspectRatio(
-        Real(_viewport->getActualWidth()) / Real(_viewport->getActualHeight()));
+	// Alter the camera aspect ratio to match the view port
+	_camera->setAspectRatio(Real(_viewport->getActualWidth())
+			/ Real(_viewport->getActualHeight()));
 }
 
 void WorldFrame::destroyScene(void)
-{	
+{
 	_renderWindow->getViewport(0)->setBackgroundColour(ColourValue(0.5f, 0.5f, 0.5f));
 
 	// destroy ray
@@ -356,7 +356,7 @@ void WorldFrame::cameraMove(Real x, Real y, Real z)
 	modify(true);
 	_camera->moveRelative(Vector3(x, y, z));
 
-	if(_toolsetMode == MainWindow::view)
+	if (_toolsetMode == MainWindow::view)
 		updateProperties();
 }
 
@@ -364,23 +364,25 @@ void WorldFrame::cameraMove(Real x, Real y, Real z)
 void WorldFrame::cameraRotate(Real yaw, Real pitch)
 {
 	modify(true);
-	_camera->yaw(yaw * (_camera->getFOVy() / _camera->getAspectRatio() / 320.0f));
+	_camera->yaw(yaw
+			* (_camera->getFOVy() / _camera->getAspectRatio() / 320.0f));
 	_camera->pitch(pitch * (_camera->getFOVy() / 240.0f));
 
-
-	if(_toolsetMode == MainWindow::view)
+	if (_toolsetMode == MainWindow::view)
 		updateProperties();
 }
 
 void WorldFrame::OnChar(wxKeyEvent& e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	_tools[_activeTool]->OnChar(e);
 }
 
 void WorldFrame::OnLeftPressed(wxMouseEvent &e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	// if you click on me get back focus
 	// focus should really be assigned by what your mouse is over but until then...
 	this->SetFocusFromKbd();
@@ -391,13 +393,15 @@ void WorldFrame::OnLeftPressed(wxMouseEvent &e)
 
 void WorldFrame::OnLeftReleased(wxMouseEvent &e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	_tools[_activeTool]->OnLeftReleased(e);
 }
 
 void WorldFrame::OnMiddlePressed(wxMouseEvent &e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	// if you click on me get back focus
 	// focus should really be assigned by what your mouse is over but until then...
 	this->SetFocusFromKbd();
@@ -408,13 +412,15 @@ void WorldFrame::OnMiddlePressed(wxMouseEvent &e)
 
 void WorldFrame::OnMiddleReleased(wxMouseEvent &e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	_tools[_activeTool]->OnMiddleReleased(e);
 }
 
 void WorldFrame::OnRightPressed(wxMouseEvent &e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	// if you click on me get back focus
 	// focus should really be assigned by what your mouse is over but until then...
 	this->SetFocusFromKbd();
@@ -424,20 +430,22 @@ void WorldFrame::OnRightPressed(wxMouseEvent &e)
 
 void WorldFrame::OnRightReleased(wxMouseEvent &e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	_tools[_activeTool]->OnRightReleased(e);
 }
 
-
 void WorldFrame::OnMouseMove(wxMouseEvent &e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	_tools[_activeTool]->OnMouseMove(e);
 }
 
 void WorldFrame::OnMouseWheel(wxMouseEvent &e)
 {
-	if(!_isDocOpen) return;
+	if (!_isDocOpen)
+		return;
 	_tools[_activeTool]->OnMouseWheel(e);
 }
 
@@ -449,8 +457,9 @@ void WorldFrame::OnPaint(wxPaintEvent &WXUNUSED(e))
 
 void WorldFrame::OnSize(wxSizeEvent &e)
 {
-	if(!_renderWindow) return;
-	
+	if (!_renderWindow)
+		return;
+
 	// Setting new size;
 	int width;
 	int height;
@@ -465,7 +474,6 @@ void WorldFrame::OnSize(wxSizeEvent &e)
 	update();
 }
 
-
 void WorldFrame::OnTimer(wxTimerEvent &e)
 {
 	update();
@@ -479,35 +487,36 @@ void WorldFrame::toggleTimerRendering()
 	_timer.Start(10);
 }
 
-
 boost::mutex cit_mutex;
 
-void prebuild(pair< vector<WorldCell*>::iterator, vector<WorldCell*>::iterator > *cIt)
+void prebuild(
+		pair< vector<WorldCell*>::iterator, vector<WorldCell*>::iterator > *cIt)
 {
-	while(true)
-	{	
+	while (true)
+	{
 		WorldCell* wc = 0;
 		{
 			boost::mutex::scoped_lock lock(cit_mutex);
-			if(cIt->first != cIt->second)
+			if (cIt->first != cIt->second)
 			{
 				wc = *(cIt->first);
 				cIt->first++;
 			}
-			else break;
+			else
+				break;
 		}
 
-		if(wc && !wc->isValid())
-			/*DEBUG: for(size_t i=0; i<100; i++)*/ wc->prebuild(); //do it 100 times
+		if (wc && !wc->isValid())
+			/*DEBUG: for(size_t i=0; i<100; i++)*/wc->prebuild(); //do it 100 times
 	}
 }
 
 void prebuild2(vector<WorldCell*> &cells)
 {
 	BOOST_FOREACH(WorldCell* c, cells)
-	{	
-		if(c && !c->isValid())
-			/*DEBUG: for(size_t i=0; i<100; i++)*/ c->prebuild(); //do it 100 times
+	{
+		if (c && !c->isValid())
+			/*DEBUG: for(size_t i=0; i<100; i++)*/c->prebuild(); //do it 100 times
 	}
 }
 
@@ -532,7 +541,7 @@ void WorldFrame::update()
 	cPIt.first = _cellVec.begin();
 	cPIt.second = _cellVec.end();
 
-//#undef THREADME
+	//#undef THREADME
 #ifdef THREADME
 	//size_t i=0, N = _cellVec.size(), N2 = N/2;
 	//vector<WorldCell*> a, b;
@@ -559,7 +568,8 @@ void WorldFrame::update()
 	//cpf2.stop();
 
 	//PerformanceTimer renpf("Render");
-	if(_camera) Root::getSingleton().renderOneFrame();
+	if (_camera)
+		Root::getSingleton().renderOneFrame();
 	//renpf.stop();
 
 	//LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
@@ -574,14 +584,14 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 
 	// Load Camera
 	string camId = worldRoot.FirstChild("camera").Element()->Attribute("id");
-	if(camId == "edit_cam")
+	if (camId == "edit_cam")
 	{
 		TiXmlElement *cameraChild = worldRoot.FirstChild("camera").FirstChild().Element();
 
-		for(; cameraChild; cameraChild=cameraChild->NextSiblingElement())
+		for (; cameraChild; cameraChild=cameraChild->NextSiblingElement())
 		{
 			string key = cameraChild->Value();
-			if(key == "position")
+			if (key == "position")
 			{
 				Real x, y, z;
 				cameraChild->QueryFloatAttribute("x", &x);
@@ -589,7 +599,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 				cameraChild->QueryFloatAttribute("z", &z);
 				_camera->setPosition(x, y, z);
 			}
-			else if(key == "camOrientation")
+			else if (key == "camOrientation")
 			{
 				Quaternion nodeOrient;
 				cameraChild->QueryFloatAttribute("w", &nodeOrient.w);
@@ -598,7 +608,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 				cameraChild->QueryFloatAttribute("z", &nodeOrient.z);
 				_cameraNode->setOrientation(nodeOrient);
 			}
-			else if(key == "nodePosition")
+			else if (key == "nodePosition")
 			{
 				Real x, y, z;
 				cameraChild->QueryFloatAttribute("x", &x);
@@ -617,7 +627,6 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 		//_camera->lookAt(_cameraNode->getPosition());
 	}
 
-
 	// a translation map is used to find the nodes for edge creation
 	map<string, WorldNode*> nodeIdTranslation;
 
@@ -632,12 +641,12 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 
 	// scan xml
 	TiXmlElement* pElem=worldRoot.FirstChild("graph").FirstChild().Element();
-	for(; pElem; pElem=pElem->NextSiblingElement())
+	for (; pElem; pElem=pElem->NextSiblingElement())
 	{
 		string key = pElem->Value();
-		if(key == "node") 
+		if (key == "node")
 		{
-			Real x,y;
+			Real x, y;
 			string strId = pElem->Attribute("id");
 			pElem->QueryFloatAttribute("x", &x);
 			pElem->QueryFloatAttribute("y", &y);
@@ -647,30 +656,32 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 			wn->setLabel(label);
 			nodeIdTranslation.insert(make_pair(strId, wn));
 		}
-		else if(key == "edge") 
+		else if (key == "edge")
 		{
-			edgeData.push_back(make_pair(pElem->Attribute("source"), pElem->Attribute("target")));
+			edgeData.push_back(make_pair(pElem->Attribute("source"),
+					pElem->Attribute("target")));
 			edgeElements.push_back(pElem);
 		}
-		else if(key == "cells") 
+		else if (key == "cells")
 			break;
 	}
 
 	// create the edges now that all graph data has been read
-	for(unsigned int i=0; i<edgeData.size(); i++)
+	for (unsigned int i=0; i<edgeData.size(); i++)
 	{
 		map<string, WorldNode*>::iterator sourceIt, targetIt;
 		sourceIt = nodeIdTranslation.find(edgeData[i].first);
 		targetIt = nodeIdTranslation.find(edgeData[i].second);
 		// if source node and target node can be found
-		if(sourceIt != nodeIdTranslation.end() && targetIt != nodeIdTranslation.end()) 
+		if (sourceIt != nodeIdTranslation.end() && targetIt
+				!= nodeIdTranslation.end())
 		{
-			if(!_simpleRoadGraph.testRoad(sourceIt->second->mSimpleNodeId, 
-				targetIt->second->mSimpleNodeId))
+			if (!_simpleRoadGraph.testRoad(sourceIt->second->mSimpleNodeId,
+					targetIt->second->mSimpleNodeId))
 			{
 				// create the road in the scene
-				WorldRoad* wr = new WorldRoad(sourceIt->second, targetIt->second, 
-										_roadGraph, _simpleRoadGraph, _sceneManager);
+				WorldRoad* wr = new WorldRoad(sourceIt->second, targetIt->second,
+						_roadGraph, _simpleRoadGraph, _sceneManager);
 				_roadVec.push_back(wr);
 				const TiXmlHandle roadRoot(edgeElements[i]);
 				wr->loadXML(roadRoot);
@@ -679,17 +690,17 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 	}
 
 	pElem=worldRoot.FirstChild("cells").FirstChild().Element();
-	for(; pElem; pElem=pElem->NextSiblingElement())
+	for (; pElem; pElem=pElem->NextSiblingElement())
 	{
-		if(string(pElem->Value())=="cell")
+		if (string(pElem->Value())=="cell")
 		{
 			vector<NodeInterface*> nodeCycle;
 
 			//load the cycle
 			TiXmlElement* pElem2=pElem->FirstChild("cycle")->FirstChildElement();
-			for(; pElem2; pElem2=pElem2->NextSiblingElement())
+			for (; pElem2; pElem2=pElem2->NextSiblingElement())
 			{
-				if(string(pElem2->Value())=="node")
+				if (string(pElem2->Value())=="node")
 				{
 					string strId = pElem2->Attribute("id");
 					nodeCycle.push_back(nodeIdTranslation[strId]);
@@ -699,25 +710,27 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 			//load the filaments
 			vector<WorldRoad*> filaments;
 			TiXmlNode* f = pElem->FirstChild("filaments");
-			if(f) pElem2 = f->FirstChildElement();
-			for(; pElem2; pElem2=pElem2->NextSiblingElement())
+			if (f)
+				pElem2 = f->FirstChildElement();
+			for (; pElem2; pElem2=pElem2->NextSiblingElement())
 			{
-				if(string(pElem2->Value())=="filament")
+				if (string(pElem2->Value())=="filament")
 				{
 					string srcId, dstId;
 					TiXmlElement* pElem3=pElem2->FirstChildElement();
 
-					if(string(pElem3->Value()) == "node") 
+					if (string(pElem3->Value()) == "node")
 						srcId = pElem3->Attribute("id");
 					pElem3 = pElem3->NextSiblingElement();
-					if(string(pElem3->Value()) == "node") 
+					if (string(pElem3->Value()) == "node")
 						dstId = pElem3->Attribute("id");
-					
-					filaments.push_back(getWorldRoad(nodeIdTranslation[srcId], nodeIdTranslation[dstId]));
+
+					filaments.push_back(getWorldRoad(nodeIdTranslation[srcId],
+							nodeIdTranslation[dstId]));
 				}
 			}
 
-			if(nodeCycle.size() > 2)
+			if (nodeCycle.size() > 2)
 			{
 				WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycle);
 				_cellVec.push_back(wc);
@@ -727,7 +740,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 			}
 		}
 	}
-		
+
 	PerformanceTimer pt("Total Generate Time");
 	update();
 	pt.stop();
@@ -737,13 +750,13 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 
 TiXmlElement* WorldFrame::saveXML()
 {
-	TiXmlElement * root = new TiXmlElement("WorldDocument");  
+	TiXmlElement * root = new TiXmlElement("WorldDocument");
 
 	// Save Camera
 	{
-		TiXmlElement *camera = new TiXmlElement("camera"); 
+		TiXmlElement *camera = new TiXmlElement("camera");
 		camera->SetAttribute("id", "edit_cam");
-		root->LinkEndChild(camera); 
+		root->LinkEndChild(camera);
 
 		const Vector3 &camPos(_camera->getPosition());
 		TiXmlElement *position = new TiXmlElement("position");
@@ -769,19 +782,19 @@ TiXmlElement* WorldFrame::saveXML()
 	}
 
 	//<graph id="roadgraph" edgedefault="undirected">
-	TiXmlElement *roadNetwork = new TiXmlElement("graph"); 
+	TiXmlElement *roadNetwork = new TiXmlElement("graph");
 	roadNetwork->SetAttribute("id", "roadgraph");
 	roadNetwork->SetAttribute("edgedefault", "undirected");
 	root->LinkEndChild(roadNetwork);
 
 	NodeIterator nIt, nEnd;
-	for(boost::tie(nIt, nEnd) = _simpleRoadGraph.getNodes(); nIt != nEnd; nIt++) 
+	for ( boost::tie(nIt, nEnd) = _simpleRoadGraph.getNodes(); nIt != nEnd; nIt++)
 	{
 		NodeInterface* ni = _simpleRoadGraph.getNode(*nIt);
 		Vector2 loc(ni->getPosition2D());
-	
+
 		TiXmlElement * node;
-		node = new TiXmlElement("node");  
+		node = new TiXmlElement("node");
 		node->SetAttribute("id", (int) ni);
 		node->SetDoubleAttribute("x", loc.x);
 		node->SetDoubleAttribute("y", loc.y);
@@ -790,23 +803,23 @@ TiXmlElement* WorldFrame::saveXML()
 	}
 
 	RoadIterator rIt, rEnd;
-	for(boost::tie(rIt, rEnd) = _simpleRoadGraph.getRoads(); rIt != rEnd; rIt++) 
+	for ( boost::tie(rIt, rEnd) = _simpleRoadGraph.getRoads(); rIt != rEnd; rIt++)
 	{
 		WorldRoad* wr = static_cast<WorldRoad*>(_simpleRoadGraph.getRoad(*rIt));
 		roadNetwork->LinkEndChild(wr->saveXML());
 	}
 
-	TiXmlElement *cells = new TiXmlElement("cells"); 
+	TiXmlElement *cells = new TiXmlElement("cells");
 	cells->SetAttribute("id", "cellset0");
 	root->LinkEndChild(cells);
 
 	BOOST_FOREACH(WorldCell* c, _cellVec)
-		cells->LinkEndChild(c->saveXML());
+	cells->LinkEndChild(c->saveXML());
 
 	return root;
 }
 
-void WorldFrame::setToolsetMode(MainWindow::ToolsetMode mode) 
+void WorldFrame::setToolsetMode(MainWindow::ToolsetMode mode)
 {
 	selectNode(0);
 	highlightNode(0);
@@ -828,9 +841,10 @@ void WorldFrame::beginNodeMode()
 
 void WorldFrame::selectNode(WorldNode* wn)
 {
-	if(_selectedNode) _selectedNode->showSelected(false);
+	if (_selectedNode)
+		_selectedNode->showSelected(false);
 	_selectedNode = wn;
-	if(_selectedNode)
+	if (_selectedNode)
 	{
 		_selectedNode->showSelected(true);
 	}
@@ -839,15 +853,16 @@ void WorldFrame::selectNode(WorldNode* wn)
 
 void WorldFrame::highlightNode(WorldNode* wn)
 {
-	if(_highlightedNode) _highlightedNode->showHighlighted(false);
+	if (_highlightedNode)
+		_highlightedNode->showHighlighted(false);
 	_highlightedNode = wn;
-	if(_highlightedNode)
+	if (_highlightedNode)
 	{
 		_highlightedNode->showHighlighted(true);
 	}
 }
 
-void WorldFrame::setActiveTool(MainWindow::ActiveTool tool) 
+void WorldFrame::setActiveTool(MainWindow::ActiveTool tool)
 {
 	_tools[_activeTool]->deactivate();
 	_activeTool = tool;
@@ -862,13 +877,14 @@ bool WorldFrame::pickTerrainIntersection(wxMouseEvent& e, Vector3& pos)
 	Ray mouseRay = _camera->getCameraToViewportRay(mouseX, mouseY);
 
 	_raySceneQuery->setRay(mouseRay);
-    _raySceneQuery->setSortByDistance(false);
+	_raySceneQuery->setSortByDistance(false);
 	RaySceneQueryResult result = _raySceneQuery->execute();
-	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
+	for (RaySceneQueryResult::const_iterator itr = result.begin(); itr
+			!= result.end(); itr++)
 	{
-		if(itr->worldFragment)
+		if (itr->worldFragment)
 		{
-    		pos = itr->worldFragment->singleIntersection;
+			pos = itr->worldFragment->singleIntersection;
 			return true;
 		}
 	}
@@ -878,11 +894,11 @@ bool WorldFrame::pickTerrainIntersection(wxMouseEvent& e, Vector3& pos)
 bool WorldFrame::pickNode(wxMouseEvent &e, Real snapSq, WorldNode *&wn)
 {
 	Vector3 pos3D;
-	if(pickTerrainIntersection(e, pos3D)) 
+	if (pickTerrainIntersection(e, pos3D))
 	{
 		Vector2 pos2D(pos3D.x, pos3D.z);
 		NodeId nd;
-		if(_simpleRoadGraph.snapToNode(pos2D, snapSq, nd))
+		if (_simpleRoadGraph.snapToNode(pos2D, snapSq, nd))
 		{
 			// all nodes in the simple graph are of type WorldNode
 			NodeInterface *ni = _simpleRoadGraph.getNode(nd);
@@ -905,7 +921,7 @@ WorldNode* WorldFrame::createNode()
 // TODO: atm this function delete the cell by deleting the roads,
 // ideally we'd like to save the cell and its lovely user specified params
 void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
-{	
+{
 	//NOTE: need to write an insert node function for WorldCell
 	// sux
 
@@ -937,8 +953,10 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 	}
 
 	// delete road node
-	vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
-	if(rIt != _roadVec.end()) _roadVec.erase(rIt);
+	vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(),
+			wr);
+	if (rIt != _roadVec.end())
+		_roadVec.erase(rIt);
 	delete wr;
 
 	// create replacement roads
@@ -949,15 +967,15 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 
 	// update cell boundaries
 	size_t numOfCells = attachedCells.size();
-	for(size_t i=0; i<numOfCells; i++)
+	for (size_t i=0; i<numOfCells; i++)
 	{
 		// insert new node into boundary cycle
-		size_t j,k,N = boundaries[i].size();
-		for(j=0; j<N; j++)
+		size_t j, k, N = boundaries[i].size();
+		for (j=0; j<N; j++)
 		{
 			k = (j+1) % N;
-			if((boundaries[i][j] == wn1 && boundaries[i][k] == wn2) 
-				|| (boundaries[i][j] == wn2 && boundaries[i][k] == wn1))
+			if ((boundaries[i][j] == wn1 && boundaries[i][k] == wn2)
+					|| (boundaries[i][j] == wn2 && boundaries[i][k] == wn1))
 			{
 				boundaries[i].insert(boundaries[i].begin() + k, wn);
 				break;
@@ -973,22 +991,27 @@ void WorldFrame::deleteNode(WorldNode* wn)
 	modify(true);
 
 	//delete any connected roads
-	while(true)
+	while (true)
 	{
 		RoadIterator2 rIt, rEnd;
 		boost::tie(rIt, rEnd) = _simpleRoadGraph.getRoadsFromNode(wn->mSimpleNodeId);
-		if(rIt == rEnd) break;
+		if (rIt == rEnd)
+			break;
 		WorldRoad* wr = static_cast<WorldRoad*>(_simpleRoadGraph.getRoad(*rIt));
 		deleteRoad(wr);
 	}
 
 	// update current node if necessary
-	if(_highlightedNode == wn) _highlightedNode = 0;
-	if(_selectedNode == wn) selectNode(0);
+	if (_highlightedNode == wn)
+		_highlightedNode = 0;
+	if (_selectedNode == wn)
+		selectNode(0);
 
 	//Delete the Node
-	vector<WorldNode*>::iterator nIt = find(_nodeVec.begin(), _nodeVec.end(), wn);
-	if(nIt != _nodeVec.end()) _nodeVec.erase(nIt);
+	vector<WorldNode*>::iterator nIt = find(_nodeVec.begin(), _nodeVec.end(),
+			wn);
+	if (nIt != _nodeVec.end())
+		_nodeVec.erase(nIt);
 	delete wn;
 }
 
@@ -997,7 +1020,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 	modify(true);
 
 	// if road is not present in graph
-	if(!_simpleRoadGraph.testRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId))
+	if (!_simpleRoadGraph.testRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId))
 	{
 		// create the road in the scene
 		WorldRoad* wr = new WorldRoad(wn1, wn2, _roadGraph, _simpleRoadGraph, _sceneManager);
@@ -1010,7 +1033,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 
 		// if the number of cycles is greater than the number of cells
 		// then we have most definitely made a new cell
-		if(nodeCycles.size() > _cellVec.size())
+		if (nodeCycles.size() > _cellVec.size())
 		{
 			// find the new cycles
 			WorldCell* alteredCell = 0;
@@ -1019,10 +1042,11 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 				bool cellFound = false;
 
 				vector< vector<NodeInterface*> >::iterator ncIt, ncEnd;
-				for(ncIt = nodeCycles.begin(), ncEnd = nodeCycles.end(); ncIt != ncEnd; ncIt++)
+				for (ncIt = nodeCycles.begin(), ncEnd = nodeCycles.end(); ncIt
+						!= ncEnd; ncIt++)
 				{
 					// if cell has boundary of cycle
-					if(wc->compareBoundary(*ncIt))
+					if (wc->compareBoundary(*ncIt))
 					{
 						// remove cycle, as its not new
 						nodeCycles.erase(ncIt);
@@ -1032,41 +1056,42 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 				}
 
 				// if no match was found
-				if(!cellFound)
+				if (!cellFound)
 				{
-					assert(alteredCell == 0);	// there should only ever be one changed cell
+					assert(alteredCell == 0); // there should only ever be one changed cell
 					alteredCell = wc;
 				}
 			}
 
 			// two options are possible:
-			switch(nodeCycles.size()) 
+			switch (nodeCycles.size())
 			{
 			// 1: created a new cell
 			case 1:
 				_cellVec.push_back(new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0]));
 				break;
-			// 2: divided an existing cell into two
+				// 2: divided an existing cell into two
 			case 2:
-				{
-					// NOTE: maybe a copy constructor could be tidier
+			{
+				// NOTE: maybe a copy constructor could be tidier
 
-					// get old cell params
-					CellGenParams g = alteredCell->getGenParams();
-					// delete old cell
-					vector<WorldCell*>::iterator cIt = find(_cellVec.begin(), _cellVec.end(), alteredCell);
-					if(cIt != _cellVec.end()) _cellVec.erase(cIt);
-					delete alteredCell;
+				// get old cell params
+				CellGenParams g = alteredCell->getGenParams();
+				// delete old cell
+				vector<WorldCell*>::iterator cIt = find(_cellVec.begin(),
+						_cellVec.end(), alteredCell);
+				if (cIt != _cellVec.end())
+					_cellVec.erase(cIt);
+				delete alteredCell;
 
-
-					// create 2 new cells in place of old cell with old cell params
-					WorldCell* wc0 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0]); 
-					WorldCell* wc1 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[1]);
-					wc0->setGenParams(g);
-					wc1->setGenParams(g);
-					_cellVec.push_back(wc0);
-					_cellVec.push_back(wc1);
-				}
+				// create 2 new cells in place of old cell with old cell params
+				WorldCell* wc0 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0]);
+				WorldCell* wc1 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[1]);
+				wc0->setGenParams(g);
+				wc1->setGenParams(g);
+				_cellVec.push_back(wc0);
+				_cellVec.push_back(wc1);
+			}
 				break;
 			default:
 				new Exception(Exception::ERR_INTERNAL_ERROR, "What how many new cycles was that", "createRoad");
@@ -1078,19 +1103,19 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 			// road is probably a filament, if its in a cell add it
 			BOOST_FOREACH(WorldCell* wc, _cellVec)
 			{
-				if(wc->isInside(wr->getSrcNode()->getPosition2D())) 
+				if (wc->isInside(wr->getSrcNode()->getPosition2D()))
 				{
-					if(wc->isInside(wr->getDstNode()->getPosition2D()) 
-						|| wc->isBoundaryNode(wr->getDstNode()))
+					if (wc->isInside(wr->getDstNode()->getPosition2D())
+							|| wc->isBoundaryNode(wr->getDstNode()))
 					{
 						wc->addFilament(wr);
 						break;
 					}
 				}
-				else if(wc->isInside(wr->getDstNode()->getPosition2D())) 
+				else if (wc->isInside(wr->getDstNode()->getPosition2D()))
 				{
-					if(wc->isInside(wr->getSrcNode()->getPosition2D())
-						|| wc->isBoundaryNode(wr->getSrcNode()))
+					if (wc->isInside(wr->getSrcNode()->getPosition2D())
+							|| wc->isBoundaryNode(wr->getSrcNode()))
 					{
 						wc->addFilament(wr);
 						break;
@@ -1113,90 +1138,102 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 	BOOST_FOREACH(WorldObject* wo, attachments)
 	{
 		// if attachment is a cell
-		if(typeid(*wo) == typeid(WorldCell))
+		if (typeid(*wo) == typeid(WorldCell))
 			aCells.push_back(static_cast<WorldCell*>(wo));
 	}
 
-	switch(aCells.size())
+	switch (aCells.size())
 	{
 	case 0:
-		{
-			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
-			if(rIt != _roadVec.end()) _roadVec.erase(rIt);
-			delete wr;
-			break;
-		}
+	{
+		vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(),
+				_roadVec.end(), wr);
+		if (rIt != _roadVec.end())
+			_roadVec.erase(rIt);
+		delete wr;
+		break;
+	}
 	case 1:
+	{
+		// could be a boundary edge or a filament
+		const vector<RoadInterface*> &boundary(aCells[0]->getBoundaryRoads());
+
+		// if found on the boundary cycle
+		if (find(boundary.begin(), boundary.end(), wr) != boundary.end())
 		{
-			// could be a boundary edge or a filament
-			const vector<RoadInterface*> &boundary(aCells[0]->getBoundaryRoads());
-
-			// if found on the boundary cycle
-			if(find(boundary.begin(), boundary.end(), wr) != boundary.end())
-			{
-				vector<WorldCell*>::iterator cIt = find(_cellVec.begin(), _cellVec.end(), aCells[0]);
-				if(cIt != _cellVec.end()) _cellVec.erase(cIt);
-				delete aCells[0];
-			}
-			else
-			{
-				aCells[0]->removeFilament(wr);
-			}
-
-			// delete road
-			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
-			if(rIt != _roadVec.end()) _roadVec.erase(rIt);
-			delete wr;
+			vector<WorldCell*>::iterator cIt = find(_cellVec.begin(),
+					_cellVec.end(), aCells[0]);
+			if (cIt != _cellVec.end())
+				_cellVec.erase(cIt);
+			delete aCells[0];
 		}
+		else
+		{
+			aCells[0]->removeFilament(wr);
+		}
+
+		// delete road
+		vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(),
+				_roadVec.end(), wr);
+		if (rIt != _roadVec.end())
+			_roadVec.erase(rIt);
+		delete wr;
+	}
 		break;
 	case 2:
+	{
+		// should favor one - can do a vector swap to set preference
+
+		// save params from the biggest attached cell by area
+		CellGenParams
+				gp =
+						aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? aCells[0]->getGenParams()
+								: aCells[1]->getGenParams();
+
+		// delete cells
+		BOOST_FOREACH(WorldCell* c, aCells)
 		{
-			// should favor one - can do a vector swap to set preference
+			vector<WorldCell*>::iterator cIt = find(_cellVec.begin(),
+					_cellVec.end(), c);
+			if (cIt != _cellVec.end())
+				_cellVec.erase(cIt);
+			delete c;
+		}
 
-			// save params from the biggest attached cell by area
-			CellGenParams gp = aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? 
-								aCells[0]->getGenParams() : aCells[1]->getGenParams();
+		// delete road
+		vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(),
+				_roadVec.end(), wr);
+		if (rIt != _roadVec.end())
+			_roadVec.erase(rIt);
+		delete wr;
 
-			// delete cells
-			BOOST_FOREACH(WorldCell* c, aCells)
+		// run cell decomposition
+		vector< vector<NodeInterface*> > nodeCycles;
+		vector< vector<NodeInterface*> > filaments;
+		_simpleRoadGraph.extractPrimitives(filaments, nodeCycles);
+
+		// find the new cell if there is one
+		BOOST_FOREACH(vector<NodeInterface*> &cycle, nodeCycles)
+		{
+			bool newCell = true;
+			BOOST_FOREACH(WorldCell* c, _cellVec)
 			{
-				vector<WorldCell*>::iterator cIt = find(_cellVec.begin(), _cellVec.end(), c);
-				if(cIt != _cellVec.end()) _cellVec.erase(cIt);
-				delete c;
-			}
-
-			// delete road
-			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
-			if(rIt != _roadVec.end()) _roadVec.erase(rIt);
-			delete wr;
-
-			// run cell decomposition
-			vector< vector<NodeInterface*> > nodeCycles;
-			vector< vector<NodeInterface*> >  filaments;
-			_simpleRoadGraph.extractPrimitives(filaments, nodeCycles);
-
-			// find the new cell if there is one
-			BOOST_FOREACH(vector<NodeInterface*> &cycle, nodeCycles)
-			{
-				bool newCell = true;
-				BOOST_FOREACH(WorldCell* c, _cellVec)
+				if (c->compareBoundary(cycle))
 				{
-					if(c->compareBoundary(cycle))
-					{
-						newCell = false;
-						break;
-					}
-				}
-				// create the new cell and break
-				if(newCell)
-				{
-					WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, cycle);
-					wc->setGenParams(gp);
-					_cellVec.push_back(wc);
+					newCell = false;
 					break;
 				}
 			}
+			// create the new cell and break
+			if (newCell)
+			{
+				WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, cycle);
+				wc->setGenParams(gp);
+				_cellVec.push_back(wc);
+				break;
+			}
 		}
+	}
 		break;
 	default:
 		new Exception(Exception::ERR_INTERNAL_ERROR, "What how many new cells have you got", "deleteRoad");
@@ -1221,11 +1258,11 @@ void WorldFrame::onNewDoc()
 
 void WorldFrame::onCloseDoc()
 {
-	if(_isDocOpen)
+	if (_isDocOpen)
 	{
 		_isDocOpen = false;
 		_tools[_activeTool]->deactivate();
-		
+
 		// destroy scene data
 		destroyScene();
 
@@ -1244,9 +1281,10 @@ bool WorldFrame::plotPointOnTerrain(Real x, Real &y, Real z)
 	RaySceneQuery* ray = _sceneManager->createRayQuery(verticalRay);
 	RaySceneQueryResult result = ray->execute();
 
-	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
+	for (RaySceneQueryResult::const_iterator itr = result.begin(); itr
+			!= result.end(); itr++)
 	{
-		if(itr->worldFragment)
+		if (itr->worldFragment)
 		{
 			y = itr->worldFragment->singleIntersection.y;
 			delete ray;
@@ -1260,7 +1298,7 @@ bool WorldFrame::plotPointOnTerrain(Real x, Real &y, Real z)
 bool WorldFrame::plotPointOnTerrain(const Vector2& pos2D, Vector3& pos3D)
 {
 	Vector3 tmp(pos2D.x, 0, pos2D.y);
-	if(plotPointOnTerrain(tmp.x, tmp.y, tmp.z))
+	if (plotPointOnTerrain(tmp.x, tmp.y, tmp.z))
 	{
 		pos3D = tmp;
 		return true;
@@ -1281,7 +1319,7 @@ void WorldFrame::updateProperties()
 void WorldFrame::moveSelectedNode(const Vector3& pos)
 {
 	WorldNode* wn = getSelected();
-	if(wn)
+	if (wn)
 	{
 		Vector2 pos2D(pos.x, pos.z);
 		wn->move(pos2D);
@@ -1293,11 +1331,11 @@ void WorldFrame::moveSelectedNode(const Vector3& pos)
 bool WorldFrame::pickCell(wxMouseEvent& e, WorldCell *&wc)
 {
 	Vector3 pos3D;
-	if(pickTerrainIntersection(e, pos3D)) 
+	if (pickTerrainIntersection(e, pos3D))
 	{
 		BOOST_FOREACH(WorldCell* c, _cellVec)
 		{
-			if(c->isInside(Vector2(pos3D.x, pos3D.z)))
+			if (c->isInside(Vector2(pos3D.x, pos3D.z)))
 			{
 				wc = c;
 				return true;
@@ -1309,9 +1347,11 @@ bool WorldFrame::pickCell(wxMouseEvent& e, WorldCell *&wc)
 
 void WorldFrame::selectCell(WorldCell* wn)
 {
-	if(_selectedCell) _selectedCell->showSelected(false);
+	if (_selectedCell)
+		_selectedCell->showSelected(false);
 	_selectedCell = wn;
-	if(_selectedCell) _selectedCell->showSelected(true);
+	if (_selectedCell)
+		_selectedCell->showSelected(true);
 	updateProperties();
 }
 
@@ -1323,16 +1363,18 @@ bool WorldFrame::pickRoad(wxMouseEvent& e, WorldRoad *&wr)
 	Ray mouseRay = _camera->getCameraToViewportRay(mouseX, mouseY);
 
 	_raySceneQuery->setRay(mouseRay);
-    _raySceneQuery->setSortByDistance(true);
+	_raySceneQuery->setSortByDistance(true);
 	RaySceneQueryResult result = _raySceneQuery->execute();
-	for(RaySceneQueryResult::const_iterator itr = result.begin(); itr != result.end(); itr++)
+	for (RaySceneQueryResult::const_iterator itr = result.begin(); itr
+			!= result.end(); itr++)
 	{
 		if (itr->movable && itr->movable->getName().substr(0, 4) == "road")
 		{
 			vector<WorldRoad*>::iterator rIt, rEnd = _roadVec.end();
-			for(rIt=_roadVec.begin(); rIt != rEnd; rIt++)
+			for (rIt=_roadVec.begin(); rIt != rEnd; rIt++)
 			{
-				if((*rIt)->getSceneNode() == itr->movable->getParentSceneNode())
+				if ((*rIt)->getSceneNode()
+						== itr->movable->getParentSceneNode())
 				{
 					wr = (*rIt);
 					return true;
@@ -1345,16 +1387,18 @@ bool WorldFrame::pickRoad(wxMouseEvent& e, WorldRoad *&wr)
 
 void WorldFrame::selectRoad(WorldRoad* wr)
 {
-	if(_selectedRoad) _selectedRoad->showSelected(false);
+	if (_selectedRoad)
+		_selectedRoad->showSelected(false);
 	_selectedRoad = wr;
-	if(_selectedRoad) _selectedRoad->showSelected(true);
+	if (_selectedRoad)
+		_selectedRoad->showSelected(true);
 	updateProperties();
 }
 
-void  WorldFrame::setViewMode(MainWindow::ViewMode mode)
+void WorldFrame::setViewMode(MainWindow::ViewMode mode)
 {
 	bool showRoads = true, showBuildings = true;
-	switch(mode)
+	switch (mode)
 	{
 	case MainWindow::view_primary:
 		showRoads = false;
@@ -1379,9 +1423,10 @@ void  WorldFrame::setViewMode(MainWindow::ViewMode mode)
 template<> WorldFrame* Ogre::Singleton<WorldFrame>::ms_Singleton = 0;
 WorldFrame* WorldFrame::getSingletonPtr(void)
 {
-    return ms_Singleton;
+	return ms_Singleton;
 }
 WorldFrame& WorldFrame::getSingleton(void)
-{  
-    assert(ms_Singleton);  return (*ms_Singleton);  
+{
+	assert(ms_Singleton);
+	return (*ms_Singleton);
 }
