@@ -7,8 +7,10 @@
  * @update  2006 by barraq see nospam@barraquand.com
  */
 
-#ifndef __include_MovableText_H__
-#define __include_MovableText_H__
+#ifndef MOVABLETEXT_H
+#define MOVABLETEXT_H
+
+#include <OgreMovableObject.h>
 
 namespace Ogre {
 
@@ -22,7 +24,7 @@ public:
 protected:
 	String			mFontName;
 	String			mType;
-	String			_name;
+	String			mName;
 	String			mCaption;
 	HorizontalAlignment	mHorizontalAlignment;
 	VerticalAlignment	mVerticalAlignment;
@@ -89,7 +91,7 @@ protected:
     const   Quaternion        &getWorldOrientation(void) const;
     const   Vector3           &getWorldPosition(void) const;
 	const   AxisAlignedBox    &getBoundingBox(void) const {return mAABB;};
-	const   String            &getName(void) const {return _name;};
+	const   String            &getName(void) const {return mName;};
 	const   String            &getMovableType(void) const {static Ogre::String movType = "MovableText"; return movType;};
 
     void    _notifyCurrentCamera(Camera *cam);

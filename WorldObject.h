@@ -2,6 +2,7 @@
 #define WORLDOBJECT_H
 
 #include "stdafx.h"
+#include <OgreSceneNode.h>
 
 class WorldObject
 {

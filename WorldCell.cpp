@@ -13,6 +13,12 @@
 #include "WorldBlock.h"
 #include "MeshBuilder.h"
 
+#include <OgreEntity.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
+#include <OgreMeshManager.h>
+#include <OgreStringConverter.h>
+#include <tinyxml.h>
 
 using namespace Ogre;
 using namespace std;

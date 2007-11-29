@@ -10,6 +10,8 @@
 
 class Ogre::MovableText;
 
+class TiXmlHandle;
+
 #define GROUNDCLEARANCE Ogre::Vector3(0,0.3,0)
 
 class WorldNode : public WorldObject, public NodeInterface, public Ogre::ManualResourceLoader

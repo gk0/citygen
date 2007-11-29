@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "Application.h"
+#include "MainWindow.h"
 
+#include <wx/msgdlg.h>
+#include <OgreConfigFile.h>
 
 using namespace Ogre;
 

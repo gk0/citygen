@@ -3,6 +3,9 @@
 #include "WorldFrame.h"
 #include "WorldNode.h"
 
+#include <wx/toolbar.h>
+#include <wx/propgrid/advprops.h>
+
 // Required for WX
 IMPLEMENT_CLASS(NodePropertyPage, wxPropertyGridPage)
 

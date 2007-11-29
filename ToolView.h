@@ -2,7 +2,11 @@
 #define TOOLVIEW_H
 
 #include "stdafx.h"
-#include "WorldFrame.h"
+#include "Tool.h"
+#include <OgreRay.h>
+#include <OgreVector3.h>
+
+class WorldFrame;
 
 class ToolView : public Tool
 {
@@ -22,7 +26,9 @@ protected:
 	Ogre::Vector3 _lastTranslateVec;
 
 	wxCursor	_rotateCursor, _translateCursor, _zoomCursor;
-
+	
+	Ogre::Vector3 toVec(long mx, long my);
+	
 public:
 	ToolView(WorldFrame* wf);
 
@@ -43,22 +49,6 @@ public:
 	void setTranslate();
 	void setZoom();
 
-	Ogre::Vector3 toVec(long mx, long my)
-	{
-		// create camera ray
-		float mouseX = float(1.0f/ _worldFrame->getViewport()->getActualWidth()) * mx;
-		float mouseY = float(1.0f/_worldFrame->getViewport()->getActualHeight()) * my;
-		Ogre::Ray mouseRay =  _worldFrame->getCamera()->getCameraToViewportRay(mouseX, mouseY);
-
-		Ogre::Vector3 camPlanePoint(_worldFrame->getCameraNode()->getPosition());
-		Ogre::Vector3 camPlaneNormal(_worldFrame->getCamera()->getRealDirection());
-
-		Ogre::Plane camPlane(camPlaneNormal, camPlanePoint);
-		Ogre::Real rayDist;
-		bool b;
-		boost::tie(b, rayDist) = mouseRay.intersects(camPlane);
-		return mouseRay.getPoint(rayDist);
-	}
 
 };
 

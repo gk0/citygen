@@ -4,6 +4,8 @@
 #include "CellGenParams.h"
 #include "WorldFrame.h"
 
+#include <OgreManualObject.h>
+
 using namespace Ogre;
 using namespace std;
 

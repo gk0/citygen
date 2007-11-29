@@ -2,10 +2,24 @@
 #define WORLDFRAME_H
 
 #include "stdafx.h"
+#include <wx/control.h>
+#include <wx/timer.h>
+#include <OgreCamera.h>
+#include <OgreLight.h>
+#include <OgreRay.h>
+#include <OgreRenderWindow.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreSingleton.h>
+#include <OgreViewport.h>
+
 #include "RoadGraph.h"
 #include "MainWindow.h"
 #include "WorldTerrain.h"
 #include "Tool.h"
+
+class TiXmlElement;
+class TiXmlHandle;
 
 class WorldNode;
 class WorldRoad;

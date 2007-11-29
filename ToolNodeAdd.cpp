@@ -3,6 +3,7 @@
 #include "WorldNode.h"
 #include "WorldRoad.h"
 #include "SimpleNode.h"
+#include "WorldFrame.h"
 
 using namespace Ogre;
 

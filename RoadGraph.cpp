@@ -6,6 +6,10 @@
 #include "WorldNode.h"
 #include "SimpleNode.h"
 
+#include <OgreVector2.h>
+#include <OgreVector3.h>
+#include <OgreLogManager.h>
+
 using namespace std;
 using namespace boost;
 using namespace Ogre;
@@ -169,7 +173,7 @@ void RoadGraph::extractPrimitives(vector< vector<NodeInterface*> > &filaments,
 	}
 	catch(Exception e)
 	{
-		LogManager::getSingleton().logMessage(e.getDescription());
+		//LogManager::getSingleton().logMessage(e.getDescription());
 
 		//DANGER - setting partially decomposed graph to real graph
 		//mGraph = g;
@@ -1367,8 +1371,7 @@ bool operator<(const NodeInfo &l, const NodeInfo &r)
 }
 
 void RoadGraph::extractFootprints(
-		std::vector< std::vector<NodeInterface*> > &polys, Real num,
-		ManualObject* dob)
+		std::vector< std::vector<NodeInterface*> > &polys, Real num)
 {
 	// create a copy of our road graph to work on
 	Graph g(_graph);
@@ -1432,16 +1435,6 @@ void RoadGraph::extractFootprints(
 	{
 		LogManager::getSingleton().logMessage(e.getDescription());
 	}
-
-	if (dob==0)
-		return;
-	//RoadIterator rIt, rEnd;
-	for ( boost::tie(rIt, rEnd) = edges(g); rIt != rEnd; rIt++)
-	{
-		dob->position(g[source(*rIt, g)]->getPosition3D() + Vector3(0, 0.5, 0));
-		dob->position(g[target(*rIt, g)]->getPosition3D() + Vector3(0, 0.5, 0));
-	}
-
 }
 
 void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap,

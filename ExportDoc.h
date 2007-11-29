@@ -2,6 +2,10 @@
 #define EXPORTDOC_H
 
 #include "stdafx.h"
+#include <OgreCamera.h>
+#include <OgreLight.h>
+#include <OgreMesh.h>
+#include <OgreSceneNode.h>
 
 
 class ExportDoc

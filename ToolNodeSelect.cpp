@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ToolNodeSelect.h"
 #include "WorldNode.h"
+#include "WorldFrame.h"
 
 ToolNodeSelect::ToolNodeSelect(WorldFrame* wf)
 : ToolView(wf)

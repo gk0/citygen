@@ -10,6 +10,8 @@
 
 class WorldNode;
 class WorldCanvas;
+class TiXmlElement;
+class TiXmlHandle;
 
 enum RoadPlotAlgorithm
 {

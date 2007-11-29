@@ -1,6 +1,14 @@
 #include "stdafx.h"
 #include "ColladaDoc.h"
+
 #include <boost/filesystem.hpp>
+#include <OgreLogManager.h>
+#include <OgreMaterialManager.h>
+#include <OgreMesh.h>
+#include <OgreStringConverter.h>
+#include <OgreSubMesh.h>
+#include <OgreTechnique.h>
+#include <tinyxml.h>
 
 using namespace std;
 using namespace Ogre;

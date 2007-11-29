@@ -12,6 +12,8 @@ class WorldRoad;
 class NodeInterface;
 class RoadInterface;
 
+class TiXmlHandle;
+class TiXmlElement;
 
 class WorldCell : public WorldObject, public Ogre::ManualResourceLoader
 {

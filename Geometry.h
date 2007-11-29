@@ -2,6 +2,8 @@
 #define GEOMETRY_H
 
 #include "stdafx.h"
+#include <OgreVector2.h>
+#include <OgreVector3.h>
 
 class Cell;
 

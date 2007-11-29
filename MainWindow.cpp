@@ -8,7 +8,12 @@
 
 #include "ColladaDoc.h"
 
-
+#include <wx/app.h>
+#include <wx/filedlg.h>
+#include <wx/image.h>
+#include <wx/menu.h>
+#include <wx/msgdlg.h>
+#include <wx/toolbar.h>
 
 // ----------------------------------------------------------------------------
 // constants

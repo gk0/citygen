@@ -2,7 +2,8 @@
 #define MESHBUILDER_H
 
 #include "stdafx.h"
-
+#include <OgreString.h>
+#include <OgreVector3.h>
 
 typedef std::pair< const std::vector<Ogre::Real>*, const std::vector<Ogre::uint16>* > PtrPolyData;
 typedef std::map< Ogre::Material*, std::vector< PtrPolyData > > PolyDataMap;

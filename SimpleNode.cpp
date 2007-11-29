@@ -6,6 +6,8 @@
 #include "RoadInterface.h"
 #include "MeshBuilder.h"
 
+#include <OgreManualObject.h>
+
 using namespace Ogre;
 using namespace std;
 

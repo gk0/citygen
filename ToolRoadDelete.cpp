@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ToolRoadDelete.h"
+#include "WorldFrame.h"
 
 ToolRoadDelete::ToolRoadDelete(WorldFrame* wf)
 : ToolView(wf)

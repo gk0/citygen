@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ToolRoadSelect.h"
 #include "WorldRoad.h"
+#include "WorldFrame.h"
 
 ToolRoadSelect::ToolRoadSelect(WorldFrame* wf)
 : ToolView(wf)

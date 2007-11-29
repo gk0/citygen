@@ -2,6 +2,10 @@
 #define _LOG_WINDOW_H_
 
 #include "stdafx.h"
+#include <wx/log.h>
+#include <wx/textctrl.h>
+#include <OgreLogManager.h>
+
 
 class LogFrame : public Ogre::LogListener, public wxTextCtrl
 {

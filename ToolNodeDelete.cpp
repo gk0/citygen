@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ToolNodeDelete.h"
+#include "WorldFrame.h"
 
 #define DELETENODESNAPSQ 16
 

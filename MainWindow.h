@@ -4,6 +4,12 @@
 #include "stdafx.h"
 #include "LogFrame.h"
 
+#include <wx/event.h>
+#include <wx/frame.h>
+#include <wx/aui/aui.h>
+#include <wx/propgrid/manager.h>
+
+
 class WorldFrame;
 class ViewPropertyPage;
 class NodePropertyPage;

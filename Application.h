@@ -1,8 +1,11 @@
-#ifndef _APPLICATIon_H_
-#define _APPLICATIon_H_
+#ifndef _APPLICATION_H_
+#define _APPLICATION_H_
 
 #include "stdafx.h"
-#include "MainWindow.h"
+#include <wx/app.h>
+#include <OgreRoot.h>
+
+class MainWindow;
 
 /**Represents the application itself.
  * It is used to:

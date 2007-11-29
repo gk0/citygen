@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ToolCellSelect.h"
 #include "WorldCell.h"
+#include "WorldFrame.h"
 
 using namespace Ogre;
 

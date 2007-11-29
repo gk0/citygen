@@ -3,6 +3,8 @@
 #include "WorldFrame.h"
 #include "WorldRoad.h"
 
+#include <wx/msgdlg.h>
+
 // Required for WX
 IMPLEMENT_CLASS(RoadPropertyPage, wxPropertyGridPage)
 

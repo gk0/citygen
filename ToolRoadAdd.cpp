@@ -2,6 +2,7 @@
 #include "ToolRoadAdd.h"
 #include "WorldRoad.h"
 #include "WorldNode.h"
+#include "WorldFrame.h"
 
 using namespace Ogre;
 

@@ -7,6 +7,13 @@
 #include "Geometry.h"
 #include "MeshBuilder.h"
 
+#include <OgreEntity.h>
+#include <OgreMeshManager.h>
+#include <OgreMaterialManager.h>
+#include <OgreStringConverter.h>
+#include <tinyxml.h>
+
+
 using namespace Ogre;
 using namespace std;
 
@@ -145,7 +152,7 @@ bool WorldNode::setPosition2D(const Ogre::Vector2& pos)
 
 bool WorldNode::loadXML(const TiXmlHandle& nodeRoot)
 {
-	Real x, z;
+	Real x = 0, z = 0;
 	nodeRoot.Element()->QueryFloatAttribute("x", &x);
 	nodeRoot.Element()->QueryFloatAttribute("y", &z);
 	setPosition2D(x, z);
@@ -153,7 +160,7 @@ bool WorldNode::loadXML(const TiXmlHandle& nodeRoot)
 	String s;
 	s = nodeRoot.Element()->Attribute("label");
 	setLabel(s);
-	
+
 	return true;
 }
 

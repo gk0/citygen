@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "ToolView.h"
+#include "RoadGraph.h"
 
 class ToolRoadAdd : public ToolView
 {

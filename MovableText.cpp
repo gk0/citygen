@@ -7,8 +7,13 @@
  * @update  2006 by barraq see nospam@barraquand.com
  */
 #include "stdafx.h"
-#include "OgreFontManager.h"
 #include "MovableText.h"
+
+#include <OgreCamera.h>
+#include <OgreFontManager.h>
+#include <OgreHardwareBufferManager.h>
+#include <OgreMaterialManager.h>
+#include <OgreRoot.h>
 
 using namespace Ogre;
 
@@ -16,29 +21,33 @@ using namespace Ogre;
 #define COLOUR_BINDING     1
 
 MovableText::MovableText(const String &name, const String &caption, const String &fontName, Real charHeight, const ColourValue &color)
-: mpCam(NULL)
-, mpWin(NULL)
-, mpFont(NULL)
-, _name(name)
-, mCaption(caption)
-, mFontName(fontName)
-, mCharHeight(charHeight)
-, mColor(color)
-, mType("MovableText")
-, mTimeUntilNextToggle(0)
-, mSpaceWidth(0)
-, mUpdateColors(true)
-, mOnTop(false)
-, mHorizontalAlignment(H_LEFT)
-, mVerticalAlignment(V_BELOW)
-, mAdditionalHeight(0.0)
 {
     if (name == "")
         throw Exception(Exception::ERR_INVALIDPARAMS, "Trying to create MovableText without name", "MovableText::MovableText");
 
     if (caption == "")
-        throw Exception(Exception::ERR_INVALIDPARAMS, "Trying to create MovableText without caption", "MovableText::MovableText");
+        throw Exception(Exception::ERR_INVALIDPARAMS, "Trying to create MovableText without caption", "MovableText::MovableText");  
+    
+    mFontName = fontName;
+    mType = "MovableText";
+    mName = name;
+    mCaption = caption;
+    mHorizontalAlignment = H_LEFT;
+    mVerticalAlignment = V_BELOW; 
 
+    mColor = color;
+    mCharHeight = charHeight;
+    mSpaceWidth = 0;
+    
+    mUpdateColors = true;
+    mOnTop = false;
+    mTimeUntilNextToggle = 0;
+    mAdditionalHeight = 0.0;
+    
+    mpCam = NULL;
+    mpWin = NULL;
+    mpFont = NULL;
+    
     mRenderOp.vertexData = NULL;
     this->setFontName(mFontName);
     this->_setupGeometry();
@@ -52,9 +61,9 @@ MovableText::~MovableText()
 
 void MovableText::setFontName(const String &fontName)
 {
-    if((Ogre::MaterialManager::getSingletonPtr()->resourceExists(_name + "Material"))) 
+    if((Ogre::MaterialManager::getSingletonPtr()->resourceExists(mName + "Material"))) 
     { 
-        Ogre::MaterialManager::getSingleton().remove(_name + "Material"); 
+        Ogre::MaterialManager::getSingleton().remove(mName + "Material"); 
     }
 
     if (mFontName != fontName || mpMaterial.isNull() || !mpFont)
@@ -71,7 +80,7 @@ void MovableText::setFontName(const String &fontName)
             mpMaterial.setNull();
         }
 
-        mpMaterial = mpFont->getMaterial()->clone(_name + "Material");
+        mpMaterial = mpFont->getMaterial()->clone(mName + "Material");
         if (!mpMaterial->isLoaded())
             mpMaterial->load();
 
@@ -217,7 +226,6 @@ void MovableText::_setupGeometry()
         HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
     bind->setBinding(COLOUR_BINDING, cbuf);
 
-    size_t charlen = mCaption.size();
     Real *pPCBuff = static_cast<Real*>(ptbuf->lock(HardwareBuffer::HBL_DISCARD));
 
     float largestWidth = 0;
@@ -229,7 +237,7 @@ void MovableText::_setupGeometry()
         mSpaceWidth = mpFont->getGlyphAspectRatio('A') * mCharHeight * 2.0;
 
     // for calculation of AABB
-    Ogre::Vector3 min, max, currPos;
+    Ogre::Vector3 min(Ogre::Vector3::ZERO), max(Ogre::Vector3::ZERO), currPos;
     Ogre::Real maxSquaredRadius = 0;
     bool first = true;
 

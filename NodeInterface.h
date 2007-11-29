@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 #include "RoadGraph.h"
+#include <OgreVector2.h>
+#include <OgreVector3.h>
 
 class NodeInterface
 {

@@ -1,13 +1,9 @@
 #include "stdafx.h"
 #include "MeshBuilder.h"
 
-
-// THIS CLASS SEEMS TOO GOOD TO BE TRUE, UNLIKE A LOT OF OTHER CODE I'VE WRITTEN
-
-// OMG, I AM SO HAPPY WITH THIS CLASS I'M FINDING IT HARD TO CONCENTRATE, ITS LIKE
-// SOME SORT OF MAGIC CLASS THAT MAKES LIFE WORTH LIVING
-
-// AND 2 HOURS IS ALL IT TOOK, PLUS ABOUT 10 WORKING OUT WHAT TO DO
+#include <OgreHardwareBufferManager.h>
+#include <OgreMeshManager.h>
+#include <OgreSubMesh.h>
 
 using namespace Ogre;
 using namespace std;

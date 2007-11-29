@@ -2,6 +2,10 @@
 #define CELLPROPERTYPAGE_H
 
 #include "stdafx.h"
+#include <wx/toolbar.h>
+#include <wx/button.h>
+#include <wx/propgrid/manager.h>
+
 
 class WorldFrame;
 

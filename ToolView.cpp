@@ -1,5 +1,10 @@
 #include "stdafx.h"
 #include "ToolView.h"
+#include "WorldFrame.h"
+
+#include <OgreLogManager.h>
+#include <OgreStringConverter.h>
+#include <OgreRay.h>
 
 
 using namespace Ogre;
@@ -223,7 +228,25 @@ void ToolView::setTranslate()
 }
 
 void ToolView::setZoom()
+
 {
 	_mode = zoom;
 	_worldFrame->SetCursor(_zoomCursor);
+}
+
+Ogre::Vector3 ToolView::toVec(long mx, long my)
+{
+	// create camera ray
+	float mouseX = float(1.0f/ _worldFrame->getViewport()->getActualWidth()) * mx;
+	float mouseY = float(1.0f/_worldFrame->getViewport()->getActualHeight()) * my;
+	Ogre::Ray mouseRay =  _worldFrame->getCamera()->getCameraToViewportRay(mouseX, mouseY);
+
+	Ogre::Vector3 camPlanePoint(_worldFrame->getCameraNode()->getPosition());
+	Ogre::Vector3 camPlaneNormal(_worldFrame->getCamera()->getRealDirection());
+
+	Ogre::Plane camPlane(camPlaneNormal, camPlanePoint);
+	Ogre::Real rayDist;
+	bool b;
+	boost::tie(b, rayDist) = mouseRay.intersects(camPlane);
+	return mouseRay.getPoint(rayDist);
 }

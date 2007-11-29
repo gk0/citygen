@@ -3,6 +3,15 @@
 
 #include "stdafx.h"
 
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/visitors.hpp>
+
+#include <OgreVector2.h>
+#include <OgreVector3.h>
+#include <OgreException.h>
+
+
 class NodeInterface;
 class RoadInterface;
 class WorldCell;
@@ -212,7 +221,7 @@ public:
 
 	bool sortVertex(const NodeId& v0, const NodeId& v1) const;
 
-	void extractFootprints(std::vector< std::vector<Ogre::Vector2> > &polys, Ogre::Real num, Ogre::ManualObject* dob=0);
+	void extractFootprints(std::vector< std::vector<Ogre::Vector2> > &polys, Ogre::Real num);
 
 	static void extractFilamentF(NodeId v0, NodeId v1, Graph &g, std::list<NodeId>& heap);
 
@@ -224,7 +233,7 @@ public:
 	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector2> &poly);
 
 	//Vector3 version
-	void extractFootprints(std::vector< std::vector<NodeInterface*> > &polys, Ogre::Real num, Ogre::ManualObject* dob=0);
+	void extractFootprints(std::vector< std::vector<NodeInterface*> > &polys, Ogre::Real num);
 
 	static void extractPrimitiveF(NodeId v0, Graph &g, std::list<NodeId>& heap, 
 		std::vector< std::vector<NodeInterface*> > &polys);

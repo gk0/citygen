@@ -3,6 +3,8 @@
 #include "WorldFrame.h"
 #include "WorldCell.h"
 
+#include <wx/propgrid/advprops.h>
+
 // Required for WX
 IMPLEMENT_CLASS(CellPropertyPage, wxPropertyGridPage)
 

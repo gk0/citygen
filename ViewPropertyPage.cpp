@@ -2,6 +2,8 @@
 #include "ViewPropertyPage.h"
 #include "WorldFrame.h"
 
+#include <wx/propgrid/advprops.h>
+
 ViewPropertyPage::ViewPropertyPage(WorldFrame* wf) : wxPropertyGridPage() 
 {
 	_worldFrame = wf;

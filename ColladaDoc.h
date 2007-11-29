@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "ExportDoc.h"
 
+#include <tinyxml.h>
+
 class ColladaDoc : public ExportDoc
 {
 private:

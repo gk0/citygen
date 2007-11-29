@@ -31,6 +31,12 @@ size_t Statistics::_buildingCount = 0;
 #include <GL/glx.h> 
 #endif
 
+#include <OgreMaterialManager.h>
+#include <OgreRenderSystem.h>
+#include <OgreStringConverter.h>
+#include <OgreRoot.h>
+#include <tinyxml.h>
+
 //#define THREADME 1
 
 

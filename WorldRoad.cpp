@@ -6,6 +6,13 @@
 #include "Geometry.h"
 #include "MeshBuilder.h"
 
+#include <OgreEntity.h>
+#include <OgreManualObject.h>
+#include <OgreMeshManager.h>
+#include <OgreMaterialManager.h>
+#include <OgreStringConverter.h>
+#include <tinyxml.h>
+
 // fine grain roads currently cause problems due to simple insets
 #define FINEGRAIN 1
 
