@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include <OgreVector2.h>
 #include <OgreVector3.h>
+#include <OgreLogManager.h>
+#include <OgreStringConverter.h>
 
 class Cell;
 
@@ -443,7 +445,87 @@ public:
 
 
 	static void polygonInset(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector2> &poly);
+	
+	inline static Ogre::Vector2 calcInsetTarget(const Ogre::Vector3& a, 
+		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &insetAB, const Ogre::Real &insetBC)
+	{
+		Ogre::Vector2 normVecBA(calcNormVec2D(b, a));
+		Ogre::Vector2 normVecBC(calcNormVec2D(b, c));
+	
+		if(insetAB == insetBC)
+		{
+			Ogre::Vector2 normVecBCPerp(normVecBC.perpendicular());
+			Ogre::Vector2 bisectorVector2(-normVecBA.perpendicular() + normVecBCPerp);
+			bisectorVector2.normalise();
+			return V2(b) + bisectorVector2 * (insetAB / bisectorVector2.dotProduct(normVecBCPerp));
+		}
+		else
+		{
+			Ogre::Real theta = std::atan2(normVecBC.y,normVecBC.x) - std::atan2(normVecBA.y,normVecBA.x);
+			if(theta < 0) theta = Ogre::Math::TWO_PI + theta;
+			Ogre::Real adj = insetAB / std::tan(theta) + insetBC / std::sin(theta);
+			return Ogre::Vector2(b.x, b.z) + (normVecBA * -adj) + -insetAB * normVecBA.perpendicular();
+		}
+	}
 
+#define gRAD15 Ogre::Math::PI/12
+#define gRAD165 Ogre::Math::PI - gRAD15
+#define gRAD195 Ogre::Math::PI + gRAD15
+#define SENSI_LIMIT 2
+
+
+	inline static Ogre::Vector3 calcBoundedBisectorTarget(const Ogre::Vector3& a, 
+		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &insetAB, const Ogre::Real &insetBC)
+	{
+		return b+calcBoundedBisector(a-b, c-b, insetAB, insetBC);
+	}
+
+	inline static Ogre::Vector3 calcBoundedBisector(const Ogre::Vector3& a, const Ogre::Vector3& b, 
+		const Ogre::Real &insetAO, const Ogre::Real &insetOB)
+	{
+		Ogre::Vector2 normVecOA(a.x, a.z);
+		Ogre::Vector2 normVecOB(b.x, b.z);
+		normVecOA.normalise();
+		normVecOB.normalise();
+
+		Ogre::Real theta = std::atan2(normVecOA.y, normVecOA.x) - std::atan2(normVecOB.y, normVecOB.x);
+
+		if(theta < 0) theta = Ogre::Math::TWO_PI + theta;
+		bool average = false;
+
+		if(theta < Ogre::Math::PI)
+		{
+			if(theta > gRAD165) average = true;
+		}
+		else if(theta < gRAD195) average = true;
+
+
+		if(average)
+		{
+			//Ogre::LogManager::getSingleton().logMessage("averaged ");
+			//(normVecBA.perpendicular() * insetAB - normVecBC.perpendicular() * insetBC) / 2;
+			return Ogre::Vector3((normVecOA.y * insetAO - normVecOB.y * insetOB)/2, 0,
+				(-normVecOA.x * insetAO + normVecOB.x * insetOB)/2);
+		}
+		else
+		{
+			//Ogre::LogManager::getSingleton().logMessage("angled: "+Ogre::StringConverter::toString(theta));
+			Ogre::Real sinTheta = std::sin(theta);
+			if(sinTheta > 0)
+			{
+				if(sinTheta < 0.3) sinTheta = 0.3;
+			}
+			else
+			{
+				if(sinTheta > -0.3) sinTheta = -0.3;
+			}
+			Ogre::Real aFac = insetOB/sinTheta;
+			Ogre::Real bFac = insetAO/sinTheta;
+			//normVecBA * aFac + normVecBC * bFac;
+			return Ogre::Vector3(normVecOA.x * aFac + normVecOB.x * bFac, 0, 
+				normVecOA.y * aFac + normVecOB.y * bFac);
+		}
+	}
 
 };
 

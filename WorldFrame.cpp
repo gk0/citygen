@@ -30,6 +30,7 @@ size_t Statistics::_buildingCount = 0;
 #include <wx/gtk/win_gtk.h>
 #include <GL/glx.h> 
 #endif
+#include <wx/msgdlg.h>
 
 #include <OgreMaterialManager.h>
 #include <OgreRenderSystem.h>
@@ -528,58 +529,75 @@ void prebuild2(vector<WorldCell*> &cells)
 
 void WorldFrame::update()
 {
-	//Statistics::resetBuildingCount();
-
-	// render nodes, roads ...
-	//PerformanceTimer npf("Nodes");
-	BOOST_FOREACH(WorldNode* wn, _nodeVec) wn->validate();
-	//npf.stop();
-
-	//PerformanceTimer rpf("Roads");
-	BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->validate();
-	//rpf.stop();
-
-	//if(_camera) Root::getSingleton().renderOneFrame();
-	//return;
-
-	//PerformanceTimer cpf("Cells 1");
-	pair<vector<WorldCell*>::iterator, vector<WorldCell*>::iterator> cPIt;
-	cPIt.first = _cellVec.begin();
-	cPIt.second = _cellVec.end();
-
-	//#undef THREADME
-#ifdef THREADME
-	//size_t i=0, N = _cellVec.size(), N2 = N/2;
-	//vector<WorldCell*> a, b;
-	//for(; i<N2; i++) a.push_back(_cellVec[i]);
-	//for(; i<N; i++) b.push_back(_cellVec[i]);
-
-	//boost::thread thrd1(
-	//	boost::bind(&prebuild2, a));
-	//boost::thread thrd2(
-	//	boost::bind(&prebuild2, b));
-
-	boost::thread thrd1(boost::bind(&prebuild, &cPIt));
-	boost::thread thrd2(boost::bind(&prebuild, &cPIt));
-
-	thrd1.join();
-	thrd2.join();
-#else
-	prebuild(&cPIt);
-#endif
-	//cpf.stop();
-
-	//PerformanceTimer cpf2("Cells 2");
-	BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
-	//cpf2.stop();
-
-	//PerformanceTimer renpf("Render");
-	if (_camera)
-		Root::getSingleton().renderOneFrame();
-	//renpf.stop();
-
-	//LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
-	//	+" - "+cpf2.toString()+" - "+renpf.toString());
+	try {
+		//Statistics::resetBuildingCount();
+	
+		// render nodes, roads ...
+		PerformanceTimer npf("Nodes");
+		BOOST_FOREACH(WorldNode* wn, _nodeVec) wn->validate();
+		npf.stop();
+	
+		PerformanceTimer rpf("Roads");
+		BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->validate();
+		rpf.stop();
+	
+		//if(_camera) Root::getSingleton().renderOneFrame();
+		//return;
+	
+		PerformanceTimer cpf("Cells 1");
+		pair<vector<WorldCell*>::iterator, vector<WorldCell*>::iterator> cPIt;
+		cPIt.first = _cellVec.begin();
+		cPIt.second = _cellVec.end();
+	
+		//#undef THREADME
+	#ifdef THREADME
+		//size_t i=0, N = _cellVec.size(), N2 = N/2;
+		//vector<WorldCell*> a, b;
+		//for(; i<N2; i++) a.push_back(_cellVec[i]);
+		//for(; i<N; i++) b.push_back(_cellVec[i]);
+	
+		//boost::thread thrd1(
+		//	boost::bind(&prebuild2, a));
+		//boost::thread thrd2(
+		//	boost::bind(&prebuild2, b));
+	
+		boost::thread thrd1(boost::bind(&prebuild, &cPIt));
+		boost::thread thrd2(boost::bind(&prebuild, &cPIt));
+	
+		thrd1.join();
+		thrd2.join();
+	#else
+		prebuild(&cPIt);
+	#endif
+		cpf.stop();
+	
+		PerformanceTimer cpf2("Cells 2");
+		BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
+		cpf2.stop();
+	
+		PerformanceTimer renpf("Render");
+		if (_camera)
+			Root::getSingleton().renderOneFrame();
+		renpf.stop();
+	
+		LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
+			+" - "+cpf2.toString()+" - "+renpf.toString());
+	} 
+	catch(Exception &e)
+	{
+		wxMessageBox(_T("Ogre::Exception: ")+_U(e.getFullDescription().c_str()),
+						_("Update Exception"), wxICON_EXCLAMATION);
+	}
+	catch(std::exception &e)
+	{
+		wxMessageBox(_T("std::exception: ")+_U(e.what()),
+						_("Update Exception"), wxICON_EXCLAMATION);
+	}
+	catch(...)
+	{
+		wxMessageBox(_T("Undescribed"),
+						_("Update Exception"), wxICON_EXCLAMATION);
+	}
 }
 
 bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)

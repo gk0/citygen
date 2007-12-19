@@ -225,12 +225,12 @@ void WorldRoad::prebuild()
 			Vector2 offset(Geometry::calcInsetVector(currRoadSegPerp, nextRoadSegPerp, _genParams._roadWidth));
 
 			// calculate vertex positions using the offset
-			b1.x = b.x - offset.x;
+			b1.x = b.x + offset.x;
 			b1.y = b.y;
-			b1.z = b.z - offset.y;
-			b2.x = b.x + offset.x;
+			b1.z = b.z + offset.y;
+			b2.x = b.x - offset.x;
 			b2.y = b.y;
-			b2.z = b.z + offset.y;
+			b2.z = b.z - offset.y;
 
 			// calculate normal
 			Vector3 nextRoadSegNormal = Vector3(nextRoadSegPerp.x, 0, nextRoadSegPerp.y).crossProduct(nextRoadSegVector);
@@ -246,8 +246,8 @@ void WorldRoad::prebuild()
 
 			// index data
 			voffset = static_cast<uint16>(_vertexData.size() >> 3);
-			MeshBuilder::addIData3(_indexData, voffset - 4, voffset - 3, voffset - 2);
-			MeshBuilder::addIData3(_indexData, voffset - 3, voffset - 1, voffset - 2);
+			MeshBuilder::addIData3(_indexData, voffset - 2, voffset - 3, voffset - 4);
+			MeshBuilder::addIData3(_indexData, voffset - 2, voffset - 1, voffset - 3);
 		}
 
 		// finish end
@@ -272,8 +272,8 @@ void WorldRoad::prebuild()
 
 		// index data
 		voffset = static_cast<uint16>(_vertexData.size() >> 3);
-		MeshBuilder::addIData3(_indexData, voffset - 4, voffset - 3, voffset - 2);
-		MeshBuilder::addIData3(_indexData, voffset - 3, voffset - 1, voffset - 2);
+		MeshBuilder::addIData3(_indexData, voffset - 2, voffset - 3, voffset - 4);
+		MeshBuilder::addIData3(_indexData, voffset - 2, voffset - 1, voffset - 3);
 	}
 }
 

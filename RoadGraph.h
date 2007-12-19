@@ -26,6 +26,8 @@ typedef boost::adjacency_list<
 
 typedef boost::graph_traits<Graph>::vertex_descriptor NodeId;
 typedef boost::graph_traits<Graph>::vertex_iterator NodeIterator;
+typedef boost::graph_traits<Graph>::adjacency_iterator NodeIterator2;
+
 typedef boost::graph_traits<Graph>::edge_descriptor RoadId;
 
 struct road_less_than :
@@ -66,7 +68,7 @@ public:
 		return _graph[rd];
 	}
 
-	inline RoadId getRoad(const NodeId src, const NodeId dst) const
+	inline RoadId getRoadId(const NodeId src, const NodeId dst) const
 	{
 		bool success;
 		RoadId rd;
@@ -108,6 +110,12 @@ public:
 		getRoadsFromNode(const NodeId& nd) const
 	{
 		return out_edges(nd, _graph);
+	}
+
+	inline std::pair<const NodeIterator2, const NodeIterator2> 
+		getAdjacentNodes(const NodeId& nd) const
+	{
+		return adjacent_vertices(nd, _graph);
 	}
 
 	inline NodeId getSrc(const RoadId rd) const
@@ -160,6 +168,10 @@ public:
 						NodeId& nd, RoadId& rd, Ogre::Vector2& pos) const;
 
 
+	NodeId getFirstAdjacent(NodeId nd)
+	{
+		return getFirstAdjacent(nd, _graph);
+	}
 		
 	bool getClockwiseMost(NodeId vcurr, NodeId& vnext)
 	{
@@ -171,7 +183,7 @@ public:
 		return getCounterClockwiseMostFromPrev(prev, vcurr, vnext, _graph);
 	}
 
-	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
+//	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
 
 
 	int findClosestIntscnOrNode(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
@@ -214,10 +226,10 @@ public:
 
 	static void removeFromHeap(NodeId v0, std::list<NodeId>& heap);
 	static NodeId getFirstAdjacent(NodeId nd, const Graph &g);
-	static RoadId getFirstRoad(NodeId nd, const Graph &g);
+	//static RoadId getFirstRoad(NodeId nd, const Graph &g);
 
 	static NodeId getSecondAdjacent(NodeId nd, const Graph &g);
-	static RoadId getSecondRoad(NodeId nd, const Graph &g);
+	//static RoadId getSecondRoad(NodeId nd, const Graph &g);
 
 	bool sortVertex(const NodeId& v0, const NodeId& v1) const;
 

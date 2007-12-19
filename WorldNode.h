@@ -30,15 +30,13 @@ private:
 	Ogre::Entity*		_selected;
 	Ogre::MovableText*	_label;
 	Ogre::SceneManager* _creator;
+	Ogre::ManualObject* _mo;
 	Ogre::String		_name;
 	//std::vector<WorldRoad*> mRoads;
 	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > _roadJunction;
 
-	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
 	void onMove();
 
-	std::vector<RoadId> getClockwiseVecOfRoads();
-	std::vector<NodeId> getClockwiseVecOfNodes(const std::vector<RoadId>& roads);
 
 public:
 	NodeId mSimpleNodeId;
@@ -104,7 +102,7 @@ public:
 	friend WorldRoad* getWorldRoad(const WorldNode* wn1, const WorldNode* wn2)
 	{
 		RoadGraph& g(wn1->_simpleRoadGraph);
-		RoadInterface* ri = g.getRoad(g.getRoad(wn1->mSimpleNodeId, wn2->mSimpleNodeId));
+		RoadInterface* ri = g.getRoad(g.getRoadId(wn1->mSimpleNodeId, wn2->mSimpleNodeId));
 		assert(typeid(*ri) == typeid(WorldRoad));
 		return static_cast<WorldRoad*>(ri);
 	}

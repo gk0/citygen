@@ -68,16 +68,8 @@ void CellPropertyPage::Init()
 	_buildingHeightProp = Append(wxFloatProperty(wxT("Building Height"), wxPG_LABEL, 0.));
 	_buildingDevianceProp = Append(wxFloatProperty(wxT("Building Deviance"), wxPG_LABEL, 0.));
 
-	//_roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 4));
-
 	_roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 0));
 	SetPropertyEditor(wxT("Road Limit"), wxPG_EDITOR(SpinCtrl));
-
-	SetPropertyHelpString(wxT("SpinCtrl"),
-		wxT("This is regular wxIntProperty, which editor has been ")
-		wxT("changed to wxPG_EDITOR(SpinCtrl). Note however that ")
-		wxT("static wxPropertyGrid::RegisterAdditionalEditors() ")
-		wxT("needs to be called prior to using it."));
 
 	_connectivityProp = Append(wxFloatProperty(wxT("Connectivity"), wxPG_LABEL, 0));
 

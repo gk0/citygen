@@ -81,8 +81,8 @@ void SimpleRoad::prebuild()
 	MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
 	MeshBuilder::addVData2(_vertexData, uMax, 0);
 
-	MeshBuilder::addIData3(_indexData, 0, 1, 3);
-	MeshBuilder::addIData3(_indexData, 1, 2, 3);
+	MeshBuilder::addIData3(_indexData, 3, 1, 0);
+	MeshBuilder::addIData3(_indexData, 3, 2, 1);
 }
 
 void SimpleRoad::build(MeshBuilder& meshBuilder, Material* mat)

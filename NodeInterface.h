@@ -27,11 +27,7 @@ public:
 	virtual void onAddRoad() {}
 	virtual void onRemoveRoad() {}
 	
-	virtual std::pair<Ogre::Vector3, Ogre::Vector3> getRoadJunction(RoadId rd)
-	{
-		return std::make_pair(Ogre::Vector3(), Ogre::Vector3());
-	}
-
+	virtual std::pair<Ogre::Vector3, Ogre::Vector3> getRoadJunction(RoadId rd) = 0;
 	virtual size_t getDegree()
 	{
 		return _roadGraph.getDegree(_nodeId);
@@ -40,7 +36,7 @@ public:
 	friend RoadInterface* getRoad(NodeInterface* n1, NodeInterface* n2)
 	{
 		RoadGraph& g(n1->_roadGraph);
-		return g.getRoad(g.getRoad(n1->_nodeId, n2->_nodeId));
+		return g.getRoad(g.getRoadId(n1->_nodeId, n2->_nodeId));
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const NodeInterface& n)

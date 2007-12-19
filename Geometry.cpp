@@ -402,80 +402,6 @@ void Geometry::processInsetVectors(const vector< pair<Vector3, Vector2> > &iv, v
 	}
 }
 
-/*
-void Geometry::processInsetVectors(const vector<pair<Vector3, Vector2>> &iv, vector<Vector3>& poly)
-{
-	size_t i, j, k, offset = 0, N=iv.size();
-	if(poly.size() != 0) poly.clear();
-	poly.reserve(N);
-
-	// set the search ahead size
-	size_t searchSz = (4 < N-2) ? 4 : (N-2);
-
-	for(i=0; i<N; i++)
-	{
-		bool breaker=false;
-		Vector2 polyi2D = V2(iv[i].first);
-		for(size_t searchOffset=searchSz; searchOffset>0; searchOffset--)
-		{
-			Vector2 interscn;
-			j = (i+searchOffset)%N;
-			Vector2 polyj2D = V2(iv[j].first);
-
-			if(lineSegmentIntersect(polyi2D, iv[i].second, polyj2D, iv[j].second, interscn))
-			{
-				//LogManager::getSingleton().logMessage("Bla!!");
-				size_t searchOffset2 = searchOffset;
-				for(; searchOffset2<searchSz; searchOffset2++)
-				{
-					k = (i+searchOffset2)%N;
-					Vector2 polyk2D = V2(iv[k].first);
-					if(lineSegmentIntersect(polyj2D, iv[j].second, polyk2D, iv[k].second, interscn))
-					{
-						LogManager::getSingleton().logMessage("Bla!!");
-						Vector2 tmp((iv[i].second+iv[k].second)/2);
-						poly.push_back(Vector3(tmp.x, (iv[i].first.y + iv[k].first.y)/2, tmp.y));
-						if(i>=(N-k))
-							offset = N - k + 1;
-						i += k;
-						breaker = true;
-						break;
-					}
-				}
-				if(breaker) break;
-				breaker = true;
-				Vector2 tmp((iv[i].second+iv[j].second)/2);
-				poly.push_back(Vector3(tmp.x, (iv[i].first.y + iv[j].first.y)/2, tmp.y));
-				if(i>=(N-j))
-					offset = N - j + 1;
-				i += j;
-				break;
-			}
-		}
-		if(!breaker)
-		{
-			// pretend its ok, could be intersecting with other less immediate neighbors
-			poly.push_back(Vector3(iv[i].second.x, iv[i].first.y, iv[i].second.y));
-		}
-	}
-
-	if(!offset)
-	{
-		vector<Vector3> tmpPoly;
-		tmpPoly.reserve(N - offset);
-		for(size_t i=offset; i<poly.size(); i++) tmpPoly.push_back(poly[i]);
-		poly.swap(tmpPoly);
-	}
-}
-*/
-/*void Geometry::processInsetVectors(const vector<pair<Vector3, Vector2>> &iv, vector<Vector3>& poly)
-{
-	size_t i, j, k, offset = 0, N=iv.size();
-	if(poly.size() != 0) poly.clear();
-	poly.reserve(N);
-	for(size_t i=0; i<N; i++) poly.push_back(Vector3(iv[i].second.x, iv[i].first.y, iv[i].second.y));
-}*/
-
 void Geometry::polygonInset(const vector<Real>& insets, vector<Vector3> &poly)
 {
 	if(poly.size() < 3) return;
@@ -556,8 +482,21 @@ bool Geometry::polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAheadMax)
 void Geometry::polyRepairCycle(std::vector<Ogre::Vector3> &poly, size_t lookAhead)
 {
 	size_t i,j,k,l,clipFront=0,N = poly.size();
-	assert(N >= 3);
-	assert((N-lookAhead) > 2);
+
+#ifdef DEBUG
+	if(N >= 3)
+	{
+		throw Ogre::Exception(Ogre::Exception::ERR_INTERNAL_ERROR, "Not a valid polygon", "Geometry::polyRepairCycle");
+		return;
+	}
+	if((N-lookAhead) > 2)
+	{
+		throw Ogre::Exception(Ogre::Exception::ERR_INTERNAL_ERROR, "Look ahead too high", "Geometry::polyRepairCycle");
+		return;
+	}
+#else
+	if(N >= 3 && (N-lookAhead) > 2) return;
+#endif
 	vector<Vector3> tmpPoly;
 	tmpPoly.reserve(N);
 
@@ -600,135 +539,6 @@ void Geometry::polyRepairCycle(std::vector<Ogre::Vector3> &poly, size_t lookAhea
 	else poly.swap(tmpPoly);
 }
 
-//
-//// draw inset vectors
-//vector< vector<NodeInterface*> > cycs;
-//_roadGraph.extractFootprints(cycs, _genParams._lotSize);
-//
-//_debugMO = new ManualObject(_name+"do");
-//_debugMO->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
-//
-//BOOST_FOREACH(vector<NodeInterface*> &cycle, cycs)
-//{
-//	size_t i,j,k,N = cycle.size();
-//	vector<Vector2> bisectorTargets(N);
-//
-//	for(i=0; i<N; i++)
-//	{
-//		j = (i+1)%N;
-//		k = (i+2)%N;
-//		Vector3& iPos(cycle[i]->getPosition3D());
-//		Vector3& jPos(cycle[j]->getPosition3D());
-//		Vector3& kPos(cycle[k]->getPosition3D());
-//		Vector2 iPos2(iPos.x, iPos.z);
-//		Vector2 jPos2(jPos.x, jPos.z);
-//		Vector2 kPos2(kPos.x, kPos.z);
-//		//_debugMO->position(footprints[0][i]);
-//		//_debugMO->position(footprints[0][j]);
-//
-//		// Segment Vectors
-//		Vector2 segmentVec1(jPos2 - iPos2);
-//		Vector2 segmentVec2(kPos2 - jPos2);
-//		segmentVec1.normalise();
-//		segmentVec2.normalise();
-//
-//		// Perpendiculars
-//		Vector2 perp1 = segmentVec1.perpendicular();
-//		perp1.normalise();
-//		Vector2 perp2 = segmentVec2.perpendicular();
-//		perp2.normalise();
-//
-//		// Segment Widths
-//		Real rw1 = _roadGraph.getRoad(_roadGraph.getRoad(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth();
-//		Real rw2 = _roadGraph.getRoad(_roadGraph.getRoad(cycle[j]->_nodeId, cycle[k]->_nodeId))->getWidth();
-//
-//		// Segment inset vectors
-//		Vector2 segmentInsetVector1 = perp1 * rw1;
-//		Vector2 segmentInsetVector2 = perp2 * rw2;
-//
-//		_debugMO->position(iPos.x, iPos.y+0.3, iPos.z);
-//		_debugMO->position(iPos.x+perp1.x, iPos.y+0.3, iPos.z+segmentInsetVector1.y);
-//		_debugMO->position(jPos.x, jPos.y+0.3, jPos.z);
-//		_debugMO->position(jPos.x+perp1.x, jPos.y+0.3, jPos.z+segmentInsetVector1.y);
-//
-//		// Bisector method 1
-//		//Vector2 bisectorVector1(segmentVec1 - segmentVec2);		// method 1
-//		//if(bisectorVector1 == Vector2::ZERO)					// doesn't always point inside
-//		//	bisectorVector1 = perp1;
-//		//else
-//		//	bisectorVector1.normalise();
-//
-//		//// Bisector method 2
-//		//{
-//		//	Vector2 bisectorVector2(perp1 + perp2);					// method 2
-//		//	bisectorVector2.normalise();							// always points inside, fine for constant inset
-//		//	Vector2 tmp2 = bisectorVector2*4;
-//		//	_debugMO->position(jPos.x, jPos.y+0.3, jPos.z);
-//		//	_debugMO->position(jPos.x+tmp2.x, jPos.y+0.3, jPos.z+tmp2.y);
-//		//}
-//
-//		// Bisector method 3
-//		{
-//			Vector2 bisectorVector3;
-//			if(!Geometry::lineIntersect(iPos2 + segmentInsetVector1, jPos2+segmentInsetVector1, 
-//				jPos2+segmentInsetVector2, kPos2+segmentInsetVector2, bisectorVector3))
-//				// parallel so intersection point is the minimum inset perpendicular
-//				bisectorVector3 = rw1 < rw2 ?  segmentInsetVector1 : segmentInsetVector2;
-//			else
-//				bisectorVector3 -= jPos2;
-//
-//			Vector2 tmp2 = bisectorVector3*5;
-//			_debugMO->position(jPos.x, jPos.y+0.3, jPos.z);
-//			_debugMO->position(jPos.x+tmp2.x, jPos.y+0.3, jPos.z+tmp2.y);
-//
-//			bisectorTargets[j] = (jPos2 + bisectorVector3);
-//		}
-//	}
-//
-//	vector<Vector3> boundary;
-//
-//	// processing 2nd round
-//	for(i=0; i<N; i++)
-//	{
-//		j = (i+1)%N;
-//		k = (i+2)%N;
-//		Vector3& iPos(cycle[i]->getPosition3D());
-//		Vector3& jPos(cycle[j]->getPosition3D());
-//		Vector3& kPos(cycle[k]->getPosition3D());
-//		Vector2 iPos2(iPos.x, iPos.z);
-//		Vector2 jPos2(jPos.x, jPos.z);
-//		Vector2 kPos2(kPos.x, kPos.z);
-//
-//		// check if the bisectors intersect with their immediate neighbors
-//		Vector2 interscn;
-//		if(Geometry::lineSegmentIntersect(iPos2, bisectorTargets[i], kPos2, bisectorTargets[k], interscn))
-//		{
-//			//boundary.push_back(Vector3(interscn.x, (iPos.y + kPos.y)/2, interscn.y));
-//			Vector2 tmp((bisectorTargets[i]+bisectorTargets[k])/2);
-//			boundary.push_back(Vector3(tmp.x, (iPos.y + kPos.y)/2, tmp.y));
-//		}
-//		else if(Geometry::lineSegmentIntersect(iPos2, bisectorTargets[i], jPos2, bisectorTargets[j], interscn))
-//		{
-//			//boundary.push_back(Vector3(interscn.x, (iPos.y + jPos.y)/2, interscn.y));
-//			Vector2 tmp((bisectorTargets[i]+bisectorTargets[j])/2);
-//			boundary.push_back(Vector3(tmp.x, (iPos.y + jPos.y)/2, tmp.y));
-//		}
-//		else
-//		{
-//			// pretend its ok, could be intersecting with other less immediate neighbors
-//			boundary.push_back(Vector3(bisectorTargets[i].x, iPos.y, bisectorTargets[i].y));
-//		}
-//	}
-//
-//	N = boundary.size();
-//	for(i=0; i<N; i++)
-//	{
-//		j = (i+1)%N;
-//		_debugMO->position(boundary[i]);
-//		_debugMO->position(boundary[j]);
-//	}
-//}
-//}
 
 
 

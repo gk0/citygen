@@ -14,9 +14,6 @@ private:
 	Ogre::Vector3 _position;
 	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > _roadJunction;
 
-	std::vector<RoadId> getClockwiseVecOfRoads();
-	std::vector<NodeId> getClockwiseVecOfNodes(const std::vector<RoadId>& roads);
-
 public:
 	SimpleNode(RoadGraph &g);
 	SimpleNode(RoadGraph &g, Ogre::Real x, Ogre::Real z);
@@ -37,7 +34,6 @@ public:
 
 	void prebuild();
 	void build(MeshBuilder &meshBuilder, Ogre::Material* mat);
-	void createJunction(Ogre::ManualObject* junctionPlate);
 	
 	std::pair<Ogre::Vector3, Ogre::Vector3> getRoadJunction(RoadId rd);
 
@@ -59,21 +55,6 @@ private:
 	void createTerminus();
 	bool createTJunction();
 
-	inline static Ogre::Vector2 madnessCheck(const Ogre::Vector2& nodePos, const Ogre::Vector2& pos, 
-		const Ogre::Real limitSq, const Ogre::Real limit)
-	{
-		Ogre::Vector2 dir = pos - nodePos;
-		Ogre::Real len = dir.squaredLength();
-		if(len < limitSq) 
-		{	
-			return pos;
-		}
-		else
-		{
-			dir.normalise();
-			return (nodePos + (dir * limit));
-		}
-	}
 
 }; 
 

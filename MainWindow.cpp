@@ -245,6 +245,7 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	// property manager
 	_propertyGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxSize(260,200));
+	_propertyGridManager->RegisterAdditionalEditors();
 	_frameManager.AddPane(_propertyGridManager, wxRIGHT, wxT("Property Inspector"));
 
 	// create pages

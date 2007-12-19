@@ -101,20 +101,6 @@ material gk/Building4
 	}
 } 
 
-material gk/Hilite/Yellow
-{
-	technique
-	{
-		pass
-		{
-
-			texture_unit
-			{
-				texture dkyellow.png
-			}
-		}
-	}
-}
 
 material Material
 {
@@ -131,36 +117,151 @@ material Material
 	}
 }
 
-material gk/Hilite/Red2
+material gk/Hilite/Red
 {
-	technique
-	{
-		pass
-		{
-			ambient 0.2 0.1 0.1
-			diffuse 0.5 0.0 0.0
-			specular 0.7 0.7 0.7 50
-		}
-	}
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 1 0 0
+        alpha_op_ex source1 src_manual src_current 0.5
+      }
+    }
+  }
+}
+
+material gk/Hilite/Yellow
+{
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 1 1 0
+        alpha_op_ex source1 src_manual src_current 0.5
+      }
+    }
+  }
+}
+
+material gk/Hilite/Rainbow0
+{
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 1 0 0
+        alpha_op_ex source1 src_manual src_current 0.5
+      }
+    }
+  }
+}
+
+material gk/Hilite/Rainbow1
+{
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 0 1 0
+        alpha_op_ex source1 src_manual src_current 0.5
+      }
+    }
+  }
+}
+
+material gk/Hilite/Rainbow2
+{
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 0 0 1
+        alpha_op_ex source1 src_manual src_current 0.5
+      }
+    }
+  }
+}
+
+material gk/Hilite/Rainbow3
+{
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 1 1 0
+        alpha_op_ex source1 src_manual src_current 0.5
+      }
+    }
+  }
+}
+
+material gk/Hilite/Rainbow4
+{
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 0 1 1
+        alpha_op_ex source1 src_manual src_current 0.5
+      }
+    }
+  }
+}
+
+material gk/Hilite/Rainbow5
+{
+  technique
+  {
+    pass
+    {
+      scene_blend alpha_blend
+      depth_write off
+      
+      texture_unit
+      {
+        colour_op_ex source1 src_manual src_current 1 0 1
+        alpha_op_ex source1 src_manual src_current 0.5
+      }
+    }
+  }
 }
 
 material default
-{
-	technique
-	{
-		pass
-		{
-
-			texture_unit
-			{
-				texture gk_red.png
-			}
-		}
-	}
-}
-
-
-material gk/Hilite/Red
 {
 	technique
 	{
@@ -299,7 +400,6 @@ material gk/Road
 		}
 	}
 }
-
 
 material gk/RoadJunction
 {
@@ -552,6 +652,7 @@ material gk/Building2WNormalMap
 		}
 	}
 }
+
 
 
 // Any number of lights, diffuse and specular

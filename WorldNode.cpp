@@ -6,8 +6,10 @@
 #include "Triangulate.h"
 #include "Geometry.h"
 #include "MeshBuilder.h"
+#include "RoadGraph.h"
 
 #include <OgreEntity.h>
+#include <OgreManualObject.h>
 #include <OgreMeshManager.h>
 #include <OgreMaterialManager.h>
 #include <OgreStringConverter.h>
@@ -24,6 +26,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
   : NodeInterface(g),
     _simpleRoadGraph(s)
 {
+	_mo = 0;
 	_creator = creator;
 
 	mSimpleNodeId = _simpleRoadGraph.addNode(this);
@@ -46,7 +49,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 //	mat->getTechnique(0)->getPass(0)->setAmbient(0.1, 0.1, 0.1);
 //	mat->getTechnique(0)->getPass(0)->setDiffuse(0.5, 0, 0, 1.0);
 //	mat->getTechnique(0)->getPass(0)->setSpecular(0.7, 0.7, 0.7, 0.5);
-	_mesh->setMaterialName("gk/Hilite/Red2");
+	_mesh->setMaterialName("gk/Hilite/Red");
 
 	// create highlight mesh
 	_highlight = _creator->createEntity(_name+"Highlight", "flange.mesh");
@@ -229,17 +232,24 @@ void WorldNode::build()
 		MeshManager::getSingleton().remove(_name+"Mesh");
 		_junctionEntity = 0;
 	}
+	
+	if(_mo)
+	{
+		_sceneNode->detachObject(_mo);
+		delete _mo;
+		_mo = 0;
+	}
 
 	// how many roads connect here
 	switch(_degree)
 	{
 	case 0:
 		_label->setVisible(true);
-		_mesh->setVisible(true);
+		_mesh->setVisible(_selected->getVisible());
 		return;
 	case 1:
 		_label->setVisible(true);
-		_mesh->setVisible(true);
+		_mesh->setVisible(_selected->getVisible());
 		createTerminus();
 		return;
 	case 2:
@@ -263,15 +273,33 @@ void WorldNode::build()
 
 	Vector2 nodePos2D = getPosition2D();
 	Real height = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
-
+	
 	// get a clockwise list of road intersections
-	vector<Vector2> pointlist;
-	vector<RoadId> roadCWVec(getClockwiseVecOfRoads());
-	for(size_t j,i=0; i < _degree; i++)
+	vector<Vector3> pointlist;
+	vector<RoadId> roadCWVec;
+	pointlist.reserve(_degree);
+	roadCWVec.reserve(_degree);
+
+	// initial vars
+	NodeId lastNodeId = _roadGraph.getFirstAdjacent(_nodeId);
+	Real lastRoadInset = _roadGraph.getRoad(_roadGraph.getRoadId(_nodeId, lastNodeId))->getWidth();
+	Vector3 lastRoadVec = _roadGraph.getNode(lastNodeId)->getPosition3D() - getPosition3D();
+
+	for(size_t i=0; i < _degree; i++)
 	{
-		j = (i+1)%_degree;
-		Vector2 tmp = _roadGraph.getRoadBounaryIntersection(roadCWVec[i], roadCWVec[j]);
-		pointlist.push_back(madnessCheck(nodePos2D, tmp, 9.0f, 3.0f));
+		NodeId currNodeId;
+		_roadGraph.getCounterClockwiseMostFromPrev(lastNodeId, _nodeId, currNodeId);
+		Vector3 curRoadVec = _roadGraph.getNode(currNodeId)->getPosition3D() - getPosition3D();
+		RoadId curRoadId = _roadGraph.getRoadId(_nodeId, currNodeId);
+		Real curRoadInset = _roadGraph.getRoad(curRoadId)->getWidth();
+
+		Vector3 intersectionPoint = Geometry::calcBoundedBisector(lastRoadVec,curRoadVec,lastRoadInset,curRoadInset);
+		pointlist.push_back(intersectionPoint+Vector3(0, GROUNDCLEARANCE.y - 0.1f,0));
+		roadCWVec.push_back(curRoadId);
+
+		lastNodeId = currNodeId;
+		lastRoadVec = curRoadVec;
+		lastRoadInset = curRoadInset;
 	}
 
 	// declare the manual object
@@ -286,22 +314,26 @@ void WorldNode::build()
 		size_t j = (i + 1) % _degree;
 
 		//
-		pair<Vector3, Vector3> roadPair(Vector3(pointlist[j].x, height, pointlist[j].y), 
-										Vector3(pointlist[i].x, height, pointlist[i].y));
+		pair<Vector3, Vector3> roadPair(pointlist[i] + getPosition3D(),
+										pointlist[j] + getPosition3D());
 
 		// create a junction -> road join pair
-		_roadJunction[roadCWVec[j]] = roadPair;
+		_roadJunction[roadCWVec[i]] = roadPair;
 
 		uint16 offset = static_cast<uint16>(_vertexData.size()>>3);
-		MeshBuilder::addVData3(_vertexData, roadPair.second - getPosition3D());
-		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
-		MeshBuilder::addVData2(_vertexData, 0, 0);
-		MeshBuilder::addVData3(_vertexData, roadPair.first - getPosition3D());
+		MeshBuilder::addVData3(_vertexData, pointlist[i]);
 		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
 		MeshBuilder::addVData2(_vertexData, 1, 0);
+		MeshBuilder::addVData3(_vertexData, pointlist[j]);
+		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+		MeshBuilder::addVData2(_vertexData, 0, 0);
 		MeshBuilder::addVData3(_vertexData, 0.0f, GROUNDCLEARANCE.y - 0.1f, 0.0f);
 		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
-		MeshBuilder::addVData2(_vertexData, 0.5, 0.5);
+
+		// this is a little costly but such is life
+		Real v = ((pointlist[i] + pointlist[j])/2).length()
+					/ _roadGraph.getRoad(roadCWVec[i])->getWidth();
+		MeshBuilder::addVData2(_vertexData, 0.5, std::min(1.0f,v/4));
 
 		MeshBuilder::addIData3(_indexData, offset, offset + 1, offset + 2);
 	}
@@ -319,23 +351,19 @@ void WorldNode::createTerminus()
 {
 	_roadJunction.clear();
 
-	// get road
-	RoadIterator2 rIt2, rEnd2;
-	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(_nodeId); 
-	if(rIt2 != rEnd2)
-	{		
-		Real h = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
-		Vector2 p1, p2, offset, roadVec;
-		p1 = _roadGraph.getSrcNode(*rIt2)->getPosition2D();
-		p2 = _roadGraph.getDstNode(*rIt2)->getPosition2D();
-		roadVec = (p1-p2);
-		roadVec.normalise();
-		offset = roadVec.perpendicular();
-		offset *= _roadGraph.getRoad(*rIt2)->getWidth();
-		roadVec *= _roadGraph.getRoad(*rIt2)->getWidth();
-		_roadJunction[*rIt2] = make_pair(Vector3(p1.x + offset.x + roadVec.x, h, p1.y + offset.y + roadVec.y),
-			Vector3(p1.x - offset.x + roadVec.x, h, p1.y - offset.y + roadVec.y));
-	}
+	Vector2 pos(getPosition2D());
+	NodeId connectedNodeId = _roadGraph.getFirstAdjacent(_nodeId);
+	RoadId roadId = _roadGraph.getRoadId(_nodeId, connectedNodeId);
+	Real roadInset = _roadGraph.getRoad(roadId)->getWidth();
+	Vector2 roadVec = _roadGraph.getNode(connectedNodeId)->getPosition2D() - pos;
+	roadVec.normalise();
+
+	Real h = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
+	Vector2 offset = roadVec.perpendicular();
+	offset *= roadInset;
+	roadVec *= roadInset;
+	_roadJunction[roadId] = make_pair(Vector3(pos.x + offset.x - roadVec.x, h, pos.y + offset.y - roadVec.y),
+		Vector3(pos.x - offset.x - roadVec.x, h, pos.y - offset.y - roadVec.y));
 }
 
 pair<Vector3, Vector3> WorldNode::getRoadJunction(RoadId rd) 
@@ -344,8 +372,8 @@ pair<Vector3, Vector3> WorldNode::getRoadJunction(RoadId rd)
 	rIt = _roadJunction.find(rd);
 	if(rIt == _roadJunction.end())
 	{
-		//size_t degree = _roadGraph.getDegree(mNodeId);
-		//throw new Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "WorldNode::getRoadJunction");
+		//TODO: this throws when a proposed road snap to an existing node where a road is already present
+		//throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "WorldNode::getRoadJunction");
 		//LogManager::getSingleton().logMessage("Node "+getLabel()+" road not found.", LML_CRITICAL);
 		return make_pair(getPosition3D(), getPosition3D());
 	}
@@ -390,19 +418,36 @@ void WorldNode::invalidate()
 
 bool WorldNode::createTJunction()
 {
+	assert(_degree == 3);
 	_roadJunction.clear();
 
+	bool roadsAreEqualSize = false;
 	vector<RoadId> throughRoads(2);
 	size_t joiningRoadInd;
-	Vector2 pos2D(getPosition2D());
-
-	// get a clockwise list of road intersections
-	bool roadsAreEqualSize = false;
-	vector<RoadId> roadCWVec(getClockwiseVecOfRoads());
+	vector<RoadId> roadCWVec;
+	vector<Vector3> roadVec;
 	vector<Real> roadWidthVec;
-	roadWidthVec.reserve(_degree);
-	BOOST_FOREACH(RoadId rd, roadCWVec) 
-		roadWidthVec.push_back(_roadGraph.getRoad(rd)->getWidth());
+
+	// init
+	{
+		roadCWVec.reserve(_degree);
+		roadVec.reserve(_degree);
+		roadWidthVec.reserve(_degree);
+		NodeId currNodeId = _roadGraph.getFirstAdjacent(_nodeId);
+		RoadId currRoadId = _roadGraph.getRoadId(_nodeId, currNodeId);
+		roadCWVec.push_back(currRoadId);
+		roadVec.push_back((_roadGraph.getNode(currNodeId)->getPosition3D() - getPosition3D()).normalisedCopy());
+		roadWidthVec.push_back(_roadGraph.getRoad(currRoadId)->getWidth());
+
+		for(size_t i=1; i < 3; i++)
+		{
+			_roadGraph.getCounterClockwiseMostFromPrev(currNodeId, _nodeId, currNodeId);
+			currRoadId = _roadGraph.getRoadId(_nodeId, currNodeId);
+			roadCWVec.push_back(currRoadId);
+			roadVec.push_back((_roadGraph.getNode(currNodeId)->getPosition3D() - getPosition3D()).normalisedCopy());
+			roadWidthVec.push_back(_roadGraph.getRoad(currRoadId)->getWidth());
+		}
+	}
 
 	if(roadWidthVec[0] == roadWidthVec[1])
 	{
@@ -418,18 +463,10 @@ bool WorldNode::createTJunction()
 	// distinction cannot be made by road width
 	if(roadsAreEqualSize)
 	{
-		vector<NodeId> nodeCWVec(getClockwiseVecOfNodes(roadCWVec));
-		Vector2 roadVec0(_roadGraph.getNode(nodeCWVec[0])->getPosition2D() - pos2D);
-		Vector2 roadVec1(_roadGraph.getNode(nodeCWVec[1])->getPosition2D() - pos2D);
-		Vector2 roadVec2(_roadGraph.getNode(nodeCWVec[2])->getPosition2D() - pos2D);
-		roadVec0.normalise();
-		roadVec1.normalise();
-		roadVec2.normalise();
-
 		// get the angles between the other two roads
-		Real cos0 = roadVec1.dotProduct(roadVec2);
-		Real cos1 = roadVec0.dotProduct(roadVec2);
-		Real cos2 = roadVec0.dotProduct(roadVec1);
+		Real cos0 = roadVec[1].x * roadVec[2].x + roadVec[1].z * roadVec[2].z;
+		Real cos1 = roadVec[0].x * roadVec[2].x + roadVec[0].z * roadVec[2].z;
+		Real cos2 = roadVec[0].x * roadVec[1].x + roadVec[0].z * roadVec[1].z;
 
 		// choose the road with the least open angle to the others
 		if(cos0 < cos1)
@@ -451,28 +488,24 @@ bool WorldNode::createTJunction()
 
 	// get height
 	Real h = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
-	Vector2 p1,p2;
-	for(size_t k,j,i=0; i<_degree; i++)
+	Vector3 p1,p2;
+	for(size_t k,j,i=0; i<3; i++)
 	{
-		j = (i+1)%_degree;
-		k = (i+2)%_degree;
+		j = (i+1)%3;
+		k = (i+2)%3;
 
 		if(j == joiningRoadInd)
 		{
-			p1 = _roadGraph.getRoadBounaryIntersection(roadCWVec[j], roadCWVec[k]);
-			p2 = _roadGraph.getRoadBounaryIntersection(roadCWVec[i], roadCWVec[j]);
-			p1 = madnessCheck(pos2D, p1, 4.0f, 2.0f);
-			p2 = madnessCheck(pos2D, p2, 4.0f, 2.0f);
-			_roadJunction[roadCWVec[j]] = make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+			p1 = getPosition3D() + Geometry::calcBoundedBisector(roadVec[i], roadVec[j], roadWidthVec[i], roadWidthVec[j]);
+			p2 = getPosition3D() + Geometry::calcBoundedBisector(roadVec[j], roadVec[k], roadWidthVec[j], roadWidthVec[k]);
+			_roadJunction[roadCWVec[j]] = make_pair(Vector3(p1.x, h, p1.z), Vector3(p2.x, h, p2.z));
 		}
 		else
 		{
-			if(k == joiningRoadInd) k = (i+3)%_degree;
-			p1 = _roadGraph.getRoadBounaryIntersection(roadCWVec[j], roadCWVec[k]);
-			p2 = _roadGraph.getRoadBounaryIntersection(roadCWVec[k], roadCWVec[j]);
-			p1 = madnessCheck(pos2D, p1, 4.0f, 2.0f);
-			p2 = madnessCheck(pos2D, p2, 4.0f, 2.0f);
-			_roadJunction[roadCWVec[j]] = make_pair(Vector3(p1.x, h, p1.y), Vector3(p2.x, h, p2.y));
+			if(k == joiningRoadInd) k = i;
+			p1 = getPosition3D() - Geometry::calcBoundedBisector(roadVec[j], roadVec[k], roadWidthVec[j], roadWidthVec[k]);
+			p2 = getPosition3D() - Geometry::calcBoundedBisector(roadVec[k], roadVec[j], roadWidthVec[k], roadWidthVec[j]);
+			_roadJunction[roadCWVec[j]] = make_pair(Vector3(p1.x, h, p1.z), Vector3(p2.x, h, p2.z));
 		}
 	}
 	return true;
@@ -524,48 +557,6 @@ vector<WorldRoad*> WorldNode::getWorldRoads() const
 		wrList.push_back(static_cast<WorldRoad*>(ri));
 	}
 	return wrList;
-}
-
-vector<RoadId> WorldNode::getClockwiseVecOfRoads()
-{
-	vector<RoadId> roadClockwiseVec;
-	roadClockwiseVec.reserve(_degree);
-
-	// get the first road and node
-	RoadIterator2 rIt2, rEnd2;
-	boost::tie(rIt2, rEnd2) = _roadGraph.getRoadsFromNode(_nodeId); 
-	RoadId currentRoad, previousRoad = *rIt2;
-	NodeId currentNode, previousNode = _roadGraph.getDst(previousRoad);
-	roadClockwiseVec.push_back(previousRoad);
-
-	// start with the second road using the first as prev
-	// NOTE: a dst node exactly on the src node screws this up
-	for(size_t i = 1; i < _degree; i++)
-	{
-		// get next node and road in a counter clockwise direction
-		_roadGraph.getCounterClockwiseMostFromPrev(previousNode, _nodeId, currentNode);
-		currentRoad = _roadGraph.getRoad(_nodeId, currentNode);
-		roadClockwiseVec.push_back(currentRoad);
-
-		// advance
-		previousRoad = currentRoad;
-		previousNode = currentNode;
-	}
-	return roadClockwiseVec;
-}
-
-vector<NodeId> WorldNode::getClockwiseVecOfNodes(const vector<RoadId>& roads)
-{
-	vector<NodeId> nodeClockwiseVec;
-	nodeClockwiseVec.reserve(_degree);
-
-	BOOST_FOREACH(const RoadId rd, roads)
-	{
-		NodeId dstNode = _roadGraph.getDst(rd);
-		if(dstNode != _nodeId) nodeClockwiseVec.push_back(dstNode);
-		else nodeClockwiseVec.push_back(_roadGraph.getSrc(rd));
-	}
-	return nodeClockwiseVec;
 }
 
 void WorldNode::exportObject(ExportDoc &doc)
