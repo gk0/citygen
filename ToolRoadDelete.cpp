@@ -24,7 +24,7 @@ void ToolRoadDelete::OnLeftPressed(wxMouseEvent &e)
 	if(_worldFrame->pickRoad(e, wr))
 	{
 		_worldFrame->deleteRoad(wr);
-		_worldFrame->update();
+		_worldFrame->Refresh();
 	}
 }
 

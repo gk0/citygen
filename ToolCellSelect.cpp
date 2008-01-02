@@ -39,5 +39,5 @@ void ToolCellSelect::OnLeftPressed(wxMouseEvent &e)
 	else
 		_worldFrame->selectCell(0); 
 
-	_worldFrame->update();
+	_worldFrame->Refresh();
 }

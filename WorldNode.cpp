@@ -142,7 +142,7 @@ bool WorldNode::setPosition2D(Real x, Real z)
 	Real y;
 	if(WorldFrame::getSingleton().plotPointOnTerrain(x, y, z))
 	{
-		setPosition(x,y + 0.1,z);
+		setPosition(x, y+GROUNDCLEARANCE, z);
 		return true;
 	}
 	return false;
@@ -272,7 +272,6 @@ void WorldNode::build()
 	
 
 	Vector2 nodePos2D = getPosition2D();
-	Real height = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
 	
 	// get a clockwise list of road intersections
 	vector<Vector3> pointlist;
@@ -294,7 +293,7 @@ void WorldNode::build()
 		Real curRoadInset = _roadGraph.getRoad(curRoadId)->getWidth();
 
 		Vector3 intersectionPoint = Geometry::calcBoundedBisector(lastRoadVec,curRoadVec,lastRoadInset,curRoadInset);
-		pointlist.push_back(intersectionPoint+Vector3(0, GROUNDCLEARANCE.y - 0.1f,0));
+		pointlist.push_back(intersectionPoint);
 		roadCWVec.push_back(curRoadId);
 
 		lastNodeId = currNodeId;
@@ -327,7 +326,7 @@ void WorldNode::build()
 		MeshBuilder::addVData3(_vertexData, pointlist[j]);
 		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
 		MeshBuilder::addVData2(_vertexData, 0, 0);
-		MeshBuilder::addVData3(_vertexData, 0.0f, GROUNDCLEARANCE.y - 0.1f, 0.0f);
+		MeshBuilder::addVData3(_vertexData, 0.0f, 0.0f, 0.0f);
 		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
 
 		// this is a little costly but such is life
@@ -358,7 +357,7 @@ void WorldNode::createTerminus()
 	Vector2 roadVec = _roadGraph.getNode(connectedNodeId)->getPosition2D() - pos;
 	roadVec.normalise();
 
-	Real h = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
+	Real h = getPosition3D().y;
 	Vector2 offset = roadVec.perpendicular();
 	offset *= roadInset;
 	roadVec *= roadInset;
@@ -487,7 +486,7 @@ bool WorldNode::createTJunction()
 	//LogManager::getSingleton().logMessage("Road Pair: "+ni1->getLabel()+":"+ni2->getLabel());
 
 	// get height
-	Real h = getPosition3D().y + GROUNDCLEARANCE.y - 0.1f;
+	Real h = getPosition3D().y;
 	Vector3 p1,p2;
 	for(size_t k,j,i=0; i<3; i++)
 	{

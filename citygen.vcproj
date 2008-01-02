@@ -42,7 +42,7 @@
 				AdditionalOptions="/Zm196"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\FCollada\LibXML\include;..\FCollada;..\boost_1_34_1;&quot;..\wxWidgets-2.8.6\include&quot;;&quot;..\wxWidgets-2.8.6\lib\vc_lib\mswud\wx\msw&quot;;&quot;C:\Program Files\Visual Leak Detector\include&quot;;&quot;..\wxWidgets-2.8.6\lib\vc_lib\mswud&quot;;&quot;..\wxWidgets-2.8.6\contrib\include&quot;;..\tinyxml;..\OgreSDK_VS80\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS"
+				PreprocessorDefinitions="WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"

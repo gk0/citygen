@@ -234,7 +234,10 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellGenParams &gp,
 		Real buildingHeight = gp._buildingHeight - (buildingDeviance / 2);
 		WorldLot* lot = new WorldLot(b, gp, buildingHeight + (buildingDeviance * rg()));
 		if(lot->hasError())
+		{
 			fail++;
+			delete lot;
+		}
 		else
 		{	
 			_lots.push_back(lot);

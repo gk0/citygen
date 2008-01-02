@@ -107,6 +107,7 @@ private:
 	void destroySceneObject();
 
 	NodeInterface* createNode(const Ogre::Vector2 &pos);
+	NodeInterface* createNode(const Ogre::Vector3 &pos);
 	RoadInterface* createRoad(NodeInterface *n1, NodeInterface *n2);
 	void deleteRoad(RoadInterface *ri);
 	void installGraph();

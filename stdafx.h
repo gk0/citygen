@@ -55,3 +55,5 @@
 
 #define _U(x) _UU((x),wxConvUTF8)
 #define _C(x) _CC((x),wxConvUTF8)
+
+#define GROUNDCLEARANCE 0.3f

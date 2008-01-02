@@ -97,12 +97,12 @@ void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	if(wr)
 	{
 		wr->setGenParams(g);
-		_worldFrame->update();
+		_worldFrame->Refresh();
 	}
 	else
 	{
 		WorldRoad::setDefaultGenParams(g);
-		_worldFrame->update();
+		_worldFrame->Refresh();
 	}
 	update();
 

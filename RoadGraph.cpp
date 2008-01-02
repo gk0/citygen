@@ -627,8 +627,8 @@ bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq,
 	return success;
 }
 
-int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
-		const Real snapSz, Vector2& pos, NodeId &nodeId, RoadId& roadId) const
+int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
+		const Real snapSz, Vector3& pos, NodeId &nodeId, RoadId& roadId) const
 {
 
 	Vector2 a(_graph[aNode]->getPosition2D());
@@ -727,6 +727,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
 	}
 
 	bool intersection = false;
+	Real intersectionY = 0.0f;
 	//size_t count = 0, execcount = 0;
 	BOOST_FOREACH(RoadId rd, possibleSnapRoads)
 	{
@@ -793,6 +794,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
 				{
 					intersection = true;
 					intersectingRoad = rd;
+					intersectionY = _graph[cNd]->getPosition3D().y + s*(_graph[dNd]->getPosition3D().y - _graph[cNd]->getPosition3D().y);
 				}
 			}
 			else
@@ -806,6 +808,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
 				{
 					intersection = true;
 					intersectingRoad = rd;
+					intersectionY = _graph[cNd]->getPosition3D().y + s*(_graph[dNd]->getPosition3D().y - _graph[cNd]->getPosition3D().y);
 				}
 			}
 		}
@@ -815,14 +818,14 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
 	if(intersection)
 	{
 		pos.x = a.x + lowestR * bxMinusAx; //lowestR: 0 ??
-		pos.y = a.y + lowestR * byMinusAy;
+		pos.y = intersectionY;
+		pos.z = a.y + lowestR * byMinusAy;
 		roadId = intersectingRoad;
 		return 1;
 	}
 	else if(lowestR < 1)
 	{
 		nodeId = snapNode;
-		pos = _graph[nodeId]->getPosition2D();
 		return 2;
 	}
 
@@ -833,7 +836,7 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
 
 	// last test
 	RoadId snapRoad;
-	Vector2 snapPos;
+	Vector3 snapPos;
 	Real closestDistToB = Math::Sqrt(closestDistToBSq);
 	BOOST_FOREACH(RoadId rd, possibleSnapRoads)
 	{
@@ -878,7 +881,9 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
 			else
 			{
 				snapRoad = rd;
-				snapPos = p;
+				snapPos.x = p.x;
+				snapPos.y = _graph[cNd]->getPosition3D().y + r*(_graph[dNd]->getPosition3D().y - _graph[cNd]->getPosition3D().y);
+				snapPos.z = p.y;
 				nodeSnapped = false;
 			}
 		}
@@ -894,7 +899,6 @@ int RoadGraph::findClosestIntscnOrNode(const NodeId aNode, const Vector2& b,
 		else
 		{
 			nodeId = snapNode;
-			pos = _graph[nodeId]->getPosition2D();
 			return 2;
 		}
 	}
@@ -1090,27 +1094,6 @@ bool RoadGraph::findClosestIntscnConnected(const NodeId aNode,
 	ignore[1] = bNode;
 	Ogre::Vector2 bPos = getNode(bNode)->getPosition2D();
 	return findClosestIntersection(ignore, bPos, snapSz, pos, rd);
-}
-
-int RoadGraph::snapInfo(const NodeId srcNd, const Vector2& dstPos,
-		const Real snapSzSquared, NodeId& nd, RoadId& rd, Vector2& pos) const
-{
-	//Vector2 srcPos = getNode(srcNd)->getPosition2D();
-	//Vector2 dstPos = getNode(dstNd)->getPosition2D();
-	int state = 0;
-
-	//while(true)
-	//{
-	state = findClosestIntscnOrNode(srcNd, dstPos, Math::Sqrt(snapSzSquared),
-			pos, nd, rd);
-	//	
-	//	if(state < 2) break;
-	//	else if()
-
-	///	{
-	//	}
-	//}
-	return state;
 }
 
 struct NodeInfo

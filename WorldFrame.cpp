@@ -38,7 +38,7 @@ size_t Statistics::_buildingCount = 0;
 #include <OgreRoot.h>
 #include <tinyxml.h>
 
-//#define THREADME 1
+#define THREADME 1
 
 
 // Namespace 
@@ -65,7 +65,7 @@ EVT_MIDDLE_UP(WorldFrame::OnMiddleReleased)
 EVT_RIGHT_DOWN(WorldFrame::OnRightPressed)
 EVT_RIGHT_UP(WorldFrame::OnRightReleased)
 EVT_MOUSEWHEEL(WorldFrame::OnMouseWheel)
-//	EVT_PAINT(WorldFrame::OnPaint)
+EVT_PAINT(WorldFrame::OnPaint)
 EVT_SIZE(WorldFrame::OnSize)
 EVT_TIMER(ID_RENDERTIMER, WorldFrame::OnTimer)
 END_EVENT_TABLE()
@@ -765,10 +765,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 		}
 	}
 
-	PerformanceTimer pt("Total Generate Time");
-	update();
-	pt.stop();
-	LogManager::getSingleton().logMessage(pt.toString());
+	Refresh();
 	return true;
 }
 
@@ -850,7 +847,7 @@ void WorldFrame::setToolsetMode(MainWindow::ToolsetMode mode)
 	selectRoad(0);
 	selectCell(0);
 	_toolsetMode = mode;
-	Update();
+	Refresh();
 }
 
 void WorldFrame::endNodeMode()
@@ -1276,7 +1273,7 @@ void WorldFrame::onNewDoc()
 	onCloseDoc();
 	createScene();
 	_tools[_activeTool]->activate();
-	update();
+	Refresh();
 	_isDocOpen = true;
 }
 
@@ -1294,7 +1291,7 @@ void WorldFrame::onCloseDoc()
 		_simpleRoadGraph.clear();
 		_roadGraph.clear();
 
-		update();
+		Refresh();
 	}
 }
 
@@ -1348,7 +1345,7 @@ void WorldFrame::moveSelectedNode(const Vector3& pos)
 		Vector2 pos2D(pos.x, pos.z);
 		wn->move(pos2D);
 		updateProperties();
-		update();
+		Refresh();
 	}
 }
 
@@ -1441,7 +1438,7 @@ void WorldFrame::setViewMode(MainWindow::ViewMode mode)
 		cell->showBuildings(showBuildings);
 	}
 	_viewMode = mode;
-	update();
+	Refresh();
 }
 
 template<> WorldFrame* Ogre::Singleton<WorldFrame>::ms_Singleton = 0;

@@ -185,7 +185,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	if(wc)
 	{
 		wc->setGenParams(g);
-		_worldFrame->update();
+		_worldFrame->Refresh();
 	}
 	else WorldCell::setDefaultGenParams(g);
 	update();

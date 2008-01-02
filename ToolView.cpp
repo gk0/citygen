@@ -57,13 +57,13 @@ void ToolView::OnChar(wxKeyEvent& e)
 	case WXK_NUMPAD_PAGEUP:
 		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
 			_worldFrame->getCameraNode()->getOrientation() * Vector3(0.0f,_moveSpeed,0.0f));
-		_worldFrame->update();
+		_worldFrame->Refresh();
 		break;
 	case WXK_PAGEDOWN:
 	case WXK_NUMPAD_PAGEDOWN:
 		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
 			_worldFrame->getCameraNode()->getOrientation() * Vector3(0.0f,-_moveSpeed,0.0f));
-		_worldFrame->update();
+		_worldFrame->Refresh();
 		break;
 	case 'w':
 	case 'W':
@@ -71,7 +71,7 @@ void ToolView::OnChar(wxKeyEvent& e)
 	case WXK_NUMPAD_UP:
 		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
 			_worldFrame->getCameraNode()->getOrientation() * Vector3(0.0f, 0.0f, -_moveSpeed));
-		_worldFrame->update();
+		_worldFrame->Refresh();
 		break;
 	case 's':
 	case 'S':
@@ -79,7 +79,7 @@ void ToolView::OnChar(wxKeyEvent& e)
 	case WXK_NUMPAD_DOWN:
 		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
 			_worldFrame->getCameraNode()->getOrientation() * Vector3(0.0f, 0.0f, _moveSpeed));
-		_worldFrame->update();
+		_worldFrame->Refresh();
 		break;
 	case 'a':
 	case 'A':
@@ -87,7 +87,7 @@ void ToolView::OnChar(wxKeyEvent& e)
 	case WXK_NUMPAD_LEFT:
 		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
 			_worldFrame->getCameraNode()->getOrientation() * Vector3(-_moveSpeed, 0.0f, 0.0f));
-		_worldFrame->update();
+		_worldFrame->Refresh();
 		break;
 	case 'd':
 	case 'D':
@@ -95,7 +95,7 @@ void ToolView::OnChar(wxKeyEvent& e)
 	case WXK_NUMPAD_RIGHT:
 		_worldFrame->getCameraNode()->setPosition(_worldFrame->getCameraNode()->getPosition() +
 			_worldFrame->getCameraNode()->getOrientation() * Vector3(_moveSpeed, 0.0f, 0.0f));
-		_worldFrame->update();
+		_worldFrame->Refresh();
 		break;
 
 	default:
@@ -128,7 +128,7 @@ void ToolView::OnMouseMove(wxMouseEvent &e)
 		_worldFrame->getCameraNode()->rotate(Vector3::UNIT_X, Degree(-_mouseDeltaY/2.0f));
 		_worldFrame->getCameraNode()->rotate(Vector3::UNIT_Y, Degree(-_mouseDeltaX/2.0f),Node::TS_WORLD);
 		_worldFrame->modify(true);
-		_worldFrame->update();
+		_worldFrame->Refresh();
 		break;
 	case translate:
 		{
@@ -143,14 +143,14 @@ void ToolView::OnMouseMove(wxMouseEvent &e)
 			_lastTranslateVec = currentTranslateVec;
 			_worldFrame->getCameraNode()->translate(translateDelta.x, translateDelta.y, translateDelta.z);
 			_worldFrame->modify(true);
-			_worldFrame->update();
+			_worldFrame->Refresh();
 			break;
 		}
 	case zoom:
 		{
 			Real camDist = _worldFrame->getCamera()->getPosition().z;
 			_worldFrame->cameraMove(0.0f, 0.0f, -(_mouseDeltaY + _mouseDeltaX) * camDist * _moveSpeed / 400);
-			_worldFrame->update();
+			_worldFrame->Refresh();
 			break;
 		}
 	}
@@ -204,7 +204,7 @@ void ToolView::OnMouseWheel(wxMouseEvent &e)
 	{
 		Real camDist = _worldFrame->getCamera()->getPosition().z;
 		_worldFrame->cameraMove(0.0f, 0.0f, -e.GetWheelRotation() * camDist * _moveSpeed / 1200);
-		_worldFrame->update();
+		_worldFrame->Refresh();
 	}
 }
 

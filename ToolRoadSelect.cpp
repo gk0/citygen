@@ -30,7 +30,7 @@ void ToolRoadSelect::OnLeftPressed(wxMouseEvent &e)
 	else
 		_worldFrame->selectRoad(0);
 
-	_worldFrame->update();
+	_worldFrame->Refresh();
 }
 
 bool ToolRoadSelect::alternate(wxMouseEvent &e)

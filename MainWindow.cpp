@@ -288,7 +288,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateOgre()
 {
-	_worldFrame->update();
+	_worldFrame->Refresh();
 }
 
 void MainWindow::onNew(wxCommandEvent &e)

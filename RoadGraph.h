@@ -164,10 +164,6 @@ public:
 	void extractPrimitives(std::vector< std::vector<NodeInterface*> > &filaments, 
 		std::vector< std::vector<NodeInterface*> > &nodeCycles);
 
-	int snapInfo(NodeId srcNd, const Ogre::Vector2 &dstPoint, Ogre::Real snapSzSquared,
-						NodeId& nd, RoadId& rd, Ogre::Vector2& pos) const;
-
-
 	NodeId getFirstAdjacent(NodeId nd)
 	{
 		return getFirstAdjacent(nd, _graph);
@@ -186,8 +182,8 @@ public:
 //	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
 
 
-	int findClosestIntscnOrNode(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
-		Ogre::Vector2& pos, NodeId &nd, RoadId& rd) const;
+	int snapInfo(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
+		Ogre::Vector3& pos, NodeId &nd, RoadId& rd) const;
 
 	inline bool findClosestIntscn(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
 		Ogre::Vector2& pos, RoadId& rd) const

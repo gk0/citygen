@@ -26,7 +26,7 @@ void ToolRoadAdd::OnMouseMove(wxMouseEvent &e)
 	WorldNode *wn;
 	if(_worldFrame->pickNode(e, 7, wn)) _worldFrame->highlightNode(wn);
 	else _worldFrame->highlightNode(0);
-	_worldFrame->update();
+	_worldFrame->Refresh();
 }
 
 void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
@@ -49,7 +49,7 @@ void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 			{
 				// deselect node
 				_worldFrame->selectNode(0);
-				_worldFrame->update();
+				_worldFrame->Refresh();
 				return;
 			}
 
@@ -79,7 +79,7 @@ void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 				_worldFrame->createRoad(_worldFrame->getSelected(), wn);
 				_worldFrame->selectNode(wn);
 			}
-			_worldFrame->update();
+			_worldFrame->Refresh();
 		}
 	}
 	else
@@ -89,7 +89,7 @@ void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 		if(_worldFrame->pickNode(e, 7, wn))
 		{
 			_worldFrame->selectNode(wn);
-			_worldFrame->update();
+			_worldFrame->Refresh();
 		}
 	}
 }

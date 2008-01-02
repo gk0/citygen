@@ -40,7 +40,7 @@ bool SimpleNode::setPosition2D(Ogre::Real x, Ogre::Real z)
 	Ogre::Real y;
 	if(WorldFrame::getSingleton().plotPointOnTerrain(x, y, z))
 	{
-		setPosition3D(x,y+0.299,z);
+		setPosition3D(x, y+GROUNDCLEARANCE, z);
 		return true;
 	}
 	return false;

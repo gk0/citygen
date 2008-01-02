@@ -104,9 +104,13 @@ protected:
 
 	void updateProperties();
 
+	void toggleTimerRendering();
+	void update();
+
 public:
 	WorldFrame(wxFrame* parent);
 	virtual ~WorldFrame();
+	void init();
 
 	Ogre::SceneManager* getSceneManager() { return _sceneManager; }
 
@@ -114,14 +118,10 @@ public:
 	WorldRoad* createRoad(WorldNode* wn1, WorldNode* wn2);
 	void insertNodeOnRoad(WorldNode* wn, WorldRoad* wr);
 	void deleteNode(WorldNode* wn);
-
 	void deleteRoad(WorldRoad* wr);
-
 	void cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
 	void cameraRotate(Ogre::Real yaw, Ogre::Real pitch);
-	void init();
-	void toggleTimerRendering();
-	void update();
+
 	bool loadXML(const TiXmlHandle& worldRoot);
 	TiXmlElement* saveXML();
 

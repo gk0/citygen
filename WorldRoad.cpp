@@ -72,7 +72,6 @@ void WorldRoad::addVertexData(const Vector3 &p1, const Vector3 &p2, const Vector
 	MeshBuilder::addVData2(_vertexData, uTex, 1);
 }
 
-
 void WorldRoad::prebuild()
 {
 	Vector2 tmper(getSrcNode()->getPosition2D() - getDstNode()->getPosition2D());
@@ -414,8 +413,8 @@ void WorldRoad::plotRoad()
 
 	// set our start node
 	std::vector<Vector3> plotList2;
-	_plotList.push_back(getSrcNode()->getPosition3D() + GROUNDCLEARANCE);
-	plotList2.push_back(getDstNode()->getPosition3D() + GROUNDCLEARANCE);
+	_plotList.push_back(getSrcNode()->getPosition3D());
+	plotList2.push_back(getDstNode()->getPosition3D());
 
 	std::stringstream oss;
 	std::vector<Vector3> samples;
@@ -465,7 +464,7 @@ void WorldRoad::plotRoad()
 				buildSampleFan(srcCursor2D, segVector2D, samples);	
 				if(_genParams._debug) buildDebugSegments(srcCursor3D, samples);
 				nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
-				nextSrcCursor3D += GROUNDCLEARANCE;
+				nextSrcCursor3D.y += GROUNDCLEARANCE;
 
 				// add our nodes to the road graph
 				_plotList.push_back(nextSrcCursor3D);
@@ -483,7 +482,7 @@ void WorldRoad::plotRoad()
 				buildSampleFan(dstCursor2D, segVector2D, samples);
 				if(_genParams._debug) buildDebugSegments(dstCursor3D, samples);
 				nextDstCursor3D = (*this.*pt2SelectSample)(dstCursor3D, samples, srcCursor3D);
-				nextDstCursor3D += GROUNDCLEARANCE;
+				nextDstCursor3D.y += GROUNDCLEARANCE;
 
 				// add our nodes to the road graph
 				plotList2.push_back(nextDstCursor3D);
@@ -548,7 +547,10 @@ void WorldRoad::plotRoad()
 		// fill array of sample
 		std::vector<Vector3> samples;
 		if(WorldFrame::getSingleton().plotPointOnTerrain(midCursor2D, midCursor3D))
+		{
+			midCursor3D.y += GROUNDCLEARANCE;
 			samples.push_back(midCursor3D);
+		}
 
 		for(uint16 i=0; i<(_genParams._numOfSamples - 1); i++)
 		{

@@ -40,7 +40,7 @@ void ToolNodeAdd::deactivate()
 	}
 	_worldFrame->selectNode(0);
 	_worldFrame->deleteNode(_proposedNode);
-	_worldFrame->update();
+	_worldFrame->Refresh();
 }
 
 
@@ -55,7 +55,7 @@ void ToolNodeAdd::OnChar(wxKeyEvent& e)
 			_proposedRoad = 0;
 		}
 		_proposedNode->setVisible(false);
-		_worldFrame->update();
+		_worldFrame->Refresh();
 	}
 }
 
@@ -83,7 +83,7 @@ void ToolNodeAdd::OnMouseMove(wxMouseEvent &e)
 		return;
 	}
 	updateState(e);
-	_worldFrame->update();
+	_worldFrame->Refresh();
 }
 
 
@@ -265,7 +265,7 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 			_worldFrame->selectNode(_worldFrame->getHighlighted());
 		}
 		updateState(e);
-		_worldFrame->update();
+		_worldFrame->Refresh();
 	}
 	catch(Exception &e)
 	{

@@ -46,7 +46,7 @@ void NodePropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			std::string s(_C(GetPropertyValueAsString(_labelProp)));
 			wn->setLabel(s);
 			update();
-			_worldFrame->update();
+			_worldFrame->Refresh();
 		}
 	}
 
