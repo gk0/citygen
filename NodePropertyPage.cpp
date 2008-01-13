@@ -72,9 +72,9 @@ void NodePropertyPage::Init()
 	Append(wxPropertyCategory(wxT("Position")));
 
 	// Add float property (value type is actually double)
-	_xProp = Append(wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0));
-	_yProp = Append(wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0));
-	_zProp = Append(wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
+	_xProp = Append(wxFloatProperty(wxT("x (m)"), wxPG_LABEL, 0.0));
+	_yProp = Append(wxFloatProperty(wxT("y (m)"), wxPG_LABEL, 0.0));
+	_zProp = Append(wxFloatProperty(wxT("z (m)"), wxPG_LABEL, 0.0));
 
 	Append(wxPropertyCategory(wxT("Extra")));
 }

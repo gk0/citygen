@@ -46,8 +46,8 @@ bool Application::OnInit()
 	loadResources();
 
 	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
-	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\shit2.cgx"));
-	_window->donew();
+	_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\manhattan.cgx"));
+	//_window->donew();
 
 	//_window->onExport(wxCommandEvent());
 	

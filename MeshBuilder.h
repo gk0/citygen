@@ -55,6 +55,11 @@ public:
 		indexData.push_back(b);
 		indexData.push_back(c);
 	}
+
+	const Ogre::String& getName()
+	{
+		return _name;
+	}
 };
 
 #endif

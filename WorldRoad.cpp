@@ -12,6 +12,7 @@
 #include <OgreMaterialManager.h>
 #include <OgreStringConverter.h>
 #include <tinyxml.h>
+#include <math.h>
 
 // fine grain roads currently cause problems due to simple insets
 #define FINEGRAIN 1
@@ -21,6 +22,17 @@ RoadGenParams WorldRoad::_defaultGenParams;
 
 using namespace Ogre;
 using namespace std;
+
+RoadGenParams::RoadGenParams()
+{
+	_algorithm = EvenElevationDiff;
+	_sampleSize = 50;
+	_sampleDeviance = 25;
+	_roadWidth = 7;
+	_numOfSamples = 7;
+	_debug = false;
+	_segmentDrawSize = 14;
+}
 
 WorldRoad::WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
 					 RoadGraph& s, Ogre::SceneManager *creator, bool bind)
@@ -66,10 +78,10 @@ void WorldRoad::addVertexData(const Vector3 &p1, const Vector3 &p2, const Vector
 {
 	MeshBuilder::addVData3(_vertexData, p1);
 	MeshBuilder::addVData3(_vertexData, norm);
-	MeshBuilder::addVData2(_vertexData, uTex, 0);
+	MeshBuilder::addVData2(_vertexData, uTex, 0.0f);
 	MeshBuilder::addVData3(_vertexData, p2);
 	MeshBuilder::addVData3(_vertexData, norm);
-	MeshBuilder::addVData2(_vertexData, uTex, 1);
+	MeshBuilder::addVData2(_vertexData, uTex, Math::Floor(getWidth() / 3.5));
 }
 
 void WorldRoad::prebuild()

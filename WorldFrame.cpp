@@ -87,7 +87,7 @@ _timer(this, ID_RENDERTIMER)
 	_selectedCell = 0;
 
 	//init();
-	//toggleTimerRendering(); // only really to test fps
+	toggleTimerRendering(); // only really to test fps
 }
 
 void WorldFrame::init()
@@ -264,14 +264,9 @@ void WorldFrame::createScene(void)
 	//_sceneManager->setFog(FOG_LINEAR, fadeColour, .001f, 500, 1000);
 	_renderWindow->getViewport(0)->setBackgroundColour(fadeColour);
 
-	string terrain_cfg("terrain.cfg");
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
-	terrain_cfg = mResourcePath + terrain_cfg;
-#endif
-	_sceneManager -> setWorldGeometry(terrain_cfg);
-
-	//TODO terrain
-	//mWorldTerrain.load();
+	// Load the Terrain
+	// TODO - put this into XML
+	_worldTerrain.load(_sceneManager);
 
 	// Infinite far plane?
 	if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
@@ -292,9 +287,9 @@ void WorldFrame::createScene(void)
 
 	// Set up the camera	
 	_cameraNode = _sceneManager->createSceneNode("cameraNode");
-	_cameraNode->setPosition(1041.25f, 0.1f, 965.25f);
+	_cameraNode->setPosition(6957.0f, 10.0f, 6400.0f);
 	_cameraNode->attachObject(_camera);
-	_camera->setPosition(0, 0, 177); // zoom on z axis, look down -z
+	_camera->setPosition(0, 0, 500); // zoom on z axis, look down -z
 	_camera->lookAt(_cameraNode->getPosition());
 	_cameraNode->setOrientation(0.631968, -0.163438, -0.733434, -0.189679);
 }
@@ -357,26 +352,43 @@ void WorldFrame::destroyScene(void)
 	WorldCell::resetInstanceCount();
 }
 
-// Moves the view
 void WorldFrame::cameraMove(Real x, Real y, Real z)
 {
-	modify(true);
 	_camera->moveRelative(Vector3(x, y, z));
-
-	if (_toolsetMode == MainWindow::view)
-		updateProperties();
+	onCameraUpdate();
 }
 
-// Rotates the view
+void WorldFrame::cameraNodeMove(Real x, Real y, Real z)
+{
+	_cameraNode->translate(x, y, z);
+	onCameraUpdate();
+}
+
+void WorldFrame::cameraNodeRotate(Real yaw, Real pitch)
+{
+	_cameraNode->rotate(Vector3::UNIT_X, Degree(pitch));
+	_cameraNode->rotate(Vector3::UNIT_Y, Degree(yaw), Node::TS_WORLD);
+	onCameraUpdate();
+}
+
 void WorldFrame::cameraRotate(Real yaw, Real pitch)
 {
-	modify(true);
-	_camera->yaw(yaw
-			* (_camera->getFOVy() / _camera->getAspectRatio() / 320.0f));
+	_camera->yaw(yaw * (_camera->getFOVy() / _camera->getAspectRatio() / 320.0f));
 	_camera->pitch(pitch * (_camera->getFOVy() / 240.0f));
+	onCameraUpdate();
+}
 
-	if (_toolsetMode == MainWindow::view)
-		updateProperties();
+void WorldFrame::cameraZoom(Ogre::Real z)
+{
+	_camera->moveRelative(Vector3(0.0f, 0.0f, z));
+	onCameraUpdate();
+}
+
+void WorldFrame::onCameraUpdate()
+{
+	modify(true);
+	if (_toolsetMode == MainWindow::view) updateProperties();
+	Refresh();
 }
 
 void WorldFrame::OnChar(wxKeyEvent& e)
@@ -533,55 +545,43 @@ void WorldFrame::update()
 		//Statistics::resetBuildingCount();
 	
 		// render nodes, roads ...
-		PerformanceTimer npf("Nodes");
+		//PerformanceTimer npf("Nodes");
 		BOOST_FOREACH(WorldNode* wn, _nodeVec) wn->validate();
-		npf.stop();
+		//npf.stop();
 	
-		PerformanceTimer rpf("Roads");
+		//PerformanceTimer rpf("Roads");
 		BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->validate();
-		rpf.stop();
+		//rpf.stop();
 	
 		//if(_camera) Root::getSingleton().renderOneFrame();
 		//return;
 	
-		PerformanceTimer cpf("Cells 1");
+		//PerformanceTimer cpf("Cells 1");
 		pair<vector<WorldCell*>::iterator, vector<WorldCell*>::iterator> cPIt;
 		cPIt.first = _cellVec.begin();
 		cPIt.second = _cellVec.end();
 	
-		//#undef THREADME
 	#ifdef THREADME
-		//size_t i=0, N = _cellVec.size(), N2 = N/2;
-		//vector<WorldCell*> a, b;
-		//for(; i<N2; i++) a.push_back(_cellVec[i]);
-		//for(; i<N; i++) b.push_back(_cellVec[i]);
-	
-		//boost::thread thrd1(
-		//	boost::bind(&prebuild2, a));
-		//boost::thread thrd2(
-		//	boost::bind(&prebuild2, b));
-	
 		boost::thread thrd1(boost::bind(&prebuild, &cPIt));
 		boost::thread thrd2(boost::bind(&prebuild, &cPIt));
-	
 		thrd1.join();
 		thrd2.join();
 	#else
 		prebuild(&cPIt);
 	#endif
-		cpf.stop();
+		//cpf.stop();
 	
-		PerformanceTimer cpf2("Cells 2");
+		//PerformanceTimer cpf2("Cells 2");
 		BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
-		cpf2.stop();
+		//cpf2.stop();
 	
-		PerformanceTimer renpf("Render");
+		//PerformanceTimer renpf("Render");
 		if (_camera)
 			Root::getSingleton().renderOneFrame();
-		renpf.stop();
+		//renpf.stop();
 	
-		LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
-			+" - "+cpf2.toString()+" - "+renpf.toString());
+		//LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
+		//	+" - "+cpf2.toString()+" - "+renpf.toString());
 	} 
 	catch(Exception &e)
 	{
@@ -1097,7 +1097,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 				// NOTE: maybe a copy constructor could be tidier
 
 				// get old cell params
-				CellGenParams g = alteredCell->getGenParams();
+				CellParams g = alteredCell->getGenParams();
 				// delete old cell
 				vector<WorldCell*>::iterator cIt = find(_cellVec.begin(),
 						_cellVec.end(), alteredCell);
@@ -1206,7 +1206,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 		// should favor one - can do a vector swap to set preference
 
 		// save params from the biggest attached cell by area
-		CellGenParams
+		CellParams
 				gp =
 						aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? aCells[0]->getGenParams()
 								: aCells[1]->getGenParams();

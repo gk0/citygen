@@ -65,7 +65,7 @@ void SimpleRoad::prebuild()
 	boost::tie(a1,a2) = _srcNode->getRoadJunction(_roadId);
 	boost::tie(b2,b1) = _dstNode->getRoadJunction(_roadId);
 	//buildSegment(a1, a2, Vector3::UNIT_Y, b1, b2, Vector3::UNIT_Y, 0, 4);
-	Real uMin = 0, uMax = 4;
+	Real uMin = 0, uMax = (((a1+a2) / 2) - ((b1+b2) / 2)).length();
 
 	MeshBuilder::addVData3(_vertexData, a1);
 	MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);

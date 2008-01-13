@@ -27,9 +27,9 @@ void RoadPropertyPage::Init()
     _plotAlgorProp = Append( wxEnumProperty(wxT("Algorithm"), wxPG_LABEL, arrPlot) );
 
 	// Add float property (value type is actually double)
-	_sampleSizeProp = Append(wxFloatProperty(wxT("Sample Size"), wxPG_LABEL, 0));
-    _roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0));
-	_sampleDevianceProp = Append(wxFloatProperty(wxT("Road Deviance Angle"), wxPG_LABEL,0));
+	_sampleSizeProp = Append(wxFloatProperty(wxT("Sample Size (m)"), wxPG_LABEL, 0));
+    _roadWidthProp = Append(wxFloatProperty(wxT("Road Width (m)"), wxPG_LABEL, 0));
+	_sampleDevianceProp = Append(wxFloatProperty(wxT("Road Deviance Angle (degrees)"), wxPG_LABEL,0));
 	_samplesProp = Append(wxIntProperty(wxT("Number of Samples"), wxPG_LABEL,0));
 
 	Append(wxPropertyCategory(wxT("Display Options")));

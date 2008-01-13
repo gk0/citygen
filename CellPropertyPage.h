@@ -31,7 +31,10 @@ private:
 	wxPGProperty*	_roadWidthProp;
 	wxPGProperty*	_roadLimitProp;
 	wxPGProperty*	_connectivityProp;
-	wxPGProperty*	_lotSizeProp;
+	wxPGProperty*	_footpathWidthProp;
+	wxPGProperty*	_footpathHeightProp;
+	wxPGProperty*	_lotWidthProp;
+	wxPGProperty*	_lotDepthProp;
 	wxPGProperty*	_lotDevianceProp;
 	wxPGProperty*	_debugProp;
 

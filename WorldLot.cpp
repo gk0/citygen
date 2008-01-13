@@ -8,9 +8,10 @@
 using namespace Ogre;
 using namespace std;
 
-WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const Real ht)
+WorldLot::WorldLot(const LotBoundary &footprint, const CellParams &gp, const Real ht, 
+				   const Real uScale, const Real vScale)
 {
-	// Note: gp._lotSize is desired lot size not actual
+	// Note: gp._lotWidth is desired lot size not actual
 	LotBoundary b;
 	
 	//LotBoundary b(footprint);
@@ -20,10 +21,10 @@ WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const 
 		b = footprint;
 		break;
 	case 1:
-		b = insetBoundary(footprint, 0.1*gp._lotSize, 0.1*gp._lotSize);
+		b = insetBoundary(footprint, 0.1*gp._lotWidth, 0.1*gp._lotWidth);
 		break;
 	case 2:
-		b = insetBoundary(footprint, 0.2*gp._lotSize, 0.1*gp._lotSize);
+		b = insetBoundary(footprint, 0.2*gp._lotWidth, 0.1*gp._lotWidth);
 		break;
 	default:
 		b = footprint;
@@ -63,8 +64,8 @@ WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const 
 			j = (i+1)%N;
 
 			// calculate texCoords
-			Real uMax =	Math::Floor((footprint2[i] - footprint2[j]).length() * 4) / 5;
-			Real vMax =	Math::Floor((_height - _foundation) * 4) / 4;
+			Real uMax =	Math::Ceil((footprint2[i] - footprint2[j]).length() / (uScale));
+			Real vMax =	Math::Ceil((_height - _foundation) / (vScale));
 
 			//calculate normal
 			Ogre::Vector3 normal(-footprint2[i].z + footprint2[j].z, 0, footprint2[i].x - footprint2[j].x);
@@ -74,19 +75,19 @@ WorldLot::WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const 
 			// v1.
 			appendVector3(_vertexData, footprint2[i].x, _foundation, footprint2[i].z);
 			appendVector3(_vertexData, normal);
-			appendVector2(_vertexData, 0.0f, 0.0f);
+			appendVector2(_vertexData, uMax, vMax);
 			// v2.
 			appendVector3(_vertexData, footprint2[j].x, _foundation, footprint2[j].z);
 			appendVector3(_vertexData, normal);
-			appendVector2(_vertexData, uMax, 0.0f);
+			appendVector2(_vertexData, 0.0f, vMax);
 			// v3.
 			appendVector3(_vertexData, footprint2[i].x, _height, footprint2[i].z);
 			appendVector3(_vertexData, normal);
-			appendVector2(_vertexData, 0.0f, vMax);
+			appendVector2(_vertexData, uMax, 0.0f);
 			// v4.
 			appendVector3(_vertexData, footprint2[j].x, _height, footprint2[j].z);
 			appendVector3(_vertexData, normal);
-			appendVector2(_vertexData, uMax, vMax);
+			appendVector2(_vertexData, 0.0f, 0.0f);
 
 			// polygons
 			uint16 vertexPos = static_cast<uint16>(N + (i*4));

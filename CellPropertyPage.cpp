@@ -47,34 +47,40 @@ void CellPropertyPage::Init()
                                     wxDEFAULT_FRAME_STYLE) );
 */
 
-    Append(wxPropertyCategory(wxT("Generation Parameters")));
+    Append(wxPropertyCategory(wxT("Road Parameters")));
 
 	_seedProp = Append(wxIntProperty(wxT("Seed"), wxPG_LABEL, 0));
 
 	// Add float property (value type is actually double)
-    _segmentSizeProp = Append(wxFloatProperty(wxT("Segment Size"), wxPG_LABEL, 4.5));
-	_segmentDevianceProp = Append(wxFloatProperty(wxT("Segment Deviance"), wxPG_LABEL, 0.1));
+    _segmentSizeProp = Append(wxFloatProperty(wxT("Segment Size (m)"), wxPG_LABEL, 0));
+	_segmentDevianceProp = Append(wxFloatProperty(wxT("Segment Deviance"), wxPG_LABEL, 0));
 
 	// Add int property
-    _degreeProp = Append(wxIntProperty(wxT("Degree"), wxPG_LABEL, 4));
-	_degreeDevianceProp = Append(wxFloatProperty(wxT("Degree Deviance"), wxPG_LABEL, 0.1));
+    _degreeProp = Append(wxIntProperty(wxT("Degree"), wxPG_LABEL, 0));
+	_degreeDevianceProp = Append(wxFloatProperty(wxT("Degree Deviance"), wxPG_LABEL, 0));
 
 	// Add float property (value type is actually double)
-    _snapSizeProp = Append(wxFloatProperty(wxT("Snap Size"), wxPG_LABEL, 4.5));
-	_snapDevianceProp = Append(wxFloatProperty(wxT("Snap Size Deviance"), wxPG_LABEL, 0.1));
+    _snapSizeProp = Append(wxFloatProperty(wxT("Snap Size (m)"), wxPG_LABEL, 0));
+	_snapDevianceProp = Append(wxFloatProperty(wxT("Snap Size Deviance"), wxPG_LABEL, 0));
 
-	_roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0.));
-
-	_buildingHeightProp = Append(wxFloatProperty(wxT("Building Height"), wxPG_LABEL, 0.));
-	_buildingDevianceProp = Append(wxFloatProperty(wxT("Building Deviance"), wxPG_LABEL, 0.));
+	_roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0));
+	_connectivityProp = Append(wxFloatProperty(wxT("Connectivity"), wxPG_LABEL, 0));
 
 	_roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 0));
 	SetPropertyEditor(wxT("Road Limit"), wxPG_EDITOR(SpinCtrl));
 
-	_connectivityProp = Append(wxFloatProperty(wxT("Connectivity"), wxPG_LABEL, 0));
+	Append(wxPropertyCategory(wxT("Block Parameters")));
+	_footpathWidthProp = Append(wxFloatProperty(wxT("Footpath width (m)"), wxPG_LABEL, 0));
+	_footpathHeightProp = Append(wxFloatProperty(wxT("Footpath height (m)"), wxPG_LABEL, 0));
 
-	_lotSizeProp = Append(wxFloatProperty(wxT("Lot Size"), wxPG_LABEL, 2));
-	_lotDevianceProp = Append(wxFloatProperty(wxT("Lot Deviance"), wxPG_LABEL, 0.2));
+	Append(wxPropertyCategory(wxT("Lot Parameters")));
+	_lotWidthProp = Append(wxFloatProperty(wxT("Lot width (m)"), wxPG_LABEL, 0));
+	_lotDepthProp = Append(wxFloatProperty(wxT("Lot depth (m)"), wxPG_LABEL, 0));
+	_lotDevianceProp = Append(wxFloatProperty(wxT("Lot Deviance"), wxPG_LABEL, 0));
+
+	Append(wxPropertyCategory(wxT("Building Parameters")));
+	_buildingHeightProp = Append(wxFloatProperty(wxT("Building Height (m)"), wxPG_LABEL, 0));
+	_buildingDevianceProp = Append(wxFloatProperty(wxT("Building Deviance"), wxPG_LABEL, 0));
 
 	wxPGChoices arrPlot2;
 	arrPlot2.Add(wxT("Downtown"), 0);
@@ -94,7 +100,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	const wxPGProperty* eventProp = event.GetPropertyPtr();
 
 
-	CellGenParams g;
+	CellParams g;
 	WorldCell *wc = _worldFrame->getSelectedCell();
 	if(wc) g = wc->getGenParams();
 	else g = WorldCell::getDefaultGenParams();
@@ -105,52 +111,13 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		{
 		// Manhattan
 		case 1:
-			g._seed = 1;
-			g._type = 0;
-			g._segmentSize = 5;
-			g._segmentDeviance = 0.2;
-			g._degree = 4;
-			g._degreeDeviance = 0.01;
-			g._snapSize = 2.4;
-			g._snapDeviance = 0.1;
-			g._buildingHeight = 1.4;
-			g._buildingDeviance = 0.7;
-			g._connectivity = 1.0;
-			g._roadWidth = 0.45;
-			g._lotSize = 0.7;
-			g._lotDeviance = 0.4;
+			g = CellParams::MANHATTAN;
 			break;
 		case 2:
-			g._seed = 1;
-			g._type = 1;
-			g._segmentSize = 4;
-			g._segmentDeviance = 0.2;
-			g._degree = 4;
-			g._degreeDeviance = 0.01;
-			g._snapSize = 2.4;
-			g._snapDeviance = 0.1;
-			g._buildingHeight = 0.7;
-			g._buildingDeviance = 0.3;
-			g._connectivity = 0.3;
-			g._roadWidth = 0.40;
-			g._lotSize = 2.0;
-			g._lotDeviance = 0.7;
+			g = CellParams::INDUSTRIAL;
 			break;
 		case 3:
-			g._seed = 1;
-			g._type = 2;
-			g._segmentSize = 3.8;
-			g._segmentDeviance = 0.6;
-			g._degree = 9;
-			g._degreeDeviance = 0.6;
-			g._snapSize = 2.8;
-			g._snapDeviance = 0.1;
-			g._buildingHeight = 0.4;
-			g._buildingDeviance = 0.1;
-			g._connectivity = 0.0;
-			g._roadWidth = 0.3;
-			g._lotSize = 0.8;
-			g._lotDeviance = 0.2;
+			g = CellParams::SUBURBIA;
 			break;
 		}
 	}
@@ -177,7 +144,10 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		g._buildingDeviance = GetPropertyValueAsDouble(_buildingDevianceProp);
 		g._roadLimit = GetPropertyValueAsInt(_roadLimitProp);
 		g._connectivity = GetPropertyValueAsDouble(_connectivityProp);
-		g._lotSize = GetPropertyValueAsDouble(_lotSizeProp);
+		g._footpathWidth = GetPropertyValueAsDouble(_footpathWidthProp);
+		g._footpathHeight = GetPropertyValueAsDouble(_footpathHeightProp);
+		g._lotWidth = GetPropertyValueAsDouble(_lotWidthProp);
+		g._lotDepth = GetPropertyValueAsDouble(_lotDepthProp);
 		g._lotDeviance = GetPropertyValueAsDouble(_lotDevianceProp);
 		g._debug = GetPropertyValueAsBool(_debugProp);
 	}
@@ -196,7 +166,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 
 void CellPropertyPage::update()
 {
-	CellGenParams g;
+	CellParams g;
 	WorldCell *wc = _worldFrame->getSelectedCell();
 	if(wc) g = wc->getGenParams();
 	else g = WorldCell::getDefaultGenParams();
@@ -225,7 +195,10 @@ void CellPropertyPage::update()
 	SetPropertyValue(_buildingDevianceProp, g._buildingDeviance);
 	SetPropertyValue(_roadLimitProp, (int) g._roadLimit);
 	SetPropertyValue(_connectivityProp, g._connectivity);
-	SetPropertyValue(_lotSizeProp, g._lotSize);
+	SetPropertyValue(_footpathHeightProp, g._footpathHeight);
+	SetPropertyValue(_footpathWidthProp, g._footpathWidth);
+	SetPropertyValue(_lotWidthProp, g._lotWidth);
+	SetPropertyValue(_lotDepthProp, g._lotDepth);
 	SetPropertyValue(_lotDevianceProp, g._lotDeviance);
 	SetPropertyValue(_debugProp, g._debug);
 
@@ -242,7 +215,10 @@ void CellPropertyPage::update()
 	RefreshProperty(_buildingDevianceProp);
 	RefreshProperty(_roadLimitProp);
 	RefreshProperty(_connectivityProp);
-	RefreshProperty(_lotSizeProp);
+	RefreshProperty(_footpathWidthProp);
+	RefreshProperty(_footpathHeightProp);
+	RefreshProperty(_lotWidthProp);
+	RefreshProperty(_lotDepthProp);
 	RefreshProperty(_lotDevianceProp);
 	RefreshProperty(_debugProp);
 }

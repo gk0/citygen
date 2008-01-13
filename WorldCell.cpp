@@ -23,7 +23,7 @@
 using namespace Ogre;
 using namespace std;
 int WorldCell::_instanceCount = 0;
-CellGenParams WorldCell::_defaultGenParams;
+CellParams WorldCell::_defaultGenParams;
 
 #define USENORMALS 1
 
@@ -54,6 +54,7 @@ void WorldCell::init()
 	_roadsEnt = 0;
 	_buildingsEnt = 0;
 	_debugMO = 0;
+	_mbBuildings = 0;
 
 	_name = "cell"+StringConverter::toString(_instanceCount++);
 	_sceneNode = WorldFrame::getSingleton().getSceneManager()->getRootSceneNode()->createChildSceneNode(_name);
@@ -415,41 +416,6 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 	}
 }
 
-void WorldCell::buildRoadNetwork()
-{
-
-	// Create the Road Junctions
-	Material* mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/RoadJunction")).get();
-	Material* mat2 = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Road")).get();
-	MeshBuilder roadBuilder(_name+"Roads", "custom", this);
-	NodeIterator nIt, nEnd;
-	for ( boost::tie(nIt, nEnd) = _roadGraph.getNodes(); nIt != nEnd; nIt++)
-	{
-		NodeInterface* ni = _roadGraph.getNode(*nIt);
-		if (typeid(*ni) == typeid(SimpleNode))
-		{
-			//static_cast<SimpleNode*>(ni)->prebuild();
-			static_cast<SimpleNode*>(ni)->build(roadBuilder, mat);
-		}
-	}
-
-	RoadIterator rIt, rEnd;
-	for ( boost::tie(rIt, rEnd) = _roadGraph.getRoads(); rIt != rEnd; rIt++)
-	{
-		RoadInterface* ri = _roadGraph.getRoad(*rIt);
-		if (typeid(*ri) == typeid(SimpleRoad))
-		{
-			//static_cast<SimpleRoad*>(ri)->prebuild();
-			static_cast<SimpleRoad*>(ri)->build(roadBuilder, mat2);
-		}
-	}
-
-	roadBuilder.build();
-	_roadsEnt = _sceneNode->getCreator()->createEntity(_name+"RoadsEntity", _name+"Roads");
-	_roadsEnt->setVisible(_showRoads);
-	_sceneNode->attachObject(_roadsEnt);
-}
-
 void WorldCell::prebuild()
 {
 	if (_busy)
@@ -497,18 +463,30 @@ void WorldCell::prebuild()
 		}
 	}
 
+	// blocks
+	_mbBuildings = new MeshBuilder(_name+"Buildings", "custom", this);
+
+	// set up materials
+	vector<Material*> materials(6);
+	materials[0] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building1WNormalMap")).get();
+	materials[1] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building2WNormalMap")).get();
+	materials[2] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building3WNormalMap")).get();
+	materials[3] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building4WNormalMap")).get();
+	materials[4] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building5WNormalMap")).get();
+	materials[5] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Paving")).get();
+
 	vector< vector<NodeInterface*> > cycles;
-	_roadGraph.extractFootprints(cycles, _genParams._lotSize);
+	_roadGraph.extractFootprints(cycles, _genParams._lotWidth);
 
 	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
 	{
 		vector<Vector3> poly;
 		extractPolygon(cycle, poly);
-	
+
 		if(_genParams._debug)
-			_blocks.push_back(new WorldBlock(poly, _genParams, rg, true));
+			_blocks.push_back(new WorldBlock(poly, _genParams, rg, _mbBuildings, materials, true));
 		else
-			_blocks.push_back(new WorldBlock(poly, _genParams, rg));
+			_blocks.push_back(new WorldBlock(poly, _genParams, rg, _mbBuildings, materials));
 	}
 	_busy = false;
 }
@@ -517,96 +495,49 @@ void WorldCell::build()
 {
 	PerformanceTimer buildPT("Cell build"), roadPT("Road build");
 
-	//1. Clear Road Graph and destroy scene object
+	//1. clear road graph and destroy scene object
 	destroySceneObject();
 
-	//std::vector<Ogre::Vector2> bd;
-	//bd.push_back(Vector2(1000, 1000));
-	//bd.push_back(Vector2(1000, 975));
-	//bd.push_back(Vector2(975, 975));
-	//bd.push_back(Vector2(975, 1000));
-
-	// seed it
-	srand(_genParams._seed);
-
-	//debug
-	//_debugMO = new ManualObject(_name+"do");
-	//_debugMO->begin("gk/Hilite/Red", Ogre::RenderOperation::OT_LINE_LIST);
-
-	vector< vector<NodeInterface*> > cycles;
-	_roadGraph.extractFootprints(cycles, _genParams._lotSize);
-	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
+	// build road junctions
+	Material* mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/RoadJunction")).get();
+	Material* mat2 = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Road")).get();
+	MeshBuilder roadBuilder(_name+"Roads", "custom", this);
+	NodeIterator nIt, nEnd;
+	for ( boost::tie(nIt, nEnd) = _roadGraph.getNodes(); nIt != nEnd; nIt++)
 	{
-		vector<Vector3> poly;
-		extractPolygon(cycle, poly);
-		//for(size_t i=0; i<poly.size(); i++)
-		//{
-		//	_debugMO->position(poly[i]+Vector3(0,0.1,0));
-		//	_debugMO->position(poly[(i+1)%poly.size()]+Vector3(0,0.1,0));
-		//}
+		NodeInterface* ni = _roadGraph.getNode(*nIt);
+		if (typeid(*ni) == typeid(SimpleNode))
+			static_cast<SimpleNode*>(ni)->build(roadBuilder, mat);
 	}
 
-	// set up materials
-	vector<Material*> materials(4);
-	materials[0] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building2WNormalMap")).get();
-	materials[1] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building3WNormalMap")).get();
-	materials[2] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building4")).get();
-	materials[3] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Paving")).get();
-
-	MeshBuilder meshBuilder(_name+"Buildings", "custom", this);
-	if (_genParams._debug)
+	// build road segments
+	RoadIterator rIt, rEnd;
+	for ( boost::tie(rIt, rEnd) = _roadGraph.getRoads(); rIt != rEnd; rIt++)
 	{
-		BOOST_FOREACH(WorldBlock* block, _blocks)
-			block->build(meshBuilder, materials, _debugMO);
-	}
-	else
-	{
-		BOOST_FOREACH(WorldBlock* block, _blocks)
-			block->build(meshBuilder, materials);
+		RoadInterface* ri = _roadGraph.getRoad(*rIt);
+		if (typeid(*ri) == typeid(SimpleRoad))
+			static_cast<SimpleRoad*>(ri)->build(roadBuilder, mat2);
 	}
 
-	meshBuilder.build();
+	// create entity for road network
+	roadBuilder.build();
+	_roadsEnt = _sceneNode->getCreator()->createEntity(_name+"RoadsEntity", _name+"Roads");
+	_roadsEnt->setVisible(_showRoads);
+	_sceneNode->attachObject(_roadsEnt);
 
-	// create entity
-	_buildingsEnt = _sceneNode->getCreator()->createEntity(_name+"Entity",_name+"Buildings");
-	
-	// attach object
+
+	// create ogre entity using mesh builder
+	_mbBuildings->build();
+	_buildingsEnt = _sceneNode->getCreator()->createEntity(_name+"Entity", _mbBuildings->getName());
+	delete _mbBuildings;
+	_mbBuildings = 0;
 	_sceneNode->attachObject(_buildingsEnt);
-
 	_buildingsEnt->setVisible(_showBuildings);
-
-	//_debugMO->end();
-	//_sceneNode->attachObject(_debugMO);
 
 	// am done with blocks now.
 	BOOST_FOREACH(WorldBlock* b, _blocks) delete b;
 	_blocks.clear();
-
-	//generateRoadNetwork();
-	buildRoadNetwork();
-	//roadPT.stop();
-
-
-	//PerformanceTimer buildingPT("Buildings");
-
-	//buildingPT.stop();
-	//buildPT.stop();
-
-	// Log Debug Data
-	//LogManager::getSingleton().logMessage(roadPT.toString()+" "+buildingPT.toString()+" "+buildPT.toString());
-	//LogManager::getSingleton().logMessage("Junction fail count: "+StringConverter::toString(junctionFailCount));
-
-	//DEBUG: count short roads
-	//size_t i=0;
-	//RoadIterator rIt, rEnd;
-	//for(boost::tie(rIt, rEnd) = _roadGraph.getRoads(); rIt != rEnd; rIt++)
-	//{
-	//	Vector2 road(_roadGraph.getSrcNode(*rIt)->getPosition2D() - _roadGraph.getDstNode(*rIt)->getPosition2D());
-	//	if(road.length() < _genParams.snapSize) i++;
-	//}
-	//LogManager::getSingleton().logMessage("Small road count: "+StringConverter::toString(i));
-	//LogManager::getSingleton().logMessage("Build fail count: "+StringConverter::toString(buildFail));
-
+	
 	return;
 }
 
@@ -753,23 +684,23 @@ void WorldCell::clearFilaments()
 	invalidate();
 }
 
-CellGenParams WorldCell::getGenParams() const
+CellParams WorldCell::getGenParams() const
 {
 	return _genParams;
 }
 
-CellGenParams WorldCell::getDefaultGenParams()
+CellParams WorldCell::getDefaultGenParams()
 {
 	return _defaultGenParams;
 }
 
-void WorldCell::setGenParams(const CellGenParams &g)
+void WorldCell::setGenParams(const CellParams &g)
 {
 	_genParams = g;
 	invalidate();
 }
 
-void WorldCell::setDefaultGenParams(const CellGenParams &g)
+void WorldCell::setDefaultGenParams(const CellParams &g)
 {
 	_defaultGenParams = g;
 }
@@ -930,8 +861,10 @@ bool WorldCell::loadXML(const TiXmlHandle& cellRoot)
 						&_genParams._buildingDeviance);
 			else if (key == "connectivity")
 				element->QueryFloatAttribute("value", &_genParams._connectivity);
-			else if (key == "lotSize")
-				element->QueryFloatAttribute("value", &_genParams._lotSize);
+			else if (key == "lotWidth")
+				element->QueryFloatAttribute("value", &_genParams._lotWidth);
+			else if (key == "lotDepth")
+				element->QueryFloatAttribute("value", &_genParams._lotDepth);
 			else if (key == "lotDeviance")
 				element->QueryFloatAttribute("value", &_genParams._lotDeviance);
 		}
@@ -986,7 +919,8 @@ addNewElement(cycle, "node")->SetAttribute("id", (int)ni);
 			_genParams._buildingDeviance);
 	addNewElement(gp, "connectivity")->SetDoubleAttribute("value",
 			_genParams._connectivity);
-	addNewElement(gp, "lotSize")->SetDoubleAttribute("value", _genParams._lotSize);
+	addNewElement(gp, "lotWidth")->SetDoubleAttribute("value", _genParams._lotWidth);
+	addNewElement(gp, "lotDepth")->SetDoubleAttribute("value", _genParams._lotDepth);
 	addNewElement(gp, "lotDeviance")->SetDoubleAttribute("value",
 			_genParams._lotDeviance);
 

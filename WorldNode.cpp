@@ -63,9 +63,9 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 
 	// create moveable text label
 	_label = new MovableText("Label"+_name, nodeCount);
-	_label->setCharacterHeight(4);
+	_label->setCharacterHeight(24);
 	_label->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE); // Center horizontally and display above the node
-	_label->setAdditionalHeight(4.0f);
+	_label->setAdditionalHeight(16.0f);
 
 	// attach objects
 	_sceneNode->attachObject(_mesh);

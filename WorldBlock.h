@@ -15,16 +15,16 @@ private:
 	std::vector<Ogre::Real>						_footpathVertexData;
 
 public:
-	WorldBlock(const std::vector<Ogre::Vector3> &boundary, const CellGenParams &gp, rando rg, bool debug=false);
+	WorldBlock(const std::vector<Ogre::Vector3> &boundary, const CellParams &gp, rando rg, 
+		MeshBuilder* mb, std::vector<Ogre::Material*> &materials, bool debug=false);
 	~WorldBlock()
 	{
 		BOOST_FOREACH(WorldLot* l, _lots) delete l;
 	}
 
-	void build(MeshBuilder &meshBuilder, std::vector<Ogre::Material*> &materials);
-	void build(MeshBuilder &meshBuilder, std::vector<Ogre::Material*> &materials, Ogre::ManualObject* dob);
-
-	static bool getLongestSideIndex(const LotBoundary &b, 
+	static bool getLongestBoundarySideIndex(const LotBoundary &b, 
+		const Ogre::Real limitSq, size_t &index);
+	static bool getLongestNonBoundarySideIndex(const LotBoundary &b, 
 		const Ogre::Real limitSq, size_t &index);
 
 	static bool splitBoundary(const size_t &index, const Ogre::Real &deviance, rando rg, const LotBoundary &input, std::vector<LotBoundary> &output);

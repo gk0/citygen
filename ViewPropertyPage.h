@@ -17,6 +17,7 @@ private:
 	wxPGProperty*	_xProp;
 	wxPGProperty*	_yProp;
 	wxPGProperty*	_zProp;
+	wxPGProperty*	_zoomProp;
 	wxPGProperty*	_xDirProp;
 	wxPGProperty*	_yDirProp;
 	wxPGProperty*	_zDirProp;

@@ -30,16 +30,7 @@ struct RoadGenParams
 	bool				_debug;
 	Ogre::Real			_segmentDrawSize;
 
-	RoadGenParams()
-	{
-		_algorithm = EvenElevationDiff;
-		_sampleSize = 100;
-		_sampleDeviance = 25;
-		_roadWidth = 0.4;
-		_numOfSamples = 1;
-		_debug = false;
-		_segmentDrawSize = 100;
-	}
+	RoadGenParams();
 };
 
 class WorldRoad : public WorldObject, public RoadInterface, public Ogre::ManualResourceLoader

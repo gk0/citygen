@@ -2,7 +2,7 @@
 #define WORLDLOT_H
 
 #include "stdafx.h"
-#include "CellGenParams.h"
+#include "CellParams.h"
 #include "Triangulate.h"
 
 struct LotBoundaryPoint
@@ -29,7 +29,8 @@ private:
 
 public:
 	//WorldLot(const LotBoundary &footprint, const CellGenParams &gp);
-	WorldLot(const LotBoundary &footprint, const CellGenParams &gp, const Ogre::Real ht);
+	WorldLot(const LotBoundary &footprint, const CellParams &gp, const Ogre::Real ht, 
+		const Ogre::Real uScale, const Ogre::Real vScale);
 
 	bool hasError() { return _error; }
 

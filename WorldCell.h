@@ -5,7 +5,7 @@
 #include "WorldObject.h"
 #include "WorldBlock.h"
 #include "RoadGraph.h"
-#include "CellGenParams.h"
+#include "CellParams.h"
 #include "ExportDoc.h"
 
 class WorldRoad;
@@ -22,7 +22,7 @@ private:
 	bool				_busy;
 
 	static int			_instanceCount;
-	static CellGenParams _defaultGenParams;
+	static CellParams _defaultGenParams;
 
 	Ogre::String		_name;
 	Ogre::Vector2		_centre;
@@ -38,7 +38,7 @@ private:
 	RoadGraph			_roadGraph;
 	const RoadGraph&	_parentRoadGraph;
 	const RoadGraph&	_simpleRoadGraph;
-	CellGenParams		_genParams;
+	CellParams			_genParams;
 
 	std::vector<RoadInterface*> _boundaryRoads;
 	std::vector<NodeInterface*> _boundaryCycle;
@@ -46,16 +46,18 @@ private:
 
 	std::vector<WorldBlock*>	_blocks;
 
+	MeshBuilder*		_mbBuildings;
+
 
 public:
 	WorldCell(const RoadGraph &p, const RoadGraph &s);
 	WorldCell(const RoadGraph &p, const RoadGraph &s, std::vector<NodeInterface*> &n);
 	virtual ~WorldCell();
 
-	CellGenParams getGenParams() const;
-	static CellGenParams getDefaultGenParams();
-	void setGenParams(const CellGenParams &g);
-	static void setDefaultGenParams(const CellGenParams &g);
+	CellParams getGenParams() const;
+	static CellParams getDefaultGenParams();
+	void setGenParams(const CellParams &g);
+	static void setDefaultGenParams(const CellParams &g);
 
 	const std::vector<RoadInterface*>& getBoundaryRoads() const;
 	const std::vector<NodeInterface*>& getBoundaryCycle() const;
@@ -129,8 +131,6 @@ private:
 	RoadInterface* getRoad(NodeInterface* n1, NodeInterface* n2);
 
 	void generateRoadNetwork(rando genRandom);
-	void buildRoadNetwork();
-
 };
 
 #endif

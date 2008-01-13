@@ -106,6 +106,7 @@ protected:
 
 	void toggleTimerRendering();
 	void update();
+	void onCameraUpdate();
 
 public:
 	WorldFrame(wxFrame* parent);
@@ -120,7 +121,11 @@ public:
 	void deleteNode(WorldNode* wn);
 	void deleteRoad(WorldRoad* wr);
 	void cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
+	void cameraNodeMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
+	void cameraNodeMove(const Ogre::Vector3 &pos) { cameraNodeMove(pos.x, pos.y, pos.z); }
 	void cameraRotate(Ogre::Real yaw, Ogre::Real pitch);
+	void cameraNodeRotate(Ogre::Real yaw, Ogre::Real pitch);
+	void cameraZoom(Ogre::Real z);
 
 	bool loadXML(const TiXmlHandle& worldRoot);
 	TiXmlElement* saveXML();

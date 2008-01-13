@@ -199,6 +199,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CellParams.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\CellPropertyPage.cpp"
 				>
 			</File>
@@ -337,7 +341,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CellGenParams.h"
+				RelativePath=".\CellParams.h"
 				>
 			</File>
 			<File
