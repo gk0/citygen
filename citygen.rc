@@ -11,6 +11,7 @@ print		BITMAP		"bitmaps/print.bmp"
 help		BITMAP		"bitmaps/help.bmp"
 
 view		BITMAP		"bitmaps/view.bmp"
+terr		BITMAP		"bitmaps/terr.bmp"
 node		BITMAP		"bitmaps/node.bmp"
 edge		BITMAP		"bitmaps/edge.bmp"
 cell		BITMAP		"bitmaps/cell.bmp"

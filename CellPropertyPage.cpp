@@ -29,7 +29,6 @@ void CellPropertyPage::Init()
     //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
 	_presetProp = Append( wxEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
 
-    SetPropertyEditor(_presetProp,wxPG_EDITOR(ChoiceAndButton));
 	//presetProp
 
 /*

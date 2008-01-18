@@ -66,7 +66,7 @@ void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 			Ogre::Vector2	newPos;
 
 			// needs a good studying
-			snapState = wr->snapInfo(2, newPos, snapNode, intersectingRoad);
+			snapState = wr->snapInfo(5, newPos, snapNode, intersectingRoad);
 			delete wr;
 			_worldFrame->deleteNode(proposedNode);
 			if(snapState != 0)

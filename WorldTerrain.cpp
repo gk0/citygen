@@ -2,49 +2,116 @@
 #include "WorldTerrain.h"
 #include <OgreSceneManager.h>
 #include <OgreLogManager.h>
+#include <tinyxml.h>
 #include <sstream>
+
+#include "Validator.h"
+#include <math.h>
+#include <wx/msgdlg.h>
+
 using namespace std;
+
+// TODO property hierarchy, validation using regxp
 
 WorldTerrain::WorldTerrain()
 {
-	_heightmapImage="terrain.png";
-	_pageSize=513;
-	_tileSize=65;
-	_maxPixelError=3;
-	_pageWorldX=50000;
-	_pageWorldZ=50000;
-	_maxHeight=3000;
-	_maxMipMapLevel=5;
-	_vertexProgramMorph=true;
-	_LODMorphStart=0.2;
-	_materialName="gk/Terrain";
+	vector<string> yesNo;
+	yesNo.push_back("no");
+	yesNo.push_back("yes");
+
+	PropertyList* hmOpts = new PropertyList("Heightmap");
+	hmOpts->addProperty(new PropertyImage("Heightmap.image", "terrain.png", _validatorHM));
+	hmOpts->addProperty(new PropertyUShort("TileSize", 65, ValidatorURange::USHORTMAX));
+	hmOpts->addProperty(new PropertyUShort("MaxPixelError", 3, ValidatorURange::USHORTMAX));
+	_properties.addProperty(hmOpts);
+
+	PropertyList* texOpts = new PropertyList("Texture");
+	texOpts->addProperty(new PropertyImage("WorldTexture", "terrain_texture.jpg", _validatorTex));
+	texOpts->addProperty(new PropertyImage("DetailTexture", "terrain_detail.jpg", _validatorTex));
+	texOpts->addProperty(new PropertyUShort("DetailTile", 3, ValidatorURange::USHORTMAX));
+	_properties.addProperty(texOpts);
+
+	PropertyList* scaleOpts = new PropertyList("Scale");
+	scaleOpts->addProperty(new PropertyReal("PageWorldX", 50000));
+	scaleOpts->addProperty(new PropertyReal("PageWorldZ", 50000));
+	scaleOpts->addProperty(new PropertyReal("MaxHeight", 3000));
+	_properties.addProperty(scaleOpts);
+
+	PropertyList* renderOpts = new PropertyList("Rendering");
+	renderOpts->addProperty(new PropertyEnum("VertexProgramMorph", 1, yesNo));	
+	renderOpts->addProperty(new PropertyReal("LODMorphStart", 0.2));
+	renderOpts->addProperty(new PropertyUShort("MaxMipMapLevel", 5));
+	_properties.addProperty(renderOpts);
 }
 
 void WorldTerrain::load(Ogre::SceneManager* sm)
 {
-	// B. manual approach - this does seem a tad silly but it seems
-	// the only way to do it harhar
-	stringstream oss;
-	oss << "PageSource=Heightmap\n";
-	oss << "Heightmap.image=" << _heightmapImage << "\n";
-	oss << "PageSize=" << _pageSize << "\n";
-	oss << "TileSize=" << _tileSize << "\n";
-	oss << "MaxPixelError=" << _maxPixelError << "\n";
-	oss << "PageWorldX=" << _pageWorldX << "\n";
-	oss << "PageWorldZ=" << _pageWorldZ << "\n";
-	oss << "MaxHeight=" << _maxHeight << "\n";
-	oss << "MaxMipMapLevel=" << _maxMipMapLevel << "\n";
-	oss << "VertexProgramMorph=" << (_vertexProgramMorph ? "yes" : "no") << "\n";
-	oss << "LODMorphStart=" << _LODMorphStart << "\n";
-	oss << "CustomMaterialName=" << _materialName << "\n";
-	Ogre::LogManager::getSingleton().logMessage(oss.str());
-	string configStr(oss.str());
+	// convert property list into a string config
+	std::string configStr = "PageSource=Heightmap\n";
+	BOOST_FOREACH(Property* p, _properties.getList())
+	{
+		if(typeid(*p) == typeid(PropertyList))
+		{
+			PropertyList* pl = static_cast<PropertyList*>(p);
+			BOOST_FOREACH(Property* p2, pl->getList())
+				configStr += (p2->_name)+"="+(p2->toString())+"\n";
+		}
+		else
+			configStr += (p->_name)+"="+(p->toString())+"\n";
+	}
 
-	void *pMem = (void *)new unsigned char[configStr.length()+1];
-	memset(pMem, 0, configStr.length()+1);
-	memcpy(pMem, configStr.c_str(), configStr.length() + 1);
-	// stuff this into a MemoryDataStream
+	// need to get page size from image
+	Property* p;
+	try
+	{
+		Ogre::Image img;
+		
+		_properties.findAll("Heightmap.image", p);
+		img.load(p->toString(), Ogre::ResourceGroupManager::getSingleton().getWorldResourceGroupName());
+		configStr += "PageSize="+Ogre::StringConverter::toString(std::min(img.getWidth(),img.getHeight()))+"\n";
+	}
+	catch(...)
+	{
+		string errMsg = "Could not load the image: \'"+p->toString()+
+			"\', specified by the \'Heightmap.image\' property of the terrain."+
+			"\n\nIf this file has been moved please correct the path in the Terrain Property Inspector.";
+
+		(void)wxMessageBox(_U(errMsg.c_str()), _("Heightmap image load error"),
+			wxOK | wxICON_EXCLAMATION);
+		return;
+	}
+
+	Ogre::LogManager::getSingleton().logMessage(configStr);
+	
+	// memory leak version:
+	// put configStr into a MemoryDataStream
+	//void *pMem = (void *)new unsigned char[configStr.length()+1];
+	//memcpy(pMem, configStr.c_str(), configStr.length() + 1);
+
+	// dubious but memory-leak free version
+	void *pMem = (void*) configStr.c_str();
 	Ogre::DataStreamPtr pStr(new Ogre::MemoryDataStream(pMem, configStr.length() + 1));
-	sm->setWorldGeometry(pStr);
+
+	try
+	{
+		sm->setWorldGeometry(pStr);
+	}
+	catch(Ogre::Exception &e)
+	{
+		(void)wxMessageBox(_U(e.getDescription().c_str()), 
+			_("Terrain load error!"), wxOK | wxICON_EXCLAMATION);
+	}
 }
 
+bool WorldTerrain::loadXML(const TiXmlHandle& root, const std::string &filePath)
+{
+	return _properties.loadXML(root, filePath);
+}
+
+TiXmlElement* WorldTerrain::saveXML(const std::string &filePath)
+{
+	TiXmlElement* root = new TiXmlElement("terrain");
+	BOOST_FOREACH(Property* p, _properties.getList())
+		root->LinkEndChild(p->saveXML(filePath));
+	return root;
+}

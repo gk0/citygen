@@ -19,7 +19,7 @@
 <folderInfo id="cdt.managedbuild.config.gnu.exe.debug.1584529566." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.1853452497" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.debug">
 <targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.debug.1058598751" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
-<builder arguments="-j 2" buildPath="${workspace_loc:/citygen/Debug Linux}" command="make" id="cdt.managedbuild.target.gnu.builder.exe.debug.1681159897" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.exe.debug"/>
+<builder arguments="-j 2" buildPath="${workspace_loc:/citygen2/Debug Linux}" command="make" id="cdt.managedbuild.target.gnu.builder.exe.debug.1681159897" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.exe.debug"/>
 <tool id="cdt.managedbuild.tool.gnu.archiver.base.2128830190" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 <tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1582100450" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug">
 <option id="gnu.cpp.compiler.exe.debug.option.optimization.level.535824271" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
@@ -53,11 +53,15 @@
 <option id="gnu.cpp.link.option.libs.2038349242" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="tinyxml"/>
 <listOptionValue builtIn="false" value="wxPropertyGrid"/>
+<listOptionValue builtIn="false" value="wxzlib"/>
+<listOptionValue builtIn="false" value="wxpng"/>
+<listOptionValue builtIn="false" value="wxjpeg"/>
 <listOptionValue builtIn="false" value="X11"/>
 <listOptionValue builtIn="false" value="GL"/>
 <listOptionValue builtIn="false" value="Xaw"/>
 <listOptionValue builtIn="false" value="boost_thread-mt"/>
 <listOptionValue builtIn="false" value="boost_filesystem-mt"/>
+<listOptionValue builtIn="false" value="boost_regex-mt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.1379963458" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="/usr/lib"/>
@@ -1385,11 +1389,15 @@
 <option id="gnu.cpp.link.option.libs.1329501378" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="tinyxml"/>
 <listOptionValue builtIn="false" value="wxPropertyGrid"/>
+<listOptionValue builtIn="false" value="wxzlib"/>
+<listOptionValue builtIn="false" value="wxpng"/>
+<listOptionValue builtIn="false" value="wxjpeg"/>
 <listOptionValue builtIn="false" value="X11"/>
 <listOptionValue builtIn="false" value="GL"/>
 <listOptionValue builtIn="false" value="Xaw"/>
 <listOptionValue builtIn="false" value="boost_thread-mt"/>
 <listOptionValue builtIn="false" value="boost_filesystem-mt"/>
+<listOptionValue builtIn="false" value="boost_regex-mt"/>
 </option>
 <option id="gnu.cpp.link.option.paths.690549858" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="/usr/lib"/>
@@ -2715,9 +2723,13 @@
 <listOptionValue builtIn="false" value="wxmsw28u_propgrid"/>
 <listOptionValue builtIn="false" value="boost_thread-mgw34-mt-s-1_34_1"/>
 <listOptionValue builtIn="false" value="boost_filesystem-mgw34-mt-s-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_regex-mgw-mt-s-1_34_1"/>
 <listOptionValue builtIn="false" value="wxmsw28u_aui"/>
 <listOptionValue builtIn="false" value="wxmsw28u_core"/>
 <listOptionValue builtIn="false" value="wxbase28u"/>
+<listOptionValue builtIn="false" value="wxzlib"/>
+<listOptionValue builtIn="false" value="wxpng"/>
+<listOptionValue builtIn="false" value="wxjpeg"/>
 <listOptionValue builtIn="false" value="gdi32"/>
 <listOptionValue builtIn="false" value="tinyxml"/>
 <listOptionValue builtIn="false" value="comctl32"/>
@@ -4066,9 +4078,13 @@
 <listOptionValue builtIn="false" value="wxmsw28ud_propgrid"/>
 <listOptionValue builtIn="false" value="boost_thread-mgw34-mt-sd-1_34_1"/>
 <listOptionValue builtIn="false" value="boost_filesystem-mgw34-mt-sd-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_regex-mgw34-mt-sd-1_34_1"/>
 <listOptionValue builtIn="false" value="wxmsw28ud_aui"/>
 <listOptionValue builtIn="false" value="wxmsw28ud_core"/>
 <listOptionValue builtIn="false" value="wxbase28ud"/>
+<listOptionValue builtIn="false" value="wxzlibd"/>
+<listOptionValue builtIn="false" value="wxpngd"/>
+<listOptionValue builtIn="false" value="wxjpeg"/>
 <listOptionValue builtIn="false" value="gdi32"/>
 <listOptionValue builtIn="false" value="tinyxml"/>
 <listOptionValue builtIn="false" value="comctl32"/>

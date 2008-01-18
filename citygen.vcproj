@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain_d.lib wxbase28ud.lib wxmsw28ud_core.lib wxmsw28ud_aui.lib wxmsw28ud_propgrid.lib tinyxmld.lib"
+				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain_d.lib wxbase28ud.lib wxmsw28ud_core.lib wxmsw28ud_aui.lib wxmsw28ud_propgrid.lib wxzlibd.lib wxpngd.lib wxjpegd.lib tinyxmld.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../boost_1_34_1/lib;&quot;..\wxWidgets-2.8.6\lib\vc_lib&quot;;..\OgreSDK_VS80\lib;&quot;..\FCollada\Output\Debug DLL\LibXML&quot;;&quot;..\FCollada\Output\Debug Unicode DLL&quot;;..\tinyxml\Debug;&quot;C:\Program Files\Visual Leak Detector\lib&quot;"
 				GenerateDebugInformation="true"
@@ -150,7 +150,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/verbose:lib"
-				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain.lib wxbase28u.lib wxmsw28u_core.lib wxmsw28u_aui.lib wxmsw28u_propgrid.lib tinyxml.lib proarc-ogre.lib"
+				AdditionalDependencies="comctl32.lib rpcrt4.lib OgreMain.lib wxbase28u.lib wxmsw28u_core.lib wxmsw28u_aui.lib wxmsw28u_propgrid.lib wxzlib.lib wxpng.lib wxjpeg.lib tinyxml.lib proarc-ogre.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\wxWidgets-2.8.6\lib\vc_lib&quot;;..\OgreSDK_VS80\lib;..\boost_1_34_1\lib;..\tinyxml\Release;&quot;../proarc-ogre/Release&quot;"
 				GenerateDebugInformation="true"
@@ -199,10 +199,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CellParams.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\CellPropertyPage.cpp"
 				>
 			</File>
@@ -239,6 +235,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PropertyList.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PropertyPage.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RoadGraph.cpp"
 				>
 			</File>
@@ -260,6 +264,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TerrainPropertyPage.cpp"
 				>
 			</File>
 			<File
@@ -296,6 +304,10 @@
 			</File>
 			<File
 				RelativePath=".\Triangulate.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Validator.cpp"
 				>
 			</File>
 			<File
@@ -393,6 +405,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PropertyList.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PropertyPage.h"
+				>
+			</File>
+			<File
 				RelativePath=".\RoadGraph.h"
 				>
 			</File>
@@ -418,6 +438,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TerrainPropertyPage.h"
 				>
 			</File>
 			<File
@@ -458,6 +482,10 @@
 			</File>
 			<File
 				RelativePath=".\Triangulate.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Validator.h"
 				>
 			</File>
 			<File

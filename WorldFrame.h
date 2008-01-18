@@ -67,9 +67,6 @@ private:
 	WorldRoad*			_selectedRoad;
 	WorldCell*			_selectedCell;
 
-	bool				_intersectionPresent;
-	RoadId				_roadIntersection;
-
 	std::vector<Tool*>	_tools;
 
 protected:
@@ -127,8 +124,8 @@ public:
 	void cameraNodeRotate(Ogre::Real yaw, Ogre::Real pitch);
 	void cameraZoom(Ogre::Real z);
 
-	bool loadXML(const TiXmlHandle& worldRoot);
-	TiXmlElement* saveXML();
+	bool loadXML(const TiXmlHandle& worldRoot, const std::string &filePath);
+	TiXmlElement* saveXML(const std::string &filePath);
 
 	void exportScene(ExportDoc& doc);
 
@@ -149,6 +146,9 @@ public:
 
 	bool pickRoad(wxMouseEvent& e, WorldRoad *&wr);
 	void selectRoad(WorldRoad* wn);
+
+	WorldTerrain* getWorldTerrain() { return &_worldTerrain; } 
+	void updateTerrain();
 
 	/**
 	 * Get a pointer to the camera

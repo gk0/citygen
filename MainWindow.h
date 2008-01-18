@@ -12,6 +12,7 @@
 
 class WorldFrame;
 class ViewPropertyPage;
+class TerrainPropertyPage;
 class NodePropertyPage;
 class RoadPropertyPage;
 class CellPropertyPage;
@@ -28,12 +29,14 @@ public:
 
 	enum ToolsetMode {
 		view,
+		terr,
 		node,
 		road,
 		cell
 	};
 	enum ActiveTool {
 		viewTool,
+		terrTool,
 		selNode,
 		addNode,
 		delNode,
@@ -57,6 +60,7 @@ private:
 
 	wxPropertyGridManager*	_propertyGridManager;
 	ViewPropertyPage*		_viewPropertyPage;
+	TerrainPropertyPage*	_terrainPropertyPage;
 	NodePropertyPage*		_nodePropertyPage;
 	RoadPropertyPage*		_roadPropertyPage;
 	CellPropertyPage*		_cellPropertyPage;
@@ -94,6 +98,7 @@ protected:
 	void onSelectViewBuilding(wxCommandEvent &e);
 
 	void onSelectToolsetView(wxCommandEvent &e);
+	void onSelectToolsetTerrain(wxCommandEvent &e);
 	void onSelectToolsetNode(wxCommandEvent &e);
 	void onSelectToolsetRoad(wxCommandEvent &e);
 	void onSelectToolsetCell(wxCommandEvent &e);

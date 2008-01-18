@@ -3,6 +3,9 @@
 #include "WorldNode.h"
 #include "WorldFrame.h"
 
+#define NODESELECTSNAPSZSQ 2500
+
+
 ToolNodeSelect::ToolNodeSelect(WorldFrame* wf)
 : ToolView(wf)
 {
@@ -19,8 +22,6 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 	_mouseDeltaX = e.m_x - _mouseX;
 	_mouseDeltaY = e.m_y - _mouseY;
 
-	//TODO: 
-	#define HIGHLIGHTNODESNAPSQ 16
 	WorldNode *wn;
 
 	// if left drag
@@ -30,7 +31,7 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 		if(_worldFrame->pickTerrainIntersection(e, pos))
 			_worldFrame->moveSelectedNode(pos);
 	}
-	else if(_worldFrame->pickNode(e, HIGHLIGHTNODESNAPSQ, wn))
+	else if(_worldFrame->pickNode(e, NODESELECTSNAPSZSQ, wn))
 		_worldFrame->highlightNode(wn);
 	else 
 		_worldFrame->highlightNode(0);
@@ -51,11 +52,9 @@ void ToolNodeSelect::OnLeftPressed(wxMouseEvent &e)
 		ToolView::OnLeftPressed(e);
 		return;
 	}
-	//TODO: 
-	#define SELECTNODESNAPSQ 16
 
 	WorldNode *wn;
-	if(_worldFrame->pickNode(e, SELECTNODESNAPSQ, wn))
+	if(_worldFrame->pickNode(e, NODESELECTSNAPSZSQ, wn))
 		_worldFrame->selectNode(wn);
 	else
 		_worldFrame->selectNode(0);

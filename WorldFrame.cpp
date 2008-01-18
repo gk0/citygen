@@ -82,12 +82,13 @@ _timer(this, ID_RENDERTIMER)
 	_sceneManager = 0;
 	_viewport = 0;
 
+	_highlightedNode = 0;
 	_selectedNode = 0;
 	_selectedRoad = 0;
 	_selectedCell = 0;
 
 	//init();
-	toggleTimerRendering(); // only really to test fps
+	//toggleTimerRendering(); // only really to test fps
 }
 
 void WorldFrame::init()
@@ -155,7 +156,7 @@ void WorldFrame::init()
 
 	// Desperate attempt to improve image quality on linux w/fglrx
 	MaterialManager::getSingleton().setDefaultTextureFiltering(TFO_ANISOTROPIC);
-	MaterialManager::getSingleton().setDefaultAnisotropy(8);
+	MaterialManager::getSingleton().setDefaultAnisotropy(4);
 
 	// Make sure assets are loaded before we create the scene
 	ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
@@ -166,6 +167,7 @@ void WorldFrame::init()
 	_toolsetMode = MainWindow::view;
 	_activeTool = MainWindow::addNode;
 
+	_tools.push_back(new ToolView(this));
 	_tools.push_back(new ToolView(this));
 	_tools.push_back(new ToolNodeSelect(this));
 	_tools.push_back(new ToolNodeAdd(this, _sceneManager, _roadGraph, _simpleRoadGraph));
@@ -223,7 +225,7 @@ void WorldFrame::createCamera(void)
 {
 	// Create the camera
 	_camera = _sceneManager->createCamera("PlayerCam");
-	_camera->setNearClipDistance(1);
+	_camera->setNearClipDistance(3);
 	_camera->setFarClipDistance(1000);
 
 	// camera is positioned in createScene - not here
@@ -247,15 +249,25 @@ void WorldFrame::createScene(void)
 					"run this application. Sorry!", "WorldFrame::createScene");
 	}
 
-	// Set ambient light
-	_sceneManager->setAmbientLight(ColourValue(0.5, 0.5, 0.5));
+
 
 	// Create a light
 	_mainLight = _sceneManager->createLight("MainLight");
 	// Accept default settings: point light, white diffuse, just set position
 	// NB I could attach the light to a SceneNode if I wanted it to move automatically with
 	//  other objects, but I don't
-	_mainLight->setPosition(20, 180, 50);
+	//_mainLight->setPosition(20, 180, 50);
+	// Add some default lighting to the scene
+	//mSceneMgr->setAmbientLight(ColourValue(0.90, 0.90, 1.00));
+
+	//_sun = mSceneMgr->createLight("SunLight");
+	_mainLight->setType(Light::LightTypes::LT_DIRECTIONAL);
+	_mainLight->setDirection(Vector3(1, -1.2, 0.2).normalisedCopy());
+	//_sun->setCastShadows(true);
+	_sceneManager->setAmbientLight(ColourValue(0.34, 0.34, 0.38));	// blueish
+	_mainLight->setDiffuseColour(0.91, 0.91, 0.85);					// yellowish
+	_mainLight->setSpecularColour(0.5, 0.5, 0.5);
+
 
 	// Fog
 	// NB it's VERY important to set this before calling setWorldGeometry 
@@ -263,10 +275,6 @@ void WorldFrame::createScene(void)
 	ColourValue fadeColour(0.76f, 0.86f, 0.93f);
 	//_sceneManager->setFog(FOG_LINEAR, fadeColour, .001f, 500, 1000);
 	_renderWindow->getViewport(0)->setBackgroundColour(fadeColour);
-
-	// Load the Terrain
-	// TODO - put this into XML
-	_worldTerrain.load(_sceneManager);
 
 	// Infinite far plane?
 	if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
@@ -600,13 +608,13 @@ void WorldFrame::update()
 	}
 }
 
-bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
+bool WorldFrame::loadXML(const TiXmlHandle& worldRoot, const std::string &filePath)
 {
 	//
 	onCloseDoc();
-	onNewDoc();
+	createScene();
 
-	// Load Camera
+	// load camera
 	string camId = worldRoot.FirstChild("camera").Element()->Attribute("id");
 	if (camId == "edit_cam")
 	{
@@ -641,15 +649,14 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 				_cameraNode->setPosition(x, y, z);
 			}
 		}
-		// COMPATIBILITY HACK with old camera model
-		//Vector3 camPos = _camera->getPosition();
-		//if(camPos.x > camPos.z) 
-		//{
-		//	_camera->setPosition(0, camPos.y, camPos.x);
-		//	_cameraNode->rotate(Vector3::UNIT_Y, Degree(90),Node::TS_WORLD);
-		//}
-		//_camera->lookAt(_cameraNode->getPosition());
 	}
+	
+	// load terrain
+	TiXmlElement* terrainElem=worldRoot.FirstChild("terrain").Element();
+	if(terrainElem)
+		_worldTerrain.loadXML(TiXmlHandle(terrainElem), filePath);
+
+	_worldTerrain.load(_sceneManager);
 
 	// a translation map is used to find the nodes for edge creation
 	map<string, WorldNode*> nodeIdTranslation;
@@ -765,11 +772,13 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot)
 		}
 	}
 
+	_tools[_activeTool]->activate();
+	_isDocOpen = true;
 	Refresh();
 	return true;
 }
 
-TiXmlElement* WorldFrame::saveXML()
+TiXmlElement* WorldFrame::saveXML(const std::string &filePath)
 {
 	TiXmlElement * root = new TiXmlElement("WorldDocument");
 
@@ -801,6 +810,10 @@ TiXmlElement* WorldFrame::saveXML()
 		position2->SetDoubleAttribute("z", camNodePos.z);
 		camera->LinkEndChild(position2);
 	}
+
+	// Save Terrain
+	TiXmlElement *terrain = _worldTerrain.saveXML(filePath);
+	root->LinkEndChild(terrain);
 
 	//<graph id="roadgraph" edgedefault="undirected">
 	TiXmlElement *roadNetwork = new TiXmlElement("graph");
@@ -973,6 +986,9 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 		}
 	}
 
+	// get road parameters
+	RoadGenParams rg = wr->getGenParams();
+
 	// delete road node
 	vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(),
 			wr);
@@ -983,6 +999,8 @@ void WorldFrame::insertNodeOnRoad(WorldNode* wn, WorldRoad* wr)
 	// create replacement roads
 	WorldRoad* wr1 = new WorldRoad(wn1, wn, _roadGraph, _simpleRoadGraph, _sceneManager);
 	WorldRoad* wr2 = new WorldRoad(wn, wn2, _roadGraph, _simpleRoadGraph, _sceneManager);
+	wr1->setGenParams(rg);
+	wr2->setGenParams(rg);
 	_roadVec.push_back(wr1);
 	_roadVec.push_back(wr2);
 
@@ -1265,16 +1283,12 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 
 void WorldFrame::onNewDoc()
 {
-	_highlightedNode = 0;
-	_selectedNode = 0;
-	_selectedRoad = 0;
-	_intersectionPresent = false;
-
 	onCloseDoc();
 	createScene();
+	_worldTerrain.load(_sceneManager);
 	_tools[_activeTool]->activate();
-	Refresh();
 	_isDocOpen = true;
+	Refresh();
 }
 
 void WorldFrame::onCloseDoc()
@@ -1282,6 +1296,10 @@ void WorldFrame::onCloseDoc()
 	if (_isDocOpen)
 	{
 		_isDocOpen = false;
+		_highlightedNode = 0;
+		_selectedNode = 0;
+		_selectedRoad = 0;
+		_selectedCell = 0;
 		_tools[_activeTool]->deactivate();
 
 		// destroy scene data
@@ -1450,4 +1468,13 @@ WorldFrame& WorldFrame::getSingleton(void)
 {
 	assert(ms_Singleton);
 	return (*ms_Singleton);
+}
+
+void WorldFrame::updateTerrain()
+{ 
+	_worldTerrain.load(_sceneManager); 
+	BOOST_FOREACH(WorldNode* wn, _nodeVec) wn->setPosition2D(wn->getPosition2D());
+	BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->invalidate();
+	BOOST_FOREACH(WorldCell* c, _cellVec) c->invalidate();
+	Refresh();
 }

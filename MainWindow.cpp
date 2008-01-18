@@ -2,6 +2,7 @@
 #include "MainWindow.h"
 #include "WorldFrame.h"
 #include "ViewPropertyPage.h"
+#include "TerrainPropertyPage.h"
 #include "NodePropertyPage.h"
 #include "RoadPropertyPage.h"
 #include "CellPropertyPage.h"
@@ -45,6 +46,7 @@ enum
     IDM_SHOW_BOTH,
 
 	IDM_TOOLSET_VIEW,
+	IDM_TOOLSET_TERR,
 	IDM_TOOLSET_NODE,
 	IDM_TOOLSET_EDGE,
 	IDM_TOOLSET_CELL,
@@ -79,6 +81,7 @@ enum
     #include "bitmaps/help.xpm"
 
     #include "bitmaps/view.xpm"
+	#include "bitmaps/terr.xpm"
     #include "bitmaps/node.xpm"
 	#include "bitmaps/edge.xpm"
     #include "bitmaps/cell.xpm"
@@ -119,6 +122,7 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 
 
 	EVT_MENU(IDM_TOOLSET_VIEW, MainWindow::onSelectToolsetView)
+	EVT_MENU(IDM_TOOLSET_TERR, MainWindow::onSelectToolsetTerrain)
 	EVT_MENU(IDM_TOOLSET_NODE, MainWindow::onSelectToolsetNode)
 	EVT_MENU(IDM_TOOLSET_EDGE, MainWindow::onSelectToolsetRoad)
 	EVT_MENU(IDM_TOOLSET_CELL, MainWindow::onSelectToolsetCell)
@@ -222,7 +226,8 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	// create an edit mode toolbar
 	_toolsetModeToolBar = new wxToolBar(this, wxNewId(), wxDefaultPosition, wxDefaultSize, TOOLBAR_STYLE);
-	_toolsetModeToolBar->AddTool(IDM_TOOLSET_VIEW, _("View"), TOOL_BMP(view), _("Select view only mode"), wxITEM_RADIO);
+	_toolsetModeToolBar->AddTool(IDM_TOOLSET_VIEW, _("View"), TOOL_BMP(view), _("Select view edit mode"), wxITEM_RADIO);
+	_toolsetModeToolBar->AddTool(IDM_TOOLSET_TERR, _("Terrain"), TOOL_BMP(terr), _("Select terrain edit mode"), wxITEM_RADIO);
 	_toolsetModeToolBar->AddTool(IDM_TOOLSET_NODE, _("Node Edit"), TOOL_BMP(node), _("Select node edit mode"), wxITEM_RADIO);
 	_toolsetModeToolBar->AddTool(IDM_TOOLSET_EDGE, _("Road Edit"), TOOL_BMP(edge), _("Select road edit mode"), wxITEM_RADIO);
 	_toolsetModeToolBar->AddTool(IDM_TOOLSET_CELL, _("Cell Edit"), TOOL_BMP(cell), _("Select cell edit mode"), wxITEM_RADIO);
@@ -250,12 +255,14 @@ MainWindow::MainWindow(wxWindow* parent)
 
 	// create pages
 	_viewPropertyPage = new ViewPropertyPage(_worldFrame);
+	_terrainPropertyPage = new TerrainPropertyPage(_worldFrame);
 	_nodePropertyPage =  new NodePropertyPage(_worldFrame);
 	_roadPropertyPage = new RoadPropertyPage(_worldFrame);
 	_cellPropertyPage = new CellPropertyPage(_worldFrame);
 
 	// Add pages to property inspector
 	_propertyGridManager->AddPage(wxT("View Properties"), wxNullBitmap, _viewPropertyPage);
+	_propertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, _terrainPropertyPage);
 	_propertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, _nodePropertyPage);
 	_propertyGridManager->AddPage(wxT("Road Properties"), wxNullBitmap, _roadPropertyPage);
 	_propertyGridManager->AddPage(wxT("Cell Properties"), wxNullBitmap, _cellPropertyPage);
@@ -335,7 +342,9 @@ void MainWindow::doOpen(const wxString& filename)
 
 			// load data
 			const TiXmlHandle worldRoot(pElem);
-			_worldFrame->loadXML(worldRoot);
+			std::string fileStr(_C(filename));
+			replace(fileStr.begin(), fileStr.end(), '\\', '/');
+			_worldFrame->loadXML(worldRoot, fileStr);
 
 			//
 			setFilename(filename);
@@ -413,15 +422,9 @@ bool MainWindow::saveAs()
 
 bool MainWindow::doExport(const wxString &file)
 {
-	//FCDocument doc;  
-	//_worldFrame->exportScene(doc);
-
-	// Save and load this document.
-	//if(!FCollada::SaveDocument(&doc, file))
 	std::string fileStr(_C(file));
-#ifdef WIN32
 	replace(fileStr.begin(), fileStr.end(), '\\', '/');
-#endif
+
 	ColladaDoc doc(fileStr);
 	_worldFrame->exportScene(doc);
 	if(!doc.save())
@@ -435,13 +438,16 @@ bool MainWindow::doExport(const wxString &file)
 
 bool MainWindow::doSave(const wxString &file)
 {
+	std::string fileStr(_C(file));
+	replace(fileStr.begin(), fileStr.end(), '\\', '/');
+
 	//TODO
 	TiXmlDocument doc;  
  	TiXmlDeclaration* decl = new TiXmlDeclaration("1.0", "", "yes");  
 	doc.LinkEndChild(decl);  
-	doc.LinkEndChild(_worldFrame->saveXML());
+	doc.LinkEndChild(_worldFrame->saveXML(fileStr));
  
-	if(doc.SaveFile(file.mb_str(wxCSConv(wxLocale::GetSystemEncoding()))))
+	if(doc.SaveFile(fileStr.c_str()))
 	{
 		setFilename(file);
 		modify(false);
@@ -524,6 +530,12 @@ void MainWindow::onSelectToolsetView(wxCommandEvent &e)
 	onChangeToolsetMode();
 }
 
+void MainWindow::onSelectToolsetTerrain(wxCommandEvent &e)
+{
+	_toolsetMode = terr;
+	onChangeToolsetMode();
+}
+
 void MainWindow::onSelectToolsetNode(wxCommandEvent &e)
 {
 	_toolsetMode = node;
@@ -583,6 +595,10 @@ void MainWindow::onChangeToolsetMode()
 		// no custom view toolbar
 		_worldFrame->setActiveTool(viewTool);
 		break;
+	case terr:
+		// no custom view toolbar
+		_worldFrame->setActiveTool(terrTool);
+		break;
 	case node:
 		initNodeEdit();
 		_worldFrame->setActiveTool(selNode);
@@ -597,6 +613,7 @@ void MainWindow::onChangeToolsetMode()
 	}
 
 	_propertyGridManager->SelectPage(_toolsetMode);
+	updateProperties();
 
 
 	// update frame manager
@@ -668,6 +685,9 @@ void MainWindow::updateProperties()
 	{
 	case view:
 		_viewPropertyPage->update();
+		break;
+	case terr:
+		_terrainPropertyPage->update();
 		break;
 	case node:
 		_nodePropertyPage->update();

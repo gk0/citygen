@@ -3,6 +3,7 @@
 #include "MainWindow.h"
 
 #include <wx/msgdlg.h>
+#include <wx/image.h>
 #include <OgreConfigFile.h>
 
 using namespace Ogre;
@@ -22,6 +23,8 @@ Application::Application()
 // App Init
 bool Application::OnInit()
 {
+	wxImage::AddHandler(new wxPNGHandler);
+	wxImage::AddHandler(new wxJPEGHandler);
 
 	if (!wxApp::OnInit()) 
 		return false;
@@ -47,6 +50,7 @@ bool Application::OnInit()
 
 	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
 	_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\manhattan.cgx"));
+	//_window->openFile(_("/home/gk/Desktop/Desktop/manhattan.cgx"));
 	//_window->donew();
 
 	//_window->onExport(wxCommandEvent());

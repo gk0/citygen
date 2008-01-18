@@ -42,27 +42,6 @@ material gk/Building2
 	}
 } 
 
-material gk/Paving
-{
-   technique
-   {
-		pass
-		{
-			// lighting on
-			// Base Pass
-			ambient 1 1 1
-			diffuse 1 1 1
-			texture_unit
-			{
-				// Base Texture
-				scale 2.0 2.0
-				texture paving.jpg
-			}
-		}  
-	}
-} 
-
-
 material gk/Building3
 {
    technique
@@ -357,6 +336,28 @@ material gk/MyWater
 	}
 }
 
+
+material gk/Paving
+{
+   technique
+   {
+		pass
+		{
+			// lighting on
+			// Base Pass
+			ambient 1 1 1
+			diffuse 0.6 0.6 0.6 
+			texture_unit
+			{
+				// Base Texture
+				scale 2.0 2.0
+				texture paving.jpg
+			}
+		}  
+	}
+} 
+
+
 material gk/Road
 {
 	technique
@@ -364,8 +365,8 @@ material gk/Road
 		pass
 		{
 			ambient 1 1 1
-			diffuse 1 1 1 
-			specular 0.2 0.2 0.2 10
+			diffuse 0.6 0.6 0.6 
+			specular 0.1 0.1 0.1 5
 			
 			texture_unit
 			{
@@ -396,8 +397,8 @@ material gk/RoadJunction
 		pass
 		{
 			ambient 1 1 1
-			diffuse 1 1 1 
-			specular 0.2 0.2 0.2 10
+			diffuse 0.6 0.6 0.6 
+			specular 0.1 0.1 0.1 5
 			
 			texture_unit
 			{

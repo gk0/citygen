@@ -2,7 +2,7 @@
 #include "ToolNodeDelete.h"
 #include "WorldFrame.h"
 
-#define DELETENODESNAPSQ 16
+#define DELETENODESNAPSQ 2500
 
 ToolNodeDelete::ToolNodeDelete(WorldFrame* wf)
 : ToolView(wf)

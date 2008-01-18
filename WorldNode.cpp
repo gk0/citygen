@@ -226,6 +226,9 @@ bool WorldNode::move(Ogre::Vector2 pos)
 
 void WorldNode::build()
 {
+	// force a check of our own y pos
+	//setPosition2D(getPosition2D());
+
 	if(_junctionEntity)
 	{
 		_sceneNode->getCreator()->destroyEntity(_junctionEntity);

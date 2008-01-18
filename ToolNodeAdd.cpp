@@ -7,7 +7,7 @@
 
 using namespace Ogre;
 
-#define SNAP_SZ 10
+#define NODEADDSNAPSZ 50
 
 
 ToolNodeAdd::ToolNodeAdd(WorldFrame* wf, SceneManager* sm, RoadGraph &g, RoadGraph &s)
@@ -128,7 +128,7 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 				LogManager::getSingleton().logMessage("State: "+StringConverter::toString(_snapState));
 */
 			if(!e.ShiftDown())
-				_snapState = _proposedRoad->snapInfo(SNAP_SZ, newPos, _snapNode, _intersectingRoad);
+				_snapState = _proposedRoad->snapInfo(NODEADDSNAPSZ, newPos, _snapNode, _intersectingRoad);
 			else
 				_snapState = 0;
 
@@ -142,7 +142,7 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 				delete _proposedRoad;
 				_proposedRoad = 0;
 			}
-			_snapState = _proposedNode->snapInfo(SNAP_SZ, newPos, _snapNode, _intersectingRoad);
+			_snapState = _proposedNode->snapInfo(NODEADDSNAPSZ, newPos, _snapNode, _intersectingRoad);
 			//LogManager::getSingleton().logMessage("State: "+StringConverter::toString(mSnapState));
 		}
 		// defaults

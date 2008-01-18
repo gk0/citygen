@@ -56,6 +56,8 @@ struct CellParams
 	CellParams()
 	{
 		*this = MANHATTAN;
+		//TODO: this is a short term hack, Manhattan may not be initialised by the time it is used. DANGER
+		_seed = 1;
 	}
 
 	static const CellParams MANHATTAN;
