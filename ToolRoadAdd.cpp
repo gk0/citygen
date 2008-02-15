@@ -39,13 +39,13 @@ void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 	}
 
 	//TODO: 
-	if(_worldFrame->getSelected())
+	if(_worldFrame->getSelectedNode())
 	{
 		// delete a road
 		WorldNode *wn;
 		if(_worldFrame->pickNode(e, 7, wn))
 		{
-			if(wn == _worldFrame->getSelected())
+			if(wn == _worldFrame->getSelectedNode())
 			{
 				// deselect node
 				_worldFrame->selectNode(0);
@@ -57,7 +57,7 @@ void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 			WorldNode* proposedNode = _worldFrame->createNode();
 			proposedNode->setPosition3D(wn->getPosition3D());
 			
-			WorldRoad* wr = new WorldRoad(_worldFrame->getSelected(), 
+			WorldRoad* wr = new WorldRoad(_worldFrame->getSelectedNode(), 
 								wn, _roadGraph, _simpleRoadGraph, _sceneManager);
 			
 			int				snapState;
@@ -76,7 +76,7 @@ void ToolRoadAdd::OnLeftPressed(wxMouseEvent &e)
 			}
 			else
 			{
-				_worldFrame->createRoad(_worldFrame->getSelected(), wn);
+				_worldFrame->createRoad(_worldFrame->getSelectedNode(), wn);
 				_worldFrame->selectNode(wn);
 			}
 			_worldFrame->Refresh();

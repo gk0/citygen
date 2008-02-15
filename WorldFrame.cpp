@@ -38,7 +38,7 @@ size_t Statistics::_buildingCount = 0;
 #include <OgreRoot.h>
 #include <tinyxml.h>
 
-#define THREADME 1
+//#define THREADME 1
 
 
 // Namespace 
@@ -83,6 +83,8 @@ _timer(this, ID_RENDERTIMER)
 	_viewport = 0;
 
 	_highlightedNode = 0;
+	_highlightedRoad = 0;
+	_highlightedCell = 0;
 	_selectedNode = 0;
 	_selectedRoad = 0;
 	_selectedCell = 0;
@@ -164,6 +166,7 @@ void WorldFrame::init()
 	//createScene();
 	_isDocOpen = false;
 
+	_viewMode = WorldCell::view_box;
 	_toolsetMode = MainWindow::view;
 	_activeTool = MainWindow::addNode;
 
@@ -249,32 +252,27 @@ void WorldFrame::createScene(void)
 					"run this application. Sorry!", "WorldFrame::createScene");
 	}
 
+	// Shadow settings
+	//_sceneManager->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_ADDITIVE);
+	//_sceneManager->setShadowColour(Ogre::ColourValue(0.5, 0.5, 0.5));
 
+	// Hey, it's the sun!
+	_mainLight = _sceneManager->createLight("SunLight");
+	_mainLight->setType(Light::LT_SPOTLIGHT);
+	_mainLight->setPosition(0,12000,10000);
+	_mainLight->setSpotlightRange(Degree(30), Degree(50));
+	_mainLight->setDirection(-_mainLight->getPosition().normalisedCopy());
 
-	// Create a light
-	_mainLight = _sceneManager->createLight("MainLight");
-	// Accept default settings: point light, white diffuse, just set position
-	// NB I could attach the light to a SceneNode if I wanted it to move automatically with
-	//  other objects, but I don't
-	//_mainLight->setPosition(20, 180, 50);
-	// Add some default lighting to the scene
-	//mSceneMgr->setAmbientLight(ColourValue(0.90, 0.90, 1.00));
-
-	//_sun = mSceneMgr->createLight("SunLight");
-	_mainLight->setType(Light::LightTypes::LT_DIRECTIONAL);
-	_mainLight->setDirection(Vector3(1, -1.2, 0.2).normalisedCopy());
-	//_sun->setCastShadows(true);
 	_sceneManager->setAmbientLight(ColourValue(0.34, 0.34, 0.38));	// blueish
 	_mainLight->setDiffuseColour(0.91, 0.91, 0.85);					// yellowish
 	_mainLight->setSpecularColour(0.5, 0.5, 0.5);
-
 
 	// Fog
 	// NB it's VERY important to set this before calling setWorldGeometry 
 	// because the vertex program picked will be different
 	ColourValue fadeColour(0.76f, 0.86f, 0.93f);
 	//_sceneManager->setFog(FOG_LINEAR, fadeColour, .001f, 500, 1000);
-	_renderWindow->getViewport(0)->setBackgroundColour(fadeColour);
+	_viewport->setBackgroundColour(fadeColour);
 
 	// Infinite far plane?
 	if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
@@ -338,10 +336,7 @@ void WorldFrame::createViewport(void)
 
 void WorldFrame::destroyScene(void)
 {
-	_renderWindow->getViewport(0)->setBackgroundColour(ColourValue(0.5f, 0.5f, 0.5f));
-
-	// destroy ray
-	delete _raySceneQuery;
+	_viewport->setBackgroundColour(ColourValue(0.5f, 0.5f, 0.5f));
 
 	// Delete cells, road and nodes
 	BOOST_FOREACH(WorldCell* c, _cellVec) delete c;
@@ -353,6 +348,9 @@ void WorldFrame::destroyScene(void)
 
 	// clear anything else
 	_sceneManager->clearScene();
+	
+	// destroy ray
+	delete _raySceneQuery;
 
 	// reset counts
 	WorldNode::resetInstanceCount();
@@ -396,7 +394,7 @@ void WorldFrame::onCameraUpdate()
 {
 	modify(true);
 	if (_toolsetMode == MainWindow::view) updateProperties();
-	Refresh();
+	update();
 }
 
 void WorldFrame::OnChar(wxKeyEvent& e)
@@ -553,18 +551,15 @@ void WorldFrame::update()
 		//Statistics::resetBuildingCount();
 	
 		// render nodes, roads ...
-		//PerformanceTimer npf("Nodes");
+		PerformanceTimer npf("Nodes");
 		BOOST_FOREACH(WorldNode* wn, _nodeVec) wn->validate();
-		//npf.stop();
+		npf.stop();
 	
-		//PerformanceTimer rpf("Roads");
+		PerformanceTimer rpf("Roads");
 		BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->validate();
-		//rpf.stop();
+		rpf.stop();
 	
-		//if(_camera) Root::getSingleton().renderOneFrame();
-		//return;
-	
-		//PerformanceTimer cpf("Cells 1");
+		PerformanceTimer cpf("Cells 1");
 		pair<vector<WorldCell*>::iterator, vector<WorldCell*>::iterator> cPIt;
 		cPIt.first = _cellVec.begin();
 		cPIt.second = _cellVec.end();
@@ -577,16 +572,16 @@ void WorldFrame::update()
 	#else
 		prebuild(&cPIt);
 	#endif
-		//cpf.stop();
+		cpf.stop();
 	
-		//PerformanceTimer cpf2("Cells 2");
+		PerformanceTimer cpf2("Cells 2");
 		BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
-		//cpf2.stop();
+		cpf2.stop();
 	
-		//PerformanceTimer renpf("Render");
+		PerformanceTimer renpf("Render");
 		if (_camera)
 			Root::getSingleton().renderOneFrame();
-		//renpf.stop();
+		renpf.stop();
 	
 		//LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
 		//	+" - "+cpf2.toString()+" - "+renpf.toString());
@@ -763,7 +758,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot, const std::string &filePa
 
 			if (nodeCycle.size() > 2)
 			{
-				WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycle);
+				WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycle, _viewMode);
 				_cellVec.push_back(wc);
 				BOOST_FOREACH(WorldRoad* wr, filaments) wc->addFilament(wr);
 				const TiXmlHandle cellRoot(pElem);
@@ -855,10 +850,27 @@ TiXmlElement* WorldFrame::saveXML(const std::string &filePath)
 
 void WorldFrame::setToolsetMode(MainWindow::ToolsetMode mode)
 {
-	selectNode(0);
+	// hide any highlighted or selected items
 	highlightNode(0);
-	selectRoad(0);
-	selectCell(0);
+	if(_selectedNode) _selectedNode->setSelected(false);
+	highlightRoad(0);
+	if(_selectedRoad) _selectedRoad->setSelected(false);
+	highlightCell(0);
+	if(_selectedCell) _selectedCell->setSelected(false);
+
+	// show any relevant selections
+	switch(mode)
+	{
+	case MainWindow::node:
+		if(_selectedNode) _selectedNode->setSelected(true);
+		break;
+	case MainWindow::road:
+		if(_selectedRoad) _selectedRoad->setSelected(true);
+		break;
+	case MainWindow::cell:
+		if(_selectedCell) _selectedCell->setSelected(true);
+		break;
+	}
 	_toolsetMode = mode;
 	Refresh();
 }
@@ -873,27 +885,25 @@ void WorldFrame::beginNodeMode()
 	selectNode(0);
 }
 
-void WorldFrame::selectNode(WorldNode* wn)
-{
-	if (_selectedNode)
-		_selectedNode->showSelected(false);
-	_selectedNode = wn;
-	if (_selectedNode)
-	{
-		_selectedNode->showSelected(true);
-	}
-	updateProperties();
-}
-
 void WorldFrame::highlightNode(WorldNode* wn)
 {
-	if (_highlightedNode)
-		_highlightedNode->showHighlighted(false);
+	if(_highlightedNode) _highlightedNode->setHighlighted(false);
+	if(wn) wn->setHighlighted(true);
 	_highlightedNode = wn;
-	if (_highlightedNode)
-	{
-		_highlightedNode->showHighlighted(true);
-	}
+}
+
+void WorldFrame::highlightRoad(WorldRoad* wr)
+{
+	if(_highlightedRoad) _highlightedRoad->setHighlighted(false); 
+	if(wr) wr->setHighlighted(true);
+	_highlightedRoad = wr;
+}
+
+void WorldFrame::highlightCell(WorldCell* wc)
+{
+	if(_highlightedCell) _highlightedCell->setHighlighted(false);
+	if(wc) wc->setHighlighted(true);
+	_highlightedCell = wc;
 }
 
 void WorldFrame::setActiveTool(MainWindow::ActiveTool tool)
@@ -1029,15 +1039,51 @@ void WorldFrame::deleteNode(WorldNode* wn)
 {
 	modify(true);
 
-	//delete any connected roads
-	while (true)
+	// special case, if road is connected to two roads
+	if(wn->getDegree() == 2)
 	{
 		RoadIterator2 rIt, rEnd;
 		boost::tie(rIt, rEnd) = _simpleRoadGraph.getRoadsFromNode(wn->mSimpleNodeId);
-		if (rIt == rEnd)
-			break;
-		WorldRoad* wr = static_cast<WorldRoad*>(_simpleRoadGraph.getRoad(*rIt));
-		deleteRoad(wr);
+		WorldRoad* wr1 = static_cast<WorldRoad*>(_simpleRoadGraph.getRoad(*rIt));
+		WorldRoad* wr2 = static_cast<WorldRoad*>(_simpleRoadGraph.getRoad(*(++rIt)));
+		RoadGenParams gp = wr1->getLengthSquared() > wr2->getLengthSquared() ?
+			wr1->getGenParams() : wr2->getGenParams();
+		WorldNode* wn1 = (wn == wr1->getSrcNode()) ? 
+			static_cast<WorldNode*>(wr1->getDstNode()) : static_cast<WorldNode*>(wr1->getSrcNode());
+		WorldNode* wn2 = (wn == wr2->getSrcNode()) ?
+			static_cast<WorldNode*>(wr2->getDstNode()) : static_cast<WorldNode*>(wr2->getSrcNode());
+		deleteRoad(wr1);
+		deleteRoad(wr2);
+
+		// test to see if a replacement road can be created
+		WorldRoad* wr = createRoad(wn1, wn2);
+
+		// road may already exist and hence wr == 0
+		if(wr != 0) 
+		{
+			wr->setGenParams(gp);
+			wr->validate();
+			Vector2 pos;
+			WorldNode* wns;
+			WorldRoad* wrs;
+			int snapState = wr->snapInfo(10, pos, wns, wrs);
+
+			// we tried but a valid road could not be created
+			if(snapState == 1 || (snapState == 2 && (wns != wn1 && wns != wn2))) deleteRoad(wr);
+		}
+	}
+	else
+	{
+		//delete any connected roads
+		while (true)
+		{
+			RoadIterator2 rIt, rEnd;
+			boost::tie(rIt, rEnd) = _simpleRoadGraph.getRoadsFromNode(wn->mSimpleNodeId);
+			if (rIt == rEnd)
+				break;
+			WorldRoad* wr = static_cast<WorldRoad*>(_simpleRoadGraph.getRoad(*rIt));
+			deleteRoad(wr);
+		}
 	}
 
 	// update current node if necessary
@@ -1107,7 +1153,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 			{
 			// 1: created a new cell
 			case 1:
-				_cellVec.push_back(new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0]));
+				_cellVec.push_back(new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0], _viewMode));
 				break;
 				// 2: divided an existing cell into two
 			case 2:
@@ -1124,8 +1170,8 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 				delete alteredCell;
 
 				// create 2 new cells in place of old cell with old cell params
-				WorldCell* wc0 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0]);
-				WorldCell* wc1 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[1]);
+				WorldCell* wc0 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[0], _viewMode);
+				WorldCell* wc1 = new WorldCell(_roadGraph, _simpleRoadGraph, nodeCycles[1], _viewMode);
 				wc0->setGenParams(g);
 				wc1->setGenParams(g);
 				_cellVec.push_back(wc0);
@@ -1171,6 +1217,10 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 {
 	modify(true);
 
+	//
+	if(wr == _highlightedRoad) _highlightedRoad = 0;
+	if(wr == _selectedRoad) _selectedRoad = 0;
+
 	// get cells attached to this road
 	vector<WorldCell*> aCells;
 	set<WorldObject*> attachments(wr->getAllAttachments());
@@ -1204,6 +1254,8 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 					_cellVec.end(), aCells[0]);
 			if (cIt != _cellVec.end())
 				_cellVec.erase(cIt);
+			if(aCells[0] == _highlightedCell) _highlightedCell = 0;
+			if(aCells[0] == _selectedCell) _selectedCell = 0;
 			delete aCells[0];
 		}
 		else
@@ -1224,10 +1276,8 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 		// should favor one - can do a vector swap to set preference
 
 		// save params from the biggest attached cell by area
-		CellParams
-				gp =
-						aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? aCells[0]->getGenParams()
-								: aCells[1]->getGenParams();
+		CellParams gp = aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? 
+			aCells[0]->getGenParams() : aCells[1]->getGenParams();
 
 		// delete cells
 		BOOST_FOREACH(WorldCell* c, aCells)
@@ -1236,6 +1286,8 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 					_cellVec.end(), c);
 			if (cIt != _cellVec.end())
 				_cellVec.erase(cIt);
+			if(c == _highlightedCell) _highlightedCell = 0;
+			if(c == _selectedCell) _selectedCell = 0;
 			delete c;
 		}
 
@@ -1266,7 +1318,7 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 			// create the new cell and break
 			if (newCell)
 			{
-				WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, cycle);
+				WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, cycle, _viewMode);
 				wc->setGenParams(gp);
 				_cellVec.push_back(wc);
 				break;
@@ -1297,6 +1349,8 @@ void WorldFrame::onCloseDoc()
 	{
 		_isDocOpen = false;
 		_highlightedNode = 0;
+		_highlightedRoad = 0;
+		_highlightedCell = 0;
 		_selectedNode = 0;
 		_selectedRoad = 0;
 		_selectedCell = 0;
@@ -1357,13 +1411,12 @@ void WorldFrame::updateProperties()
 
 void WorldFrame::moveSelectedNode(const Vector3& pos)
 {
-	WorldNode* wn = getSelected();
+	WorldNode* wn = getSelectedNode();
 	if (wn)
 	{
 		Vector2 pos2D(pos.x, pos.z);
 		wn->move(pos2D);
 		updateProperties();
-		Refresh();
 	}
 }
 
@@ -1382,16 +1435,6 @@ bool WorldFrame::pickCell(wxMouseEvent& e, WorldCell *&wc)
 		}
 	}
 	return false;
-}
-
-void WorldFrame::selectCell(WorldCell* wn)
-{
-	if (_selectedCell)
-		_selectedCell->showSelected(false);
-	_selectedCell = wn;
-	if (_selectedCell)
-		_selectedCell->showSelected(true);
-	updateProperties();
 }
 
 bool WorldFrame::pickRoad(wxMouseEvent& e, WorldRoad *&wr)
@@ -1424,38 +1467,35 @@ bool WorldFrame::pickRoad(wxMouseEvent& e, WorldRoad *&wr)
 	return false;
 }
 
-void WorldFrame::selectRoad(WorldRoad* wr)
+void WorldFrame::selectCell(WorldCell* wn)
 {
-	if (_selectedRoad)
-		_selectedRoad->showSelected(false);
-	_selectedRoad = wr;
-	if (_selectedRoad)
-		_selectedRoad->showSelected(true);
+	if(_selectedCell) _selectedCell->setSelected(false);
+	if(wn) wn->setSelected(true);
+	_selectedCell = wn;
 	updateProperties();
 }
 
-void WorldFrame::setViewMode(MainWindow::ViewMode mode)
+void WorldFrame::selectNode(WorldNode* wn)
 {
-	bool showRoads = true, showBuildings = true;
-	switch (mode)
-	{
-	case MainWindow::view_primary:
-		showRoads = false;
-		showBuildings = false;
-		break;
-	case MainWindow::view_cell:
-		showBuildings = false;
-		break;
-	case MainWindow::view_box:
-	case MainWindow::view_building:
-		break;
-	}
-	BOOST_FOREACH(WorldCell* cell, _cellVec)
-	{
-		cell->showRoads(showRoads);
-		cell->showBuildings(showBuildings);
-	}
+	if(_selectedNode) _selectedNode->setSelected(false);
+	if(wn) wn->setSelected(true);
+	_selectedNode = wn;
+	updateProperties();
+}
+
+void WorldFrame::selectRoad(WorldRoad* wr)
+{
+	if(_selectedRoad) _selectedRoad->setSelected(false);
+	if(wr) wr->setSelected(true);
+	_selectedRoad = wr;
+	updateProperties();
+}
+
+void WorldFrame::setViewMode(WorldCell::Display mode)
+{
 	_viewMode = mode;
+	BOOST_FOREACH(WorldCell* cell, _cellVec)
+		cell->setDisplayMode(_viewMode);
 	Refresh();
 }
 

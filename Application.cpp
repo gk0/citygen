@@ -48,12 +48,27 @@ bool Application::OnInit()
 	
 	loadResources();
 
-	//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
-	_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\manhattan.cgx"));
-	//_window->openFile(_("/home/gk/Desktop/Desktop/manhattan.cgx"));
-	//_window->donew();
+	if(_inputFile.size() > 1)
+	{
+		std::replace(_inputFile.begin(), _inputFile.end(), '\\', '/');
+		_window->openFile(_U(_inputFile.c_str()));
+	}
+	else
+	{
+		//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
+		//_window->openFile(_("C:/Documents and Settings/George/Desktop/cgx2/testo2.cgx"));
+		//_window->openFile(_("C:/Documents and Settings/George/Desktop/cgx2/shit.cgx"));
+		_window->openFile(_("/home/gk/Desktop/Desktop/cgx2/city neue 4.cgx"));
+		//_window->donew();
+	}
 
 	//_window->onExport(wxCommandEvent());
+
+	if(_outputFile.size() > 1)
+	{
+		std::replace(_outputFile.begin(), _outputFile.end(), '\\', '/');
+		_window->saveFile(_U(_outputFile.c_str()));
+	}
 	
 	// All clear!
 	return true;
@@ -129,4 +144,27 @@ void Application::loadResources(void)
 {
 	// Initialise, parse scripts etc
 	ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+}
+
+int Application::OnRun()
+{
+	return wxApp::OnRun();
+}
+
+
+void Application::OnInitCmdLine(wxCmdLineParser& parser)
+{
+    parser.SetDesc(cmdLineDesc);
+
+    // must refuse '/' as parameter starter or cannot use "/path" style paths
+    parser.SetSwitchChars (wxT("-"));
+}
+ 
+bool Application::OnCmdLineParsed(wxCmdLineParser& parser)
+{
+	// get unnamed parameters
+	if(parser.GetParamCount() >= 1) _inputFile = std::string(_C(parser.GetParam(0)));
+	if(parser.GetParamCount() >= 2) _outputFile = std::string(_C(parser.GetParam(1)));
+ 
+    return true;
 }

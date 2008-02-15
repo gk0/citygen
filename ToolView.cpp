@@ -238,3 +238,9 @@ Ogre::Vector3 ToolView::toVec(long mx, long my)
 	boost::tie(b, rayDist) = mouseRay.intersects(camPlane);
 	return mouseRay.getPoint(rayDist);
 }
+
+bool ToolView::alternate(wxMouseEvent &e)
+{
+	if(e.ControlDown()) return true;
+	else return false;
+}

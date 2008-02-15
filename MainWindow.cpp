@@ -355,7 +355,8 @@ void MainWindow::doOpen(const wxString& filename)
 		}
 		else
 		{
-			(void)wxMessageBox(_("Sorry, could not open this file."), _("File error"), 
+			wxString err = wxString(_("Sorry, could not open the file:\""))+filename+wxString(_("\"."));
+			(void)wxMessageBox(err, _("File error"), 
 				wxOK | wxICON_EXCLAMATION, this);
 		}
 	}
@@ -506,22 +507,22 @@ void MainWindow::setFilename(const wxString &file)
 
 void MainWindow::onSelectViewPrimary(wxCommandEvent &e)
 {
-	_worldFrame->setViewMode(view_primary);
+	_worldFrame->setViewMode(WorldCell::view_primary);
 }
 
 void MainWindow::onSelectViewCell(wxCommandEvent &e)
 {
-	_worldFrame->setViewMode(view_cell);
+	_worldFrame->setViewMode(WorldCell::view_cell);
 }
 
 void MainWindow::onSelectViewBox(wxCommandEvent &e)
 {
-	_worldFrame->setViewMode(view_box);
+	_worldFrame->setViewMode(WorldCell::view_box);
 }
 
 void MainWindow::onSelectViewBuilding(wxCommandEvent &e)
 {
-	_worldFrame->setViewMode(view_building);
+	_worldFrame->setViewMode(WorldCell::view_building);
 }
 
 void MainWindow::onSelectToolsetView(wxCommandEvent &e)

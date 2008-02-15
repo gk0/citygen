@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioUserFile
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	ShowAllFiles="false"
 	>
 	<Configurations>
@@ -10,7 +10,7 @@
 			>
 			<DebugSettings
 				Command="$(TargetPath)"
-				WorkingDirectory="S:\game\OgreSDK_VS8\bin\debug"
+				WorkingDirectory=""
 				CommandArguments=""
 				Attach="false"
 				DebuggerType="3"
@@ -20,7 +20,7 @@
 				HttpUrl=""
 				PDBPath=""
 				SQLDebugging=""
-				Environment=""
+				Environment="path=S:\game\OgreSDK_VS90\bin\debug"
 				EnvironmentMerge="true"
 				DebuggerFlavor="0"
 				MPIRunCommand=""
@@ -39,7 +39,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory=""
-				CommandArguments=""
+				CommandArguments="&quot;C:\Documents and Settings\George\Desktop\cgx2\shit.cgx&quot; &quot;C:\Documents and Settings\George\Desktop\cgx2\shit4.cgx&quot;"
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"
@@ -48,9 +48,9 @@
 				HttpUrl=""
 				PDBPath=""
 				SQLDebugging=""
-				Environment=""
+				Environment="PATH=S:\game\OgreSDK_VS90\bin\release"
 				EnvironmentMerge="true"
-				DebuggerFlavor=""
+				DebuggerFlavor="0"
 				MPIRunCommand=""
 				MPIRunArguments=""
 				MPIRunWorkingDirectory=""

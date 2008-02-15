@@ -28,6 +28,7 @@ protected:
 	wxCursor	_rotateCursor, _translateCursor, _zoomCursor;
 	
 	Ogre::Vector3 toVec(long mx, long my);
+	virtual bool alternate(wxMouseEvent &e);
 	
 public:
 	ToolView(WorldFrame* wf);

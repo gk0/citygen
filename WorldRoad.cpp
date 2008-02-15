@@ -9,6 +9,7 @@
 #include <OgreEntity.h>
 #include <OgreManualObject.h>
 #include <OgreMeshManager.h>
+#include <OgreSubMesh.h>
 #include <OgreMaterialManager.h>
 #include <OgreStringConverter.h>
 #include <tinyxml.h>
@@ -296,9 +297,8 @@ void WorldRoad::build()
 	prebuild();
 
 	MaterialPtr mat;
-	if(_selected) mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/YellowBrickRoad"));
-	else mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Road"));
-
+	if(!_selected) mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Road"));
+	else mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Hilite/RedRoad"));
 	// build new
 	MeshBuilder meshBuilder(_name+"Mesh", "custom", this);
 	meshBuilder.registerData(mat.get(), _vertexData, _indexData);
@@ -315,7 +315,8 @@ void WorldRoad::buildDebugSegments(const Vector3 &pos, const std::vector<Vector3
 	for(size_t i=0; i<samples.size(); i++)
 	{
 		_debugMOObject->position(pos + offset);
-		_debugMOObject->position(samples[i] + offset);
+		_debugMOObject->position(samples[i].x + offset.x, 
+			samples[i].y + offset.y + GROUNDCLEARANCE, samples[i].z + offset.z);
 	}
 }
 
@@ -579,7 +580,7 @@ void WorldRoad::plotRoad()
 		
 		// select best sample
 		nextSrcCursor3D = (*this.*pt2SelectSample)(srcCursor3D, samples, dstCursor3D);
-		_plotList.push_back(nextSrcCursor3D + GROUNDCLEARANCE);
+		_plotList.push_back(nextSrcCursor3D);
 	}
 	else
 	{
@@ -1098,8 +1099,21 @@ Ogre::Vector3 WorldRoad::getMidPoint()
 	return _spline.interpolate(0.5f);
 }
 
-
 void WorldRoad::exportObject(ExportDoc &doc)
 {
 	doc.addMesh(_entity->getMesh());
+}
+
+void WorldRoad::setHighlighted(bool highlighted)
+{
+	if(_selected) return;
+	highlighted ? _entity->setMaterialName("gk/Hilite/YellowRoad") : _entity->setMaterialName("gk/Road");
+}
+
+void WorldRoad::setSelected(bool selected)
+{
+	_selected = selected;
+	if(_entity)
+		_selected ? _entity->setMaterialName("gk/Hilite/RedRoad") : _entity->setMaterialName("gk/Road");
+	int moo = 0;
 }

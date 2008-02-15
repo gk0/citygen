@@ -38,7 +38,7 @@ void NodePropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 	if((eventProp == _xProp) || (eventProp == _yProp) || (eventProp == _zProp)
 		|| (eventProp == _labelProp))
 	{
-		WorldNode* wn = _worldFrame->getSelected();
+		WorldNode* wn = _worldFrame->getSelectedNode();
 		if(wn)
 		{
 			//wn->setLabel(GetPropertyValueAsString(labelProp));
@@ -84,7 +84,7 @@ void NodePropertyPage::update()
 	//get data from worldframe
 	Ogre::Vector3 nodePos;
 	Ogre::String label;
-	WorldNode* wn = _worldFrame->getSelected();
+	WorldNode* wn = _worldFrame->getSelectedNode();
 	if(wn != 0)
 	{
 		nodePos = wn->getPosition3D();

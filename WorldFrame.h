@@ -16,6 +16,7 @@
 #include "RoadGraph.h"
 #include "MainWindow.h"
 #include "WorldTerrain.h"
+#include "WorldCell.h"
 #include "Tool.h"
 
 class TiXmlElement;
@@ -23,7 +24,6 @@ class TiXmlHandle;
 
 class WorldNode;
 class WorldRoad;
-class WorldCell;
 class FCDocument;
 class ExportDoc;
 
@@ -49,7 +49,7 @@ private:
 
 	Ogre::RaySceneQuery* _raySceneQuery;
 
-	MainWindow::ViewMode		_viewMode;
+	WorldCell::Display		_viewMode;
 	MainWindow::ToolsetMode		_toolsetMode;
 	MainWindow::ActiveTool		_activeTool;
 
@@ -63,6 +63,8 @@ private:
 	std::vector<WorldCell*> _cellVec;
 
 	WorldNode*			_highlightedNode;
+	WorldRoad*			_highlightedRoad;
+	WorldCell*			_highlightedCell;
 	WorldNode*			_selectedNode;
 	WorldRoad*			_selectedRoad;
 	WorldCell*			_selectedCell;
@@ -102,10 +104,12 @@ protected:
 	void updateProperties();
 
 	void toggleTimerRendering();
-	void update();
+	
 	void onCameraUpdate();
 
 public:
+	void update();
+
 	WorldFrame(wxFrame* parent);
 	virtual ~WorldFrame();
 	void init();
@@ -129,7 +133,7 @@ public:
 
 	void exportScene(ExportDoc& doc);
 
-	void setViewMode(MainWindow::ViewMode mode);
+	void setViewMode(WorldCell::Display mode);
 	void setToolsetMode(MainWindow::ToolsetMode mode);
 	void setActiveTool(MainWindow::ActiveTool tool);
 	void onNewDoc();
@@ -137,15 +141,20 @@ public:
 
 	bool plotPointOnTerrain(Ogre::Real x, Ogre::Real &y, Ogre::Real z);
 	bool plotPointOnTerrain(const Ogre::Vector2& pos2D, Ogre::Vector3& pos3D);
-	void selectNode(WorldNode* wn);
+
 	void highlightNode(WorldNode* wn);
+	void highlightRoad(WorldRoad* wr);
+	void highlightCell(WorldCell* wc);
+
+
 	void moveSelectedNode(const Ogre::Vector3& pos);
 
-	bool pickCell(wxMouseEvent& e, WorldCell *&wc);
-	void selectCell(WorldCell* wn);
-
 	bool pickRoad(wxMouseEvent& e, WorldRoad *&wr);
+	bool pickCell(wxMouseEvent& e, WorldCell *&wc);
+
+	void selectNode(WorldNode* wn);
 	void selectRoad(WorldRoad* wn);
+	void selectCell(WorldCell* wn);
 
 	WorldTerrain* getWorldTerrain() { return &_worldTerrain; } 
 	void updateTerrain();
@@ -169,19 +178,37 @@ public:
 	}
 
 	/**
+	 * Get the value for the currently highlighted road
+	 * @return 0 if no road currently highlighted 
+	 */
+	WorldCell* getHighlightedCell()
+	{
+		return _highlightedCell;
+	}
+
+	/**
 	 * Get the value for the currently highlighted node
 	 * @return 0 if no node currently highlighted 
 	 */
-	WorldNode* getHighlighted()
+	WorldNode* getHighlightedNode()
 	{
 		return _highlightedNode;
+	}
+
+	/**
+	 * Get the value for the currently highlighted road
+	 * @return 0 if no road currently highlighted 
+	 */
+	WorldRoad* getHighlightedRoad()
+	{
+		return _highlightedRoad;
 	}
 
 	/**
 	 * Get the value for the currently selected node
 	 * @return 0 if no node currently selected 
 	 */
-	WorldNode* getSelected()
+	WorldNode* getSelectedNode()
 	{
 		return _selectedNode;
 	}

@@ -14,6 +14,7 @@ protected:
 	
 	Ogre::SceneNode*		_sceneNode;
 	bool					_visible;
+	bool					_selected;
 
 public:
 
@@ -21,6 +22,7 @@ public:
 	{
 		_valid = false;
 		_visible = true;
+		_selected = false;
 		_sceneNode = 0;
 	}
 
@@ -116,6 +118,9 @@ public:
 	}
 
 	virtual void build() = 0; 
+
+	virtual void setHighlighted(bool) = 0;
+	virtual void setSelected(bool) = 0;
 
 };
 

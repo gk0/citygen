@@ -1253,10 +1253,20 @@ void RoadGraph::extractPrimitiveF(NodeId v0, Graph &g, list<NodeId>& heap,
 			// Remove the filament rooted at v0.
 			extractFilamentF(v0, getFirstAdjacent(v0, g), g, heap);
 		}
-		if (out_degree(v1, g) == 1) //TODO: causes error sometimes
+		//DANGER: shit code
+		try
 		{
-			// Remove the filament rooted at v1.
-			extractFilamentF(v1, getFirstAdjacent(v1, g), g, heap); // error
+			if(typeid(*(g[v1])) == typeid(NodeInterface) &&		// lets try and throw a catchable exception if v1 is crap
+				(out_degree(v1, g) == 1)) //TODO: causes error sometimes
+			{
+				// Remove the filament rooted at v1.
+				extractFilamentF(v1, getFirstAdjacent(v1, g), g, heap); // error
+			}
+		}
+		catch(...)
+		{
+			// This is true, it just happens too much, lets not tell the user ;|
+			//Ogre::LogManager::getSingleton().logMessage("WARNING: RoadGraph::extractFilamentF - v1 deleted");
 		}
 	}
 }

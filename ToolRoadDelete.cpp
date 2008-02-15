@@ -11,6 +11,18 @@ void ToolRoadDelete::OnMouseMove(wxMouseEvent &e)
 {
 	if(alternate(e) == true)
 		ToolView::OnMouseMove(e);
+
+	WorldRoad *wr;
+	if(_worldFrame->pickRoad(e, wr))
+	{
+		_worldFrame->highlightRoad(wr);
+		_worldFrame->update();
+	}
+	else if(_worldFrame->getHighlightedRoad())
+	{
+		_worldFrame->highlightRoad(0);
+		_worldFrame->update();
+	}
 }
 
 void ToolRoadDelete::OnLeftPressed(wxMouseEvent &e)

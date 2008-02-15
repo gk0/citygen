@@ -20,13 +20,6 @@ class CellPropertyPage;
 class MainWindow : public wxFrame
 {
 public:
-	enum ViewMode {
-		view_primary,
-		view_cell,
-		view_box,
-		view_building
-	};
-
 	enum ToolsetMode {
 		view,
 		terr,
@@ -123,6 +116,7 @@ public:
 	bool isModified();
 	void updateProperties();
 	void openFile(const wxString& filename) { doOpen(filename); }
+	void saveFile(const wxString &file) { doSave(file); }
 	void donew() { 
 		wxCommandEvent e;
 		onNew(e); 

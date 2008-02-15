@@ -17,8 +17,17 @@ class TiXmlElement;
 
 class WorldCell : public WorldObject, public Ogre::ManualResourceLoader
 {
+public:
+	enum Display {
+		view_primary,
+		view_cell,
+		view_box,
+		view_building
+	};
 
 private:
+
+	Display				_displayMode;
 	bool				_busy;
 
 	static int			_instanceCount;
@@ -30,9 +39,6 @@ private:
 
 	Ogre::Entity*		_buildingsEnt;
 	Ogre::Entity*		_roadsEnt;
-
-	bool				_showRoads;			
-	bool				_showBuildings;
 	size_t				_roadLimit;
 
 	RoadGraph			_roadGraph;
@@ -50,8 +56,7 @@ private:
 
 
 public:
-	WorldCell(const RoadGraph &p, const RoadGraph &s);
-	WorldCell(const RoadGraph &p, const RoadGraph &s, std::vector<NodeInterface*> &n);
+	WorldCell(const RoadGraph &p, const RoadGraph &s, std::vector<NodeInterface*> &n, const Display mode);
 	virtual ~WorldCell();
 
 	CellParams getGenParams() const;
@@ -79,9 +84,9 @@ public:
 	void clearBoundary();
 	void clear();
 
-	void showSelected(bool show);
-	void showRoads(bool show);
-	void showBuildings(bool show);
+	void setSelected(bool show);
+	void setHighlighted(bool show);
+	void setDisplayMode(Display mode);
 
 	bool loadXML(const TiXmlHandle& worldRoot);
 	TiXmlElement* saveXML();
@@ -103,7 +108,6 @@ public:
 
 private:
 	void clearRoadGraph();
-	void init();
 
 	void clearFilaments();
 	void destroySceneObject();
@@ -131,6 +135,11 @@ private:
 	RoadInterface* getRoad(NodeInterface* n1, NodeInterface* n2);
 
 	void generateRoadNetwork(rando genRandom);
+	void buildRoads();
+	void buildBuildings();
+	void prebuildRoads();
+	void prebuildBuildings();
+
 };
 
 #endif

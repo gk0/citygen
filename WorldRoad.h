@@ -83,11 +83,10 @@ public:
 	void onMoveNode();
 
 	void invalidate();
-	void showSelected(bool show)
-	{
-		_selected = show;
-		invalidate();
-	}
+
+	void setHighlighted(bool highlighted);
+	void setSelected(bool selected);
+
 
 	static RoadGenParams getDefaultGenParams();
 	RoadGenParams getGenParams();

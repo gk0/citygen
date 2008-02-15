@@ -24,12 +24,11 @@ private:
 	static int			_instanceCount;
 	Ogre::Entity*		_junctionEntity;
 	Ogre::Entity*		_mesh;
-	Ogre::Entity*		_highlight;
-	Ogre::Entity*		_selected;
 	Ogre::MovableText*	_label;
 	Ogre::SceneManager* _creator;
 	Ogre::ManualObject* _mo;
 	Ogre::String		_name;
+	bool				_selected;
 	//std::vector<WorldRoad*> mRoads;
 	std::map<RoadId, std::pair<Ogre::Vector3, Ogre::Vector3>, road_less_than > _roadJunction;
 
@@ -44,8 +43,8 @@ public:
 
 	void setLabel(const Ogre::String& label);
 	const Ogre::String& getLabel() const;
-	void showHighlighted(bool highlighted);
-	void showSelected(bool selected);
+	void setHighlighted(bool highlighted);
+	void setSelected(bool selected);
 	Ogre::Vector3 getPosition3D() const;
 	void setPosition(const Ogre::Vector3 &pos);
 	bool setPosition2D(Ogre::Real x, Ogre::Real z);

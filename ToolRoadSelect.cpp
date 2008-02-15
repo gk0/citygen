@@ -15,6 +15,17 @@ void ToolRoadSelect::OnMouseMove(wxMouseEvent &e)
 		ToolView::OnMouseMove(e);
 		return;
 	}
+	WorldRoad *wr;
+	if(_worldFrame->pickRoad(e, wr))
+	{
+		_worldFrame->highlightRoad(wr);
+		_worldFrame->update();
+	}
+	else if(_worldFrame->getHighlightedRoad())
+	{
+		_worldFrame->highlightRoad(0);
+		_worldFrame->update();
+	}
 }
 
 void ToolRoadSelect::OnLeftPressed(wxMouseEvent &e)
@@ -24,13 +35,17 @@ void ToolRoadSelect::OnLeftPressed(wxMouseEvent &e)
 		ToolView::OnLeftPressed(e);
 		return;
 	}
-	WorldRoad *c;
-	if(_worldFrame->pickRoad(e, c))
-		_worldFrame->selectRoad(c);
+	WorldRoad *wr;
+	if(_worldFrame->pickRoad(e, wr))
+	{
+		_worldFrame->selectRoad(wr);
+		_worldFrame->update();
+	}
 	else
+	{
 		_worldFrame->selectRoad(0);
-
-	_worldFrame->Refresh();
+		_worldFrame->update();
+	}
 }
 
 bool ToolRoadSelect::alternate(wxMouseEvent &e)

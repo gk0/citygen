@@ -23,19 +23,27 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 	_mouseDeltaY = e.m_y - _mouseY;
 
 	WorldNode *wn;
+	Ogre::Vector3 pos;
 
 	// if left drag
 	if(e.m_leftDown)
 	{
-		Ogre::Vector3 pos;
 		if(_worldFrame->pickTerrainIntersection(e, pos))
+		{
 			_worldFrame->moveSelectedNode(pos);
+			_worldFrame->update();
+		}
 	}
 	else if(_worldFrame->pickNode(e, NODESELECTSNAPSZSQ, wn))
+	{
 		_worldFrame->highlightNode(wn);
-	else 
+		_worldFrame->update();
+	}
+	else if(_worldFrame->getHighlightedNode())
+	{
 		_worldFrame->highlightNode(0);
-	_worldFrame->Refresh();
+		_worldFrame->update();
+	}
 
 	//TODO: take a good look at the number of update event we're causing 
 	// and see if WM_PAINT or some event shit can reduce this
@@ -59,7 +67,8 @@ void ToolNodeSelect::OnLeftPressed(wxMouseEvent &e)
 	else
 		_worldFrame->selectNode(0);
 
-	_worldFrame->Refresh();
+	//_worldFrame->Refresh();
+	_worldFrame->update();
 }
 
 bool ToolNodeSelect::alternate(wxMouseEvent &e)

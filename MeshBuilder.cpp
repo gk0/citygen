@@ -35,8 +35,11 @@ void MeshBuilder::build()
 {
 	// create a mesh
 	MeshPtr mesh = MeshManager::getSingleton().createManual(_name, _groupName, _loader);
-	AxisAlignedBox aabox;		// record the bounding box
 
+	// build edge lists if required for shadows
+	mesh->setAutoBuildEdgeLists(true);
+
+	AxisAlignedBox aabox;		// record the bounding box
 
 	PolyDataMap::iterator pdIt = _polyDataMap.begin();
 	for(; pdIt != _polyDataMap.end(); pdIt++)
@@ -70,7 +73,6 @@ void MeshBuilder::build()
 			HardwareBufferManager::getSingleton().createVertexBuffer(declaration->getVertexSize(source), // == offset
 			submesh->vertexData->vertexCount,   // == nbVertices
 			HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-
 
 		// Install vertex data
 		float* vdata = static_cast<float*>(vbuffer->lock(HardwareBuffer::HBL_DISCARD));
@@ -141,5 +143,6 @@ void MeshBuilder::build()
 
 	// And we load the mesh
 	mesh->load();
+
 }
 

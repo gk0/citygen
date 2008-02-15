@@ -40,7 +40,7 @@ void ToolNodeAdd::deactivate()
 	}
 	_worldFrame->selectNode(0);
 	_worldFrame->deleteNode(_proposedNode);
-	_worldFrame->Refresh();
+	_worldFrame->update();
 }
 
 
@@ -55,7 +55,7 @@ void ToolNodeAdd::OnChar(wxKeyEvent& e)
 			_proposedRoad = 0;
 		}
 		_proposedNode->setVisible(false);
-		_worldFrame->Refresh();
+		_worldFrame->update();
 	}
 }
 
@@ -82,8 +82,9 @@ void ToolNodeAdd::OnMouseMove(wxMouseEvent &e)
 		ToolView::OnMouseMove(e);
 		return;
 	}
+	//TODO: should detect state change and not auto update 
 	updateState(e);
-	_worldFrame->Refresh();
+	_worldFrame->update();
 }
 
 
@@ -96,20 +97,20 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 		_proposedNode->setPosition(intersection);
 
 		// if a node is selected, then we're moving a road too
-		if(_worldFrame->getSelected())
+		if(_worldFrame->getSelectedNode())
 		{
 			//// we have a selected node so we are creating a road here
 			if(!_proposedRoad) 
-				_proposedRoad = new WorldRoad(_worldFrame->getSelected(), 
+				_proposedRoad = new WorldRoad(_worldFrame->getSelectedNode(), 
 						_proposedNode, _roadGraph, _simpleRoadGraph, _sceneManager);
 			
-			_proposedRoad->showSelected(true);
+			_proposedRoad->setSelected(true);
 			_intersectingRoad = 0;
 /*
 			NodeId nd;
 			RoadId rd;
 
-			_snapState = _roadGraph.findClosestIntscnOrNode(_worldFrame->getSelected()->_nodeId, _proposedNode->getPosition2D(),15, 
+			_snapState = _roadGraph.findClosestIntscnOrNode(_worldFrame->getSelectedNode()->_nodeId, _proposedNode->getPosition2D(),15, 
 				newPos, nd, rd);
 
 
@@ -176,7 +177,7 @@ void ToolNodeAdd::updateState(wxMouseEvent &e)
 	// proposed road won't be validate as part of the WorldFrame
 	if(_proposedRoad) 
 	{
-		_worldFrame->getSelected()->validate();
+		_worldFrame->getSelectedNode()->validate();
 		_proposedNode->validate();
 		_proposedRoad->validate();
 	}
@@ -196,8 +197,8 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 		updateState(e);
 
 		// if node is selected and the current node is it
-		if(_worldFrame->getSelected() && 
-			_worldFrame->getSelected() == _worldFrame->getHighlighted())
+		if(_worldFrame->getSelectedNode() && 
+			_worldFrame->getSelectedNode() == _worldFrame->getHighlightedNode())
 		{
 			// deselect node
 			_worldFrame->selectNode(0);
@@ -216,7 +217,7 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 			_proposedRoad = 0;
 
 			// declare the src & dst for the new road
-			WorldNode *srcNode = _worldFrame->getSelected();
+			WorldNode *srcNode = _worldFrame->getSelectedNode();
 			WorldNode *dstNode;
 
 			switch(_snapState)
@@ -262,7 +263,7 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 		else
 		{
 			// change selection
-			_worldFrame->selectNode(_worldFrame->getHighlighted());
+			_worldFrame->selectNode(_worldFrame->getHighlightedNode());
 		}
 		updateState(e);
 		_worldFrame->Refresh();

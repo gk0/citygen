@@ -12,23 +12,20 @@ ToolCellSelect::ToolCellSelect(WorldFrame* wf)
 
 void ToolCellSelect::OnMouseMove(wxMouseEvent &e)
 {
-	ToolView::OnMouseMove(e);
+	if(alternate(e) == true)
+		ToolView::OnMouseMove(e);
 
-	// Compute deltas
-	_mouseDeltaX = e.m_x - _mouseX;
-	_mouseDeltaY = e.m_y - _mouseY;
-/*
-	//TODO: 
-	#define HIGHLIGHTNODESNAPSQ 16
-	WorldCell *wn;
-
-	// if left drag
-	if(mWorldFrame->pickCell(e, HIGHLIGHTNODESNAPSQ, c))
-		mWorldFrame->highlightCell(c);
-*/
-	// save for calc of next deltas
-	_mouseX = e.m_x;
-	_mouseY = e.m_y;
+	WorldCell *wc;
+	if(_worldFrame->pickCell(e, wc))
+	{
+		_worldFrame->highlightCell(wc);
+		_worldFrame->update();
+	}
+	else if(_worldFrame->getHighlightedCell())
+	{
+		_worldFrame->highlightCell(0);
+		_worldFrame->update();
+	}
 }
 
 void ToolCellSelect::OnLeftPressed(wxMouseEvent &e)

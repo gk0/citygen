@@ -28,6 +28,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 {
 	_mo = 0;
 	_creator = creator;
+	_selected = false;
 
 	mSimpleNodeId = _simpleRoadGraph.addNode(this);
 	_nodeId = _roadGraph.addNode(this);
@@ -44,22 +45,7 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 
 	// create mesh
 	_mesh = _creator->createEntity(_name+"Mesh", "node.mesh");
-//	MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().getByName("gk/Hilite/Red2");
-	//MaterialPtr mat = (MaterialPtr)MaterialManager::getSingleton().create("gk/Hilite/Red2");
-//	mat->getTechnique(0)->getPass(0)->setAmbient(0.1, 0.1, 0.1);
-//	mat->getTechnique(0)->getPass(0)->setDiffuse(0.5, 0, 0, 1.0);
-//	mat->getTechnique(0)->getPass(0)->setSpecular(0.7, 0.7, 0.7, 0.5);
-	_mesh->setMaterialName("gk/Hilite/Red");
-
-	// create highlight mesh
-	_highlight = _creator->createEntity(_name+"Highlight", "flange.mesh");
-	_highlight->setMaterialName("gk/Hilite/Yellow");
-	_highlight->setVisible(false);
-
-	// create select mesh
-	_selected = _creator->createEntity(_name+"Selected", "node.mesh");
-	_selected->setMaterialName("gk/Hilite/Yellow");
-	_selected->setVisible(false);
+	_mesh->setMaterialName("gk/Default");
 
 	// create moveable text label
 	_label = new MovableText("Label"+_name, nodeCount);
@@ -69,8 +55,6 @@ WorldNode::WorldNode(RoadGraph &g, RoadGraph &s, SceneManager* creator)
 
 	// attach objects
 	_sceneNode->attachObject(_mesh);
-	_sceneNode->attachObject(_highlight);
-	_sceneNode->attachObject(_selected);
 	_sceneNode->attachObject(_label);
 }
 
@@ -79,8 +63,6 @@ WorldNode::~WorldNode()
 	_simpleRoadGraph.removeNode(mSimpleNodeId);
 	_roadGraph.removeNode(_nodeId);
 	_creator->destroyEntity(_mesh);
-	_creator->destroyEntity(_highlight);
-	_creator->destroyEntity(_selected);
 	delete _label;
 	if(_junctionEntity)
 	{
@@ -101,17 +83,18 @@ const String& WorldNode::getLabel() const
 	return _label->getCaption();
 }
 
-void WorldNode::showHighlighted(bool highlighted)
+void WorldNode::setHighlighted(bool highlighted)
 {
-	_highlight->setVisible(highlighted);
-	//mMesh->setVisible(!highlighted & !(mSelected->getVisible()));
+	if(_selected) return;
+	highlighted ? _mesh->setMaterialName("gk/Hilite/Yellow") : _mesh->setMaterialName("gk/Default");
+	_mesh->setVisible(_degree < 2 || highlighted); 
 }
 
-void WorldNode::showSelected(bool selected)
+void WorldNode::setSelected(bool selected)
 {
-	_selected->setVisible(selected);
-	_label->setVisible(selected || _degree < 2);
-	_mesh->setVisible(!selected && _degree < 2);
+	_selected = selected;
+	_selected ? _mesh->setMaterialName("gk/Hilite/Red") : _mesh->setMaterialName("gk/Default");
+	_mesh->setVisible(_degree < 2 || selected); 
 }
 
 void WorldNode::setPosition(const Ogre::Vector3 &pos)
@@ -247,32 +230,29 @@ void WorldNode::build()
 	switch(_degree)
 	{
 	case 0:
-		_label->setVisible(true);
-		_mesh->setVisible(_selected->getVisible());
+		_label->setVisible(false);
+		_mesh->setVisible(false);
 		return;
 	case 1:
-		_label->setVisible(true);
-		_mesh->setVisible(_selected->getVisible());
+		_label->setVisible(false);
+		_mesh->setVisible(false);
 		createTerminus();
 		return;
 	case 2:
 		_label->setVisible(false);
-		_mesh->setVisible(false);
+		_mesh->setVisible(_selected);
 		break;
 	case 3:
 		_label->setVisible(false);
-		_mesh->setVisible(false);
+		_mesh->setVisible(_selected);
 		if(createTJunction()) return;
 		break;
 	default:
 		// try it
 		_label->setVisible(false);
-		_mesh->setVisible(false);
+		_mesh->setVisible(_selected);
 		break;
-	}
-	//_label->setVisible(true);
-	//_mesh->setVisible(true);
-	
+	}	
 
 	Vector2 nodePos2D = getPosition2D();
 	

@@ -49,43 +49,43 @@ const CellParams CellParams::MANHATTAN(
 const CellParams CellParams::INDUSTRIAL(
 	1,		// type
 	1,		// seed
-	28,		// segmentSize
+	84,		// segmentSize
 	0.2,	// segmentDeviance
 	4,		// degree
-	0.01,	// degreeDeviance
-	16.8,	// snapSize
+	0.05,	// degreeDeviance
+	75,		// snapSize
 	0.1,	// snapDeviance
-	0.7,	// buildingHeight
+	6,	// buildingHeight
 	0.3,	// buildingDeviance
 	3.5,	// roadWidth
 	0,		// roadLimit
-	0.3,	// connectivity
-	1.5,	// footpathWidth;
+	0.15,	// connectivity
+	2,	// footpathWidth;
 	0.28,	// footpathHeight;
-	16.0,	// lotWidth
-	16.0,	// lotDepth
-	0.7,	// lotDeviance
+	32.0,	// lotWidth
+	28.0,	// lotDepth
+	0.6,	// lotDeviance
 	false	// debug
-);	
+);
 
 const CellParams CellParams::SUBURBIA(
 	2,		// type
 	1,		// seed
-	26.6,	// segmentSize
+	46,		// segmentSize
 	0.6,	// segmentDeviance
 	9,		// degree
 	0.6,	// degreeDeviance
-	19.6,	// snapSize
+	40,		// snapSize
 	0.1,	// snapDeviance
-	0.4,	// buildingHeight
+	4,		// buildingHeight
 	0.1,	// buildingDeviance
 	3.0,	// roadWidth
 	0,		// roadLimit
 	0.0,	// connectivity
 	1.5,	// footpathWidth;
 	0.28,	// footpathHeight;
-	5.0,	// lotWidth
-	10.0,	// lotDepth
+	7.0,	// lotWidth
+	12.0,	// lotDepth
 	0.2,	// lotDeviance
 	false	// debug
 );
@@ -94,26 +94,13 @@ CellParams WorldCell::_defaultGenParams = CellParams::MANHATTAN;
 
 #define USENORMALS 1
 
-WorldCell::WorldCell(const RoadGraph &p, const RoadGraph &s) :
-	_parentRoadGraph(p), _simpleRoadGraph(s)
-{
-	init();
-}
 
 WorldCell::WorldCell(const RoadGraph &p, const RoadGraph &s,
-		vector<NodeInterface*> &n) :
+		vector<NodeInterface*> &n, const Display mode) :
 	_parentRoadGraph(p), _simpleRoadGraph(s)
 {
-	init();
-	setBoundary(n);
-}
-
-void WorldCell::init()
-{
+	_displayMode = mode;
 	_busy = false;
-
-	_showRoads = true;
-	_showBuildings = true;
 
 	// set up some default growth gen params
 	_genParams = _defaultGenParams;
@@ -125,6 +112,8 @@ void WorldCell::init()
 
 	_name = "cell"+StringConverter::toString(_instanceCount++);
 	_sceneNode = WorldFrame::getSingleton().getSceneManager()->getRootSceneNode()->createChildSceneNode(_name);
+
+	setBoundary(n);
 }
 
 WorldCell::~WorldCell()
@@ -485,13 +474,13 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 
 void WorldCell::prebuild()
 {
-	if (_busy)
-		return;
-	_busy = true;
+	if(_displayMode >= view_cell) prebuildRoads();
+	if(_displayMode >= view_box) prebuildBuildings();
+}
 
-	// 1.
-	// Assemble the random generator
 
+void WorldCell::prebuildRoads()
+{
 	// Define a random number generator and init with a reproducible seed.
 	base_generator_type generator(_genParams._seed);
 
@@ -529,6 +518,17 @@ void WorldCell::prebuild()
 			//static_cast<SimpleRoad*>(ri)->build(roadBuilder, mat2);
 		}
 	}
+}
+
+void WorldCell::prebuildBuildings()
+{
+	// Define a random number generator and init with a reproducible seed.
+	base_generator_type generator(_genParams._seed);
+
+	// Define a uniform random number distribution which produces "double"
+	// values between 0 and 1 (0 inclusive, 1 exclusive).
+	boost::uniform_real<> uni_dist(0, 1);
+	rando rg(generator, uni_dist);
 
 	// blocks
 	_mbBuildings = new MeshBuilder(_name+"Buildings", "custom", this);
@@ -555,15 +555,18 @@ void WorldCell::prebuild()
 		else
 			_blocks.push_back(new WorldBlock(poly, _genParams, rg, _mbBuildings, materials));
 	}
-	_busy = false;
 }
 
 void WorldCell::build()
 {
-	PerformanceTimer buildPT("Cell build"), roadPT("Road build");
-
-	//1. clear road graph and destroy scene object
 	destroySceneObject();
+	if(_displayMode >= view_cell) buildRoads();
+	if(_displayMode >= view_box) buildBuildings();
+}
+
+void WorldCell::buildRoads()
+{
+	//1. destroy scene objects
 
 	// build road junctions
 	Material* mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/RoadJunction")).get();
@@ -588,24 +591,24 @@ void WorldCell::build()
 
 	// create entity for road network
 	roadBuilder.build();
-	_roadsEnt = _sceneNode->getCreator()->createEntity(_name+"RoadsEntity", _name+"Roads");
-	_roadsEnt->setVisible(_showRoads);
+	_roadsEnt = _sceneNode->getCreator()->createEntity(_name+"RoadsEnt", roadBuilder.getName());
 	_sceneNode->attachObject(_roadsEnt);
 
+}
 
+void WorldCell::buildBuildings()
+{
 	// create ogre entity using mesh builder
 	_mbBuildings->build();
-	_buildingsEnt = _sceneNode->getCreator()->createEntity(_name+"Entity", _mbBuildings->getName());
+	_buildingsEnt = _sceneNode->getCreator()->createEntity(_name+"BuildsEnt", _mbBuildings->getName());
+	_sceneNode->attachObject(_buildingsEnt);
+
 	delete _mbBuildings;
 	_mbBuildings = 0;
-	_sceneNode->attachObject(_buildingsEnt);
-	_buildingsEnt->setVisible(_showBuildings);
-
+	
 	// am done with blocks now.
 	BOOST_FOREACH(WorldBlock* b, _blocks) delete b;
 	_blocks.clear();
-	
-	return;
 }
 
 bool WorldCell::isInside(const Ogre::Vector2 &loc) const
@@ -872,13 +875,23 @@ RoadInterface* WorldCell::getRoad(NodeInterface* n1, NodeInterface* n2)
 {
 	return _roadGraph.getRoad(_roadGraph.getRoadId(n1->_nodeId, n2->_nodeId));
 }
-void WorldCell::showSelected(bool show)
+void WorldCell::setSelected(bool show)
 {
 	std::vector<RoadInterface*>::iterator bIt, bEnd;
 	for (bIt = _boundaryRoads.begin(), bEnd = _boundaryRoads.end(); bIt != bEnd; bIt++)
 	{
 		if (typeid(*(*bIt)) == typeid(WorldRoad))
-			static_cast<WorldRoad*>(*bIt)->showSelected(show);
+			static_cast<WorldRoad*>(*bIt)->setSelected(show);
+	}
+}
+
+void WorldCell::setHighlighted(bool show)
+{
+	std::vector<RoadInterface*>::iterator bIt, bEnd;
+	for (bIt = _boundaryRoads.begin(), bEnd = _boundaryRoads.end(); bIt != bEnd; bIt++)
+	{
+		if (typeid(*(*bIt)) == typeid(WorldRoad))
+			static_cast<WorldRoad*>(*bIt)->setHighlighted(show);
 	}
 }
 
@@ -994,20 +1007,6 @@ addNewElement(cycle, "node")->SetAttribute("id", (int)ni);
 	return root;
 }
 
-void WorldCell::showRoads(bool show)
-{
-	_showRoads = show;
-	if (_roadsEnt)
-		_roadsEnt->setVisible(_showRoads);
-}
-
-void WorldCell::showBuildings(bool show)
-{
-	_showBuildings = show;
-	if (_buildingsEnt)
-		_buildingsEnt->setVisible(_showBuildings);
-}
-
 vector<Vector3> WorldCell::getBoundaryPoints3D()
 {
 	vector<Vector3> pointList;
@@ -1046,23 +1045,48 @@ void WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
 		insets.push_back(_roadGraph.getRoad(_roadGraph.getRoadId(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth());
 	}
 	Geometry::polygonInset(insets, poly);
-	
-	/* alt. method: t-junctions are a problem
-	size_t i, j, N = cycle.size();
-	poly.reserve(cycle.size());
-	for(i=0; i<N; i++)
-	{
-		j=(i+1)%N;
-		RoadId rd = _roadGraph.getRoad(cycle[i]->_nodeId, cycle[j]->_nodeId);
-		RoadInterface* ri = _roadGraph.getRoad(rd);
-		poly.push_back(cycle[i]->getRoadJunction(rd).second);
-	}
-	 */
 }
 
 void WorldCell::exportObject(ExportDoc &doc)
 {
 	doc.addMesh(_buildingsEnt->getMesh());
 	doc.addMesh(_roadsEnt->getMesh());
+}
+
+void WorldCell::setDisplayMode(Display mode)
+{
+	// build and show what is necessary, hide what is not
+	switch(mode)
+	{
+	case view_primary:
+		if(_roadsEnt) _roadsEnt->setVisible(false);
+		if(_buildingsEnt) _buildingsEnt->setVisible(false);
+		break;
+	case view_cell:
+		if(_roadsEnt == 0)
+		{
+			prebuildRoads();
+			buildRoads();
+		}
+		else _roadsEnt->setVisible(true);
+		if(_buildingsEnt) _buildingsEnt->setVisible(false);
+		break;
+	case view_box:
+	case view_building:
+		if(_roadsEnt == 0)
+		{
+			prebuildRoads();
+			buildRoads();
+		}
+		else _roadsEnt->setVisible(true);
+		if(_buildingsEnt == 0)
+		{
+			prebuildBuildings();
+			buildBuildings();
+		}
+		else _buildingsEnt->setVisible(true);
+		break;
+	}
+	_displayMode = mode;
 }
 
