@@ -8,10 +8,25 @@
 #include <OgreStringConverter.h>
 
 class Cell;
+class NodeInterface;
+
+struct InsetVertex;
+
+struct InsetVertex
+{
+	Ogre::Vector3 _pos;
+	Ogre::Vector2 _insetTarget;
+	Ogre::Real _inset;
+	InsetVertex* _left;
+	InsetVertex* _right;
+	bool _intersectionTested;
+};
 
 class Geometry 
 {
 public:
+	static void processInset(std::list<InsetVertex> &ivList, std::vector<Ogre::Vector3> &poly);
+
 
 	/**
 	 * Pick a node from the scene using a mouse event with coords

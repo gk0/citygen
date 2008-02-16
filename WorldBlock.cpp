@@ -16,6 +16,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 	MeshBuilder* mb, vector<Material*> &materials, bool debug)
 {
 	// 
+	_error = false;
 	size_t i,j,N = boundary.size(), N2 = N * 2;
 	vector<Vector3> innerBoundary;
 	innerBoundary.reserve(N);
@@ -47,6 +48,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 			if(tmp.size() != N)
 			{
 				//LogManager::getSingleton().logMessage("Outset Fail!!");
+				_error = true;
 				return;
 			}
 			outerBoundary = tmp;
@@ -146,6 +148,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 		{
 			_footpathVertexData.clear();
 			_footpathPolys.clear();
+			_error = true;
 			return;
 		}
 		else

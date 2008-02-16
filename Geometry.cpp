@@ -415,9 +415,29 @@ bool Geometry::polygonInsetFast(Real inset, vector<Vector3> &poly)
 {
 	if(poly.size() < 3) return false;
 	// get the inset vectors
-	vector< pair<Vector3, Vector2> > iv(calcInsetVectors(inset, poly));
+	//vector< pair<Vector3, Vector2> > iv(calcInsetVectors(inset, poly));
 	// process them for anomalies
-	processInsetVectors(iv, poly);
+	//processInsetVectors(iv, poly);
+	// 1. Prepare initial inset data structures
+	///////////////////////////////////////////////////////////////////////
+	list<InsetVertex> ivList;
+	size_t i,j,N = poly.size();
+	size_t lastI = N-1;
+	for(i=0; i<N; i++)
+	{
+		j = (i+1) % N;
+		InsetVertex insetVx;
+		insetVx._pos = poly[i];
+		insetVx._insetTarget = Geometry::calcInsetTarget(poly[lastI], poly[i], 
+				poly[j], inset, inset);
+		insetVx._inset = inset;
+		insetVx._intersectionTested = false;
+		ivList.insert(ivList.end(), insetVx);
+
+		lastI = i;
+	}
+	poly.clear();
+	processInset(ivList, poly);
 
 	return true;
 }
@@ -446,7 +466,6 @@ void Geometry::polygonInsetFFast(Real inset, vector<Vector3> &poly)
 		poly[i].x += insetVec.x;
 		poly[i].z += insetVec.y;
 		
-
 		// update prev vars
 		prevPolyi2D = polyi2D;
 		prevSegInsetVec = segInsetVec;
@@ -679,4 +698,102 @@ void Geometry::polygonInset(const vector<Real>& insets, vector<Vector2> &poly)
 	vector< pair<Vector2, Vector2> > iv(calcInsetVectors(insets, poly));
 	// process them for anomalies
 	processInsetVectors(iv, poly);
+}
+
+
+void Geometry::processInset(list<InsetVertex> &ivList, vector<Vector3> &poly)
+{
+	//TODO: Use a slav and a queue instead of the list
+	//queue<InsetVertex*> ivQueue;
+	//BOOST_FOREACH(InsetVertex& iv, ivList) ivQueue.push(&iv);
+
+	while(true)
+	{
+		///////////////////////////////////////////////////////////////////
+		// 1. Intersection test for all inset vectors
+		///////////////////////////////////////////////////////////////////
+		
+		// find the earliest intersection
+		Real intersectionLocation = 1;
+		Vector2 intersection;
+		list<InsetVertex>::iterator firstOffender, secondOffender, bisecOffender;
+
+		for(list<InsetVertex>::iterator ivIt = ivList.begin(); ivIt != ivList.end(); ivIt++)
+		{
+			if(ivIt->_intersectionTested) continue;
+			list<InsetVertex>::iterator nextIt = ivIt;
+			if(++nextIt == ivList.end()) nextIt = ivList.begin();
+			Vector2 ivItPos2D(ivIt->_pos.x, ivIt->_pos.z);
+
+			// check if the pair intersect and store the lowest
+			Real r,s;
+			Vector2 tmpInscn, nextItPos2D(nextIt->_pos.x, nextIt->_pos.z);
+			if(Geometry::lineIntersect(ivItPos2D, ivIt->_insetTarget, 
+					nextItPos2D, nextIt->_insetTarget, tmpInscn, r, s) &&
+					r >= 0 && r <= 1 && s >= 0 && s <= 1)
+			{
+				// TODO: tolerance value could be used here
+				if(r < intersectionLocation) 
+				{
+					intersectionLocation = r;
+					firstOffender = ivIt;
+					secondOffender = nextIt;
+					intersection = tmpInscn;
+				}
+			}
+			else
+				ivIt->_intersectionTested = true;
+		}
+		
+		///////////////////////////////////////////////////////////////////
+		// 2. Process Bisector Intersection
+		///////////////////////////////////////////////////////////////////
+		
+		// find the closest intersection
+		if(intersectionLocation != 1.0)
+		{
+			list<InsetVertex>::iterator ivIt;
+
+			// remove the first offender
+			ivList.erase(firstOffender);
+
+			// if there is a valid polygon remaining
+			if(ivList.size() >= 3)
+			{
+				// update the pos and inset of the remaining vertices
+				for(ivIt = ivList.begin(); ivIt != ivList.end(); ivIt++)
+				{
+					ivIt->_pos.x = ivIt->_pos.x + intersectionLocation * (ivIt->_insetTarget.x - ivIt->_pos.x);
+					ivIt->_pos.z = ivIt->_pos.z + intersectionLocation * (ivIt->_insetTarget.y - ivIt->_pos.z);
+					ivIt->_inset = ivIt->_inset * (1 - intersectionLocation);
+				}
+				
+				// update the second offender
+				list<InsetVertex>::iterator prev(secondOffender), next(secondOffender);
+				if(prev == ivList.begin()) prev = ivList.end();
+				prev--;
+				next++;
+				if(next == ivList.end()) next = ivList.begin();
+				
+				//LogManager::getSingleton().logMessage("Int:"+StringConverter::toString(intersection));
+				secondOffender->_pos.x = intersection.x;
+				secondOffender->_pos.z = intersection.y;
+				secondOffender->_insetTarget = Geometry::calcInsetTarget(prev->_pos, secondOffender->_pos, 
+						next->_pos, prev->_inset, secondOffender->_inset);
+
+				secondOffender->_intersectionTested = false;
+				prev->_intersectionTested = false;
+			}
+			else
+				LogManager::getSingleton().logMessage("Less than 3 vertices after collapse.");
+		}
+		else
+		{
+			//LogManager::getSingleton().logMessage("Valid.");
+			poly.reserve(ivList.size());
+			for(list<InsetVertex>::iterator ivIt = ivList.begin(); ivIt != ivList.end(); ivIt++)
+				poly.push_back(Vector3(ivIt->_insetTarget.x, ivIt->_pos.y, ivIt->_insetTarget.y));
+			break;
+		}
+	}
 }

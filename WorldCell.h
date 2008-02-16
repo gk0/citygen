@@ -7,6 +7,7 @@
 #include "RoadGraph.h"
 #include "CellParams.h"
 #include "ExportDoc.h"
+#include "Geometry.h"
 
 class WorldRoad;
 class NodeInterface;
@@ -14,6 +15,7 @@ class RoadInterface;
 
 class TiXmlHandle;
 class TiXmlElement;
+
 
 class WorldCell : public WorldObject, public Ogre::ManualResourceLoader
 {
@@ -139,6 +141,7 @@ private:
 	void buildBuildings();
 	void prebuildRoads();
 	void prebuildBuildings();
+	void constructInsetVertexList(const std::vector<NodeInterface*> &cycle, std::list<InsetVertex> &ivList);
 
 };
 

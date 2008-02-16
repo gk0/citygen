@@ -545,16 +545,28 @@ void WorldCell::prebuildBuildings()
 	vector< vector<NodeInterface*> > cycles;
 	_roadGraph.extractFootprints(cycles, _genParams._lotWidth);
 
+
+	size_t fail_count = 0;
+	size_t blockErrors = 0;
+	_blocks.reserve(cycles.size());
 	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
 	{
 		vector<Vector3> poly;
 		extractPolygon(cycle, poly);
+		
+		//vector<uint16> indices;
+		//if(!Triangulate::Process(poly, indices)) fail_count++;
 
-		if(_genParams._debug)
-			_blocks.push_back(new WorldBlock(poly, _genParams, rg, _mbBuildings, materials, true));
-		else
-			_blocks.push_back(new WorldBlock(poly, _genParams, rg, _mbBuildings, materials));
+		WorldBlock* b = new WorldBlock(poly, _genParams, rg, _mbBuildings, materials, _genParams._debug);
+		if(b->_error) 
+		{
+			blockErrors++;
+			delete b;
+		}
+		else _blocks.push_back(b);
 	}
+	//LogManager::getSingleton().logMessage("Cell: "+_name+" fail count: "+StringConverter::toString(fail_count));
+	LogManager::getSingleton().logMessage(_name+"\tblock error count\t"+StringConverter::toString(blockErrors));
 }
 
 void WorldCell::build()
@@ -1030,23 +1042,6 @@ Real WorldCell::calcArea2D()
 	return Geometry::polygonArea(getBoundaryPoints2D());
 }
 
-void WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
-		vector<Vector3> &poly)
-{
-	size_t i, j, N = cycle.size();
-	vector<Real> insets;
-	poly.reserve(cycle.size());
-	insets.reserve(cycle.size());
-
-	for (i=0; i<N; i++)
-	{
-		j = (i+1)%N;
-		poly.push_back(cycle[i]->getPosition3D());
-		insets.push_back(_roadGraph.getRoad(_roadGraph.getRoadId(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth());
-	}
-	Geometry::polygonInset(insets, poly);
-}
-
 void WorldCell::exportObject(ExportDoc &doc)
 {
 	doc.addMesh(_buildingsEnt->getMesh());
@@ -1089,4 +1084,52 @@ void WorldCell::setDisplayMode(Display mode)
 	}
 	_displayMode = mode;
 }
+/*
+void WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
+		vector<Vector3> &poly)
+{
+	size_t i, j, N = cycle.size();
+	vector<Real> insets;
+	poly.reserve(cycle.size());
+	insets.reserve(cycle.size());
 
+	for (i=0; i<N; i++)
+	{
+		j = (i+1)%N;
+		poly.push_back(cycle[i]->getPosition3D());
+		insets.push_back(_roadGraph.getRoad(_roadGraph.getRoadId(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth());
+	}
+	Geometry::polygonInset(insets, poly);
+}
+*/
+
+
+void WorldCell::constructInsetVertexList(const vector<NodeInterface*> &cycle, list<InsetVertex> &ivList)
+{
+	size_t i,j,N = cycle.size();
+	Vector3 lastPos = cycle[N-1]->getPosition3D();
+	Real lastInset = _roadGraph.getRoad(_roadGraph.getRoadId(cycle[N-1]->_nodeId, cycle[0]->_nodeId))->getWidth();
+	for(i=0; i<N; i++)
+	{
+		j = (i+1) % N;
+		InsetVertex insetVx;
+		insetVx._pos = cycle[i]->getPosition3D();
+		insetVx._inset = _roadGraph.getRoad(_roadGraph.getRoadId(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth();
+		insetVx._insetTarget = Geometry::calcInsetTarget(lastPos, cycle[i]->getPosition3D(), 
+				cycle[j]->getPosition3D(), lastInset, insetVx._inset);
+		insetVx._intersectionTested = false;
+		ivList.insert(ivList.end(), insetVx);
+
+		// update last vars for next loop iteration
+		lastPos = insetVx._pos;
+		lastInset = insetVx._inset;
+	}
+}
+
+void WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
+		vector<Vector3> &poly)
+{
+	list<InsetVertex> ivList;
+	constructInsetVertexList(cycle, ivList);
+	Geometry::processInset(ivList, poly);
+}

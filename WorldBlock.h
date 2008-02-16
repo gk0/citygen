@@ -8,6 +8,7 @@
 class WorldBlock
 {
 private:
+
 	std::vector<WorldLot*>						_lots;
 	std::vector< std::vector<Ogre::Vector3> >	_debugLots;
 
@@ -15,6 +16,7 @@ private:
 	std::vector<Ogre::Real>						_footpathVertexData;
 
 public:
+	bool	_error;
 	WorldBlock(const std::vector<Ogre::Vector3> &boundary, const CellParams &gp, rando rg, 
 		MeshBuilder* mb, std::vector<Ogre::Material*> &materials, bool debug=false);
 	~WorldBlock()
