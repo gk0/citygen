@@ -36,8 +36,11 @@ void ToolNodeSelect::OnMouseMove(wxMouseEvent &e)
 	}
 	else if(_worldFrame->pickNode(e, NODESELECTSNAPSZSQ, wn))
 	{
-		_worldFrame->highlightNode(wn);
-		_worldFrame->update();
+		if(wn != _worldFrame->getHighlightedNode())
+		{
+			_worldFrame->highlightNode(wn);
+			_worldFrame->update();
+		}
 	}
 	else if(_worldFrame->getHighlightedNode())
 	{

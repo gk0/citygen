@@ -39,7 +39,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory=""
-				CommandArguments="&quot;C:\Documents and Settings\George\Desktop\cgx2\shit.cgx&quot; &quot;C:\Documents and Settings\George\Desktop\cgx2\shit4.cgx&quot;"
+				CommandArguments=""
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"

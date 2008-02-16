@@ -18,8 +18,11 @@ void ToolRoadSelect::OnMouseMove(wxMouseEvent &e)
 	WorldRoad *wr;
 	if(_worldFrame->pickRoad(e, wr))
 	{
-		_worldFrame->highlightRoad(wr);
-		_worldFrame->update();
+		if(wr != _worldFrame->getHighlightedRoad())
+		{
+			_worldFrame->highlightRoad(wr);
+			_worldFrame->update();
+		}
 	}
 	else if(_worldFrame->getHighlightedRoad())
 	{

@@ -75,6 +75,7 @@ void SimpleNode::prebuild()
 	roadCWVec.reserve(degree);
 
 	// initial vars
+	bool isConnectedToWorldRoad = false;
 	NodeId lastNodeId = _roadGraph.getFirstAdjacent(_nodeId);
 	Real lastRoadInset = _roadGraph.getRoad(_roadGraph.getRoadId(_nodeId, lastNodeId))->getWidth();
 	Vector3 lastRoadVec = _roadGraph.getNode(lastNodeId)->getPosition3D() - getPosition3D();
@@ -85,6 +86,7 @@ void SimpleNode::prebuild()
 		_roadGraph.getCounterClockwiseMostFromPrev(lastNodeId, _nodeId, currNodeId);
 		Vector3 curRoadVec = _roadGraph.getNode(currNodeId)->getPosition3D() - getPosition3D();
 		RoadId curRoadId = _roadGraph.getRoadId(_nodeId, currNodeId);
+		isConnectedToWorldRoad |= typeid(*(_roadGraph.getRoad(curRoadId))) == typeid(WorldRoad);
 		Real curRoadInset = _roadGraph.getRoad(curRoadId)->getWidth();
 
 		Vector3 intersectionPoint = Geometry::calcBoundedBisector(lastRoadVec,curRoadVec,lastRoadInset,curRoadInset);
@@ -112,20 +114,24 @@ void SimpleNode::prebuild()
 		// create a junction -> road join pair
 		_roadJunction[roadCWVec[i]] = roadPair;
 
-		uint16 offset = static_cast<uint16>(_vertexData.size()>>3);
-		MeshBuilder::addVData3(_vertexData, roadPair.first);
-		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
-		MeshBuilder::addVData2(_vertexData, 1, 0);
-		MeshBuilder::addVData3(_vertexData, roadPair.second);
-		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
-		MeshBuilder::addVData2(_vertexData, 0, 0);
-		MeshBuilder::addVData3(_vertexData, getPosition3D());
-		MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
-		// this is a little costly but such is life
-		Real v = (((pointlist[i] + pointlist[j])/2)-getPosition3D()).length()
-			/ _roadGraph.getRoad(roadCWVec[i])->getWidth();
-		MeshBuilder::addVData2(_vertexData, 0.5, std::min(1.0f,v/4));
-		MeshBuilder::addIData3(_indexData, offset, offset + 1, offset + 2);
+		// no junction plate if we are an intermediate node on a WorldRoad
+		if(!isConnectedToWorldRoad)
+		{
+			uint16 offset = static_cast<uint16>(_vertexData.size()>>3);
+			MeshBuilder::addVData3(_vertexData, roadPair.first);
+			MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+			MeshBuilder::addVData2(_vertexData, 1, 0);
+			MeshBuilder::addVData3(_vertexData, roadPair.second);
+			MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+			MeshBuilder::addVData2(_vertexData, 0, 0);
+			MeshBuilder::addVData3(_vertexData, getPosition3D());
+			MeshBuilder::addVData3(_vertexData, Vector3::UNIT_Y);
+			// this is a little costly but such is life
+			Real v = (((pointlist[i] + pointlist[j])/2)-getPosition3D()).length()
+				/ _roadGraph.getRoad(roadCWVec[i])->getWidth();
+			MeshBuilder::addVData2(_vertexData, 0.5, std::min(1.0f,v/4));
+			MeshBuilder::addIData3(_indexData, offset, offset + 1, offset + 2);
+		}
 	}
 }
 

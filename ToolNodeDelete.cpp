@@ -37,8 +37,11 @@ void ToolNodeDelete::OnMouseMove(wxMouseEvent &e)
 	WorldNode *wn;
 	if(_worldFrame->pickNode(e, DELETENODESNAPSQ, wn))
 	{
-		_worldFrame->highlightNode(wn);
-		_worldFrame->update();
+		if(wn != _worldFrame->getHighlightedNode())
+		{
+			_worldFrame->highlightNode(wn);
+			_worldFrame->update();
+		}
 	}
 	else if(_worldFrame->getHighlightedNode())
 	{

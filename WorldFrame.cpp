@@ -583,8 +583,8 @@ void WorldFrame::update()
 			Root::getSingleton().renderOneFrame();
 		renpf.stop();
 	
-		//LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
-		//	+" - "+cpf2.toString()+" - "+renpf.toString());
+		LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
+			+" - "+cpf2.toString()+" - "+renpf.toString());
 	} 
 	catch(Exception &e)
 	{

@@ -627,6 +627,7 @@ bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq,
 	return success;
 }
 
+
 int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 		const Real snapSz, Vector3& pos, NodeId &nodeId, RoadId& roadId) const
 {
@@ -635,8 +636,8 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 
 	vector<RoadId> possibleSnapRoads;
 	vector<NodeId> possibleSnapNodes;
-	possibleSnapRoads.reserve(16);
-	possibleSnapNodes.reserve(32);
+	possibleSnapRoads.reserve(256);
+	possibleSnapNodes.reserve(256);
 
 	// create bounding box vectors for segment ab
 	Vector2 abP, abE;
@@ -656,10 +657,11 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 		if(Math::Abs(T.x) <= (abE.x + cdE.x) && Math::Abs(T.y) <= (abE.y + cdE.y))
 		{
 			possibleSnapRoads.push_back(rd);
-			//possibleSnapNodes.insert(getSrc(rd));
-			//possibleSnapNodes.insert(getDst(rd));
-			possibleSnapNodes.push_back(getSrc(rd));
-			possibleSnapNodes.push_back(getDst(rd));
+			if(typeid(*(_graph[rd])) != typeid(WorldRoad))
+			{
+				possibleSnapNodes.push_back(getSrc(rd));
+				possibleSnapNodes.push_back(getDst(rd));
+			}
 		}
 		//roundCount++;
 	}
@@ -737,17 +739,17 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 		NodeInterface* cNi = _graph[cNd];
 		NodeInterface* dNi = _graph[dNd];
 
-		// exclude r: outside segment ab or a(last snap point)
-		if (cNi->_r > lowestR && dNi->_r > lowestR)
-			continue;
-		if (cNi->_r < 0 && dNi->_r < 0)
-			continue;
+		//// exclude r: outside segment ab or a(last snap point)
+		//if (cNi->_r > lowestR && dNi->_r > lowestR)
+		//	continue;
+		//if (cNi->_r < 0 && dNi->_r < 0)
+		//	continue;
 
-		// exclude s: on same side
-		if (cNi->_s > 1 && dNi->_s > 1)
-			continue;
-		if (cNi->_s < 0 && dNi->_s < 0)
-			continue;
+		//// exclude s: on same side
+		//if (cNi->_s > 1 && dNi->_s > 1)
+		//	continue;
+		//if (cNi->_s < 0 && dNi->_s < 0)
+		//	continue;
 
 		//te++;
 
@@ -868,12 +870,12 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 		{
 			closestDistToB = distance;
 			Vector2 p(c.x + r*dxMinusCx, c.y + r*dyMinusCy);
-			if((p - c).squaredLength() < snapSzSq)
+			if((p - c).squaredLength() < snapSzSq && typeid(*(_graph[rd]))!=typeid(WorldRoad))
 			{
 				nodeSnapped = true;
 				snapNode = cNd;
 			}
-			else if((p - d).squaredLength() < snapSzSq)
+			else if((p - d).squaredLength() < snapSzSq && typeid(*(_graph[rd]))!=typeid(WorldRoad))
 			{
 				nodeSnapped = true;
 				snapNode = dNd;

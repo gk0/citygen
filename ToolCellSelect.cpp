@@ -18,8 +18,11 @@ void ToolCellSelect::OnMouseMove(wxMouseEvent &e)
 	WorldCell *wc;
 	if(_worldFrame->pickCell(e, wc))
 	{
-		_worldFrame->highlightCell(wc);
-		_worldFrame->update();
+		if(wc != _worldFrame->getHighlightedCell())
+		{
+			_worldFrame->highlightCell(wc);
+			_worldFrame->update();
+		}
 	}
 	else if(_worldFrame->getHighlightedCell())
 	{
