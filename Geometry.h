@@ -6,21 +6,10 @@
 #include <OgreVector3.h>
 #include <OgreLogManager.h>
 #include <OgreStringConverter.h>
+#include "Skeletor.h"
 
 class Cell;
 class NodeInterface;
-
-struct InsetVertex;
-
-struct InsetVertex
-{
-	Ogre::Vector3 _pos;
-	Ogre::Vector2 _insetTarget;
-	Ogre::Real _inset;
-	InsetVertex* _left;
-	InsetVertex* _right;
-	bool _intersectionTested;
-};
 
 class Geometry 
 {
@@ -169,6 +158,60 @@ public:
 
 		//if r and s are 0 then the line are coincident (on top of one another)
 		if(r == 0 && s == 0) return false;
+
+		// Px=Ax+r(Bx-Ax)
+		// Py=Ay+r(By-Ay)
+		intersection.x = a.x + r * (BminusA.x);
+		intersection.y = a.y + r * (BminusA.y);
+
+		return true;
+	}
+
+
+	/** Checks if the two lines with points a,b & c,d intersect
+	@remarks
+	Algorithm defined at 
+	http://www.faqs.org/faqs/graphics/algorithms-faq/
+	OR
+	Computational Geometry in C, Joeseph O'Rourke Pg.221 
+	@param
+	a, a Vector2 defines the start point of segment 1
+	@param
+	b, a Vector2 defines the end point of segment 1
+	@param
+	c, a Vector2 defines the start point of segment 2
+	@param
+	d, a Vector2 defines the end point of segment 2
+	@param
+	intersection a Vector2 reference store the resulting
+	point of intersection if it occurs.
+	@param
+	r, a Ogre::Real reference stores the type of 
+	intersection for line a-->b
+	- if r>1, P is located on extension of ab
+	- if r<0, P is located on extension of ba
+	@param
+	s, a Ogre::Real reference stores the type of 
+	intersection for line c-->d
+	- if s>1, P is located on extension of cd
+	- if s<0, P is located on extension of dc
+	@returns
+	A bool indicating if the line segments intersect. 
+	*/
+	static inline bool lineIntersect(const Ogre::Vector2& a, const Ogre::Vector2& b, 
+		const Ogre::Vector2& c, const Ogre::Vector2& d, Ogre::Vector2& intersection, 
+		Ogre::Real& r)
+	{
+		Ogre::Vector2 BminusA(b - a);
+		Ogre::Vector2 DminusC(d - c);
+		Ogre::Real denom = (BminusA.x * DminusC.y) - (BminusA.y * DminusC.x);
+
+		// line are parallel
+		if(denom == 0) return false;
+
+		Ogre::Vector2  AminusC(a - c);
+
+		r = ((AminusC.y * DminusC.x) - (AminusC.x * DminusC.y)) / denom;
 
 		// Px=Ax+r(Bx-Ax)
 		// Py=Ay+r(By-Ay)
@@ -367,44 +410,24 @@ public:
 			true if the inset is successful, false if it is not successful for
 			example in the event that the polygon is too small to be inset
 	*/
-	static bool polygonInset(Ogre::Real inset, std::vector<Ogre::Vector2> &polyPoints);
+	static bool polygonInset(Ogre::Real inset, std::vector<Ogre::Vector3> &polyPoints);
 
 	/** Insets a polygon
-	@remarks
-	This function returns a polygon that is inset
-	@param 
-	inset a Ogre::Real that specifies the amount to inset the polygon
-	@param
-	polyPoints a std::vector that defines the polygon in the
-	form of ordered points.
-
-	@returns
-	true if the inset is successful, false if it is not successful for
-	example in the event that the polygon is too small to be inset
-	*/
-	static bool polygonInsetFast(Ogre::Real inset, std::vector<Ogre::Vector3> &polyPoints);
-
-	/** Insets a line
 		@remarks
-			This function returns a line that is inset
+			This function returns a polygon that is inset
         @param 
-			inset a Ogre::Real that specifies the amount to inset the polygon
+			inset a std::vector of Ogre::Real that specifies the amount to inset
+			the individual polygon sides
         @param
-            linePoints a std::vector that defines the polygon in the
+            polyPoints a std::vector that defines the polygon in the
 			form of ordered points.
-
         @returns
 			true if the inset is successful, false if it is not successful for
-			example in the event that the poly is too small to be inset
+			example in the event that the polygon is too small to be inset
 	*/
-	static bool lineInset(Ogre::Real inset, std::vector<Ogre::Vector2> &linePoints);
-
-	static bool unionPolyAndLine(std::vector<Ogre::Vector2> &polyPoints, std::vector<Ogre::Vector2> &linePoints);
+	static bool polygonInset(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector3> &poly);
 
 	static bool isInside(const Ogre::Vector2 &loc, const std::vector<Ogre::Vector2> &polyPoints);
-
-
-
 
 	inline static Ogre::Vector2 calcNormVec2D(const Ogre::Vector2& p1, const Ogre::Vector2& p2)
 	{
@@ -417,9 +440,6 @@ public:
 		tmp.normalise();
 		return tmp;
 	}
-
-	static void polygonInset(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector3> &poly);
-
 
 	inline static Ogre::Vector2 calcInsetVector(const  Ogre::Vector2& a, 
 		const Ogre::Vector2& b, const  Ogre::Real& inset)
@@ -436,31 +456,9 @@ public:
 		return Ogre::Vector2(v.x, v.z);
 	}
 
-	void static polygonInsetFFast(Ogre::Real inset, std::vector<Ogre::Vector3> &poly);
-
 	static bool polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAheadMax);
 	static void polyRepairCycle(std::vector<Ogre::Vector3> &poly, size_t lookAhead);
 
-	static std::vector< std::pair<Ogre::Vector3, Ogre::Vector2> >  
-		calcInsetVectors(const Ogre::Real inset, std::vector<Ogre::Vector3> &poly);
-
-	static std::vector< std::pair<Ogre::Vector3, Ogre::Vector2> >  
-	calcInsetVectors(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector3> &poly);
-
-	static void 
-	processInsetVectors(const std::vector< std::pair<Ogre::Vector3, Ogre::Vector2> > &iv, std::vector<Ogre::Vector3> &poly);
-
-
-	// 2D insets
-	static std::vector< std::pair<Ogre::Vector2, Ogre::Vector2> >  
-		calcInsetVectors(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector2> &poly);
-
-	static void 
-		processInsetVectors(const std::vector< std::pair<Ogre::Vector2, Ogre::Vector2> > &iv, std::vector<Ogre::Vector2> &poly);
-
-
-	static void polygonInset(const std::vector<Ogre::Real>& insets, std::vector<Ogre::Vector2> &poly);
-	
 	inline static Ogre::Vector2 calcInsetTarget(const Ogre::Vector3& a, 
 		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &insetAB, const Ogre::Real &insetBC)
 	{

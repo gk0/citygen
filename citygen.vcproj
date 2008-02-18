@@ -262,6 +262,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Skeletor.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 			</File>
@@ -433,6 +437,10 @@
 			</File>
 			<File
 				RelativePath=".\skeleton.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Skeletor.h"
 				>
 			</File>
 			<File

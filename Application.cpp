@@ -57,7 +57,7 @@ bool Application::OnInit()
 	{
 		//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
 		//_window->openFile(_("C:/Documents and Settings/George/Desktop/cgx2/testo2.cgx"));
-		//_window->openFile(_("C:/Documents and Settings/George/Desktop/cgx2/shit.cgx"));
+		//_window->openFile(_("C:/Documents and Settings/George/Desktop/shit.cgx"));
 		_window->openFile(_("C:/Documents and Settings/George/Desktop/cgx2/city neue 4.cgx"));
 		//_window->donew();
 	}

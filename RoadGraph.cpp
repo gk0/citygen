@@ -657,7 +657,7 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 		if(Math::Abs(T.x) <= (abE.x + cdE.x) && Math::Abs(T.y) <= (abE.y + cdE.y))
 		{
 			possibleSnapRoads.push_back(rd);
-			if(typeid(*(_graph[rd])) != typeid(WorldRoad))
+			//if(typeid(*(_graph[rd])) != typeid(WorldRoad))
 			{
 				possibleSnapNodes.push_back(getSrc(rd));
 				possibleSnapNodes.push_back(getDst(rd));
@@ -712,6 +712,7 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 				{
 					lowestR = r;
 					snapNode = nd;
+					nodeSnapped = true; //gk 0208
 				}
 			}
 			else if (r < stretchR && lowestR == 1)
@@ -776,41 +777,56 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 		// if outside segment cd
 		if (s< 0 || s> 1)continue ;
 
-		if(r >= 0 && r < lowestR)
+		if(r >= 0 && r <= 1)
 		{
 			// skip connected segments
 			if(cNd == aNode || dNd == aNode) continue;
 
-			lowestR = r;
-
-			Vector2 p(a.x + bxMinusAx * r, a.y + byMinusAy * r);
-
-			if(s < 0.5)
+			//HACK: this basic subsidises world road intersection against 
+			// node snaps, this whole function probably need rethought
+			if(typeid(*(_graph[rd]))==typeid(WorldRoad) && nodeSnapped)
 			{
-				if((c-p).squaredLength() < snapSzSq)
-				{
-					intersection = false;
-					snapNode = cNd;
-				}
-				else
+				if(r < (lowestR + (stretchR - 1)))
 				{
 					intersection = true;
 					intersectingRoad = rd;
 					intersectionY = _graph[cNd]->getPosition3D().y + s*(_graph[dNd]->getPosition3D().y - _graph[cNd]->getPosition3D().y);
+					lowestR = r;
 				}
 			}
-			else
+			else if(r < lowestR)
 			{
-				if((d-p).squaredLength() < snapSzSq)
+				lowestR = r;
+
+				Vector2 p(a.x + bxMinusAx * r, a.y + byMinusAy * r);
+
+				if(s < 0.5)
 				{
-					intersection = false;
-					snapNode = dNd;
+					if((c-p).squaredLength() < snapSzSq && typeid(*(_graph[rd]))!=typeid(WorldRoad))
+					{
+						intersection = false;
+						snapNode = cNd;
+					}
+					else
+					{
+						intersection = true;
+						intersectingRoad = rd;
+						intersectionY = _graph[cNd]->getPosition3D().y + s*(_graph[dNd]->getPosition3D().y - _graph[cNd]->getPosition3D().y);
+					}
 				}
 				else
 				{
-					intersection = true;
-					intersectingRoad = rd;
-					intersectionY = _graph[cNd]->getPosition3D().y + s*(_graph[dNd]->getPosition3D().y - _graph[cNd]->getPosition3D().y);
+					if((d-p).squaredLength() < snapSzSq && typeid(*(_graph[rd]))!=typeid(WorldRoad))
+					{
+						intersection = false;
+						snapNode = dNd;
+					}
+					else
+					{
+						intersection = true;
+						intersectingRoad = rd;
+						intersectionY = _graph[cNd]->getPosition3D().y + s*(_graph[dNd]->getPosition3D().y - _graph[cNd]->getPosition3D().y);
+					}
 				}
 			}
 		}

@@ -558,8 +558,8 @@ void WorldFrame::update()
 		PerformanceTimer rpf("Roads");
 		BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->validate();
 		rpf.stop();
-	
-		PerformanceTimer cpf("Cells 1");
+	/*
+		PerformanceTimer cpf1("Cells 1");
 		pair<vector<WorldCell*>::iterator, vector<WorldCell*>::iterator> cPIt;
 		cPIt.first = _cellVec.begin();
 		cPIt.second = _cellVec.end();
@@ -572,19 +572,25 @@ void WorldFrame::update()
 	#else
 		prebuild(&cPIt);
 	#endif
-		cpf.stop();
-	
+		cpf1.stop();
+		*/
+		PerformanceTimer cpf1("Cells 1");
+		BOOST_FOREACH(WorldCell* c, _cellVec) if(!c->isValid()) c->prebuild1();
+		cpf1.stop();
 		PerformanceTimer cpf2("Cells 2");
-		BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
+		BOOST_FOREACH(WorldCell* c, _cellVec) if(!c->isValid()) c->prebuild2();
 		cpf2.stop();
+		PerformanceTimer cpfb("Cell BuildMesh");
+		BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
+		cpfb.stop();
 	
 		PerformanceTimer renpf("Render");
 		if (_camera)
 			Root::getSingleton().renderOneFrame();
 		renpf.stop();
 	
-		LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf.toString()
-			+" - "+cpf2.toString()+" - "+renpf.toString());
+		LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf1.toString()
+			+" - "+cpf2.toString()+" - "+cpfb.toString()+" - "+renpf.toString());
 	} 
 	catch(Exception &e)
 	{

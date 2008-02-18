@@ -374,7 +374,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				break;
 			}
 
-			if (roadCount >= 39)
+			if (roadCount == 15)
 			{
 				size_t z = 0;
 			}
@@ -478,6 +478,16 @@ void WorldCell::prebuild()
 	if(_displayMode >= view_box) prebuildBuildings();
 }
 
+void WorldCell::prebuild1()
+{
+	if(_displayMode >= view_cell) prebuildRoads();
+}
+
+void WorldCell::prebuild2()
+{
+	if(_displayMode >= view_box) prebuildBuildings();
+}
+
 
 void WorldCell::prebuildRoads()
 {
@@ -574,6 +584,7 @@ void WorldCell::build()
 	destroySceneObject();
 	if(_displayMode >= view_cell) buildRoads();
 	if(_displayMode >= view_box) buildBuildings();
+	if(_genParams._debug) buildDebugOverlay();
 }
 
 void WorldCell::buildRoads()
@@ -1084,52 +1095,244 @@ void WorldCell::setDisplayMode(Display mode)
 	}
 	_displayMode = mode;
 }
-/*
-void WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
-		vector<Vector3> &poly)
-{
-	size_t i, j, N = cycle.size();
-	vector<Real> insets;
-	poly.reserve(cycle.size());
-	insets.reserve(cycle.size());
 
-	for (i=0; i<N; i++)
-	{
-		j = (i+1)%N;
-		poly.push_back(cycle[i]->getPosition3D());
-		insets.push_back(_roadGraph.getRoad(_roadGraph.getRoadId(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth());
-	}
-	Geometry::polygonInset(insets, poly);
-}
-*/
-
-
-void WorldCell::constructInsetVertexList(const vector<NodeInterface*> &cycle, list<InsetVertex> &ivList)
+void WorldCell::constructSLAV(const vector<NodeInterface*> &cycle, SLAV &sv)
 {
 	size_t i,j,N = cycle.size();
-	Vector3 lastPos = cycle[N-1]->getPosition3D();
+	assert(N >= 3);
 	Real lastInset = _roadGraph.getRoad(_roadGraph.getRoadId(cycle[N-1]->_nodeId, cycle[0]->_nodeId))->getWidth();
+	size_t lastI = N-1;
 	for(i=0; i<N; i++)
 	{
 		j = (i+1) % N;
-		InsetVertex insetVx;
-		insetVx._pos = cycle[i]->getPosition3D();
-		insetVx._inset = _roadGraph.getRoad(_roadGraph.getRoadId(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth();
-		insetVx._insetTarget = Geometry::calcInsetTarget(lastPos, cycle[i]->getPosition3D(), 
-				cycle[j]->getPosition3D(), lastInset, insetVx._inset);
-		insetVx._intersectionTested = false;
-		ivList.insert(ivList.end(), insetVx);
+		InsetVertex *iv = new InsetVertex();
+		iv->_intersectionTested = false;
+		iv->_inset = _roadGraph.getRoad(_roadGraph.getRoadId(cycle[i]->_nodeId, cycle[j]->_nodeId))->getWidth();
 
-		// update last vars for next loop iteration
-		lastPos = insetVx._pos;
-		lastInset = insetVx._inset;
+		// a special case is required for the end node of filaments
+		if(cycle[i]->getDegree()==1)
+		{	
+			// create two vertices in place of one point to create a cap for the segment end
+			Vector2 pos2D(cycle[i]->getPosition2D());
+			Vector3 pos3D(cycle[i]->getPosition3D());
+			Vector2 segmentVec = pos2D -  cycle[lastI]->getPosition2D();
+			segmentVec.normalise();
+			Vector2 segmentPerp = segmentVec.perpendicular();
+			
+			// Note: Two different approaches are possible to creating the inset vectors
+			// a: create both points with the target = position and do not test
+			// b: move pos slightly so that intersection is not detected
+			// -- i've chosen b, which is slighty more expensive but less problematic later
+			segmentVec *= iv->_inset;
+			segmentPerp *= iv->_inset;
+			iv->_insetTarget = pos2D + segmentVec + segmentPerp;
+			iv->_pos.x = pos3D.x + (0.001) * segmentPerp.x;
+			iv->_pos.y = pos3D.y;
+			iv->_pos.z = pos3D.z + (0.001) * segmentPerp.y;
+			sv.add(iv);
+			
+			InsetVertex *iv2 = new InsetVertex();
+			iv2->_intersectionTested = false;
+			iv2->_inset = iv->_inset;
+			iv2->_insetTarget = pos2D + segmentVec - segmentPerp;
+			iv2->_pos.x = pos3D.x - (0.001) * segmentPerp.x;
+			iv2->_pos.y = pos3D.y;
+			iv2->_pos.z = pos3D.z - (0.001) * segmentPerp.y;
+			sv.add(iv2);
+		}
+		else
+		{
+			iv->_insetTarget = Geometry::calcInsetTarget(cycle[lastI]->getPosition3D(), cycle[i]->getPosition3D(), 
+				cycle[j]->getPosition3D(), lastInset, iv->_inset);
+			iv->_pos = cycle[i]->getPosition3D();
+			sv.add(iv);
+		}
+		lastI = i;
+		lastInset = iv->_inset;
 	}
 }
 
 void WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
 		vector<Vector3> &poly)
 {
-	list<InsetVertex> ivList;
-	constructInsetVertexList(cycle, ivList);
-	Geometry::processInset(ivList, poly);
+	SLAV sv;
+	constructSLAV(cycle, sv);
+	Skeletor::processInset(sv, poly);
+}
+
+void WorldCell::buildDebugOverlay()
+{
+
+	// vis
+	queue<vector<pair<Vector3, Vector3> > > insetPairsSet;
+
+	if(_debugMO)
+	{
+		_sceneNode->detachObject(_debugMO);
+		delete _debugMO;
+	}
+	_debugMO = new ManualObject(_name+"Debug");
+
+	// extract cycles
+	vector< vector<NodeInterface*> > cycles;
+	_roadGraph.extractFootprints(cycles, _genParams._lotWidth);
+
+	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
+	{
+		// inset data
+		vector< vector<Vector3> > polysOut;
+		SLAV sv;
+		constructSLAV(cycle, sv);
+
+		while(true)
+		{
+			///////////////////////////////////////////////////////////////////
+			// 1. Intersection test for all inset vectors
+			///////////////////////////////////////////////////////////////////
+			
+			// find the earliest intersection
+			Real intersectionLocation = 1;
+			Vector2 intersection;
+			InsetVertex *iv,*firstOffender, *secondOffender;
+
+			iv = sv.getRoot();
+			do
+			{
+				if(!iv->_intersectionTested)
+				{
+					Vector2 ivPos2D(iv->_pos.x, iv->_pos.z);
+					Vector2 nextIvPos2D(iv->_right->_pos.x, iv->_right->_pos.z);
+
+					// check if the pair intersect and store the lowest
+					Real r;
+					Vector2 tmpInscn;
+					if(Geometry::lineIntersect(ivPos2D, iv->_insetTarget, 
+							nextIvPos2D, iv->_right->_insetTarget, tmpInscn, r) &&
+							r >= 0 && r <= 1)
+					{
+						// TODO: tolerance value could be used here
+						if(r < intersectionLocation) 
+						{
+							intersectionLocation = r;
+							firstOffender = iv;
+							secondOffender = iv->_right;
+							intersection = tmpInscn;
+						}
+					}
+					else
+						iv->_intersectionTested = true;
+				}
+				iv = iv->_right;
+			}
+			while(iv != sv.getRoot());
+			
+			///////////////////////////////////////////////////////////////////
+			// 2. Process Bisector Intersection
+			///////////////////////////////////////////////////////////////////
+			
+			// find the closest intersection
+			if(intersectionLocation != 1.0)
+			{
+// DIRTY VIS BASTARD
+				{
+					vector< pair<Vector3, Vector3> > insetPairs;
+					iv = sv.getRoot();
+					do
+					{
+						pair<Vector3, Vector3> insetPair;
+						insetPair.first = iv->_pos;
+						insetPair.second.x = iv->_pos.x + intersectionLocation * (iv->_insetTarget.x - iv->_pos.x);
+						insetPair.second.y = iv->_pos.y;
+						insetPair.second.z = iv->_pos.z + intersectionLocation * (iv->_insetTarget.y - iv->_pos.z);
+						insetPairs.push_back(insetPair);
+						iv = iv->_right;
+					}
+					while(iv != sv.getRoot());
+					insetPairsSet.push(insetPairs);
+				}
+// end
+				// remove the first offender
+				sv.remove(firstOffender);
+
+				// if there is a valid polygon remaining
+				if(sv.getSize() >= 3)
+				{
+					// update the pos and inset of the remaining vertices
+					iv = sv.getRoot();
+					do
+					{
+						iv->_pos.x = iv->_pos.x + intersectionLocation * (iv->_insetTarget.x - iv->_pos.x);
+						iv->_pos.z = iv->_pos.z + intersectionLocation * (iv->_insetTarget.y - iv->_pos.z);
+						iv->_inset = iv->_inset * (1 - intersectionLocation);
+						iv = iv->_right;
+					}
+					while(iv != sv.getRoot());
+					
+					// update the second offender
+					
+					//LogManager::getSingleton().logMessage("Int:"+StringConverter::toString(intersection));
+					secondOffender->_pos.x = intersection.x;
+					secondOffender->_pos.z = intersection.y;
+					secondOffender->_insetTarget = Geometry::calcInsetTarget(secondOffender->_left->_pos, secondOffender->_pos, 
+							secondOffender->_right->_pos, secondOffender->_left->_inset, secondOffender->_inset);
+
+					secondOffender->_intersectionTested = false;
+					secondOffender->_left->_intersectionTested = false;
+				}
+				else
+				{
+					LogManager::getSingleton().logMessage("Less than 3 vertices after collapse.");
+					continue;
+				}
+			}
+			else
+			{
+// DIRTY VIS BASTARD
+				{
+					vector< pair<Vector3, Vector3> > insetPairs;
+					iv = sv.getRoot();
+					do
+					{
+						pair<Vector3, Vector3> insetPair;
+						insetPair.first = iv->_pos;
+						insetPair.second.x = iv->_pos.x + intersectionLocation * (iv->_insetTarget.x - iv->_pos.x);
+						insetPair.second.y = iv->_pos.y;
+						insetPair.second.z = iv->_pos.z + intersectionLocation * (iv->_insetTarget.y - iv->_pos.z);
+						insetPairs.push_back(insetPair);
+						iv = iv->_right;
+					}
+					while(iv != sv.getRoot());
+					insetPairsSet.push(insetPairs);
+				}
+// end
+				//LogManager::getSingleton().logMessage("Valid.");
+				break;
+			}
+		}
+			// vis
+		size_t col = 0;
+		while(!insetPairsSet.empty())
+		{
+			vector<pair<Vector3, Vector3> > insetPairs = insetPairsSet.front();
+			insetPairsSet.pop();
+			_debugMO->begin("gk/Hilite/Rainbow"+StringConverter::toString(col%6), Ogre::RenderOperation::OT_LINE_LIST);
+			for(size_t i=0; i<insetPairs.size(); i++)
+			{
+				_debugMO->position(insetPairs[i].first);
+				_debugMO->position(insetPairs[i].second);
+			}
+			_debugMO->end();
+			col++;
+
+			_debugMO->begin("gk/Default", Ogre::RenderOperation::OT_LINE_LIST);
+			for(size_t i=0; i<insetPairs.size(); i++)
+			{
+				size_t j = (i+1)%insetPairs.size();
+				_debugMO->position(insetPairs[i].second);
+				_debugMO->position(insetPairs[j].second);
+			}
+			_debugMO->end();
+		}
+	}
+	_sceneNode->attachObject(_debugMO);
 }

@@ -34,7 +34,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 	for(i=0; i<N; i++) outerBoundary[i].y += gp._footpathHeight;
 	innerBoundary.insert(innerBoundary.end(), outerBoundary.begin(), outerBoundary.end());
 
-	if(Geometry::polygonInsetFast(gp._footpathWidth, innerBoundary))
+	if(Geometry::polygonInset(gp._footpathWidth, innerBoundary))
 	{
 		// if the inner boundary has a different number of vertices
 		if(innerBoundary.size() != N)
@@ -44,7 +44,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 			N2 = N * 2;
 			vector<Vector3> tmp;
 			tmp.insert(tmp.end(), innerBoundary.begin(), innerBoundary.end());
-			if(!Geometry::polygonInsetFast(-gp._footpathWidth, tmp)) return;
+			if(!Geometry::polygonInset(-gp._footpathWidth, tmp)) return;
 			if(tmp.size() != N)
 			{
 				//LogManager::getSingleton().logMessage("Outset Fail!!");
@@ -143,7 +143,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 	vector<uint16> tmp;
 	if(!Triangulate::Process(innerBoundary, tmp))
 	{
-		//LogManager::getSingleton().logMessage("Boundary Fail!!"+StringConverter::toString(N));
+		LogManager::getSingleton().logMessage("Boundary Fail!!"+StringConverter::toString(N));
 		if(!Geometry::polyRepair(innerBoundary, 100))
 		{
 			_footpathVertexData.clear();
@@ -153,6 +153,7 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 		}
 		else
 		{
+			LogManager::getSingleton().logMessage("Polygon Repaired!!");
 			mb->registerData(materials[materials.size()-1], _footpathVertexData, _footpathPolys);
 			N = innerBoundary.size();
 			N2 = N * 2;

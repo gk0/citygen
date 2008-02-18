@@ -80,6 +80,8 @@ public:
 
 	void build();
 	void prebuild();
+	void prebuild1();
+	void prebuild2();
 	bool isInside(const Ogre::Vector2 &loc) const;
 	bool isBoundaryNode(const NodeInterface *ni) const;
 	bool compareBoundary(const std::vector<NodeInterface*>& nodeCycle) const;
@@ -141,8 +143,9 @@ private:
 	void buildBuildings();
 	void prebuildRoads();
 	void prebuildBuildings();
-	void constructInsetVertexList(const std::vector<NodeInterface*> &cycle, std::list<InsetVertex> &ivList);
+	void constructSLAV(const std::vector<NodeInterface*> &cycle, SLAV &sv);
 
+	void buildDebugOverlay();
 };
 
 #endif
