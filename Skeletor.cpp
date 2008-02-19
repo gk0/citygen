@@ -102,8 +102,8 @@ bool Skeletor::processInset(SLAV &sv, vector<Vector3> &poly)
 		
 		// find the earliest intersection
 		Real intersectionLocation = 1;
-		Vector2 intersection;
-		InsetVertex *iv,*firstOffender, *secondOffender;
+		Vector2 intersection(Vector2::ZERO);
+		InsetVertex *iv,*firstOffender=0;
 
 		iv = sv.getRoot();
 		do
@@ -125,7 +125,6 @@ bool Skeletor::processInset(SLAV &sv, vector<Vector3> &poly)
 					{
 						intersectionLocation = r;
 						firstOffender = iv;
-						secondOffender = iv->_right;
 						intersection = tmpInscn;
 					}
 				}
@@ -144,6 +143,7 @@ bool Skeletor::processInset(SLAV &sv, vector<Vector3> &poly)
 		if(intersectionLocation != 1.0)
 		{
 			// remove the first offender
+			InsetVertex *secondOffender=firstOffender->_right;
 			sv.remove(firstOffender);
 
 			// if there is a valid polygon remaining
@@ -161,8 +161,6 @@ bool Skeletor::processInset(SLAV &sv, vector<Vector3> &poly)
 				while(iv != sv.getRoot());
 				
 				// update the second offender
-				
-				//LogManager::getSingleton().logMessage("Int:"+StringConverter::toString(intersection));
 				secondOffender->_pos.x = intersection.x;
 				secondOffender->_pos.z = intersection.y;
 				secondOffender->_insetTarget = Geometry::calcInsetTarget(secondOffender->_left->_pos, secondOffender->_pos, 
@@ -173,7 +171,7 @@ bool Skeletor::processInset(SLAV &sv, vector<Vector3> &poly)
 			}
 			else
 			{
-				LogManager::getSingleton().logMessage("Less than 3 vertices after collapse.");
+				//LogManager::getSingleton().logMessage("Less than 3 vertices after collapse.");
 				return false;
 			}
 		}

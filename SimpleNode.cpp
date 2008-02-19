@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SimpleNode.h"
 #include "WorldFrame.h"
+#include "WorldRoad.h"
 #include "RoadGraph.h"
 #include "Triangulate.h"
 #include "RoadInterface.h"
@@ -147,8 +148,8 @@ pair<Vector3, Vector3> SimpleNode::getRoadJunction(RoadId rd)
 	if(rIt == _roadJunction.end())
 	{
 		//size_t degree = _roadGraph.getDegree(mNodeId);
-		throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "SimpleNode::getRoadJunction");
-		//LogManager::getSingleton().logMessage("SimpleNode road not found.", LML_CRITICAL);
+		//throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not found", "SimpleNode::getRoadJunction");
+		LogManager::getSingleton().logMessage("Error: SimpleNode road not found.", LML_CRITICAL);
 		return make_pair(getPosition3D(), getPosition3D());
 	}
 

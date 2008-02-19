@@ -520,7 +520,7 @@ void ColladaDoc::addMaterial(Material *m)
 	replace(id.begin(), id.end(), '/', '_');
 	Ogre::Technique* t = m->getBestTechnique();
 	string tex1, tex2;
-	Ogre::Pass* p;
+	Ogre::Pass* p=0;
 
 	unsigned short numOfPasses = static_cast<unsigned short>(t->getNumPasses());
 	if(numOfPasses != 0) 
@@ -539,6 +539,7 @@ void ColladaDoc::addMaterial(Material *m)
 			if(tex1 != string("")) break;
 		}
 	}
+	if(p==0) return;
 	
 	// add the image
 	//////////////////////////////////////////////////////////////////////////

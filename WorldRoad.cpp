@@ -824,7 +824,7 @@ bool WorldRoad::loadXML(const TiXmlHandle& roadRoot)
 			}else if(key == "sampleSize")
 				element->QueryFloatAttribute("value", &_genParams._sampleSize);
 			else if(key == "sampleDeviance"){
-				Real sd;
+				Real sd=0;
 				element->QueryFloatAttribute("value", &sd);
 				_genParams._sampleDeviance = Degree(sd);
 			}else if(key == "roadWidth")
@@ -832,7 +832,7 @@ bool WorldRoad::loadXML(const TiXmlHandle& roadRoot)
 			else if(key == "segmentDrawSize")
 				element->QueryFloatAttribute("value", &_genParams._segmentDrawSize);
 			else if(key == "numOfSamples") {
-				int nos;
+				int nos=1;
 				element->QueryIntAttribute("value", &nos);
 				_genParams._numOfSamples = static_cast<uint16>(nos);
 			}else if(key == "debug") {
@@ -1066,9 +1066,9 @@ int WorldRoad::snapInfo(Ogre::Real snapSz, Vector2& pos, WorldNode*& wn, WorldRo
 	else if(intersection == true)
 	{
 		//TODO: interpolate point on spline
-		RoadInterface* ri = _roadGraph.getRoad(rd);
+		RoadInterface *ri = _roadGraph.getRoad(rd);
 		assert(typeid(*ri) == typeid(WorldRoad));
-		wr = static_cast<WorldRoad*>(_roadGraph.getRoad(rd));
+		wr = static_cast<WorldRoad*>(ri);
 		return 1;
 	}
 	else return 0;
@@ -1115,5 +1115,4 @@ void WorldRoad::setSelected(bool selected)
 	_selected = selected;
 	if(_entity)
 		_selected ? _entity->setMaterialName("gk/Hilite/RedRoad") : _entity->setMaterialName("gk/Road");
-	int moo = 0;
 }

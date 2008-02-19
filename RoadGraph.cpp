@@ -14,10 +14,6 @@ using namespace std;
 using namespace boost;
 using namespace Ogre;
 
-RoadGraph::RoadGraph()
-{
-}
-
 bool RoadGraph::addRoad(const NodeId nd1, const NodeId nd2, RoadId& rd)
 {
 	assert(nd1 != nd2);
@@ -478,22 +474,6 @@ NodeId RoadGraph::getSecondAdjacent(NodeId nd, const Graph &g)
 	return *nIt;
 }
 
-bool RoadGraph::roadIntersection(const Vector2& a, const Vector2& b,
-		const RoadId rd, Vector2& intersection) const
-{
-	// get some values for our points
-	return Geometry::lineSegmentIntersect(a, b, getNode(getSrc(rd))->getPosition2D(), getNode(getDst(rd))->getPosition2D(), intersection);
-
-}
-
-bool RoadGraph::roadIntersection(const RoadId rd1, const RoadId rd2,
-		Vector2& intersection) const
-{
-	// get some values for our points
-	return Geometry::lineSegmentIntersect(getNode(getSrc(rd1))->getPosition2D(), getNode(getDst(rd1))->getPosition2D(), getNode(getSrc(rd2))->getPosition2D(), getNode(getDst(rd2))->getPosition2D(), intersection);
-
-}
-
 bool RoadGraph::getNodeClosest(const Ogre::Vector2 &loc, NodeId &nd,
 		Ogre::Real &distance) const
 {
@@ -530,20 +510,6 @@ bool RoadGraph::getNodeClosestSq(const Ogre::Vector2 &loc, NodeId &nd,
 	return success;
 }
 
-bool RoadGraph::hasIntersection(const Vector2& a, const Vector2& b, Vector2& pos) const
-{
-	Vector2 currentIntersection;
-	BOOST_FOREACH(RoadId rd, edges(_graph))
-	{
-		if(roadIntersection(a, b, rd, currentIntersection))
-		{
-			pos = currentIntersection;
-			return true;
-		}
-	}
-	return false;
-}
-
 bool RoadGraph::hasIntersection(const RoadId roadId)
 {
 	// prepare the ignore list used to avoid returning 
@@ -566,47 +532,14 @@ bool RoadGraph::hasIntersection(const RoadId roadId)
 		if(ignoreIt == ignoreList.end())
 		{
 			Vector2 intersection;
-			if(roadIntersection(roadId, rd, intersection))
-			return true;
+			if(Geometry::lineSegmentIntersect(getNode(getSrc(roadId))->getPosition2D(), getNode(getDst(roadId))->getPosition2D(), 
+				getNode(getSrc(rd))->getPosition2D(), getNode(getDst(rd))->getPosition2D(), intersection))
+				return true;
 		}
 	}
 	return false;
 }
-/*
-Vector2 RoadGraph::getRoadBounaryIntersection(const RoadId leftR,
-		const RoadId rightR)
-{
-	Real lWidth, rWidth;
-	Vector2 l1, l2, r1, r2, lOffset, rOffset;
 
-	l1 = getSrcNode(leftR)->getPosition2D();
-	l2 = getDstNode(leftR)->getPosition2D();
-	r1 = getSrcNode(rightR)->getPosition2D();
-	r2 = getDstNode(rightR)->getPosition2D();
-
-	lWidth = getRoad(leftR)->getWidth();
-	rWidth = getRoad(rightR)->getWidth();
-
-	lOffset = (l2 - l1).perpendicular();
-	lOffset.normalise();
-	lOffset *= lWidth;
-
-	rOffset = (r2 - r1).perpendicular();
-	rOffset.normalise();
-	rOffset *= rWidth;
-
-	l1 -= lOffset;
-	l2 -= lOffset;
-	r1 += rOffset;
-	r2 += rOffset;
-
-	// if parallel, use l1 as pos
-	Vector2 pos;
-	if (Geometry::lineIntersect(l1, l2, r1, r2, pos))
-		return pos;
-	else
-		return l1;
-}*/
 
 bool RoadGraph::snapToNode(const Vector2& pos, const Real& snapSzSq,
 		NodeId& nodeId) const
@@ -924,13 +857,12 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 
 }
 
-
 bool RoadGraph::findClosestIntersection(const std::vector<NodeId>& ignore,
 		const Vector2& b, const Real snapSz, Vector2& pos, RoadId& roadId) const
 {
 	// function vars
 	Real bR, bS, cR, cS, dR, dS, lowestR=std::numeric_limits<Real>::max();
-	Vector2 bestPoint;
+	Vector2 bestPoint(Vector2::ZERO);
 	RoadId intersectingRoad;
 
 	// get vars for seg AB
@@ -1038,7 +970,7 @@ bool RoadGraph::findClosestRoad(const NodeId aNode, const Real snapSz,
 {
 	// function vars
 	Real currentDistance, closestDistanceSq=std::numeric_limits<Real>::max();
-	Vector2 bestPoint, a(getNode(aNode)->getPosition2D());
+	Vector2 bestPoint(Vector2::ZERO), a(getNode(aNode)->getPosition2D());
 	RoadId intersectingRoad;
 	Real snapSzSq = Math::Sqr(snapSz);
 
@@ -1366,4 +1298,3 @@ void RoadGraph::extractFilamentF(NodeId v0, NodeId v1, Graph &g,
 		}
 	}
 }
-

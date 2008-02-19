@@ -202,11 +202,8 @@ bool cmpRd(const WorldRoad* l, const WorldRoad* r)
 void WorldCell::generateRoadNetwork(rando genRandom)
 {
 	queue< pair<NodeInterface*, Vector2> > q;
-	//TODO tidy
 
-	Ogre::Real snapSzSquared = _genParams._snapSize * _genParams._snapSize;
-
-	// 
+	// TODO: tidy me up
 	bool centreSuccess = false;
 	if (_genParams._connectivity >= 1.0f)
 	{
@@ -555,28 +552,24 @@ void WorldCell::prebuildBuildings()
 	vector< vector<NodeInterface*> > cycles;
 	_roadGraph.extractFootprints(cycles, _genParams._lotWidth);
 
-
-	size_t fail_count = 0;
 	size_t blockErrors = 0;
 	_blocks.reserve(cycles.size());
 	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
 	{
 		vector<Vector3> poly;
-		extractPolygon(cycle, poly);
-		
-		//vector<uint16> indices;
-		//if(!Triangulate::Process(poly, indices)) fail_count++;
-
-		WorldBlock* b = new WorldBlock(poly, _genParams, rg, _mbBuildings, materials, _genParams._debug);
-		if(b->_error) 
+		if(extractPolygon(cycle, poly))
 		{
-			blockErrors++;
-			delete b;
+			WorldBlock* b = new WorldBlock(poly, _genParams, rg, _mbBuildings, materials, _genParams._debug);
+			if(b->_error) 
+			{
+				blockErrors++;
+				delete b;
+			}
+			else _blocks.push_back(b);
 		}
-		else _blocks.push_back(b);
+		else blockErrors++;
 	}
-	//LogManager::getSingleton().logMessage("Cell: "+_name+" fail count: "+StringConverter::toString(fail_count));
-	LogManager::getSingleton().logMessage(_name+"\tblock error count\t"+StringConverter::toString(blockErrors));
+	if(blockErrors > 0) LogManager::getSingleton().logMessage(_name+"\tblock error count\t"+StringConverter::toString(blockErrors));
 }
 
 void WorldCell::build()
@@ -1152,12 +1145,12 @@ void WorldCell::constructSLAV(const vector<NodeInterface*> &cycle, SLAV &sv)
 	}
 }
 
-void WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
+bool WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
 		vector<Vector3> &poly)
 {
 	SLAV sv;
 	constructSLAV(cycle, sv);
-	Skeletor::processInset(sv, poly);
+	return Skeletor::processInset(sv, poly);
 }
 
 void WorldCell::buildDebugOverlay()
@@ -1192,8 +1185,8 @@ void WorldCell::buildDebugOverlay()
 			
 			// find the earliest intersection
 			Real intersectionLocation = 1;
-			Vector2 intersection;
-			InsetVertex *iv,*firstOffender, *secondOffender;
+			Vector2 intersection(Vector2::ZERO);
+			InsetVertex *iv,*firstOffender=0;
 
 			iv = sv.getRoot();
 			do
@@ -1215,7 +1208,6 @@ void WorldCell::buildDebugOverlay()
 						{
 							intersectionLocation = r;
 							firstOffender = iv;
-							secondOffender = iv->_right;
 							intersection = tmpInscn;
 						}
 					}
@@ -1252,6 +1244,7 @@ void WorldCell::buildDebugOverlay()
 				}
 // end
 				// remove the first offender
+				InsetVertex *secondOffender = firstOffender->_right;
 				sv.remove(firstOffender);
 
 				// if there is a valid polygon remaining
@@ -1281,7 +1274,7 @@ void WorldCell::buildDebugOverlay()
 				}
 				else
 				{
-					LogManager::getSingleton().logMessage("Less than 3 vertices after collapse.");
+					//LogManager::getSingleton().logMessage("Less than 3 vertices after collapse.");
 					continue;
 				}
 			}

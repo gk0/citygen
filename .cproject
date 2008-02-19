@@ -90,6 +90,7 @@
 
 
 
+
 <storageModule moduleId="scannerConfiguration">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
 <profile id="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfile">
@@ -1427,6 +1428,7 @@
 
 
 
+
 <storageModule moduleId="scannerConfiguration">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
 <profile id="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfile">
@@ -2698,10 +2700,10 @@
 <option id="gnu.cpp.compiler.option.include.paths.688317315" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;../../boost_1_34_1&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../OgreSDK_mingw/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/lib/gcc_lib/mswu/wx/msw&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/lib/gcc_lib/mswu&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/contrib/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.7/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.7/lib/gcc_lib/mswu/wx/msw&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.7/lib/gcc_lib/mswu&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.7/contrib/include&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../tinyxml&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.preprocessor.def.1644027093" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -2720,9 +2722,9 @@
 <tool command="g++ -mwindows" id="cdt.managedbuild.tool.gnu.cpp.linker.mingw.base.618156001" name="MinGW C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.mingw.base">
 <option id="gnu.cpp.link.option.libs.42048664" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="wxmsw28u_propgrid"/>
-<listOptionValue builtIn="false" value="boost_thread-mgw34-mt-s-1_34_1"/>
-<listOptionValue builtIn="false" value="boost_filesystem-mgw34-mt-s-1_34_1"/>
-<listOptionValue builtIn="false" value="boost_regex-mgw-mt-s-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_thread-mgw42-mt-s-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_filesystem-mgw42-mt-s-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_regex-mgw42-mt-s-1_34_1"/>
 <listOptionValue builtIn="false" value="wxmsw28u_aui"/>
 <listOptionValue builtIn="false" value="wxmsw28u_core"/>
 <listOptionValue builtIn="false" value="wxbase28u"/>
@@ -2751,7 +2753,7 @@
 <option id="gnu.cpp.link.option.paths.740994588" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="../../OgreSDK_mingw/bin/release"/>
 <listOptionValue builtIn="false" value="../../boost_1_34_1/lib"/>
-<listOptionValue builtIn="false" value="../../wxWidgets-2.8.6/lib/gcc_lib"/>
+<listOptionValue builtIn="false" value="../../wxWidgets-2.8.7/lib/gcc_lib"/>
 <listOptionValue builtIn="false" value="../../tinyxml/Release"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.719434655" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -2777,6 +2779,7 @@
 
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 <storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+
 
 
 
@@ -4039,7 +4042,7 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactExtension="exe" artifactName="citygen" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser" id="cdt.managedbuild.config.gnu.exe.debug.1848299287.2040117252" name="Debug MinGW" parent="cdt.managedbuild.config.gnu.exe.debug" postannouncebuildStep="" postbuildStep="strip" preannouncebuildStep="" prebuildStep="">
+<configuration artifactExtension="exe" artifactName="citygen" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.MakeErrorParser" id="cdt.managedbuild.config.gnu.exe.debug.1848299287.2040117252" name="Debug MinGW" parent="cdt.managedbuild.config.gnu.exe.debug" postannouncebuildStep="" postbuildStep="" preannouncebuildStep="" prebuildStep="">
 <folderInfo id="cdt.managedbuild.config.gnu.exe.debug.1848299287.2040117252." name="/" resourcePath="">
 <toolChain errorParsers="" id="cdt.managedbuild.toolchain.gnu.mingw.base.1402342496" name="MinGW GCC" superClass="cdt.managedbuild.toolchain.gnu.mingw.base">
 <targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.PE" id="cdt.managedbuild.target.gnu.platform.mingw.base.933485508" name="Debug Platform" osList="win32" superClass="cdt.managedbuild.target.gnu.platform.mingw.base"/>
@@ -4052,10 +4055,10 @@
 <option id="gnu.cpp.compiler.option.include.paths.819793048" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="&quot;../../boost_1_34_1&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../OgreSDK_mingw/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/include&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/lib/gcc_lib/mswud/wx/msw&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/lib/gcc_lib/mswud&quot;"/>
-<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.6/contrib/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.7/include&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.7/lib/gcc_lib/mswud/wx/msw&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.7/lib/gcc_lib/mswud&quot;"/>
+<listOptionValue builtIn="false" value="&quot;../../wxWidgets-2.8.7/contrib/include&quot;"/>
 <listOptionValue builtIn="false" value="&quot;../../tinyxml&quot;"/>
 </option>
 <option id="gnu.cpp.compiler.option.preprocessor.def.1761936704" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -4076,14 +4079,14 @@
 <tool errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="cdt.managedbuild.tool.gnu.cpp.linker.mingw.base.1708777065" name="MinGW C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.mingw.base">
 <option id="gnu.cpp.link.option.libs.1261365579" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="wxmsw28ud_propgrid"/>
-<listOptionValue builtIn="false" value="boost_thread-mgw34-mt-sd-1_34_1"/>
-<listOptionValue builtIn="false" value="boost_filesystem-mgw34-mt-sd-1_34_1"/>
-<listOptionValue builtIn="false" value="boost_regex-mgw34-mt-sd-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_thread-mgw42-mt-sd-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_filesystem-mgw42-mt-sd-1_34_1"/>
+<listOptionValue builtIn="false" value="boost_regex-mgw42-mt-sd-1_34_1"/>
 <listOptionValue builtIn="false" value="wxmsw28ud_aui"/>
 <listOptionValue builtIn="false" value="wxmsw28ud_core"/>
 <listOptionValue builtIn="false" value="wxbase28ud"/>
-<listOptionValue builtIn="false" value="wxzlibd"/>
 <listOptionValue builtIn="false" value="wxpngd"/>
+<listOptionValue builtIn="false" value="wxzlibd"/>
 <listOptionValue builtIn="false" value="wxjpeg"/>
 <listOptionValue builtIn="false" value="gdi32"/>
 <listOptionValue builtIn="false" value="tinyxml"/>
@@ -4104,7 +4107,7 @@
 <option id="gnu.cpp.link.option.paths.955154363" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
 <listOptionValue builtIn="false" value="../../OgreSDK_mingw/bin/debug"/>
 <listOptionValue builtIn="false" value="../../boost_1_34_1/lib"/>
-<listOptionValue builtIn="false" value="../../wxWidgets-2.8.6/lib/gcc_lib"/>
+<listOptionValue builtIn="false" value="../../wxWidgets-2.8.7/lib/gcc_lib"/>
 <listOptionValue builtIn="false" value="../../tinyxml/Debug"/>
 </option>
 <option id="gnu.cpp.link.option.userobjs.848456664" name="Other objects" superClass="gnu.cpp.link.option.userobjs" valueType="userObjs">
@@ -4149,6 +4152,7 @@
 
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 <storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+
 
 
 

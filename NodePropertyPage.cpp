@@ -82,7 +82,7 @@ void NodePropertyPage::Init()
 void NodePropertyPage::update()
 {
 	//get data from worldframe
-	Ogre::Vector3 nodePos;
+	Ogre::Vector3 nodePos(Ogre::Vector3::ZERO);
 	Ogre::String label;
 	WorldNode* wn = _worldFrame->getSelectedNode();
 	if(wn != 0)

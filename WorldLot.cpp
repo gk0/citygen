@@ -2,7 +2,6 @@
 #include "WorldLot.h"
 #include "Triangulate.h"
 #include "Geometry.h"
-#include "skeleton.h"
 #include "Statistics.h"
 
 using namespace Ogre;
@@ -124,33 +123,3 @@ LotBoundary WorldLot::insetBoundary(const LotBoundary &b, const Real &roadInset,
 	BOOST_FOREACH(Vector3& p, poly) newBoundary.push_back(LotBoundaryPoint(true, p));
 	return newBoundary;
 }
-/*
-void WorldLot::installVertexData(float*& vPtr)
-{
-	memcpy(vPtr, _vertexData, _vertexDataSz * sizeof(Real));
-	vPtr = vPtr + _vertexDataSz;
-}
-
-void WorldLot::installIndexData(Ogre::uint16*& iPtr, size_t& offset)
-{
-	memcpy(iPtr, _polyData, _polyDataSz * sizeof(uint16));
-	iPtr = iPtr + _polyDataSz;
-	//size_t i,N=_sidePolys.size();
-	//for(i=0; i<N; i+=3)
-	//{
-	//	*iPtr++ = offset + _sidePolys[i];//(offset);
-	//	*iPtr++ = offset + _sidePolys[i+1];//(offset+1);
-	//	*iPtr++ = offset + _sidePolys[i+2];
-	//}
-
-	////roof
-	//N=_roofPolys.size();
-	//for(i=0; i<N; i+=3)
-	//{
-	//	*iPtr++ = offset + _roofPolys[i];//(offset);
-	//	*iPtr++ = offset + _roofPolys[i+1];//(offset+1);
-	//	*iPtr++ = offset + _roofPolys[i+2];
-	//}
-	//offset += getVertexCount();
-}
-*/

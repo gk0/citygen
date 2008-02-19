@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "Geometry.h"
 #include "Triangulate.h"
-#include "skeleton.h"
 
+using namespace std;
 using namespace Ogre;
 
 Real Geometry::dotPerp(const Vector2& v0, const Vector2& v1)
@@ -32,7 +32,6 @@ Real Geometry::polygonArea(const std::vector<Vector2> &polyPoints)
 	area /= 2.0;
 	return area;
 }
-
 
 Vector2 Geometry::centerOfMass(const std::vector<Vector2> &polyPoints)
 {

@@ -259,8 +259,8 @@ void WorldFrame::createScene(void)
 	// Hey, it's the sun!
 	_mainLight = _sceneManager->createLight("SunLight");
 	_mainLight->setType(Light::LT_SPOTLIGHT);
-	_mainLight->setPosition(0,12000,10000);
-	_mainLight->setSpotlightRange(Degree(30), Degree(50));
+	_mainLight->setPosition(0,24000,20000);
+	_mainLight->setSpotlightRange(Degree(50), Degree(50));
 	_mainLight->setDirection(-_mainLight->getPosition().normalisedCopy());
 
 	_sceneManager->setAmbientLight(ColourValue(0.34, 0.34, 0.38));	// blueish
@@ -558,28 +558,37 @@ void WorldFrame::update()
 		PerformanceTimer rpf("Roads");
 		BOOST_FOREACH(WorldRoad* wr, _roadVec) wr->validate();
 		rpf.stop();
-	/*
-		PerformanceTimer cpf1("Cells 1");
+	
+	#ifdef THREADME
+	    PerformanceTimer cpf1("Cells");
 		pair<vector<WorldCell*>::iterator, vector<WorldCell*>::iterator> cPIt;
 		cPIt.first = _cellVec.begin();
 		cPIt.second = _cellVec.end();
-	
-	#ifdef THREADME
 		boost::thread thrd1(boost::bind(&prebuild, &cPIt));
 		boost::thread thrd2(boost::bind(&prebuild, &cPIt));
 		thrd1.join();
 		thrd2.join();
-	#else
-		prebuild(&cPIt);
-	#endif
 		cpf1.stop();
-		*/
+	#else
+		bool builtCell = false;
 		PerformanceTimer cpf1("Cells 1");
-		BOOST_FOREACH(WorldCell* c, _cellVec) if(!c->isValid()) c->prebuild1();
+		BOOST_FOREACH(WorldCell* c, _cellVec)
+			if(!c->isValid()) 
+			{
+				c->prebuild1();
+				builtCell = true;
+			}
 		cpf1.stop();
 		PerformanceTimer cpf2("Cells 2");
-		BOOST_FOREACH(WorldCell* c, _cellVec) if(!c->isValid()) c->prebuild2();
+		BOOST_FOREACH(WorldCell* c, _cellVec) 
+			if(!c->isValid()) 
+			{
+				c->prebuild2();
+				builtCell = true;
+			}
 		cpf2.stop();
+	#endif
+
 		PerformanceTimer cpfb("Cell BuildMesh");
 		BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
 		cpfb.stop();
@@ -588,9 +597,14 @@ void WorldFrame::update()
 		if (_camera)
 			Root::getSingleton().renderOneFrame();
 		renpf.stop();
-	
+#ifdef THREADME
 		LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf1.toString()
+			+" - "+cpfb.toString()+" - "+renpf.toString());
+#else
+		if(builtCell)
+			LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf1.toString()
 			+" - "+cpf2.toString()+" - "+cpfb.toString()+" - "+renpf.toString());
+#endif
 	} 
 	catch(Exception &e)
 	{
@@ -626,7 +640,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot, const std::string &filePa
 			string key = cameraChild->Value();
 			if (key == "position")
 			{
-				Real x, y, z;
+				Real x=0, y=0, z=0;
 				cameraChild->QueryFloatAttribute("x", &x);
 				cameraChild->QueryFloatAttribute("y", &y);
 				cameraChild->QueryFloatAttribute("z", &z);
@@ -643,7 +657,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot, const std::string &filePa
 			}
 			else if (key == "nodePosition")
 			{
-				Real x, y, z;
+				Real x=0, y=0, z=0;
 				cameraChild->QueryFloatAttribute("x", &x);
 				cameraChild->QueryFloatAttribute("y", &y);
 				cameraChild->QueryFloatAttribute("z", &z);
@@ -678,7 +692,7 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot, const std::string &filePa
 		string key = pElem->Value();
 		if (key == "node")
 		{
-			Real x, y;
+			Real x=0, y=0;
 			string strId = pElem->Attribute("id");
 			pElem->QueryFloatAttribute("x", &x);
 			pElem->QueryFloatAttribute("y", &y);
@@ -867,6 +881,9 @@ void WorldFrame::setToolsetMode(MainWindow::ToolsetMode mode)
 	// show any relevant selections
 	switch(mode)
 	{
+	case MainWindow::view:
+	case MainWindow::terr:
+		break;
 	case MainWindow::node:
 		if(_selectedNode) _selectedNode->setSelected(true);
 		break;

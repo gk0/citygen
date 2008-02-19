@@ -51,8 +51,6 @@ public:
 	Graph _graph;
 
 public:
-	RoadGraph();
-
 	inline NodeId addNode(NodeInterface* n)
 	{
 		return add_vertex(n, _graph);
@@ -148,17 +146,11 @@ public:
 	bool findRoad(const NodeId nd1, const NodeId nd2, RoadId &rd) const;
 	bool testRoad(const NodeId nd1, const NodeId nd2) const;
 
-	bool roadIntersection(const RoadId rd1, const RoadId rd2, Ogre::Vector2& intersection) const;
-	bool roadIntersection(const Ogre::Vector2& a, const Ogre::Vector2& b, 
-		const RoadId rd, Ogre::Vector2& intersection) const;
-
 	bool getNodeClosest(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Real &distance) const;
 	bool getNodeClosestSq(const Ogre::Vector2 &loc, NodeId &nd, Ogre::Real &distance) const;
 
-	bool snapToRoadNode(const Ogre::Vector2& pos, const RoadId& rd, const Ogre::Real& snapSzSq, NodeId& nd) const;
 	bool snapToNode(const Ogre::Vector2& pos, const Ogre::Real& snapSzSq, NodeId& nd) const;
 
-	bool hasIntersection(const Ogre::Vector2& a, const Ogre::Vector2& b, Ogre::Vector2& pos) const;
 	bool hasIntersection(const RoadId rd);
 
 	void extractPrimitives(std::vector< std::vector<NodeInterface*> > &filaments, 
@@ -178,9 +170,6 @@ public:
 	{
 		return getCounterClockwiseMostFromPrev(prev, vcurr, vnext, _graph);
 	}
-
-//	Ogre::Vector2 getRoadBounaryIntersection(const RoadId leftR, const RoadId rightR);
-
 
 	int snapInfo(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
 		Ogre::Vector3& pos, NodeId &nd, RoadId& rd) const;
@@ -222,10 +211,7 @@ public:
 
 	static void removeFromHeap(NodeId v0, std::list<NodeId>& heap);
 	static NodeId getFirstAdjacent(NodeId nd, const Graph &g);
-	//static RoadId getFirstRoad(NodeId nd, const Graph &g);
-
 	static NodeId getSecondAdjacent(NodeId nd, const Graph &g);
-	//static RoadId getSecondRoad(NodeId nd, const Graph &g);
 
 	bool sortVertex(const NodeId& v0, const NodeId& v1) const;
 
