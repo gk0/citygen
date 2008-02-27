@@ -166,9 +166,9 @@ public:
 		 return getClockwiseMost(vcurr, vnext, _graph);
 	}
 
-	bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext)
+	bool getAntiClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext)
 	{
-		return getCounterClockwiseMostFromPrev(prev, vcurr, vnext, _graph);
+		return getAntiClockwiseMostFromPrev(prev, vcurr, vnext, _graph);
 	}
 
 	int snapInfo(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
@@ -199,8 +199,12 @@ public:
 
 //private:
 public:
+	static bool getClockwiseCycle(NodeId v0, NodeId v1, Graph &g, std::vector<NodeId> &cycle);
+	static bool getAntiClockwiseCycle(NodeId v0, NodeId v1, Graph &g, std::vector<NodeId> &cycle);
+
 	static bool getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g);
-	static bool getCounterClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext, const Graph &g);
+	static bool getClockwiseMostFromPrev(NodeId vprev, NodeId vcurr, NodeId& vnext, const Graph& g);
+	static bool getAntiClockwiseMostFromPrev(NodeId prev, NodeId vcurr, NodeId& vnext, const Graph &g);
 
 	static void extractFilament(NodeId v0, NodeId v1, Graph &g, std::list<NodeId>& heap, 
 		std::vector< std::vector<NodeInterface*> > &filaments);
@@ -215,22 +219,12 @@ public:
 
 	bool sortVertex(const NodeId& v0, const NodeId& v1) const;
 
-	void extractFootprints(std::vector< std::vector<Ogre::Vector2> > &polys, Ogre::Real num);
-
-	static void extractFilamentF(NodeId v0, NodeId v1, Graph &g, std::list<NodeId>& heap);
-
-	static void extractPrimitiveF(NodeId v0, Graph &g, std::list<NodeId>& heap, 
-		std::vector< std::vector<Ogre::Vector2> > &polys);
-
 	static Ogre::Vector2 getSuperIntscn(NodeId a, NodeId b, NodeId c, Graph& g);
 
 	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector2> &poly);
 
-	//Vector3 version
-	void extractFootprints(std::vector< std::vector<NodeInterface*> > &polys, Ogre::Real num);
-
-	static void extractPrimitiveF(NodeId v0, Graph &g, std::list<NodeId>& heap, 
-		std::vector< std::vector<NodeInterface*> > &polys);
+	void extractEnclosedRegions(
+		std::vector< std::vector<NodeInterface*> > &polys, size_t limit = 10000);
 
 	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector3> &poly);
 
@@ -241,6 +235,21 @@ private:
 
 	bool findClosestIntersection(const std::vector<NodeId>& ignore, const Ogre::Vector2& b, const Ogre::Real snapSz, 
 		Ogre::Vector2& pos, RoadId& rd) const;
+
+	void calculateBoundingBoxFriends(const Ogre::Vector2& a, const Ogre::Vector2& b, 
+		const Ogre::Real snapSz, std::vector< RoadId > &possibleRoads, std::vector< RoadId > &possibleWrRoads,
+		std::vector< NodeId > &possibleNodes, std::vector<NodeId> &possibleNodesOnWr) const;
+
+	bool findClosestNodeSnap(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
+							const std::vector< NodeId > &nodes, Ogre::Real &lowestR, NodeId &snapNode) const;
+
+	bool findClosestRoadIntersection(const NodeId aNode, const Ogre::Vector2& b, const std::vector<RoadId> &roads, 
+								Ogre::Real &lowestR, RoadId &iRoad, Ogre::Vector3& iPoint) const;
+
+	bool snapToRoadNode(const Ogre::Vector3 &p, const Ogre::Real snapSz, const RoadId rd, NodeId &nd) const;
+
+	bool findClosestSnapRoad(const Ogre::Vector2& b, const std::vector<RoadId> &roads, Ogre::Real &closestDist,
+									RoadId &sRoad, Ogre::Vector3& sPoint) const;
 };
 
 #endif

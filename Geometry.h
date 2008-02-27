@@ -460,25 +460,28 @@ public:
 	static void polyRepairCycle(std::vector<Ogre::Vector3> &poly, size_t lookAhead);
 
 	inline static Ogre::Vector2 calcInsetTarget(const Ogre::Vector3& a, 
-		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &insetAB, const Ogre::Real &insetBC)
+		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &inset)
 	{
 		Ogre::Vector2 normVecBA(calcNormVec2D(b, a));
 		Ogre::Vector2 normVecBC(calcNormVec2D(b, c));
-	
+		Ogre::Vector2 normVecBCPerp(normVecBC.perpendicular());
+		Ogre::Vector2 bisectorVector2(-normVecBA.perpendicular() + normVecBCPerp);
+		bisectorVector2.normalise();
+		return V2(b) + bisectorVector2 * (inset / bisectorVector2.dotProduct(normVecBCPerp));
+	}
+
+	inline static Ogre::Vector2 calcInsetTarget(const Ogre::Vector3& a, 
+		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &insetAB, const Ogre::Real &insetBC)
+	{
 		if(insetAB == insetBC)
-		{
-			Ogre::Vector2 normVecBCPerp(normVecBC.perpendicular());
-			Ogre::Vector2 bisectorVector2(-normVecBA.perpendicular() + normVecBCPerp);
-			bisectorVector2.normalise();
-			return V2(b) + bisectorVector2 * (insetAB / bisectorVector2.dotProduct(normVecBCPerp));
-		}
-		else
-		{
-			Ogre::Real theta = std::atan2(normVecBC.y,normVecBC.x) - std::atan2(normVecBA.y,normVecBA.x);
-			if(theta < 0) theta = Ogre::Math::TWO_PI + theta;
-			Ogre::Real adj = insetAB / std::tan(theta) + insetBC / std::sin(theta);
-			return Ogre::Vector2(b.x, b.z) + (normVecBA * -adj) + -insetAB * normVecBA.perpendicular();
-		}
+			return calcInsetTarget(a,b,c,insetAB);
+		
+		Ogre::Vector2 normVecBA(calcNormVec2D(b, a));
+		Ogre::Vector2 normVecBC(calcNormVec2D(b, c));
+		Ogre::Real theta = std::atan2(normVecBC.y,normVecBC.x) - std::atan2(normVecBA.y,normVecBA.x);
+		if(theta < 0) theta = Ogre::Math::TWO_PI + theta;
+		Ogre::Real adj = insetAB / std::tan(theta) + insetBC / std::sin(theta);
+		return Ogre::Vector2(b.x, b.z) + (normVecBA * -adj) + -insetAB * normVecBA.perpendicular();
 	}
 
 #define gRAD15 Ogre::Math::PI/12
@@ -541,7 +544,5 @@ public:
 	}
 
 };
-
-
 
 #endif

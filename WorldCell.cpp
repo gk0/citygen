@@ -199,13 +199,97 @@ bool cmpRd(const WorldRoad* l, const WorldRoad* r)
 	return l->getLength() < r->getLength();
 }
 
+NodeInterface* WorldCell::placeSegment(rando &genRandom, NodeInterface* currentNode, Vector2 &cursor, size_t &roadCount)
+{
+	RoadId rd;
+	NodeId nd;
+	Vector3 newPoint;
+
+	// 6600 vs. 8600 debug
+	// 94 vs. 109 release
+	switch (_roadGraph.snapInfo(currentNode->_nodeId, cursor,
+			_genParams._snapSize, newPoint, nd, rd))
+	{
+	case 0:
+		// no intersection found
+		{
+			NodeInterface *cursorNode = createNode(cursor);
+			createRoad(currentNode, cursorNode);
+			roadCount++;
+			return cursorNode;
+			//q.push(make_pair<NodeInterface*, Vector2>(cursorNode,
+			//		currentDirection)); // enqueue
+		}
+	case 1:
+		{
+			//if(((float)rand()/(float)RAND_MAX) > _genParams._connectivity)
+			if (genRandom() > _genParams._connectivity)
+				return 0;
+
+			// road intersection
+			//NodeInterface *cursorNode = createNode(newPoint);
+			NodeInterface *cursorNode = new SimpleNode(_roadGraph);
+			NodeId cursorNodeId = _roadGraph.addNode(cursorNode);
+			cursorNode->_nodeId = cursorNodeId;
+			createRoad(currentNode, cursorNode);
+			roadCount++;
+
+			// get intersected source src and dst
+			RoadInterface *ri = _roadGraph.getRoad(rd);
+			NodeId srcNodeId = _roadGraph.getSrc(rd);
+			NodeId dstNodeId = _roadGraph.getDst(rd);
+
+			//if road is a boundary road
+			if (typeid(*ri) == typeid(WorldRoad))
+			{
+				cursorNode->setPosition3D(newPoint.x, newPoint.y, newPoint.z);
+				// remove road segment from graph
+				_roadGraph.removeRoad(srcNodeId, dstNodeId);
+
+				// create replacement segments
+				RoadId rd;
+				if (_roadGraph.addRoad(srcNodeId, cursorNodeId, rd))
+					_roadGraph.setRoad(rd, ri);
+				if (_roadGraph.addRoad(cursorNodeId, dstNodeId, rd))
+					_roadGraph.setRoad(rd, ri);
+			}
+			else
+			{
+				cursorNode->setPosition2D(newPoint.x, newPoint.z);
+				// delete the road rd
+				deleteRoad(ri);
+
+				// reconstruct road in the form of two segments
+				createRoad(_roadGraph.getNode(srcNodeId), cursorNode);
+				createRoad(cursorNode, _roadGraph.getNode(dstNodeId));
+			}
+			break;
+		}	
+	case 2:
+		// node snap
+		//if(((float)rand()/(float)RAND_MAX) > _genParams._connectivity)
+		if (genRandom() > _genParams._connectivity)
+			return 0;
+		// MMM: dont snap to your self ass monkey
+		if (currentNode != _roadGraph.getNode(nd))
+		{
+			createRoad(currentNode, _roadGraph.getNode(nd));
+			roadCount++;
+		}
+		break;
+	}
+	return 0;
+}
+
 void WorldCell::generateRoadNetwork(rando genRandom)
 {
 	queue< pair<NodeInterface*, Vector2> > q;
+	size_t roadCount = 0;
+	//return;
 
 	// TODO: tidy me up
 	bool centreSuccess = false;
-	if (_genParams._connectivity >= 1.0f)
+/*	if (_genParams._connectivity >= 1.0f)
 	{
 		// 2. Get Center as a start point !!return if its node inside the cell	
 		vector<Vector2> pointList;
@@ -224,12 +308,12 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 			RoadInterface *longest = getLongestBoundaryRoad();
 			Vector2 direction = longest->getSrcNode()->getPosition2D() - longest->getDstNode()->getPosition2D();
 			direction.normalise();
-			direction *= _genParams._segmentSize;
+			direction = direction.perpendicular() * _genParams._segmentSize;
 
 			q.push(make_pair<NodeInterface*, Vector2>(startNode, direction));
 			centreSuccess = true;
 		}
-	}
+	}*/
 
 	if (!centreSuccess)
 	{
@@ -252,8 +336,12 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 		// sort roads by length
 		std::sort(boundaryRoads.begin(), boundaryRoads.end(), CMP1231());
 
+		//
+		size_t numberOfRoadsToStartFrom = boundaryRoadsN/2;
+		if(_genParams._connectivity >= 1.0f) numberOfRoadsToStartFrom = 1;
+
 		// for half of the roads, the largest ones
-		for (size_t i=0; i<(boundaryRoadsN/2); i++)
+		for (size_t i=0; i<numberOfRoadsToStartFrom; i++)
 		{
 			// first node
 			Vector3 pos1_3D(boundaryRoads[i].second->getMidPoint());
@@ -266,14 +354,28 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 					- _boundaryCycle[j]->getPosition2D());
 			roadDir = roadDir.perpendicular();
 			roadDir.normalise();
-			Vector2 pos2 = pos1 + (roadDir * _genParams._segmentSize);
+			Vector2 pos2 = pos1 + (roadDir * _genParams._segmentSize*2.1);
 			pos1 -= (roadDir * _genParams._segmentSize);
 
 			NodeInterface* currentNode = 0;
 			if (!isInside(pos2))
 				continue;
 			currentNode = createNode(pos2);
-
+/*
+			NodeInterface* ni = placeSegment(genRandom, currentNode, pos1, roadCount);
+			if(ni)
+			{
+				RoadId rd = _roadGraph.getRoadId(currentNode->_nodeId, ni->_nodeId);
+				RoadInterface* ri = _roadGraph.getRoad(rd);
+				delete ri;
+				_roadGraph.removeRoad(rd);
+				NodeId nd = ni->_nodeId;
+				delete ni;
+				_roadGraph.removeNode(nd);
+			}
+			else
+				q.push(make_pair<NodeInterface*, Vector2>(currentNode, roadDir));
+*/
 			// alter adjoining boundary road
 			RoadId rd;
 			NodeId nd;
@@ -337,6 +439,8 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				q.push(make_pair<NodeInterface*, Vector2>(currentNode, roadDir));
 				break;
 			}
+
+
 		}
 	}
 
@@ -344,10 +448,6 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 	Ogre::Real segSzBase = _genParams._segmentSize - (segDevSz / 2);
 	Real degDev = _genParams._degree * _genParams._degreeDeviance;
 	Real degBase = _genParams._degree - (degDev / 2);
-
-	srand(_genParams._seed);
-
-	size_t roadCount = 0;
 
 	while (!q.empty())
 	{
@@ -359,11 +459,13 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 		//Ogre::Radian theta(Math::TWO_PI / (degBase + (degDev * ((float)rand()/(float)RAND_MAX))));
 		Ogre::Radian theta(Math::TWO_PI / (degBase + (degDev * genRandom())));
 
+		Vector2 originalDirection(currentDirection);
+
 		// alter our direction vector 
 		for (unsigned int i=0; i < _genParams._degree; i++)
 		{
-			if (_genParams._roadLimit != 0 && roadCount
-					>= _genParams._roadLimit)
+			if (!_genParams._mcbDebug && _genParams._roadLimit != 0 && 
+				roadCount >= _genParams._roadLimit)
 			//if(roadCount++ >= 29)
 			{
 				while (!q.empty())
@@ -371,100 +473,35 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				break;
 			}
 
-			if (roadCount == 15)
+			if (roadCount == 42)
 			{
 				size_t z = 0;
 			}
 
 			// get a candidate
+			
 			Geometry::rotate(currentDirection, theta);
 			// doesn't work grrrrrrrrrr
 
 			currentDirection.normalise();
 			//Real segSz = (segSzBase + (segDevSz *  ((float)rand()/(float)RAND_MAX)));
-			Real segSz = (segSzBase + (segDevSz * genRandom()));
+			Real segSz= (segSzBase + (segDevSz * genRandom()));
+			if(_genParams._connectivity == 1.0 && (i==1 || i==3)) segSz *= 2.1;
 			currentDirection *= segSz;
 			Vector2 cursor(currentDirection + currentNode->getPosition2D());
 
-			RoadId rd;
-			NodeId nd;
-			Vector3 newPoint;
-
-			// 6600 vs. 8600 debug
-			// 94 vs. 109 release
-			//switch(_roadGraph.findClosestSnappedIntersection(currentNode->getPosition2D(), cursor, snapSzSquared, nd, rd, newPoint))
-			switch (_roadGraph.snapInfo(currentNode->_nodeId, cursor,
-					_genParams._snapSize, newPoint, nd, rd))
+			if (_genParams._roadLimit != 0 && 
+				roadCount >= (_genParams._roadLimit - 1))
 			{
-			case 0:
-				// no intersection found
-			{
-				NodeInterface *cursorNode = createNode(cursor);
-				createRoad(currentNode, cursorNode);
-				roadCount++;
-				q.push(make_pair<NodeInterface*, Vector2>(cursorNode,
-						currentDirection)); // enqueue
+				RoadId rd;
+				NodeId nd;
+				Vector3 newPoint;
+				int snapState = _roadGraph.snapInfo(currentNode->_nodeId, cursor,
+					_genParams._snapSize, newPoint, nd, rd);
+				LogManager::getSingleton().logMessage("I got: "+StringConverter::toString(snapState));
 			}
-				break;
-			case 1:
-			{
-				//if(((float)rand()/(float)RAND_MAX) > _genParams._connectivity)
-				if (genRandom() > _genParams._connectivity)
-					break;
-
-				// road intersection
-				//NodeInterface *cursorNode = createNode(newPoint);
-				NodeInterface *cursorNode = new SimpleNode(_roadGraph);
-				NodeId cursorNodeId = _roadGraph.addNode(cursorNode);
-				cursorNode->_nodeId = cursorNodeId;
-				createRoad(currentNode, cursorNode);
-				roadCount++;
-
-				// get intersected source src and dst
-				RoadInterface *ri = _roadGraph.getRoad(rd);
-				NodeId srcNodeId = _roadGraph.getSrc(rd);
-				NodeId dstNodeId = _roadGraph.getDst(rd);
-
-				//if road is a boundary road
-				if (typeid(*ri) == typeid(WorldRoad))
-				{
-					cursorNode->setPosition3D(newPoint.x, newPoint.y, newPoint.z);
-					// remove road segment from graph
-					_roadGraph.removeRoad(srcNodeId, dstNodeId);
-
-					// create replacement segments
-					RoadId rd;
-					if (_roadGraph.addRoad(srcNodeId, cursorNodeId, rd))
-						_roadGraph.setRoad(rd, ri);
-					if (_roadGraph.addRoad(cursorNodeId, dstNodeId, rd))
-						_roadGraph.setRoad(rd, ri);
-				}
-				else
-				{
-					cursorNode->setPosition2D(newPoint.x, newPoint.z);
-					// delete the road rd
-					deleteRoad(ri);
-
-					// reconstruct road in the form of two segments
-					createRoad(_roadGraph.getNode(srcNodeId), cursorNode);
-					createRoad(cursorNode, _roadGraph.getNode(dstNodeId));
-				}
-			}
-				break;
-			case 2:
-				// node snap
-				//if(((float)rand()/(float)RAND_MAX) > _genParams._connectivity)
-				if (genRandom() > _genParams._connectivity)
-					break;
-				// MMM: dont snap to your self ass monkey
-				if (currentNode != _roadGraph.getNode(nd))
-				{
-					createRoad(currentNode, _roadGraph.getNode(nd));
-					roadCount++;
-				}
-				break;
-
-			}
+			NodeInterface* ni = placeSegment(genRandom, currentNode, cursor, roadCount);
+			if(ni) q.push(make_pair<NodeInterface*, Vector2>(ni, originalDirection));
 		}
 	}
 }
@@ -529,6 +566,7 @@ void WorldCell::prebuildRoads()
 
 void WorldCell::prebuildBuildings()
 {
+
 	// Define a random number generator and init with a reproducible seed.
 	base_generator_type generator(_genParams._seed);
 
@@ -550,7 +588,7 @@ void WorldCell::prebuildBuildings()
 	materials[5] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Paving")).get();
 
 	vector< vector<NodeInterface*> > cycles;
-	_roadGraph.extractFootprints(cycles, _genParams._lotWidth);
+	_roadGraph.extractEnclosedRegions(cycles,10000);
 
 	size_t blockErrors = 0;
 	_blocks.reserve(cycles.size());
@@ -578,6 +616,7 @@ void WorldCell::build()
 	if(_displayMode >= view_cell) buildRoads();
 	if(_displayMode >= view_box) buildBuildings();
 	if(_genParams._debug) buildDebugOverlay();
+	//if(_genParams._mcbDebug && _debugMO) _sceneNode->attachObject(_debugMO);
 }
 
 void WorldCell::buildRoads()
@@ -640,13 +679,13 @@ RoadInterface* WorldCell::getLongestBoundaryRoad() const
 	RoadInterface* longest = 0;
 	Ogre::Real length = 0;
 	BOOST_FOREACH(RoadInterface* ri, _boundaryRoads)
-{	if(longest == 0 || ri->getLengthSquared() > length)
-	{
-		longest = ri;
-		length = longest->getLengthSquared();
+	{	if(longest == 0 || ri->getLengthSquared() > length)
+		{
+			longest = ri;
+			length = longest->getLengthSquared();
+		}
 	}
-}
-return longest;
+	return longest;
 }
 
 void WorldCell::installGraph()
@@ -654,13 +693,9 @@ void WorldCell::installGraph()
 	// node map used to only insert nodes once
 	map<NodeInterface*, NodeInterface*> nodeMap;
 
-	// install nodes, road and filaments to map
-	BOOST_FOREACH(NodeInterface* ni, _boundaryCycle)
-		nodeMap[ni] = createNode(ni->getPosition3D());
-	BOOST_FOREACH(RoadInterface* ri, _boundaryRoads)
-		installRoad(ri, nodeMap);
-	BOOST_FOREACH(RoadInterface* ri, _filamentRoads)
-		installRoad(ri, nodeMap);
+	// install boundary roads and filaments to map
+	BOOST_FOREACH(RoadInterface* ri, _boundaryRoads) installRoad(ri, nodeMap);
+	BOOST_FOREACH(RoadInterface* ri, _filamentRoads) installRoad(ri, nodeMap);
 }
 
 void WorldCell::installRoad(RoadInterface* ri,
@@ -679,12 +714,9 @@ void WorldCell::installRoad(RoadInterface* ri,
 			nodeMap[dstNd] = createNode(dstNd->getPosition3D());
 
 		// create the road seg
-		//createRoad(nodeMap[srcNd], nodeMap[dstNd]);
 		RoadId rd;
 		if(_roadGraph.addRoad(nodeMap[srcNd]->_nodeId, nodeMap[dstNd]->_nodeId, rd))
-		{
 			_roadGraph.setRoad(rd, ri);
-		}
 		else
 			throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Road not Installed", "WorldCell::installRoad");
 	}
@@ -1168,7 +1200,7 @@ void WorldCell::buildDebugOverlay()
 
 	// extract cycles
 	vector< vector<NodeInterface*> > cycles;
-	_roadGraph.extractFootprints(cycles, _genParams._lotWidth);
+	_roadGraph.extractEnclosedRegions(cycles, 10000);
 
 	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
 	{
@@ -1233,8 +1265,9 @@ void WorldCell::buildDebugOverlay()
 					{
 						pair<Vector3, Vector3> insetPair;
 						insetPair.first = iv->_pos;
+						insetPair.first.y += 0.1;
 						insetPair.second.x = iv->_pos.x + intersectionLocation * (iv->_insetTarget.x - iv->_pos.x);
-						insetPair.second.y = iv->_pos.y;
+						insetPair.second.y = iv->_pos.y + 0.1;
 						insetPair.second.z = iv->_pos.z + intersectionLocation * (iv->_insetTarget.y - iv->_pos.z);
 						insetPairs.push_back(insetPair);
 						iv = iv->_right;
@@ -1321,6 +1354,8 @@ void WorldCell::buildDebugOverlay()
 			for(size_t i=0; i<insetPairs.size(); i++)
 			{
 				size_t j = (i+1)%insetPairs.size();
+				_debugMO->position(insetPairs[i].first);
+				_debugMO->position(insetPairs[j].first);
 				_debugMO->position(insetPairs[i].second);
 				_debugMO->position(insetPairs[j].second);
 			}

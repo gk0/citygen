@@ -90,6 +90,7 @@ void CellPropertyPage::Init()
 	Append(wxPropertyCategory(wxT("Display Options")));
 
 	_debugProp =  Append(wxBoolProperty(wxT("View Debug Info"), wxPG_LABEL,0));
+	_mcbDebugProp =  Append(wxBoolProperty(wxT("MCB Debug Info"), wxPG_LABEL,0));
 }
 
 
@@ -149,6 +150,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		g._lotDepth = GetPropertyValueAsDouble(_lotDepthProp);
 		g._lotDeviance = GetPropertyValueAsDouble(_lotDevianceProp);
 		g._debug = GetPropertyValueAsBool(_debugProp);
+		g._mcbDebug = GetPropertyValueAsBool(_mcbDebugProp);
 	}
 
 	if(wc)
@@ -200,6 +202,7 @@ void CellPropertyPage::update()
 	SetPropertyValue(_lotDepthProp, g._lotDepth);
 	SetPropertyValue(_lotDevianceProp, g._lotDeviance);
 	SetPropertyValue(_debugProp, g._debug);
+	SetPropertyValue(_mcbDebugProp, g._mcbDebug);
 
 	RefreshProperty(_presetProp);
 	RefreshProperty(_seedProp);
@@ -220,6 +223,7 @@ void CellPropertyPage::update()
 	RefreshProperty(_lotDepthProp);
 	RefreshProperty(_lotDevianceProp);
 	RefreshProperty(_debugProp);
+	RefreshProperty(_mcbDebugProp);
 }
 
 void CellPropertyPage::setWorldFrame(WorldFrame* wf)

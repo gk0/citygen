@@ -24,13 +24,14 @@ struct CellParams
 	Ogre::Real		_lotDepth;
 	Ogre::Real		_lotDeviance;
 	bool			_debug;
+	bool			_mcbDebug;
 
 	CellParams(unsigned int type, int seed, Ogre::Real segmentSize, 
 		Ogre::Real segmentDeviance, unsigned int degree, Ogre::Real degreeDeviance, 
 		Ogre::Real snapSize, Ogre::Real snapDeviance, Ogre::Real buildingHeight, 
 		Ogre::Real buildingDeviance, Ogre::Real roadWidth, size_t roadLimit, 
 		Ogre::Real connectivity, Ogre::Real	footpathWidth, Ogre::Real footpathHeight,
-		Ogre::Real lotWidth, Ogre::Real lotDepth, Ogre::Real lotDeviance, bool debug)
+		Ogre::Real lotWidth, Ogre::Real lotDepth, Ogre::Real lotDeviance, bool debug, bool mcbDebug = false)
 	{
 		_type = type;
 		_seed = seed;
@@ -51,6 +52,7 @@ struct CellParams
 		_lotDepth = lotDepth;
 		_lotDeviance = lotDeviance;
 		_debug = debug;
+		_mcbDebug = mcbDebug;
 	}
 
 	CellParams()

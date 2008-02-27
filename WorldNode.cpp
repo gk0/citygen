@@ -270,7 +270,7 @@ void WorldNode::build()
 	for(size_t i=0; i < _degree; i++)
 	{
 		NodeId currNodeId;
-		_roadGraph.getCounterClockwiseMostFromPrev(lastNodeId, _nodeId, currNodeId);
+		_roadGraph.getAntiClockwiseMostFromPrev(lastNodeId, _nodeId, currNodeId);
 		Vector3 curRoadVec = _roadGraph.getNode(currNodeId)->getPosition3D() - getPosition3D();
 		RoadId curRoadId = _roadGraph.getRoadId(_nodeId, currNodeId);
 		Real curRoadInset = _roadGraph.getRoad(curRoadId)->getWidth();
@@ -423,7 +423,7 @@ bool WorldNode::createTJunction()
 
 		for(size_t i=1; i < 3; i++)
 		{
-			_roadGraph.getCounterClockwiseMostFromPrev(currNodeId, _nodeId, currNodeId);
+			_roadGraph.getAntiClockwiseMostFromPrev(currNodeId, _nodeId, currNodeId);
 			currRoadId = _roadGraph.getRoadId(_nodeId, currNodeId);
 			roadCWVec.push_back(currRoadId);
 			roadVec.push_back((_roadGraph.getNode(currNodeId)->getPosition3D() - getPosition3D()).normalisedCopy());

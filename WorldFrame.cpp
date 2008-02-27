@@ -1139,6 +1139,7 @@ WorldRoad* WorldFrame::createRoad(WorldNode* wn1, WorldNode* wn2)
 		vector< vector<NodeInterface*> > filaments;
 		_simpleRoadGraph.extractPrimitives(filaments, nodeCycles);
 
+
 		// if the number of cycles is greater than the number of cells
 		// then we have most definitely made a new cell
 		if (nodeCycles.size() > _cellVec.size())
@@ -1257,98 +1258,94 @@ void WorldFrame::deleteRoad(WorldRoad* wr)
 	switch (aCells.size())
 	{
 	case 0:
-	{
-		vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(),
-				_roadVec.end(), wr);
-		if (rIt != _roadVec.end())
-			_roadVec.erase(rIt);
-		delete wr;
-		break;
-	}
+		{
+			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
+			if (rIt != _roadVec.end()) _roadVec.erase(rIt);
+			delete wr;
+			break;
+		}
 	case 1:
-	{
-		// could be a boundary edge or a filament
-		const vector<RoadInterface*> &boundary(aCells[0]->getBoundaryRoads());
-
-		// if found on the boundary cycle
-		if (find(boundary.begin(), boundary.end(), wr) != boundary.end())
 		{
-			vector<WorldCell*>::iterator cIt = find(_cellVec.begin(),
-					_cellVec.end(), aCells[0]);
-			if (cIt != _cellVec.end())
-				_cellVec.erase(cIt);
-			if(aCells[0] == _highlightedCell) _highlightedCell = 0;
-			if(aCells[0] == _selectedCell) _selectedCell = 0;
-			delete aCells[0];
-		}
-		else
-		{
-			aCells[0]->removeFilament(wr);
-		}
+			// could be a boundary edge or a filament
+			const vector<RoadInterface*> &boundary(aCells[0]->getBoundaryRoads());
 
-		// delete road
-		vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(),
-				_roadVec.end(), wr);
-		if (rIt != _roadVec.end())
-			_roadVec.erase(rIt);
-		delete wr;
-	}
-		break;
-	case 2:
-	{
-		// should favor one - can do a vector swap to set preference
-
-		// save params from the biggest attached cell by area
-		CellParams gp = aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? 
-			aCells[0]->getGenParams() : aCells[1]->getGenParams();
-
-		// delete cells
-		BOOST_FOREACH(WorldCell* c, aCells)
-		{
-			vector<WorldCell*>::iterator cIt = find(_cellVec.begin(),
-					_cellVec.end(), c);
-			if (cIt != _cellVec.end())
-				_cellVec.erase(cIt);
-			if(c == _highlightedCell) _highlightedCell = 0;
-			if(c == _selectedCell) _selectedCell = 0;
-			delete c;
-		}
-
-		// delete road
-		vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(),
-				_roadVec.end(), wr);
-		if (rIt != _roadVec.end())
-			_roadVec.erase(rIt);
-		delete wr;
-
-		// run cell decomposition
-		vector< vector<NodeInterface*> > nodeCycles;
-		vector< vector<NodeInterface*> > filaments;
-		_simpleRoadGraph.extractPrimitives(filaments, nodeCycles);
-
-		// find the new cell if there is one
-		BOOST_FOREACH(vector<NodeInterface*> &cycle, nodeCycles)
-		{
-			bool newCell = true;
-			BOOST_FOREACH(WorldCell* c, _cellVec)
+			// if found on the boundary cycle
+			if (find(boundary.begin(), boundary.end(), wr) != boundary.end())
 			{
-				if (c->compareBoundary(cycle))
+				vector<WorldCell*>::iterator cIt = find(_cellVec.begin(),
+						_cellVec.end(), aCells[0]);
+				if (cIt != _cellVec.end())
+					_cellVec.erase(cIt);
+				if(aCells[0] == _highlightedCell) _highlightedCell = 0;
+				if(aCells[0] == _selectedCell) _selectedCell = 0;
+				delete aCells[0];
+			}
+			else
+			{
+				aCells[0]->removeFilament(wr);
+			}
+
+			// delete road
+			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(), _roadVec.end(), wr);
+			if (rIt != _roadVec.end()) _roadVec.erase(rIt);
+			delete wr;
+			break;
+		}
+	case 2:
+		{
+			// should favor one - can do a vector swap to set preference
+
+			// save params from the biggest attached cell by area
+			CellParams gp = aCells[0]->calcArea2D() > aCells[1]->calcArea2D() ? 
+				aCells[0]->getGenParams() : aCells[1]->getGenParams();
+
+			// delete cells
+			BOOST_FOREACH(WorldCell* c, aCells)
+			{
+				vector<WorldCell*>::iterator cIt = find(_cellVec.begin(),
+						_cellVec.end(), c);
+				if (cIt != _cellVec.end())
+					_cellVec.erase(cIt);
+				if(c == _highlightedCell) _highlightedCell = 0;
+				if(c == _selectedCell) _selectedCell = 0;
+				delete c;
+			}
+
+			// delete road
+			vector<WorldRoad*>::iterator rIt = find(_roadVec.begin(),
+					_roadVec.end(), wr);
+			if (rIt != _roadVec.end())
+				_roadVec.erase(rIt);
+			delete wr;
+
+			// run cell decomposition
+			vector< vector<NodeInterface*> > nodeCycles;
+			vector< vector<NodeInterface*> > filaments;
+			_simpleRoadGraph.extractPrimitives(filaments, nodeCycles);
+
+			// find the new cell if there is one
+			BOOST_FOREACH(vector<NodeInterface*> &cycle, nodeCycles)
+			{
+				bool newCell = true;
+				BOOST_FOREACH(WorldCell* c, _cellVec)
 				{
-					newCell = false;
+					if (c->compareBoundary(cycle))
+					{
+						newCell = false;
+						break;
+					}
+				}
+				// create the new cell and break
+				if (newCell)
+				{
+					WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, cycle, _viewMode);
+					wc->setGenParams(gp);
+					_cellVec.push_back(wc);
 					break;
 				}
 			}
-			// create the new cell and break
-			if (newCell)
-			{
-				WorldCell* wc = new WorldCell(_roadGraph, _simpleRoadGraph, cycle, _viewMode);
-				wc->setGenParams(gp);
-				_cellVec.push_back(wc);
-				break;
-			}
+			break;
 		}
-	}
-		break;
 	default:
 		new Exception(Exception::ERR_INTERNAL_ERROR, "What how many new cells have you got", "deleteRoad");
 		break;

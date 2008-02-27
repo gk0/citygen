@@ -25,7 +25,7 @@ SLAV::SLAV(const Real inset, const vector<Vector3> &poly)
 		InsetVertex *iv = new InsetVertex();
 		iv->_pos = poly[i];
 		iv->_insetTarget = Geometry::calcInsetTarget(poly[lastI], poly[i], 
-				poly[j], inset, inset);
+				poly[j], inset);
 		iv->_inset = inset;
 		iv->_intersectionTested = false;
 		add(iv);

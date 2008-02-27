@@ -73,6 +73,7 @@ public:
 	const std::vector<RoadInterface*>& getFilaments() const;
 	void addFilament(WorldRoad* f);
 	void removeFilament(WorldRoad* f);
+	NodeInterface* placeSegment(rando &genRandom, NodeInterface* currentNode, Ogre::Vector2 &cursor, size_t &roadCount);
 	
 	void update();
 	//void createCell();

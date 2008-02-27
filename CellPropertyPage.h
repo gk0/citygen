@@ -37,6 +37,7 @@ private:
 	wxPGProperty*	_lotDepthProp;
 	wxPGProperty*	_lotDevianceProp;
 	wxPGProperty*	_debugProp;
+	wxPGProperty*	_mcbDebugProp;
 
 protected:
 	DECLARE_EVENT_TABLE()
