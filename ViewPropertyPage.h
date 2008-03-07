@@ -14,6 +14,7 @@ private:
 	WorldFrame*		_worldFrame;
 
 	// properties
+	wxPGProperty*	_cameraProp;
 	wxPGProperty*	_xProp;
 	wxPGProperty*	_yProp;
 	wxPGProperty*	_zProp;

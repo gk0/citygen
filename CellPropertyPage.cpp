@@ -57,6 +57,8 @@ void CellPropertyPage::Init()
 	// Add int property
     _degreeProp = Append(wxIntProperty(wxT("Degree"), wxPG_LABEL, 0));
 	_degreeDevianceProp = Append(wxFloatProperty(wxT("Degree Deviance"), wxPG_LABEL, 0));
+	_aspectProp = Append(wxFloatProperty(wxT("Aspect"), wxPG_LABEL, 0));
+
 
 	// Add float property (value type is actually double)
     _snapSizeProp = Append(wxFloatProperty(wxT("Snap Size (m)"), wxPG_LABEL, 0));
@@ -137,6 +139,7 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		g._segmentDeviance = GetPropertyValueAsDouble(_segmentDevianceProp);
 		g._degree = GetPropertyValueAsInt(_degreeProp);
 		g._degreeDeviance = GetPropertyValueAsDouble(_degreeDevianceProp);
+		g._aspect = GetPropertyValueAsDouble(_aspectProp);
 		g._snapSize = GetPropertyValueAsDouble(_snapSizeProp);
 		g._snapDeviance = GetPropertyValueAsDouble(_snapDevianceProp);
 		g._roadWidth = GetPropertyValueAsDouble(_roadWidthProp);
@@ -189,6 +192,7 @@ void CellPropertyPage::update()
 	SetPropertyValue(_segmentDevianceProp, g._segmentDeviance);
 	SetPropertyValue(_degreeProp, (int) g._degree);
 	SetPropertyValue(_degreeDevianceProp, g._degreeDeviance);
+	SetPropertyValue(_aspectProp, g._aspect);
 	SetPropertyValue(_snapSizeProp, g._snapSize);
 	SetPropertyValue(_snapDevianceProp, g._snapDeviance);
 	SetPropertyValue(_roadWidthProp, g._roadWidth);
@@ -208,9 +212,10 @@ void CellPropertyPage::update()
 	RefreshProperty(_seedProp);
 	RefreshProperty(_segmentSizeProp);
 	RefreshProperty(_degreeProp);
+	RefreshProperty(_degreeDevianceProp);
+	RefreshProperty(_aspectProp);
 	RefreshProperty(_snapSizeProp);
 	RefreshProperty(_segmentDevianceProp);
-	RefreshProperty(_degreeDevianceProp);
 	RefreshProperty(_snapDevianceProp);
 	RefreshProperty(_roadWidthProp);
 	RefreshProperty(_buildingHeightProp);

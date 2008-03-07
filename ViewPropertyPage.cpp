@@ -41,6 +41,14 @@ void ViewPropertyPage::update()
 
 void ViewPropertyPage::Init()
 {
+	wxPGChoices arrPlot;
+	arrPlot.Add(wxT("World"), 0);
+	arrPlot.Add(wxT("FPS"), 1);
+	arrPlot.Add(wxT("3D Author"), 2);
+
+    //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
+	_cameraProp = Append( wxEnumProperty(wxT("Camera Model"), wxPG_LABEL, arrPlot) );
+
 	Append(wxPropertyCategory(wxT("Camera Target")));
 
 	// Add float property (value type is actually double)

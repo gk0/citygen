@@ -14,6 +14,7 @@ ToolView::ToolView(WorldFrame* wf)
 	_worldFrame = wf;
 	_moveSpeed = 1.0;
 	_cameraTarget = Vector3(1026.25f, 0.1f, 946.25f);
+	_mode = world;
 
 #ifdef __WXMSW__
 	_rotateCursor = wxCursor(_("rotato"));
@@ -22,6 +23,10 @@ ToolView::ToolView(WorldFrame* wf)
 #else
 	//wxBITMAP_TYPE_XBM
 #endif
+
+	_leftButtonOp = translate;
+	_middleButtonOp = zoom;
+	_rightButtonOp = rotate;
 }
 
 void ToolView::activate()
@@ -98,6 +103,15 @@ void ToolView::OnChar(wxKeyEvent& e)
 	}
 }
 
+void ToolView::OnFocusLost(wxFocusEvent& e)
+{
+}
+
+void ToolView::OnFocusSet(wxFocusEvent& e)
+{
+}
+
+Vector3 shit;
 
 void ToolView::OnMouseMove(wxMouseEvent &e)
 {
@@ -105,42 +119,57 @@ void ToolView::OnMouseMove(wxMouseEvent &e)
 	_mouseDeltaX = e.m_x - _mouseX;
 	_mouseDeltaY = e.m_y - _mouseY;
 
-	if(e.LeftIsDown() && e.RightIsDown() || e.MiddleIsDown()) setTranslate(); 
-	else if(e.LeftIsDown()) setRotate();
-	else if(e.RightIsDown()) setZoom();
-	else setNone();
+	if(e.LeftIsDown() && e.RightIsDown() || e.MiddleIsDown()) setOperation(_middleButtonOp);
+	else if(e.LeftIsDown()) setOperation(_leftButtonOp);
+	else if(e.RightIsDown())  setOperation(_rightButtonOp);
+	else setOperation(none);
 
 	switch(_mode)
 	{
-	case none:
-		break;
-	case rotate:
-		//FPS: 
-		//_worldFrame->cameraRotate(_mouseDeltaX*2, _mouseDeltaY);
-
-		//Editor
-		_worldFrame->cameraNodeRotate(-_mouseDeltaX/2.0f, -_mouseDeltaY/2.0f);
-		break;
-	case translate:
+	case world:
 		{
-			//FPS: 
-			//_worldFrame->cameraMove((Ogre::Real)(-_mouseDeltaX) * (_moveSpeed / 4), (Ogre::Real)_mouseDeltaY * (_moveSpeed / 4), 0.0f);
+			switch(_activeOp)
+			{
+			case none:
+				break;
+			case rotate:
+				{
+					int w,h;
+					_worldFrame->GetSize(&w,&h);
+					Real wReal(w), hReal(h);
+					_worldFrame->cameraNodeRotate(-_mouseDeltaX/wReal * 180, -_mouseDeltaY/hReal * 90);
+					break;
+				}
+			case translate:
+				{
+					if(_lastTranslateVec == Vector3::ZERO)
+					{
+						shit = Vector3::ZERO;
+						if(!_worldFrame->pickTerrainIntersection(e, _lastTranslateVec)) break;
+					}
+					Vector3 currentTranslateVec;
+					if(!_worldFrame->pickTerrainIntersection(e, currentTranslateVec)) break;
+					Vector3 translateDelta =  _lastTranslateVec - currentTranslateVec;
+					_lastTranslateVec = currentTranslateVec;
+					translateDelta = (translateDelta + shit);
+					shit = translateDelta;
 
-			//Editor
-			// create camera ray
-			if(_lastTranslateVec == Vector3::ZERO) _lastTranslateVec = toVec(_mouseX, _mouseY);
-			Vector3 currentTranslateVec(toVec(e.m_x, e.m_y));
-			Vector3 translateDelta =  _lastTranslateVec - currentTranslateVec;
-			_lastTranslateVec = currentTranslateVec;
-			_worldFrame->cameraNodeMove(translateDelta.x, translateDelta.y, translateDelta.z);
+					_worldFrame->cameraNodeMove(translateDelta.x, translateDelta.z);
+					break;
+				}
+			case zoom:
+				{
+					Real camDist = _worldFrame->getCamera()->getPosition().z;
+					_worldFrame->cameraZoom(-(_mouseDeltaY + _mouseDeltaX) * camDist * _moveSpeed / 400);
+					break;
+				}
+			}
 			break;
 		}
-	case zoom:
-		{
-			Real camDist = _worldFrame->getCamera()->getPosition().z;
-			_worldFrame->cameraZoom(-(_mouseDeltaY + _mouseDeltaX) * camDist * _moveSpeed / 400);
-			break;
-		}
+	case fps:
+		break;
+	case author:
+		break;
 	}
 
 	// save for calc of next deltas
@@ -150,40 +179,43 @@ void ToolView::OnMouseMove(wxMouseEvent &e)
 
 void ToolView::OnLeftPressed(wxMouseEvent &e)
 {
-	if(e.RightIsDown()) setTranslate();
-	else setRotate();
+	//Vector3 tmp;
+	//bool b = _worldFrame->pickAnyIntersection(e, tmp);
+	//LogManager::getSingleton().logMessage(StringConverter::toString(b)+":"+StringConverter::toString(tmp));
+	if(e.RightIsDown()) setOperation(_middleButtonOp);
+	else setOperation(_leftButtonOp);
 }
 
 void ToolView::OnLeftReleased(wxMouseEvent &e)
 {
-	if(e.RightIsDown()) setZoom();
-	else if(e.MiddleIsDown()) setTranslate(); 
-	else setNone();
+	if(e.RightIsDown()) setOperation(_rightButtonOp);
+	else if(e.MiddleIsDown()) setOperation(_middleButtonOp);
+	else setOperation(none);
 }
 
 void ToolView::OnMiddlePressed(wxMouseEvent &e)
 {
-	setTranslate();
+	setOperation(_middleButtonOp);
 }
 
 void ToolView::OnMiddleReleased(wxMouseEvent &e)
 {
-	if(e.LeftIsDown()) setRotate();
-	else if(e.RightIsDown()) setZoom(); 
-	else setNone();
+	if(e.LeftIsDown()) setOperation(_leftButtonOp);
+	else if(e.RightIsDown()) setOperation(_rightButtonOp);
+	else setOperation(none);
 }
 
 void ToolView::OnRightPressed(wxMouseEvent &e)
 {
-	if(e.LeftIsDown()) setTranslate();
-	else setZoom();
+	if(e.LeftIsDown()) setOperation(_leftButtonOp);
+	else setOperation(_rightButtonOp);
 }
 
 void ToolView::OnRightReleased(wxMouseEvent &e)
 {
-	if(e.LeftIsDown()) setRotate();
-	else if(e.MiddleIsDown()) setTranslate(); 
-	else setNone();
+	if(e.LeftIsDown()) setOperation(_leftButtonOp);
+	else if(e.MiddleIsDown()) setOperation(_middleButtonOp);
+	else setOperation(none);
 }
 
 void ToolView::OnMouseWheel(wxMouseEvent &e)
@@ -196,30 +228,26 @@ void ToolView::OnMouseWheel(wxMouseEvent &e)
 	}
 }
 
-void ToolView::setNone()
+void ToolView::setOperation(Operation op)
 {
-	_mode = none;
-	_worldFrame->SetCursor(wxCURSOR_ARROW);
-}
-
-void ToolView::setRotate()
-{
-	_mode = rotate;
-	_worldFrame->SetCursor(_rotateCursor);
-}
-
-void ToolView::setTranslate()
-{
-	_mode = translate;
-	_lastTranslateVec = Vector3::ZERO;
-	_worldFrame->SetCursor(_translateCursor);
-}
-
-void ToolView::setZoom()
-
-{
-	_mode = zoom;
-	_worldFrame->SetCursor(_zoomCursor);
+	if(op == _activeOp) return;
+	switch(op)
+	{
+	case none:
+		_worldFrame->SetCursor(wxCURSOR_ARROW);
+		break;
+	case translate:
+		_lastTranslateVec = Vector3::ZERO;
+		_worldFrame->SetCursor(_translateCursor);
+		break;
+	case rotate:
+		_worldFrame->SetCursor(_rotateCursor);
+		break;
+	case zoom:
+		_worldFrame->SetCursor(_zoomCursor);
+		break;
+	}
+	_activeOp = op;
 }
 
 Ogre::Vector3 ToolView::toVec(long mx, long my)
@@ -244,3 +272,4 @@ bool ToolView::alternate(wxMouseEvent &e)
 	if(e.ControlDown()) return true;
 	else return false;
 }
+

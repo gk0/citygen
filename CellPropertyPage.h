@@ -24,6 +24,7 @@ private:
 	wxPGProperty*	_segmentDevianceProp;
 	wxPGProperty*	_degreeProp;
 	wxPGProperty*	_degreeDevianceProp;
+	wxPGProperty*	_aspectProp;
 	wxPGProperty*	_snapSizeProp;
 	wxPGProperty*	_snapDevianceProp;
 	wxPGProperty*	_buildingHeightProp;

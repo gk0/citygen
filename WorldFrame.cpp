@@ -89,6 +89,8 @@ _timer(this, ID_RENDERTIMER)
 	_selectedRoad = 0;
 	_selectedCell = 0;
 
+	_isDocOpen = false;
+
 	//init();
 	//toggleTimerRendering(); // only really to test fps
 }
@@ -293,9 +295,9 @@ void WorldFrame::createScene(void)
 
 	// Set up the camera	
 	_cameraNode = _sceneManager->createSceneNode("cameraNode");
-	_cameraNode->setPosition(6957.0f, 10.0f, 6400.0f);
+	cameraNodeMove(_worldTerrain.getTerrainX() / 2, _worldTerrain.getTerrainZ() / 2);
 	_cameraNode->attachObject(_camera);
-	_camera->setPosition(0, 0, 500); // zoom on z axis, look down -z
+	_camera->setPosition(0, 0, 1000); // zoom on z axis, look down -z
 	_camera->lookAt(_cameraNode->getPosition());
 	_cameraNode->setOrientation(0.631968, -0.163438, -0.733434, -0.189679);
 }
@@ -370,10 +372,21 @@ void WorldFrame::cameraNodeMove(Real x, Real y, Real z)
 	onCameraUpdate();
 }
 
+void WorldFrame::cameraNodeMove(const Real x, const Real z)
+{
+	Real y;
+	Vector3 pos = _cameraNode->getPosition();
+	if(plotPointOnTerrain(pos.x+x,y,pos.z+z))
+	{
+		_cameraNode->setPosition(pos.x+x, y+(2*GROUNDCLEARANCE), pos.z+z);
+		onCameraUpdate();
+	}
+}
+
 void WorldFrame::cameraNodeRotate(Real yaw, Real pitch)
 {
-	_cameraNode->rotate(Vector3::UNIT_X, Degree(pitch));
-	_cameraNode->rotate(Vector3::UNIT_Y, Degree(yaw), Node::TS_WORLD);
+	_cameraNode->pitch(Degree(pitch));
+	_cameraNode->yaw(Degree(yaw), Node::TS_WORLD);
 	onCameraUpdate();
 }
 
@@ -399,9 +412,22 @@ void WorldFrame::onCameraUpdate()
 
 void WorldFrame::OnChar(wxKeyEvent& e)
 {
-	if (!_isDocOpen)
-		return;
-	_tools[_activeTool]->OnChar(e);
+	if(_isDocOpen)
+		_tools[_activeTool]->OnChar(e);
+}
+
+void WorldFrame::OnFocusLost(wxFocusEvent& e)
+{
+	if(_isDocOpen)
+		_tools[_activeTool]->OnFocusLost(e);
+	//wxControl::OnFocusLost(e);
+}
+
+void WorldFrame::OnFocusSet(wxFocusEvent& e)
+{
+	if(_isDocOpen)
+		_tools[_activeTool]->OnFocusSet(e);
+	//wxControl::OnFocusSet(e);
 }
 
 void WorldFrame::OnLeftPressed(wxMouseEvent &e)
@@ -958,6 +984,38 @@ bool WorldFrame::pickTerrainIntersection(wxMouseEvent& e, Vector3& pos)
 	return false;
 }
 
+bool WorldFrame::pickAnyIntersection(wxMouseEvent& e, Vector3& pos)
+{
+	// Setup the ray scene query
+	float mouseX = float(1.0f/_viewport->getActualWidth()) * e.GetX();
+	float mouseY = float(1.0f/_viewport->getActualHeight()) * e.GetY();
+	Ray mouseRay = _camera->getCameraToViewportRay(mouseX, mouseY);
+
+	_raySceneQuery->setRay(mouseRay);
+	_raySceneQuery->setSortByDistance(true);
+	RaySceneQueryResult result = _raySceneQuery->execute();
+	for (RaySceneQueryResult::const_iterator itr = result.begin(); itr
+		!= result.end(); itr++)
+	{
+		if(itr->movable && itr->movable->getName().substr(0, 5) != "tile[")
+		{
+			//itr->movable->
+			pos = mouseRay.getPoint(itr->distance);
+			LogManager::getSingleton().logMessage("movable:"+string(itr->movable->getName())
+				+"="+StringConverter::toString(pos));
+			return true;
+		}
+		else if (itr->worldFragment)
+		{
+			LogManager::getSingleton().logMessage("terrain");
+			pos = itr->worldFragment->singleIntersection;
+			return true;
+		}
+		else LogManager::getSingleton().logMessage("other");
+	}
+	return false;
+}
+
 bool WorldFrame::pickNode(wxMouseEvent &e, Real snapSq, WorldNode *&wn)
 {
 	Vector3 pos3D;
@@ -1358,6 +1416,7 @@ void WorldFrame::onNewDoc()
 	onCloseDoc();
 	createScene();
 	_worldTerrain.load(_sceneManager);
+	cameraNodeMove(_worldTerrain.getTerrainX() / 2, _worldTerrain.getTerrainZ() / 2);
 	_tools[_activeTool]->activate();
 	_isDocOpen = true;
 	Refresh();

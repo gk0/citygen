@@ -11,6 +11,7 @@ struct CellParams
 	Ogre::Real		_segmentDeviance;
 	unsigned int	_degree;
 	Ogre::Real		_degreeDeviance;
+	Ogre::Real		_aspect;
 	Ogre::Real		_snapSize;
 	Ogre::Real		_snapDeviance;
 	Ogre::Real		_buildingHeight;
@@ -27,7 +28,7 @@ struct CellParams
 	bool			_mcbDebug;
 
 	CellParams(unsigned int type, int seed, Ogre::Real segmentSize, 
-		Ogre::Real segmentDeviance, unsigned int degree, Ogre::Real degreeDeviance, 
+		Ogre::Real segmentDeviance, unsigned int degree, Ogre::Real degreeDeviance, Ogre::Real aspect, 
 		Ogre::Real snapSize, Ogre::Real snapDeviance, Ogre::Real buildingHeight, 
 		Ogre::Real buildingDeviance, Ogre::Real roadWidth, size_t roadLimit, 
 		Ogre::Real connectivity, Ogre::Real	footpathWidth, Ogre::Real footpathHeight,
@@ -39,6 +40,7 @@ struct CellParams
 		_segmentDeviance = segmentDeviance;
 		_degree = degree;
 		_degreeDeviance = degreeDeviance;
+		_aspect = aspect;
 		_snapSize = snapSize;
 		_snapDeviance = snapDeviance;
 		_buildingHeight = buildingHeight;

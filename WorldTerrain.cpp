@@ -20,21 +20,21 @@ WorldTerrain::WorldTerrain()
 	yesNo.push_back("yes");
 
 	PropertyList* hmOpts = new PropertyList("Heightmap");
-	hmOpts->addProperty(new PropertyImage("Heightmap.image", "terrain.png", _validatorHM));
+	hmOpts->addProperty(new PropertyImage("Heightmap.image", "terrain1.png", _validatorHM));
 	hmOpts->addProperty(new PropertyUShort("TileSize", 65, ValidatorURange::USHORTMAX));
 	hmOpts->addProperty(new PropertyUShort("MaxPixelError", 3, ValidatorURange::USHORTMAX));
 	_properties.addProperty(hmOpts);
 
 	PropertyList* texOpts = new PropertyList("Texture");
-	texOpts->addProperty(new PropertyImage("WorldTexture", "terrain_texture.jpg", _validatorTex));
+	texOpts->addProperty(new PropertyImage("WorldTexture", "terrain_texture1.jpg", _validatorTex));
 	texOpts->addProperty(new PropertyImage("DetailTexture", "terrain_detail.jpg", _validatorTex));
 	texOpts->addProperty(new PropertyUShort("DetailTile", 3, ValidatorURange::USHORTMAX));
 	_properties.addProperty(texOpts);
 
 	PropertyList* scaleOpts = new PropertyList("Scale");
-	scaleOpts->addProperty(new PropertyReal("PageWorldX", 50000));
-	scaleOpts->addProperty(new PropertyReal("PageWorldZ", 50000));
-	scaleOpts->addProperty(new PropertyReal("MaxHeight", 3000));
+	scaleOpts->addProperty(new PropertyReal("PageWorldX", 8000));
+	scaleOpts->addProperty(new PropertyReal("PageWorldZ", 8000));
+	scaleOpts->addProperty(new PropertyReal("MaxHeight", 1200));
 	_properties.addProperty(scaleOpts);
 
 	PropertyList* renderOpts = new PropertyList("Rendering");
@@ -114,4 +114,16 @@ TiXmlElement* WorldTerrain::saveXML(const std::string &filePath)
 	BOOST_FOREACH(Property* p, _properties.getList())
 		root->LinkEndChild(p->saveXML(filePath));
 	return root;
+}
+
+Ogre::Real WorldTerrain::getTerrainX()
+{
+	PropertyList* pl = static_cast<PropertyList*>(_properties.getPropertyPtr("Scale"));
+	return static_cast<PropertyReal*>(pl->getPropertyPtr("PageWorldX"))->_data;
+}
+
+Ogre::Real WorldTerrain::getTerrainZ()
+{
+	PropertyList* pl = static_cast<PropertyList*>(_properties.getPropertyPtr("Scale"));
+	return static_cast<PropertyReal*>(pl->getPropertyPtr("PageWorldZ"))->_data;
 }

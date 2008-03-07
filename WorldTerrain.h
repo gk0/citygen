@@ -28,7 +28,8 @@ public:
 	}
 	TiXmlElement* saveXML(const std::string &filePath);
 
-
+	Ogre::Real getTerrainX();
+	Ogre::Real getTerrainZ();
 
 };
 

@@ -74,8 +74,8 @@ private:
 protected:
 	void OnChar(wxKeyEvent& e);
 	void OnEraseBackground(wxEraseEvent &e) { update(); }
-	void OnFocusLost(wxFocusEvent& e) {}
-	void OnFocusSet(wxFocusEvent& e) {}
+	void OnFocusLost(wxFocusEvent& e);
+	void OnFocusSet(wxFocusEvent& e);
 	void OnMouseMove(wxMouseEvent &e);
 	void OnLeftPressed(wxMouseEvent &e);
 	void OnLeftReleased(wxMouseEvent &e);
@@ -124,6 +124,7 @@ public:
 	void cameraMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
 	void cameraNodeMove(Ogre::Real x, Ogre::Real y, Ogre::Real z);
 	void cameraNodeMove(const Ogre::Vector3 &pos) { cameraNodeMove(pos.x, pos.y, pos.z); }
+	void cameraNodeMove(const Ogre::Real x, const Ogre::Real z);
 	void cameraRotate(Ogre::Real yaw, Ogre::Real pitch);
 	void cameraNodeRotate(Ogre::Real yaw, Ogre::Real pitch);
 	void cameraZoom(Ogre::Real z);
@@ -249,6 +250,8 @@ public:
 	 */
 	bool pickTerrainIntersection(wxMouseEvent& e, Ogre::Vector3& pos);
 
+
+	bool pickAnyIntersection(wxMouseEvent& e, Ogre::Vector3& pos);
 
 	const Ogre::Viewport* getViewport()
 	{

@@ -411,29 +411,190 @@ material gk/RoadJunction
 	}
 }
 
-material gk/YellowBrickRoad
+vertex_program relief_view_space_vp cg			
+{
+	source cg_relief_map.cg
+	entry_point view_space
+	profiles arbvp1 vs_1_1
+}
+
+fragment_program relief_main_fp cg			
+{
+	source cg_relief_map.cg	
+	entry_point main_relief
+	profiles ps_2_x arbfp1 fp30
+}
+
+
+material gk/Building1WRelief
 {
 	technique
-	{
+	{		
 		pass
 		{
 			ambient 1 1 1
-			diffuse 1 1 1 
-			specular 0.2 0.2 0.2 10
-			
+			diffuse 0.6 0.6 0.6 
+			specular 0 0 0 5
+
+			// Vertex program reference
+			vertex_program_ref relief_view_space_vp
+			{
+				param_named_auto lightpos light_position_object_space 0
+				//param_named_auto view view_matrix
+				//param_named_auto modelviewproj worldviewproj_matrix
+				//param_named_auto modelview worldview_matrix
+				param_named depth float 0.05
+				param_named tile float 1
+			}
+
+			// Fragment program
+			fragment_program_ref relief_main_fp
+			{
+				param_named_auto ambient ambient_light_colour 0
+				param_named_auto diffuse light_diffuse_colour 0 
+				param_named_auto specular light_specular_colour 255
+				param_named planes float2 1 3000
+			}
 			texture_unit
 			{
-				// Base Texture
-				texture yellowroad.png
-				//filtering anisotropic 
+				texture building1_reliefmap.png
+				filtering anisotropic 
+				scale 4 3
+			}
+			texture_unit
+			{
+				texture building1.jpg
+				scale 4 3
 			}
 		}
 	}
 }
 
+material gk/Building2WRelief
+{
+	technique
+	{		
+		pass
+		{
+			ambient 1 1 1
+			diffuse 0.6 0.6 0.6 
+			specular 0 0 0 5
+
+			// Vertex program reference
+			vertex_program_ref relief_view_space_vp
+			{
+				param_named_auto lightpos light_position_object_space 0
+				param_named depth float 0.17
+				param_named tile float 1
+			}
+
+			// Fragment program
+			fragment_program_ref relief_main_fp
+			{
+				param_named_auto ambient ambient_light_colour 0
+				param_named_auto diffuse light_diffuse_colour 0 
+				param_named_auto specular light_specular_colour 255
+				param_named planes float2 1 3000
+			}
+			texture_unit
+			{
+				texture building2_reliefmap.png
+				filtering trilinear
+				scale 5.4 3.0
+			}
+			texture_unit
+			{
+				texture building2.jpg
+				scale 5.4 3.0
+			}
+		}
+	}
+}
+
+material gk/Building3WRelief
+{
+	technique
+	{		
+		pass
+		{
+			ambient 1 1 1
+			diffuse 0.6 0.6 0.6 
+			specular 0 0 0 5
+
+			// Vertex program reference
+			vertex_program_ref relief_view_space_vp
+			{
+				param_named_auto lightpos light_position_object_space 0
+				param_named depth float 0.17
+				param_named tile float 1
+			}
+
+			// Fragment program
+			fragment_program_ref relief_main_fp
+			{
+				param_named_auto ambient ambient_light_colour 0
+				param_named_auto diffuse light_diffuse_colour 0 
+				param_named_auto specular light_specular_colour 255
+				param_named planes float2 1 3000
+			}
+			texture_unit
+			{
+				texture building3_reliefmap.png
+				filtering trilinear
+				scale 2.5 3.0
+			}
+			texture_unit
+			{
+				texture building3.jpg
+				scale 2.5 3.0
+			}
+		}
+	}
+}
+
+material gk/Building4WRelief
+{
+	technique
+	{		
+		pass
+		{
+			ambient 1 1 1
+			diffuse 0.6 0.6 0.6 
+			specular 0 0 0 5
+
+			// Vertex program reference
+			vertex_program_ref relief_view_space_vp
+			{
+				param_named_auto lightpos light_position_object_space 0
+				param_named depth float 0.2
+				param_named tile float 1
+			}
+
+			// Fragment program
+			fragment_program_ref relief_main_fp
+			{
+				param_named_auto ambient ambient_light_colour 0
+				param_named_auto diffuse light_diffuse_colour 0 
+				param_named_auto specular light_specular_colour 255
+				param_named planes float2 1 3000
+			}
+			texture_unit
+			{
+				texture building4_reliefmap.png
+				filtering trilinear
+				scale 5.4 3.0
+			}
+			texture_unit
+			{
+				texture building4.jpg
+				scale 5.4 3.0
+			}
+		}
+	}
+}
 
 // Any number of lights, diffuse and specular
-material gk/Building2WNormalMap
+material gk/Building5WNormalMap
 {
 
 	// This is the preferred technique which uses both vertex and
@@ -490,7 +651,7 @@ material gk/Building2WNormalMap
 			// Base bump map
 			texture_unit NormalMap
 			{
-				texture btex_NH.png
+				texture building5_normalmap.png
 				scale 4.5 3.0
 				colour_op replace
 			}
@@ -526,7 +687,7 @@ material gk/Building2WNormalMap
 			scene_blend dest_colour zero
 			texture_unit DiffuseMap
 			{
-				texture btex.jpg
+				texture building5.jpg
 				scale 4.5 3.0
 			}
 			
@@ -580,7 +741,7 @@ material gk/Building2WNormalMap
 			// Base bump map
 			texture_unit NormalMap
 			{
-				texture btex_NH.png
+				texture building5_normalmap.png
 				colour_op replace
 				scale 4.5 3.0
 			}
@@ -611,194 +772,8 @@ material gk/Building2WNormalMap
 			scene_blend dest_colour zero
 			texture_unit DiffuseMap
 			{
-				texture btex.jpg
+				texture building5.jpg
 				scale 4.5 3.0
-			}
-		}
-	}
-}
-
-material gk/Building3WNormalMap : gk/Building2WNormalMap
-{
-	technique preferred 
-	{
-		pass 1
-		{
-			texture_unit NormalMap 
-			{
-				texture btile_NH.png
-				scale 2.5 3.0
-			}
-		}
-		pass 2 
-		{
-			texture_unit DiffuseMap 
-			{
-				texture btile.jpg
-				scale 2.5 3.0
-			}
-		}
-	}
-	technique no_fragment 
-	{
-		pass 1 
-		{
-			texture_unit NormalMap 
-			{
-				texture btile_NH.png
-				scale 2.5 3.0
-			}
-		}
-		pass 2 
-		{
-			texture_unit DiffuseMap 
-			{
-				texture btile.jpg
-				scale 2.5 3.0
-			}
-		}
-	}
-}
-
-material gk/Building4WNormalMap : gk/Building2WNormalMap
-{
-	technique preferred 
-	{
-		pass 1
-		{
-			texture_unit NormalMap 
-			{
-				texture btex4_NH.png
-				scale 5.4 3
-			}
-		}
-		pass 2 
-		{
-			texture_unit DiffuseMap 
-			{
-				texture btex4.jpg
-				scale 5.4 3
-			}
-		}
-	}
-	technique no_fragment 
-	{
-		pass 1 
-		{
-			texture_unit NormalMap 
-			{
-				texture btex4_NH.png
-				scale 5.4 3
-			}
-		}
-		pass 2 
-		{
-			texture_unit DiffuseMap 
-			{
-				texture btex4.jpg
-				scale 5.4 3
-			}
-		}
-	}
-}
-
-material gk/Building5WNormalMap : gk/Building2WNormalMap
-{
-	technique preferred 
-	{
-		pass 1
-		{
-			texture_unit NormalMap 
-			{
-				texture btex5_NH.png
-				scale 5.8 3.1
-			}
-		}
-		pass 2 
-		{
-			texture_unit DiffuseMap 
-			{
-				texture btex5.jpg
-				scale 5.8 3.1
-			}
-		}
-	}
-	technique no_fragment 
-	{
-		pass 1 
-		{
-			texture_unit NormalMap 
-			{
-				texture btex5_NH.png
-				scale 5.8 3.1
-			}
-		}
-		pass 2 
-		{
-			texture_unit DiffuseMap
-			{
-				texture btex5.jpg
-				scale 5.8 3.1
-			}
-		}
-	}
-}
-
-
-vertex_program relief_view_space_vp cg			
-{
-	source cg_relief_map.cg
-	entry_point view_space
-	profiles arbvp1 vs_1_1
-}
-
-fragment_program relief_main_fp cg			
-{
-	source cg_relief_map.cg	
-	entry_point main_relief
-	profiles ps_2_x arbfp1 fp30
-}
-
-
-material gk/Building1WNormalMap
-{
-	technique
-	{		
-		pass
-		{
-			ambient 1 1 1
-			diffuse 0.6 0.6 0.6 
-			specular 0 0 0 5
-
-			// Vertex program reference
-			vertex_program_ref relief_view_space_vp
-			{
-				param_named_auto lightpos light_position_object_space 0
-				//param_named_auto view view_matrix
-				//param_named_auto modelviewproj worldviewproj_matrix
-				//param_named_auto modelview worldview_matrix
-				param_named depth float 0.15
-				param_named tile float 1
-			}
-
-			// Fragment program
-			fragment_program_ref relief_main_fp
-			{
-				param_named_auto ambient ambient_light_colour 0
-				param_named_auto diffuse light_diffuse_colour 0 
-				param_named_auto specular light_specular_colour 255
-				param_named planes float2 1 3000
-			}
-			texture_unit
-			{
-				texture test1.png
-				filtering trilinear
-				scale 5 5
-			}
-			texture_unit
-			{
-				texture btex1.jpg
-				scale 5 5
 			}
 		}
 	}

@@ -27,10 +27,11 @@ int WorldCell::_instanceCount = 0;
 const CellParams CellParams::MANHATTAN(
 	0,		// type
 	1,		// seed
-	100,	// segmentSize
-	0.2,	// segmentDeviance
+	70,		// segmentSize
+	0.02,	// segmentDeviance
 	4,		// degree
-	0.02,	// degreeDeviance
+	0.0,	// degreeDeviance
+	2.1,	// aspect
 	30.0,	// snapSize
 	0.1,	// snapDeviance
 	18,		// buildingHeight
@@ -49,20 +50,21 @@ const CellParams CellParams::MANHATTAN(
 const CellParams CellParams::INDUSTRIAL(
 	1,		// type
 	1,		// seed
-	84,		// segmentSize
+	40,		// segmentSize
 	0.2,	// segmentDeviance
 	4,		// degree
 	0.05,	// degreeDeviance
-	75,		// snapSize
+	1.2,	// aspect
+	35,		// snapSize
 	0.1,	// snapDeviance
-	6,	// buildingHeight
+	6,		// buildingHeight
 	0.3,	// buildingDeviance
 	3.5,	// roadWidth
 	0,		// roadLimit
 	0.15,	// connectivity
-	2,	// footpathWidth;
+	2,		// footpathWidth;
 	0.28,	// footpathHeight;
-	32.0,	// lotWidth
+	24.0,	// lotWidth
 	28.0,	// lotDepth
 	0.6,	// lotDeviance
 	false	// debug
@@ -75,6 +77,7 @@ const CellParams CellParams::SUBURBIA(
 	0.6,	// segmentDeviance
 	9,		// degree
 	0.6,	// degreeDeviance
+	1.0,	// aspect
 	40,		// snapSize
 	0.1,	// snapDeviance
 	4,		// buildingHeight
@@ -486,7 +489,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 			currentDirection.normalise();
 			//Real segSz = (segSzBase + (segDevSz *  ((float)rand()/(float)RAND_MAX)));
 			Real segSz= (segSzBase + (segDevSz * genRandom()));
-			if(_genParams._connectivity == 1.0 && (i==1 || i==3)) segSz *= 2.1;
+			if(_genParams._degree == 4 && (i==1 || i==3)) segSz *= _genParams._aspect;
 			currentDirection *= segSz;
 			Vector2 cursor(currentDirection + currentNode->getPosition2D());
 
@@ -580,10 +583,10 @@ void WorldCell::prebuildBuildings()
 
 	// set up materials
 	vector<Material*> materials(6);
-	materials[0] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building1WNormalMap")).get();
-	materials[1] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building2WNormalMap")).get();
-	materials[2] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building3WNormalMap")).get();
-	materials[3] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building4WNormalMap")).get();
+	materials[0] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building1WRelief")).get();
+	materials[1] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building2WRelief")).get();
+	materials[2] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building3WRelief")).get();
+	materials[3] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building4WRelief")).get();
 	materials[4] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building5WNormalMap")).get();
 	materials[5] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Paving")).get();
 
@@ -607,7 +610,7 @@ void WorldCell::prebuildBuildings()
 		}
 		else blockErrors++;
 	}
-	if(blockErrors > 0) LogManager::getSingleton().logMessage(_name+"\tblock error count\t"+StringConverter::toString(blockErrors));
+	//if(blockErrors > 0) LogManager::getSingleton().logMessage(_name+"\tblock error count\t"+StringConverter::toString(blockErrors));
 }
 
 void WorldCell::build()
@@ -975,6 +978,8 @@ bool WorldCell::loadXML(const TiXmlHandle& cellRoot)
 			else if (key == "degreeDeviance")
 				element->QueryFloatAttribute("value",
 						&_genParams._degreeDeviance);
+			else if (key == "aspect")
+				element->QueryFloatAttribute("value", &_genParams._aspect);
 			else if (key == "snapSize")
 				element->QueryFloatAttribute("value", &_genParams._snapSize);
 			else if (key == "snapDeviance")
@@ -1037,6 +1042,8 @@ addNewElement(cycle, "node")->SetAttribute("id", (int)ni);
 	addNewElement(gp, "degree")->SetAttribute("value", _genParams._degree);
 	addNewElement(gp, "degreeDeviance")->SetDoubleAttribute("value",
 			_genParams._degreeDeviance);
+	addNewElement(gp, "aspect")->SetDoubleAttribute("value",
+		_genParams._aspect);
 	addNewElement(gp, "snapSize")->SetDoubleAttribute("value", _genParams._snapSize);
 	addNewElement(gp, "snapDeviance")->SetDoubleAttribute("value",
 			_genParams._snapDeviance);

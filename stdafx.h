@@ -56,7 +56,7 @@
 #define _U(x) _UU((x),wxConvUTF8)
 #define _C(x) _CC((x),wxConvUTF8)
 
-#define GROUNDCLEARANCE 16.0f
+#define GROUNDCLEARANCE 12.0f
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;

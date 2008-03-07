@@ -12,11 +12,22 @@ class ToolView : public Tool
 {
 protected:
 	enum Mode {
+		world,
+		fps,
+		author
+	} _mode;
+
+	enum Operation {
 		none,
 		rotate,
 		translate,
 		zoom
-	} _mode;
+	};
+	Operation _leftButtonOp;
+	Operation _middleButtonOp;
+	Operation _rightButtonOp;
+	Operation _activeOp;
+
 	WorldFrame* _worldFrame;
 	Ogre::Real _moveSpeed;
 
@@ -36,6 +47,8 @@ public:
 	void activate();
 	void deactivate();
 	void OnChar(wxKeyEvent& e);
+	void OnFocusLost(wxFocusEvent& e);
+	void OnFocusSet(wxFocusEvent& e);
 	void OnMouseMove(wxMouseEvent &e);
 	void OnLeftPressed(wxMouseEvent &e);
 	void OnLeftReleased(wxMouseEvent &e);
@@ -45,12 +58,7 @@ public:
 	void OnRightReleased(wxMouseEvent &e);
 	void OnMouseWheel(wxMouseEvent &e);
 
-	void setNone();
-	void setRotate();
-	void setTranslate();
-	void setZoom();
-
-
+	void setOperation(Operation op);
 };
 
 #endif
