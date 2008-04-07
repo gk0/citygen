@@ -519,7 +519,7 @@ void ColladaDoc::addMaterial(Material *m)
 	string id = m->getName();
 	replace(id.begin(), id.end(), '/', '_');
 	Ogre::Technique* t = m->getBestTechnique();
-	string tex1, tex2;
+	string tex1 = "", tex2 = "";
 	Ogre::Pass* p=0;
 
 	unsigned short numOfPasses = static_cast<unsigned short>(t->getNumPasses());
@@ -530,11 +530,14 @@ void ColladaDoc::addMaterial(Material *m)
 			p = t->getPass(i);
 			for(unsigned short j=0; j<p->getNumTextureUnitStates(); j++)
 			{
-				TextureUnitState* tu = p->getTextureUnitState(j);
+				TextureUnitState* tu = p->getTextureUnitState("DiffuseMap");
 				//TextureType ty = tu->getTextureType();
-				tex1 = tu->getTextureName();
-				tex2 = tu->getTextureNameAlias();
-				break;
+				if(tu != 0)
+				{
+					tex1 = tu->getTextureName();
+					tex2 = tu->getTextureNameAlias();
+					break;
+				}
 			}
 			if(tex1 != string("")) break;
 		}

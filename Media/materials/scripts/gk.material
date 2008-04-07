@@ -286,7 +286,7 @@ material gk/Paving
 			// Base Pass
 			ambient 1 1 1
 			diffuse 0.6 0.6 0.6 
-			texture_unit
+			texture_unit DiffuseMap
 			{
 				// Base Texture
 				scale 2.0 2.0
@@ -307,7 +307,7 @@ material gk/Road
 			diffuse 0.6 0.6 0.6 
 			specular 0.1 0.1 0.1 5
 			
-			texture_unit
+			texture_unit DiffuseMap
 			{
 				// Base Texture
 				texture road.png
@@ -402,7 +402,7 @@ material gk/RoadJunction
 			diffuse 0.6 0.6 0.6 
 			specular 0.1 0.1 0.1 5
 			
-			texture_unit
+			texture_unit DiffuseMap
 			{
 				// Base Texture
 				texture junction.png
@@ -455,13 +455,13 @@ material gk/Building1WRelief
 				param_named_auto specular light_specular_colour 255
 				param_named planes float2 1 3000
 			}
-			texture_unit
+			texture_unit ReleifMap
 			{
 				texture building1_reliefmap.png
 				filtering anisotropic 
 				scale 4 3
 			}
-			texture_unit
+			texture_unit DiffuseMap
 			{
 				texture building1.jpg
 				scale 4 3
@@ -502,7 +502,7 @@ material gk/Building2WRelief
 				filtering trilinear
 				scale 5.4 3.0
 			}
-			texture_unit
+			texture_unit DiffuseMap
 			{
 				texture building2.jpg
 				scale 5.4 3.0
@@ -543,7 +543,7 @@ material gk/Building3WRelief
 				filtering trilinear
 				scale 2.5 3.0
 			}
-			texture_unit
+			texture_unit DiffuseMap
 			{
 				texture building3.jpg
 				scale 2.5 3.0
@@ -584,7 +584,7 @@ material gk/Building4WRelief
 				filtering trilinear
 				scale 5.4 3.0
 			}
-			texture_unit
+			texture_unit DiffuseMap
 			{
 				texture building4.jpg
 				scale 5.4 3.0
