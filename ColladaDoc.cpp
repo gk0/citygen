@@ -507,7 +507,7 @@ TiXmlElement* createFloatElement(const string &name, const Real &r)
 <color>1 1 1 1</color>
 </transparent>
 <transparency>
-<float>0.0</float>
+<float>1.0</float>
 </transparency>
 </phong>
 </technique>
@@ -520,6 +520,7 @@ void ColladaDoc::addMaterial(Material *m)
 	replace(id.begin(), id.end(), '/', '_');
 	Ogre::Technique* t = m->getBestTechnique();
 	string tex1 = "", tex2 = "";
+	Real uScale = 1.0, vScale = 1.0;
 	Ogre::Pass* p=0;
 
 	unsigned short numOfPasses = static_cast<unsigned short>(t->getNumPasses());
@@ -536,6 +537,11 @@ void ColladaDoc::addMaterial(Material *m)
 				{
 					tex1 = tu->getTextureName();
 					tex2 = tu->getTextureNameAlias();
+					if(id.find("Normal") == string::npos && id.find("Relief") == string::npos)
+					{
+					uScale = tu->getTextureUScale();
+					vScale = tu->getTextureVScale();
+					}
 					break;
 				}
 			}
@@ -619,14 +625,64 @@ void ColladaDoc::addMaterial(Material *m)
 		TiXmlElement* texture = new TiXmlElement("texture");
 		texture->SetAttribute("texture", (texUrl+"-img").c_str());
 		texture->SetAttribute("texcoord", "CHANNEL0");
-		/*<extra>
-			<technique profile="MAYA">
-			<wrapU sid="wrapU0">TRUE</wrapU>
-			<wrapV sid="wrapV0">TRUE</wrapV>
-			<blend_mode>ADD</blend_mode>
-			</technique>
-		</extra>*/
-
+		/*
+        <extra>
+          <technique profile="MAYA">
+            <mirrorU>0</mirrorU>
+            <mirrorV>0</mirrorV>
+            <wrapU>1</wrapU>
+            <wrapV>1</wrapV>
+            <repeatU>0.14</repeatU>
+            <repeatV>1</repeatV>
+            <offsetU>0</offsetU>
+            <offsetV>0</offsetV>
+            <rotateUV>0</rotateUV>
+          </technique>
+          <technique profile="MAX3D">
+            <amount>1</amount>
+          </technique>
+        </extra>
+		*/
+		TiXmlElement* extra = new TiXmlElement("extra");
+		TiXmlElement* technique = new TiXmlElement("technique");
+		technique->SetAttribute("profile", "MAYA");
+		TiXmlElement* mirrorU = new TiXmlElement("mirrorU");
+		mirrorU->InsertEndChild(TiXmlText("0"));
+		TiXmlElement* mirrorV = new TiXmlElement("mirrorV");
+		mirrorV->InsertEndChild(TiXmlText("0"));
+		TiXmlElement* wrapU = new TiXmlElement("wrapU");
+		wrapU->InsertEndChild(TiXmlText("1"));
+		TiXmlElement* wrapV = new TiXmlElement("wrapV");
+		wrapV->InsertEndChild(TiXmlText("1"));
+		TiXmlElement* repeatU = new TiXmlElement("repeatU");
+		repeatU->InsertEndChild(TiXmlText(StringConverter::toString(1/uScale).c_str()));
+		TiXmlElement* repeatV = new TiXmlElement("repeatV");
+		repeatV->InsertEndChild(TiXmlText(StringConverter::toString(1/vScale).c_str()));
+		TiXmlElement* offsetU = new TiXmlElement("offsetU");
+		offsetU->InsertEndChild(TiXmlText("0"));
+		TiXmlElement* offsetV = new TiXmlElement("offsetV");
+		offsetV->InsertEndChild(TiXmlText("0"));
+		TiXmlElement* rotateUV = new TiXmlElement("rotateUV");
+		rotateUV->InsertEndChild(TiXmlText("0"));	
+		technique->LinkEndChild(mirrorU);
+		technique->LinkEndChild(mirrorV);		
+		technique->LinkEndChild(wrapU);
+		technique->LinkEndChild(wrapV);	
+		technique->LinkEndChild(repeatU);
+		technique->LinkEndChild(repeatV);
+		technique->LinkEndChild(offsetU);		
+		technique->LinkEndChild(offsetV);
+		technique->LinkEndChild(rotateUV);	
+		
+		TiXmlElement* technique2 = new TiXmlElement("technique");
+		technique2->SetAttribute("profile", "MAX3D");
+		TiXmlElement* amount = new TiXmlElement("amount");
+		amount->InsertEndChild(TiXmlText("1"));
+		technique2->LinkEndChild(amount);
+		
+		extra->LinkEndChild(technique);
+		extra->LinkEndChild(technique2);
+		texture->LinkEndChild(extra);
 
 		diffuse->LinkEndChild(texture);
 		//diffuse->LinkEndChild(extra);
@@ -637,8 +693,9 @@ void ColladaDoc::addMaterial(Material *m)
 	TiXmlElement* shininess = createFloatElement("shininess", p->getShininess());
 	TiXmlElement* reflective = createColourElement("reflective", ColourValue::Black);
 	TiXmlElement* reflectivity = createFloatElement("reflectivity", 0.0f);
-	TiXmlElement* transparent = createColourElement("transparent", ColourValue::Black);
-	TiXmlElement* transparency = createFloatElement("transparency", 0.0f);
+	// transparent interpretation varies, I don't need it so don't use it
+	//TiXmlElement* transparent = createColourElement("transparent", ColourValue::White);
+	//TiXmlElement* transparency = createFloatElement("transparency", 1.0f);
 
 	phong->LinkEndChild(emission);
 	phong->LinkEndChild(ambient);
@@ -647,8 +704,8 @@ void ColladaDoc::addMaterial(Material *m)
 	phong->LinkEndChild(shininess);
 	phong->LinkEndChild(reflective);
 	phong->LinkEndChild(reflectivity);
-	phong->LinkEndChild(transparent);
-	phong->LinkEndChild(transparency);
+	//phong->LinkEndChild(transparent);
+	//phong->LinkEndChild(transparency);
 /*
 	TiXmlElement* extra = new TiXmlElement("extra");
 	TiXmlElement* technique2 = new TiXmlElement("technique");
