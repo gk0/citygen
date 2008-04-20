@@ -552,3 +552,19 @@ bool WorldBlock::splitBoundary(const size_t &index, const Real &deviance, rando 
 	return true;
 }
 
+void WorldBlock::drawDebug(ManualObject* debugMO)
+{
+   if(debugMO)
+   {
+      BOOST_FOREACH(std::vector<Vector3>& debugLot, _debugLots)
+      {
+         debugMO->begin("gk/Red", RenderOperation::OT_LINE_STRIP);
+         BOOST_FOREACH(Vector3& p, debugLot)
+         {
+            debugMO->position(p);
+         }
+         debugMO->position(debugLot[0]);
+         debugMO->end();
+      }
+   }
+}

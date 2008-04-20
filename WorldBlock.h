@@ -24,6 +24,8 @@ public:
 		BOOST_FOREACH(WorldLot* l, _lots) delete l;
 	}
 
+   void drawDebug(Ogre::ManualObject* debugMO);
+
 	static bool getLongestBoundarySideIndex(const LotBoundary &b, 
 		const Ogre::Real limitSq, size_t &index);
 	static bool getLongestNonBoundarySideIndex(const LotBoundary &b, 

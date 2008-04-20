@@ -593,6 +593,7 @@ void WorldCell::prebuildBuildings()
 	vector< vector<NodeInterface*> > cycles;
 	_roadGraph.extractEnclosedRegions(cycles,10000);
 
+   // set debug object
 	size_t blockErrors = 0;
 	_blocks.reserve(cycles.size());
 	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
@@ -616,9 +617,22 @@ void WorldCell::prebuildBuildings()
 void WorldCell::build()
 {
 	destroySceneObject();
+   if(_debugMO)
+   {
+      _sceneNode->detachObject(_debugMO);
+      delete _debugMO;
+      _debugMO = 0;
+   }
+
 	if(_displayMode >= view_cell) buildRoads();
-	if(_displayMode >= view_box) buildBuildings();
-	if(_genParams._debug) buildDebugOverlay();
+	if(_genParams._debug)
+   {
+      _debugMO = new ManualObject(_name+"Debug");
+      buildDebugOverlay();
+      BOOST_FOREACH(WorldBlock* b, _blocks) b->drawDebug(_debugMO);
+      _sceneNode->attachObject(_debugMO);
+   }
+   if(_displayMode >= view_box) buildBuildings();
 	//if(_genParams._mcbDebug && _debugMO) _sceneNode->attachObject(_debugMO);
 }
 
@@ -1198,13 +1212,6 @@ void WorldCell::buildDebugOverlay()
 	// vis
 	queue<vector<pair<Vector3, Vector3> > > insetPairsSet;
 
-	if(_debugMO)
-	{
-		_sceneNode->detachObject(_debugMO);
-		delete _debugMO;
-	}
-	_debugMO = new ManualObject(_name+"Debug");
-
 	// extract cycles
 	vector< vector<NodeInterface*> > cycles;
 	_roadGraph.extractEnclosedRegions(cycles, 10000);
@@ -1369,5 +1376,4 @@ void WorldCell::buildDebugOverlay()
 			_debugMO->end();
 		}
 	}
-	_sceneNode->attachObject(_debugMO);
 }
