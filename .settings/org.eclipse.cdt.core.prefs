@@ -1,8 +1,9 @@
-#Thu Nov 29 15:10:24 GMT 2007
+#Thu Jun 19 00:15:52 BST 2008
 eclipse.preferences.version=1
 indexer/filesToParseUpFront=
 indexer/indexAllFiles=false
-indexer/indexerId=org.eclipse.cdt.core.fastIndexer
+indexer/indexerId=org.eclipse.cdt.core.domsourceindexer
+indexer/skipMacroReferences=false
 indexer/skipReferences=false
 indexer/skipTypeReferences=false
 indexerId=org.eclipse.cdt.core.nullindexer

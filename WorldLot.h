@@ -5,73 +5,45 @@
 #include "CellParams.h"
 #include "Triangulate.h"
 
-struct LotBoundaryPoint
-{
-	bool			_roadAccess;
-	Ogre::Vector3	_pos;
-
-	LotBoundaryPoint(const bool ra, const Ogre::Vector3 &p)
-		: _roadAccess(ra), _pos(p) {}
-};
-typedef std::vector<LotBoundaryPoint> LotBoundary;
-
+class Ogre::Material;
+class MeshBuilder;
 
 class WorldLot
 {
 private:
 	bool						_error;
 
-	Ogre::Real					_height;
-	Ogre::Real					_foundation;
-
 	std::vector<Ogre::Real>		_vertexData;
 	std::vector<Ogre::uint16>	_indexData;
+   Ogre::Material* _wallMaterial;
+
+   // cache vars
+   struct MaterialInfo{
+      Ogre::Material* _material; 
+      Ogre::Real _u;
+      Ogre::Real _v;
+   };
+   static std::vector<MaterialInfo> _wallMaterialCache;
 
 public:
-	//WorldLot(const LotBoundary &footprint, const CellGenParams &gp);
-	WorldLot(const LotBoundary &footprint, const CellParams &gp, const Ogre::Real ht, 
-		const Ogre::Real uScale, const Ogre::Real vScale);
+
+   WorldLot(std::vector<Ogre::Vector3> &poly, std::vector<bool> &isExterior, const CellParams &gp, rando rg);
 
 	bool hasError() { return _error; }
 
-	static LotBoundary insetBoundary(const LotBoundary &b, const Ogre::Real &roadInset, 
+	static void insetBoundary(std::vector<Ogre::Vector3> &poly, 
+      std::vector<bool> &isExterior, const Ogre::Real &roadInset, 
 		const Ogre::Real &standardInset);
 
 	const std::vector<Ogre::Real>& getVertexData() { return _vertexData; }
 	const std::vector<Ogre::uint16>& getIndexData() { return _indexData; }
-	//void installVertexData(float*& vPtr);
+	//void installVertexData(float*& vPtr);g
 	//void installIndexData(Ogre::uint16*& iPtr, size_t& voffset);
 
+   void registerData(MeshBuilder &mb);
+
 private:
-	inline void appendVector3(std::vector<Ogre::Real> &vertexData, const Ogre::Vector3& v)
-	{
-		vertexData.push_back(v.x);
-		vertexData.push_back(v.y);
-		vertexData.push_back(v.z);
-	}
-
-	inline void appendVector3(std::vector<Ogre::Real> &vertexData, 
-		const Ogre::Real &x, const Ogre::Real &y, const Ogre::Real &z)
-	{
-		vertexData.push_back(x);
-		vertexData.push_back(y);
-		vertexData.push_back(z);
-	}
-
-	inline void appendVector2(std::vector<Ogre::Real> &vertexData, 
-		const Ogre::Real &x, const Ogre::Real &y)
-	{
-		vertexData.push_back(x);
-		vertexData.push_back(y);
-	}
-
-	inline void appendPoly(std::vector<Ogre::uint16> &indexData, 
-		const Ogre::uint16 &a, const Ogre::uint16 &b, const Ogre::uint16 &c)
-	{
-		indexData.push_back(a);
-		indexData.push_back(b);
-		indexData.push_back(c);
-	}
+   void buildExtrusion(std::vector<Ogre::Vector3> &poly, const CellParams &gp, rando rg);
 
 };
 

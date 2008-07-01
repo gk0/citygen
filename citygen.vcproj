@@ -239,6 +239,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Region.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RoadGraph.cpp"
 				>
 			</File>
@@ -327,6 +331,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorldMaterials.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\WorldNode.cpp"
 				>
 			</File>
@@ -362,6 +370,10 @@
 			</File>
 			<File
 				RelativePath=".\ColladaDoc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DirectedEdge.h"
 				>
 			</File>
 			<File
@@ -406,6 +418,10 @@
 			</File>
 			<File
 				RelativePath=".\PropertyPage.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Region.h"
 				>
 			</File>
 			<File
@@ -505,6 +521,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\WorldMaterials.h"
+				>
+			</File>
+			<File
 				RelativePath=".\WorldNode.h"
 				>
 			</File>
@@ -539,6 +559,10 @@
 		</File>
 		<File
 			RelativePath=".\citygen.rc"
+			>
+		</File>
+		<File
+			RelativePath=".\VTune\citygen.vpj"
 			>
 		</File>
 		<File

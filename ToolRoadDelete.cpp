@@ -48,3 +48,15 @@ bool ToolRoadDelete::alternate(wxMouseEvent &e)
 	if(e.ControlDown()) return true;
 	else return false;
 }
+
+void ToolRoadDelete::OnMiddlePressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnMiddlePressed(e);
+}
+
+void ToolRoadDelete::OnRightPressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnRightPressed(e);
+}

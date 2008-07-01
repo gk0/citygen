@@ -4,7 +4,7 @@
 
 #include <wx/propgrid/advprops.h>
 
-ViewPropertyPage::ViewPropertyPage(WorldFrame* wf) : wxPropertyGridPage() 
+ViewPropertyPage::ViewPropertyPage(WorldFrame* wf) : wxPropertyGridPage()
 {
 	_worldFrame = wf;
 }
@@ -24,7 +24,7 @@ void ViewPropertyPage::update()
 		SetPropertyValue(_xDirProp, camDir.x);
 		SetPropertyValue(_yDirProp, camDir.y);
 		SetPropertyValue(_zDirProp, camDir.z);
-		
+
 		SetPropertyValue(_zoomProp, cam->getPosition().z);
 
 		RefreshProperty(_xProp);
@@ -34,7 +34,7 @@ void ViewPropertyPage::update()
 		RefreshProperty(_xDirProp);
 		RefreshProperty(_yDirProp);
 		RefreshProperty(_zDirProp);
-		
+
 		RefreshProperty(_zoomProp);
 	}
 }
@@ -47,7 +47,7 @@ void ViewPropertyPage::Init()
 	arrPlot.Add(wxT("3D Author"), 2);
 
     //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
-	_cameraProp = Append( wxEnumProperty(wxT("Camera Model"), wxPG_LABEL, arrPlot) );
+	_cameraProp = Append(wxEnumProperty(wxT("Camera Model"), wxPG_LABEL, arrPlot) );
 
 	Append(wxPropertyCategory(wxT("Camera Target")));
 
@@ -62,11 +62,11 @@ void ViewPropertyPage::Init()
 	_xDirProp = Append(wxFloatProperty(wxT("x_dir"), wxPG_LABEL, 0.0));
 	_yDirProp = Append(wxFloatProperty(wxT("y_dir"), wxPG_LABEL, 0.0));
 	_zDirProp = Append(wxFloatProperty(wxT("z_dir"), wxPG_LABEL, 0.0));
-	
-	Append(wxPropertyCategory(wxT("Zoom Distance")));
-	_zoomProp = Append(wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
 
-	// Another way  
+	Append(wxPropertyCategory(wxT("Zoom Distance")));
+	_zoomProp = Append(wxFloatProperty(wxT("zoom"), wxPG_LABEL, 0.0));
+
+	// Another way
 	Append(wxPropertyCategory(wxT("Advanced")));
 
 	// Cursor property

@@ -13,11 +13,11 @@
 #include <OgreSingleton.h>
 #include <OgreViewport.h>
 
-#include "RoadGraph.h"
 #include "MainWindow.h"
 #include "WorldTerrain.h"
 #include "WorldCell.h"
 #include "Tool.h"
+#include "PerformanceTimer.h"
 
 class TiXmlElement;
 class TiXmlHandle;
@@ -26,6 +26,7 @@ class WorldNode;
 class WorldRoad;
 class FCDocument;
 class ExportDoc;
+class WorldMaterials;
 
 
 
@@ -33,6 +34,9 @@ class WorldFrame : public wxControl, public Ogre::Singleton<WorldFrame>
 {
 	DECLARE_CLASS(WorldFrame);
 
+public:
+	PerformanceTimer cpf2;
+	
 private:
 	/* WX members */
 	wxTimer				_timer;
@@ -62,6 +66,7 @@ private:
 	std::vector<WorldRoad*> _roadVec;
 	std::vector<WorldCell*> _cellVec;
 
+   WorldMaterials*   _worldMaterials;
 	WorldNode*			_highlightedNode;
 	WorldRoad*			_highlightedRoad;
 	WorldCell*			_highlightedCell;
@@ -262,7 +267,7 @@ public:
 	void modify(bool b);
 
 	static WorldFrame& getSingleton(void);
-    static WorldFrame* getSingletonPtr(void);
+   static WorldFrame* getSingletonPtr(void);
 };
 
 #endif

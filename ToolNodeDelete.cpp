@@ -59,3 +59,15 @@ bool ToolNodeDelete::alternate(wxMouseEvent &e)
 	}
 	else return false;
 }
+
+void ToolNodeDelete::OnMiddlePressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnMiddlePressed(e);
+}
+
+void ToolNodeDelete::OnRightPressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnRightPressed(e);
+}

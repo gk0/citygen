@@ -26,7 +26,7 @@ bool Application::OnInit()
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage::AddHandler(new wxJPEGHandler);
 
-	if (!wxApp::OnInit()) 
+	if (!wxApp::OnInit())
 		return false;
 
 	InitializeOgre();
@@ -34,7 +34,7 @@ bool Application::OnInit()
 	setupResources();
 	//loadResources();
 
-	_window = new MainWindow(0); 
+	_window = new MainWindow(0);
 
 	// now we need to create MainWindow singleton because
 	// it creates RenderWindow, which is needed for resource loading (for example, textures and VBO)
@@ -45,7 +45,6 @@ bool Application::OnInit()
 	_window->updateOgre();
 
 	// Resources and resource initialization
-	
 	loadResources();
 
 	if(_inputFile.size() > 1)
@@ -58,7 +57,8 @@ bool Application::OnInit()
 		//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
 		//_window->openFile(_("C:/Documents and Settings/George/Desktop/cgx2/testo2.cgx"));
 		//_window->openFile(_("C:/Documents and Settings/George/Desktop/shit.cgx"));
-		//_window->openFile(_("C:/Documents and Settings/George/Desktop/cgx2/city neue 7.cgx"));
+
+		//_window->openFile(_("C:/Documents and Settings/George/Desktop/milan.cgx"));
 		_window->donew();
 	}
 
@@ -69,7 +69,7 @@ bool Application::OnInit()
 		std::replace(_outputFile.begin(), _outputFile.end(), '\\', '/');
 		_window->saveFile(_U(_outputFile.c_str()));
 	}
-	
+
 	// All clear!
 	return true;
 }
@@ -89,14 +89,24 @@ int Application::OnExit()
 bool Application::InitializeOgre()
 {
 	// Make the root
-	_root = new Root();
+	_root = new Root("", "", "citygen.log");
+
+#if _DEBUG && WIN32
+   // load render system plugins first !
+    _root->loadPlugin(".\\RenderSystem_GL_d");
+    _root->loadPlugin(".\\Plugin_CgProgramManager_d");
+    _root->loadPlugin(".\\Plugin_OctreeSceneManager_d");
+#else
+    _root->loadPlugin(".\\RenderSystem_GL");
+    _root->loadPlugin(".\\Plugin_CgProgramManager");
+    _root->loadPlugin(".\\Plugin_OctreeSceneManager");
+#endif
 
 	try
 	{
-		if(!_root->restoreConfig())
-		{
-			_root->showConfigDialog();
-		}
+		// set the default render system
+		_root->setRenderSystem(_root->getAvailableRenderers()->front());
+
 		// initialise with false doesn't create a window
 		_root->initialise(false);
    }
@@ -105,7 +115,7 @@ bool Application::InitializeOgre()
 	  String s = "OgreView::Init() - Exception:\n" + e.getFullDescription() + "\n";
 	  LogManager::getSingleton().logMessage(s, LML_CRITICAL);
       wxMessageBox(wxString(e.getFullDescription().c_str(), wxConvUTF8),
-      _("Exception!"), 
+      _("Exception!"),
       wxICON_EXCLAMATION);
       return false;
    }
@@ -159,12 +169,12 @@ void Application::OnInitCmdLine(wxCmdLineParser& parser)
     // must refuse '/' as parameter starter or cannot use "/path" style paths
     parser.SetSwitchChars (wxT("-"));
 }
- 
+
 bool Application::OnCmdLineParsed(wxCmdLineParser& parser)
 {
 	// get unnamed parameters
 	if(parser.GetParamCount() >= 1) _inputFile = std::string(_C(parser.GetParam(0)));
 	if(parser.GetParamCount() >= 2) _outputFile = std::string(_C(parser.GetParam(1)));
- 
+
     return true;
 }

@@ -18,7 +18,6 @@ END_EVENT_TABLE()
 void CellPropertyPage::Init()
 {
 	Append(wxPropertyCategory(wxT("Presets")));
-	
 
 	wxPGChoices arrPlot;
 	arrPlot.Add(wxT("Select Preset ..."), 0);
@@ -27,11 +26,27 @@ void CellPropertyPage::Init()
 	arrPlot.Add(wxT("Suburbia"), 3);
 
     //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
-	_presetProp = Append( wxEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
+	_presetProp = Append(wxEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
 
 	//presetProp
+	//wxButton* but = new wxButton();
+	//but->SetLabel(wxT("Save to defaults"));
+	////this->
+	////Append(but);
+
+	//// Register editor class - needs only to be called once
+	//wxPGRegisterEditorClass( MultiButtonTextCtrlEditor );
+
+	//// Insert the property that will have multiple buttons
+	//wxLongStringProperty* testo = new wxLongStringProperty(wxT("MultipleButtons"), wxPG_LABEL)
+	//Append( testo, wxPG_LABEL) );
+
+	//// Change property to use editor created in the previous code segment
+	//SetPropertyEditor( wxT("MultipleButtons"), wxPG_EDITOR(MultiButtonTextCtrlEditor) );
+
 
 /*
+
 	const wxChar* flags_prop_labels[] = { wxT("wxICONIZE"),
             wxT("wxCAPTION"), wxT("wxMINIMIZE_BOX"), wxT("wxMAXIMIZE_BOX"), NULL };
 
@@ -62,7 +77,6 @@ void CellPropertyPage::Init()
 
 	// Add float property (value type is actually double)
     _snapSizeProp = Append(wxFloatProperty(wxT("Snap Size (m)"), wxPG_LABEL, 0));
-	_snapDevianceProp = Append(wxFloatProperty(wxT("Snap Size Deviance"), wxPG_LABEL, 0));
 
 	_roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0));
 	_connectivityProp = Append(wxFloatProperty(wxT("Connectivity"), wxPG_LABEL, 0));
@@ -71,8 +85,8 @@ void CellPropertyPage::Init()
 	SetPropertyEditor(wxT("Road Limit"), wxPG_EDITOR(SpinCtrl));
 
 	Append(wxPropertyCategory(wxT("Block Parameters")));
-	_footpathWidthProp = Append(wxFloatProperty(wxT("Footpath width (m)"), wxPG_LABEL, 0));
-	_footpathHeightProp = Append(wxFloatProperty(wxT("Footpath height (m)"), wxPG_LABEL, 0));
+	_pavementWidthProp = Append(wxFloatProperty(wxT("Pavement width (m)"), wxPG_LABEL, 0));
+	_pavementHeightProp = Append(wxFloatProperty(wxT("Pavement height (m)"), wxPG_LABEL, 0));
 
 	Append(wxPropertyCategory(wxT("Lot Parameters")));
 	_lotWidthProp = Append(wxFloatProperty(wxT("Lot width (m)"), wxPG_LABEL, 0));
@@ -87,14 +101,13 @@ void CellPropertyPage::Init()
 	arrPlot2.Add(wxT("Downtown"), 0);
 	arrPlot2.Add(wxT("Industrial"), 1);
 	arrPlot2.Add(wxT("Suburbia"), 2);
-	_typeProp = Append( wxEnumProperty(wxT("Building Hint"), wxPG_LABEL, arrPlot2) );
+	_typeProp = Append(wxEnumProperty(wxT("Building Hint"), wxPG_LABEL, arrPlot2) );
 
 	Append(wxPropertyCategory(wxT("Display Options")));
 
 	_debugProp =  Append(wxBoolProperty(wxT("View Debug Info"), wxPG_LABEL,0));
 	_mcbDebugProp =  Append(wxBoolProperty(wxT("MCB Debug Info"), wxPG_LABEL,0));
 }
-
 
 void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 {
@@ -123,8 +136,8 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 			break;
 		}
 	}
-	else /*if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp) 
-		|| (eventProp == snapSizeProp) || (eventProp == _segmentDevianceProp) 
+	else /*if((eventProp == seedProp) || (eventProp == segmentSizeProp) || (eventProp == degreeProp)
+		|| (eventProp == snapSizeProp) || (eventProp == _segmentDevianceProp)
 		|| (eventProp == degreeDevianceProp) || (eventProp == snapDevianceProp)
 		|| (eventProp == buildingHeightProp) || (eventProp == buildingDevianceProp)
 		|| (eventProp == roadWidthProp) || (eventProp == roadLimitProp))*/
@@ -141,14 +154,13 @@ void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 		g._degreeDeviance = GetPropertyValueAsDouble(_degreeDevianceProp);
 		g._aspect = GetPropertyValueAsDouble(_aspectProp);
 		g._snapSize = GetPropertyValueAsDouble(_snapSizeProp);
-		g._snapDeviance = GetPropertyValueAsDouble(_snapDevianceProp);
 		g._roadWidth = GetPropertyValueAsDouble(_roadWidthProp);
 		g._buildingHeight = GetPropertyValueAsDouble(_buildingHeightProp);
 		g._buildingDeviance = GetPropertyValueAsDouble(_buildingDevianceProp);
 		g._roadLimit = GetPropertyValueAsInt(_roadLimitProp);
 		g._connectivity = GetPropertyValueAsDouble(_connectivityProp);
-		g._footpathWidth = GetPropertyValueAsDouble(_footpathWidthProp);
-		g._footpathHeight = GetPropertyValueAsDouble(_footpathHeightProp);
+		g._pavementWidth = GetPropertyValueAsDouble(_pavementWidthProp);
+		g._pavementHeight = GetPropertyValueAsDouble(_pavementHeightProp);
 		g._lotWidth = GetPropertyValueAsDouble(_lotWidthProp);
 		g._lotDepth = GetPropertyValueAsDouble(_lotDepthProp);
 		g._lotDeviance = GetPropertyValueAsDouble(_lotDevianceProp);
@@ -194,14 +206,13 @@ void CellPropertyPage::update()
 	SetPropertyValue(_degreeDevianceProp, g._degreeDeviance);
 	SetPropertyValue(_aspectProp, g._aspect);
 	SetPropertyValue(_snapSizeProp, g._snapSize);
-	SetPropertyValue(_snapDevianceProp, g._snapDeviance);
 	SetPropertyValue(_roadWidthProp, g._roadWidth);
 	SetPropertyValue(_buildingHeightProp, g._buildingHeight);
 	SetPropertyValue(_buildingDevianceProp, g._buildingDeviance);
 	SetPropertyValue(_roadLimitProp, (int) g._roadLimit);
 	SetPropertyValue(_connectivityProp, g._connectivity);
-	SetPropertyValue(_footpathHeightProp, g._footpathHeight);
-	SetPropertyValue(_footpathWidthProp, g._footpathWidth);
+	SetPropertyValue(_pavementHeightProp, g._pavementHeight);
+	SetPropertyValue(_pavementWidthProp, g._pavementWidth);
 	SetPropertyValue(_lotWidthProp, g._lotWidth);
 	SetPropertyValue(_lotDepthProp, g._lotDepth);
 	SetPropertyValue(_lotDevianceProp, g._lotDeviance);
@@ -216,14 +227,13 @@ void CellPropertyPage::update()
 	RefreshProperty(_aspectProp);
 	RefreshProperty(_snapSizeProp);
 	RefreshProperty(_segmentDevianceProp);
-	RefreshProperty(_snapDevianceProp);
 	RefreshProperty(_roadWidthProp);
 	RefreshProperty(_buildingHeightProp);
 	RefreshProperty(_buildingDevianceProp);
 	RefreshProperty(_roadLimitProp);
 	RefreshProperty(_connectivityProp);
-	RefreshProperty(_footpathWidthProp);
-	RefreshProperty(_footpathHeightProp);
+	RefreshProperty(_pavementWidthProp);
+	RefreshProperty(_pavementHeightProp);
 	RefreshProperty(_lotWidthProp);
 	RefreshProperty(_lotDepthProp);
 	RefreshProperty(_lotDevianceProp);

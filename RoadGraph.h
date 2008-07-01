@@ -76,6 +76,14 @@ public:
 		return rd;
 	}
 
+	bool roadExists(const NodeId src, const NodeId dst) const
+	{
+		bool success;
+		RoadId rd;
+		tie(rd, success) = edge(src, dst, _graph);
+		return success;
+	}
+
 	void removeRoad(const NodeId nd1, const NodeId nd2);
 	void removeRoad(const RoadId rd);
 
@@ -196,10 +204,13 @@ public:
 		E.y = Ogre::Math::Abs(halfVec.y);
 	}
 
+   std::list<NodeId> calculateBoundaryCycle(NodeId firstNode, Graph& g) const;
 
 //private:
 public:
+	
 	static bool getClockwiseCycle(NodeId v0, NodeId v1, Graph &g, std::vector<NodeId> &cycle);
+	static bool getClockwiseCycleList(NodeId v0, NodeId v1, Graph &g, std::list<NodeId> &cycle);
 	static bool getAntiClockwiseCycle(NodeId v0, NodeId v1, Graph &g, std::vector<NodeId> &cycle);
 
 	static bool getClockwiseMost(NodeId vcurr, NodeId& vnext, const Graph &g);
@@ -224,7 +235,7 @@ public:
 	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector2> &poly);
 
 	void extractEnclosedRegions(
-		std::vector< std::vector<NodeInterface*> > &polys, size_t limit = 10000);
+      std::vector< std::vector<NodeInterface*> > &polys, Ogre::ManualObject* debugMO = 0, size_t limit = 10000);
 
 	static void addTerminalPoints(NodeId a, NodeId b, Graph& g, std::vector<Ogre::Vector3> &poly);
 

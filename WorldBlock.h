@@ -2,8 +2,15 @@
 #define WORLDBLOCK_H
 
 #include "stdafx.h"
-#include "WorldLot.h"
-#include "MeshBuilder.h"
+#include "CellParams.h"
+#include <OgreVector3.h>
+#include <vector>
+#include <list>
+#include "Region.h"
+
+//class Region;
+class WorldLot;
+class MeshBuilder;
 
 class WorldBlock
 {
@@ -11,58 +18,21 @@ private:
 
 	std::vector<WorldLot*>						_lots;
 	std::vector< std::vector<Ogre::Vector3> >	_debugLots;
-
-	std::vector<Ogre::uint16>					_footpathPolys;		
-	std::vector<Ogre::Real>						_footpathVertexData;
+	std::vector<Ogre::uint16>					_pavementPolys;
+	std::vector<Ogre::Real>						_pavementVertexData;
 
 public:
 	bool	_error;
-	WorldBlock(const std::vector<Ogre::Vector3> &boundary, const CellParams &gp, rando rg, 
-		MeshBuilder* mb, std::vector<Ogre::Material*> &materials, bool debug=false);
-	~WorldBlock()
-	{
-		BOOST_FOREACH(WorldLot* l, _lots) delete l;
-	}
+
+	WorldBlock(const std::vector<Ogre::Vector3> &boundary, const CellParams &gp, rando rg,
+		MeshBuilder* mb, bool debug=false);
+	virtual ~WorldBlock();
 
    void drawDebug(Ogre::ManualObject* debugMO);
 
-	static bool getLongestBoundarySideIndex(const LotBoundary &b, 
-		const Ogre::Real limitSq, size_t &index);
-	static bool getLongestNonBoundarySideIndex(const LotBoundary &b, 
-		const Ogre::Real limitSq, size_t &index);
-
-	static bool splitBoundary(const size_t &index, const Ogre::Real &deviance, rando rg, const LotBoundary &input, std::vector<LotBoundary> &output);
-
 private:
-	inline void appendVector3(std::vector<Ogre::Real> &vertexData, const Ogre::Vector3& v)
-	{
-		vertexData.push_back(v.x);
-		vertexData.push_back(v.y);
-		vertexData.push_back(v.z);
-	}
-
-	inline void appendVector3(std::vector<Ogre::Real> &vertexData, 
-		const Ogre::Real &x, const Ogre::Real &y, const Ogre::Real &z)
-	{
-		vertexData.push_back(x);
-		vertexData.push_back(y);
-		vertexData.push_back(z);
-	}
-
-	inline void appendVector2(std::vector<Ogre::Real> &vertexData, 
-		const Ogre::Real &x, const Ogre::Real &y)
-	{
-		vertexData.push_back(x);
-		vertexData.push_back(y);
-	}
-
-	inline void appendPoly(std::vector<Ogre::uint16> &indexData, 
-		const Ogre::uint16 &a, const Ogre::uint16 &b, const Ogre::uint16 &c)
-	{
-		indexData.push_back(a);
-		indexData.push_back(b);
-		indexData.push_back(c);
-	}
+	std::list<citygen::Region*> subdivide(citygen::Region* region, const CellParams &params, rando rg);
+	void addDebugLot(citygen::Region* r);
 };
 
 #endif

@@ -8,6 +8,7 @@ class PerformanceTimer
 private:
 	Ogre::String	_title;
 	wxDateTime		_time;
+	wxDateTime		_pauseTime;
 	wxDateTime		_stopTime;
 	bool			_active;
 
@@ -27,6 +28,16 @@ public:
 	{
 		_active = true;
 		_time = wxDateTime::UNow();
+	}
+
+	void pause()
+	{
+		_pauseTime =  wxDateTime::UNow();
+	}
+
+	void resume()
+	{
+		_time += wxDateTime::UNow() - _pauseTime;
 	}
 
 	void stop()

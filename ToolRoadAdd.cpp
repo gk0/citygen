@@ -100,3 +100,14 @@ bool ToolRoadAdd::alternate(wxMouseEvent &e)
 	else return false;
 }
 
+void ToolRoadAdd::OnMiddlePressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnMiddlePressed(e);
+}
+
+void ToolRoadAdd::OnRightPressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnRightPressed(e);
+}

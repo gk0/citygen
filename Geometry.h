@@ -359,9 +359,9 @@ public:
         @param
             angle defines the amount in Radians for the vector to be rotated
     */
-	static inline void rotate(Ogre::Vector2& vec, const Ogre::Radian &angle)
+	static inline Ogre::Vector2 rotate(const Ogre::Vector2& vec, const Ogre::Radian &angle)
 	{
-		vec = (Ogre::Math::Cos(angle) * vec) + (Ogre::Math::Sin(angle) * vec.perpendicular());
+		return (Ogre::Math::Cos(angle) * vec) + (Ogre::Math::Sin(angle) * vec.perpendicular());
 	}
 
 
@@ -381,20 +381,23 @@ public:
 	static Ogre::Real polygonArea(const std::vector<Ogre::Vector2> &polyPoints);
 
 
-    /** Calculates the centre of mass for any given polygon
-		@remarks
-			This algorithm returns the centre of mass or centre of gravity
-			for any polygon assuming it is of even mass.
-			Algorithm defined at 
-			http://local.wasp.uwa.edu.au/~pbourke/geometry/polyarea
-        @param
-            polyPoints a std::vector that defines the polygon in the
-			form of ordered points.
-        @returns
-			A vector which defines the location of the centre of the 
-			polygon mass.
-    */
-	static Ogre::Vector2 centerOfMass(const std::vector<Ogre::Vector2> &polyPoints);
+   /** Calculates the center of mass for any given polygon
+   @remarks
+   This algorithm returns the center of mass
+   for any polygon assuming it is of even mass.
+   Gerard Bashein and Paul R. Detmer,
+   (gb@locke.hs.washington.edu, pdetmer@u.washington.edu)
+   in "Graphics Gems IV", Academic Press, 1994
+   @param
+   polyPoints a std::vector that defines the polygon in the
+   form of ordered points.
+   @returns
+   0 - success
+   1 - 0 area, no midpoint
+   2 - invalid polygon
+   */
+   static int calcCentroid2D(const std::vector<Ogre::Vector3> poly, 
+      Ogre::Vector2 &center, Ogre::Real &area);
 
 
 	/** Insets a polygon
@@ -459,30 +462,11 @@ public:
 	static bool polyRepair(std::vector<Ogre::Vector3> &poly, size_t lookAheadMax);
 	static void polyRepairCycle(std::vector<Ogre::Vector3> &poly, size_t lookAhead);
 
-	inline static Ogre::Vector2 calcInsetTarget(const Ogre::Vector3& a, 
-		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &inset)
-	{
-		Ogre::Vector2 normVecBA(calcNormVec2D(b, a));
-		Ogre::Vector2 normVecBC(calcNormVec2D(b, c));
-		Ogre::Vector2 normVecBCPerp(normVecBC.perpendicular());
-		Ogre::Vector2 bisectorVector2(-normVecBA.perpendicular() + normVecBCPerp);
-		bisectorVector2.normalise();
-		return V2(b) + bisectorVector2 * (inset / bisectorVector2.dotProduct(normVecBCPerp));
-	}
+	static Ogre::Vector2 calcInsetTarget(const Ogre::Vector3& a, 
+		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &inset);
 
-	inline static Ogre::Vector2 calcInsetTarget(const Ogre::Vector3& a, 
-		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &insetAB, const Ogre::Real &insetBC)
-	{
-		if(insetAB == insetBC)
-			return calcInsetTarget(a,b,c,insetAB);
-		
-		Ogre::Vector2 normVecBA(calcNormVec2D(b, a));
-		Ogre::Vector2 normVecBC(calcNormVec2D(b, c));
-		Ogre::Real theta = std::atan2(normVecBC.y,normVecBC.x) - std::atan2(normVecBA.y,normVecBA.x);
-		if(theta < 0) theta = Ogre::Math::TWO_PI + theta;
-		Ogre::Real adj = insetAB / std::tan(theta) + insetBC / std::sin(theta);
-		return Ogre::Vector2(b.x, b.z) + (normVecBA * -adj) + -insetAB * normVecBA.perpendicular();
-	}
+	static Ogre::Vector2 calcInsetTarget(const Ogre::Vector3& a, 
+		const Ogre::Vector3& b, const Ogre::Vector3& c, const Ogre::Real &insetAB, const Ogre::Real &insetBC);
 
 #define gRAD15 Ogre::Math::PI/12
 #define gRAD165 Ogre::Math::PI - gRAD15

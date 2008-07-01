@@ -57,4 +57,14 @@ bool ToolRoadSelect::alternate(wxMouseEvent &e)
 	else return false;
 }
 
+void ToolRoadSelect::OnMiddlePressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnMiddlePressed(e);
+}
 
+void ToolRoadSelect::OnRightPressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnRightPressed(e);
+}

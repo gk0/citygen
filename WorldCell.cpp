@@ -12,10 +12,10 @@
 #include "PerformanceTimer.h"
 #include "WorldBlock.h"
 #include "MeshBuilder.h"
+#include "WorldMaterials.h"
 
 #include <OgreEntity.h>
 #include <OgreManualObject.h>
-#include <OgreMaterialManager.h>
 #include <OgreMeshManager.h>
 #include <OgreStringConverter.h>
 #include <tinyxml.h>
@@ -33,14 +33,13 @@ const CellParams CellParams::MANHATTAN(
 	0.0,	// degreeDeviance
 	2.1,	// aspect
 	30.0,	// snapSize
-	0.1,	// snapDeviance
 	18,		// buildingHeight
 	0.6,	// buildingDeviance
 	4.6,	// roadWidth
 	0,		// roadLimit
 	1.0,	// connectivity
-	3.2,	// footpathWidth;
-	0.28,	// footpathHeight;
+	3.2,	// pavementWidth;
+	0.28,	// pavementHeight;
 	10.5,	// lotWidth
 	18.0,	// lotDepth
 	0.5,	// lotDeviance
@@ -56,14 +55,13 @@ const CellParams CellParams::INDUSTRIAL(
 	0.05,	// degreeDeviance
 	1.2,	// aspect
 	35,		// snapSize
-	0.1,	// snapDeviance
 	6,		// buildingHeight
 	0.3,	// buildingDeviance
 	3.5,	// roadWidth
 	0,		// roadLimit
 	0.15,	// connectivity
-	2,		// footpathWidth;
-	0.28,	// footpathHeight;
+	2,		// pavementWidth;
+	0.28,	// pavementHeight;
 	24.0,	// lotWidth
 	28.0,	// lotDepth
 	0.6,	// lotDeviance
@@ -79,14 +77,13 @@ const CellParams CellParams::SUBURBIA(
 	0.6,	// degreeDeviance
 	1.0,	// aspect
 	40,		// snapSize
-	0.1,	// snapDeviance
 	4,		// buildingHeight
 	0.1,	// buildingDeviance
 	3.0,	// roadWidth
 	0,		// roadLimit
 	0.0,	// connectivity
-	1.5,	// footpathWidth;
-	0.28,	// footpathHeight;
+	1.5,	// pavementWidth;
+	0.28,	// pavementHeight;
 	7.0,	// lotWidth
 	12.0,	// lotDepth
 	0.2,	// lotDeviance
@@ -178,8 +175,10 @@ void WorldCell::clearRoadGraph()
 	for ( tie(rIt, rEnd) = _roadGraph.getRoads(); rIt != rEnd; rIt++)
 	{
 		RoadInterface* ri = _roadGraph.getRoad((*rIt));
+      try {
 		if (typeid(*ri) == typeid(SimpleRoad))
 			delete ri;
+      }catch(...) {}
 	}
 
 	// delete nodes
@@ -267,17 +266,17 @@ NodeInterface* WorldCell::placeSegment(rando &genRandom, NodeInterface* currentN
 				createRoad(cursorNode, _roadGraph.getNode(dstNodeId));
 			}
 			break;
-		}	
+		}
 	case 2:
 		// node snap
-		//if(((float)rand()/(float)RAND_MAX) > _genParams._connectivity)
-		if (genRandom() > _genParams._connectivity)
-			return 0;
-		// MMM: dont snap to your self ass monkey
-		if (currentNode != _roadGraph.getNode(nd))
+		// test if road exists
+		if(_roadGraph.roadExists(currentNode->_nodeId, nd) != true && currentNode != _roadGraph.getNode(nd))
 		{
-			createRoad(currentNode, _roadGraph.getNode(nd));
-			roadCount++;
+			if (genRandom() <= _genParams._connectivity)
+			{
+				createRoad(currentNode, _roadGraph.getNode(nd));
+				roadCount++;
+			}
 		}
 		break;
 	}
@@ -294,7 +293,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 	bool centreSuccess = false;
 /*	if (_genParams._connectivity >= 1.0f)
 	{
-		// 2. Get Center as a start point !!return if its node inside the cell	
+		// 2. Get Center as a start point !!return if its node inside the cell
 		vector<Vector2> pointList;
 		vector<NodeInterface*>::const_iterator nIt, nEnd;
 		for (nIt = _boundaryCycle.begin(), nEnd = _boundaryCycle.end(); nIt
@@ -350,6 +349,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 			Vector3 pos1_3D(boundaryRoads[i].second->getMidPoint());
 			Vector2 pos1(pos1_3D.x, pos1_3D.z);
 
+			// TODO: current direction is cumulative, test non-cumulative
 			// get the road direction
 			size_t j = boundaryRoads[i].first;
 			size_t k = (j+1)%boundaryRoadsN;
@@ -357,7 +357,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 					- _boundaryCycle[j]->getPosition2D());
 			roadDir = roadDir.perpendicular();
 			roadDir.normalise();
-			Vector2 pos2 = pos1 + (roadDir * _genParams._segmentSize*2.1);
+			Vector2 pos2 = pos1 + (roadDir * _genParams._segmentSize/* * _genParams._aspect*/);
 			pos1 -= (roadDir * _genParams._segmentSize);
 
 			NodeInterface* currentNode = 0;
@@ -442,32 +442,41 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				q.push(make_pair<NodeInterface*, Vector2>(currentNode, roadDir));
 				break;
 			}
-
-
 		}
 	}
 
 	Ogre::Real segDevSz = _genParams._segmentSize * _genParams._segmentDeviance;
 	Ogre::Real segSzBase = _genParams._segmentSize - (segDevSz / 2);
-	Real degDev = _genParams._degree * _genParams._degreeDeviance;
-	Real degBase = _genParams._degree - (degDev / 2);
+
+	Radian thetaDivDegree(Math::TWO_PI / _genParams._degree);
+	Radian thetaDeviance(_genParams._degreeDeviance * thetaDivDegree);
+	Radian thetaHalfDeviance(thetaDeviance / 2);
 
 	while (!q.empty())
 	{
 		NodeInterface* currentNode;
-		Vector2 currentDirection;
-		boost::tie(currentNode, currentDirection) = q.front();
+		Vector2 originalDirection, currentDirection;
+		boost::tie(currentNode, originalDirection) = q.front();
 		q.pop();
 
 		//Ogre::Radian theta(Math::TWO_PI / (degBase + (degDev * ((float)rand()/(float)RAND_MAX))));
-		Ogre::Radian theta(Math::TWO_PI / (degBase + (degDev * genRandom())));
+		//	(degBase + (degDev * genRandom())));
+		vector<Vector2> directions;
+		directions.reserve(_genParams._degree);
 
-		Vector2 originalDirection(currentDirection);
-
-		// alter our direction vector 
 		for (unsigned int i=0; i < _genParams._degree; i++)
 		{
-			if (!_genParams._mcbDebug && _genParams._roadLimit != 0 && 
+			Radian theta = (i*thetaDivDegree) - thetaHalfDeviance + genRandom() * thetaDeviance;
+			directions.push_back(Geometry::rotate(originalDirection, theta).normalisedCopy());
+		}
+
+
+		// alter our direction vector
+		for (unsigned int i=0; i < _genParams._degree; i++)
+		{
+			Radian theta = (i*thetaDivDegree) - thetaHalfDeviance + genRandom() * thetaDeviance;
+
+			if (!_genParams._mcbDebug && _genParams._roadLimit != 0 &&
 				roadCount >= _genParams._roadLimit)
 			//if(roadCount++ >= 29)
 			{
@@ -476,24 +485,25 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				break;
 			}
 
-			if (roadCount == 42)
+			if (roadCount == 39)
 			{
 				size_t z = 0;
 			}
 
 			// get a candidate
-			
-			Geometry::rotate(currentDirection, theta);
-			// doesn't work grrrrrrrrrr
 
-			currentDirection.normalise();
+			currentDirection = directions[i];
+			//currentDirection = Geometry::rotate(originalDirection, theta);
+			// doesn't work grrrrrrrrrr
+			//currentDirection.normalise();
+
 			//Real segSz = (segSzBase + (segDevSz *  ((float)rand()/(float)RAND_MAX)));
 			Real segSz= (segSzBase + (segDevSz * genRandom()));
 			if(_genParams._degree == 4 && (i==1 || i==3)) segSz *= _genParams._aspect;
 			currentDirection *= segSz;
 			Vector2 cursor(currentDirection + currentNode->getPosition2D());
 
-			if (_genParams._roadLimit != 0 && 
+			if (_genParams._roadLimit != 0 &&
 				roadCount >= (_genParams._roadLimit - 1))
 			{
 				RoadId rd;
@@ -504,7 +514,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				LogManager::getSingleton().logMessage("I got: "+StringConverter::toString(snapState));
 			}
 			NodeInterface* ni = placeSegment(genRandom, currentNode, cursor, roadCount);
-			if(ni) q.push(make_pair<NodeInterface*, Vector2>(ni, originalDirection));
+			if(ni) q.push(make_pair<NodeInterface*, Vector2>(ni, directions[0]));
 		}
 	}
 }
@@ -524,7 +534,6 @@ void WorldCell::prebuild2()
 {
 	if(_displayMode >= view_box) prebuildBuildings();
 }
-
 
 void WorldCell::prebuildRoads()
 {
@@ -569,40 +578,35 @@ void WorldCell::prebuildRoads()
 
 void WorldCell::prebuildBuildings()
 {
+   size_t blockErrors = 0;
+   vector< vector<NodeInterface*> > cycles;
 
-	// Define a random number generator and init with a reproducible seed.
+	// Define a random number generator and init with a reproducible seed
+   // using a uniform random number distribution which produces "double"
+   // values between 0 and 1 (0 inclusive, 1 exclusive).
 	base_generator_type generator(_genParams._seed);
-
-	// Define a uniform random number distribution which produces "double"
-	// values between 0 and 1 (0 inclusive, 1 exclusive).
 	boost::uniform_real<> uni_dist(0, 1);
 	rando rg(generator, uni_dist);
 
-	// blocks
-	_mbBuildings = new MeshBuilder(_name+"Buildings", "custom", this);
-
-	// set up materials
-	vector<Material*> materials(6);
-	materials[0] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building1WRelief")).get();
-	materials[1] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building2WRelief")).get();
-	materials[2] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building3WRelief")).get();
-	materials[3] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building4WRelief")).get();
-	materials[4] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Building5WNormalMap")).get();
-	materials[5] = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Paving")).get();
-
-	vector< vector<NodeInterface*> > cycles;
-	_roadGraph.extractEnclosedRegions(cycles,10000);
-
-   // set debug object
-	size_t blockErrors = 0;
+	// extract the cycles from the road graph, build the blocks and add to the
+   // building mesh if no error occurred
+	_roadGraph.extractEnclosedRegions(cycles,0,10000);
 	_blocks.reserve(cycles.size());
+   _mbBuildings = new MeshBuilder(_name+"Buildings", "custom", this);
+
 	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
 	{
 		vector<Vector3> poly;
+		BOOST_FOREACH(NodeInterface* ni, cycle)
+		{
+			Vector3 v = ni->getPosition3D();
+			//if(_isnan(v.x) || _isnan(v.y) || _isnan(v.z))
+			//	throw Exception(Exception::ERR_INVALIDPARAMS, "Nan", "WorldBlock");
+		}
 		if(extractPolygon(cycle, poly))
 		{
-			WorldBlock* b = new WorldBlock(poly, _genParams, rg, _mbBuildings, materials, _genParams._debug);
-			if(b->_error) 
+			WorldBlock* b = new WorldBlock(poly, _genParams, rg, _mbBuildings, _genParams._debug);
+			if(b->_error)
 			{
 				blockErrors++;
 				delete b;
@@ -611,6 +615,8 @@ void WorldCell::prebuildBuildings()
 		}
 		else blockErrors++;
 	}
+
+   // print out some debug information on block errors
 	//if(blockErrors > 0) LogManager::getSingleton().logMessage(_name+"\tblock error count\t"+StringConverter::toString(blockErrors));
 }
 
@@ -624,10 +630,13 @@ void WorldCell::build()
       _debugMO = 0;
    }
 
+
 	if(_displayMode >= view_cell) buildRoads();
 	if(_genParams._debug)
    {
       _debugMO = new ManualObject(_name+"Debug");
+      vector< vector<NodeInterface*> > cycles;
+	  _roadGraph.extractEnclosedRegions(cycles, _debugMO);
       buildDebugOverlay();
       BOOST_FOREACH(WorldBlock* b, _blocks) b->drawDebug(_debugMO);
       _sceneNode->attachObject(_debugMO);
@@ -641,15 +650,16 @@ void WorldCell::buildRoads()
 	//1. destroy scene objects
 
 	// build road junctions
-	Material* mat = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/RoadJunction")).get();
-	Material* mat2 = static_cast<MaterialPtr>(MaterialManager::getSingleton().getByName("gk/Road")).get();
+   Material* roadMaterial = WorldMaterials::getSingleton().getDefaultMaterial("road");
+   Material* junctionMaterial = WorldMaterials::getSingleton().getDefaultMaterial("junction");
+
 	MeshBuilder roadBuilder(_name+"Roads", "custom", this);
 	NodeIterator nIt, nEnd;
 	for ( boost::tie(nIt, nEnd) = _roadGraph.getNodes(); nIt != nEnd; nIt++)
 	{
 		NodeInterface* ni = _roadGraph.getNode(*nIt);
 		if (typeid(*ni) == typeid(SimpleNode))
-			static_cast<SimpleNode*>(ni)->build(roadBuilder, mat);
+			static_cast<SimpleNode*>(ni)->build(roadBuilder, junctionMaterial);
 	}
 
 	// build road segments
@@ -658,7 +668,7 @@ void WorldCell::buildRoads()
 	{
 		RoadInterface* ri = _roadGraph.getRoad(*rIt);
 		if (typeid(*ri) == typeid(SimpleRoad))
-			static_cast<SimpleRoad*>(ri)->build(roadBuilder, mat2);
+			static_cast<SimpleRoad*>(ri)->build(roadBuilder, roadMaterial);
 	}
 
 	// create entity for road network
@@ -677,7 +687,7 @@ void WorldCell::buildBuildings()
 
 	delete _mbBuildings;
 	_mbBuildings = 0;
-	
+
 	// am done with blocks now.
 	BOOST_FOREACH(WorldBlock* b, _blocks) delete b;
 	_blocks.clear();
@@ -996,8 +1006,6 @@ bool WorldCell::loadXML(const TiXmlHandle& cellRoot)
 				element->QueryFloatAttribute("value", &_genParams._aspect);
 			else if (key == "snapSize")
 				element->QueryFloatAttribute("value", &_genParams._snapSize);
-			else if (key == "snapDeviance")
-				element->QueryFloatAttribute("value", &_genParams._snapDeviance);
 			else if (key == "roadWidth")
 				element->QueryFloatAttribute("value", &_genParams._roadWidth);
 			else if (key == "buildingHeight")
@@ -1008,14 +1016,37 @@ bool WorldCell::loadXML(const TiXmlHandle& cellRoot)
 						&_genParams._buildingDeviance);
 			else if (key == "connectivity")
 				element->QueryFloatAttribute("value", &_genParams._connectivity);
-			else if (key == "lotWidth")
-				element->QueryFloatAttribute("value", &_genParams._lotWidth);
+         else if (key == "pavementWidth")
+            element->QueryFloatAttribute("value", &_genParams._pavementWidth);
+         else if (key == "pavementHeight")
+            element->QueryFloatAttribute("value", &_genParams._pavementHeight);
+         else if (key == "lotWidth")
+            element->QueryFloatAttribute("value", &_genParams._lotWidth);
 			else if (key == "lotDepth")
 				element->QueryFloatAttribute("value", &_genParams._lotDepth);
 			else if (key == "lotDeviance")
 				element->QueryFloatAttribute("value", &_genParams._lotDeviance);
+         else if (key == "debug")
+         {
+            int i;
+            element->QueryIntAttribute("value", &i);
+            _genParams._debug = (i==0) ? false : true;
+         }
+         else if (key == "mcbdebug")
+         {
+            int i;
+            element->QueryIntAttribute("value", &i);
+            _genParams._mcbDebug = (i==0) ? false : true;
+         }
 		}
 	}
+
+	//_genParams._lotWidth *= 1.7;
+	//_genParams._lotDepth *= 1.6;
+
+   // May want to do this for versions
+   //_genParams._lotWidth = _genParams._lotWidth * 2;
+   //_genParams._lotDepth = _genParams._lotDepth * 2;
 	return true;
 }
 
@@ -1059,8 +1090,6 @@ addNewElement(cycle, "node")->SetAttribute("id", (int)ni);
 	addNewElement(gp, "aspect")->SetDoubleAttribute("value",
 		_genParams._aspect);
 	addNewElement(gp, "snapSize")->SetDoubleAttribute("value", _genParams._snapSize);
-	addNewElement(gp, "snapDeviance")->SetDoubleAttribute("value",
-			_genParams._snapDeviance);
 	addNewElement(gp, "roadWidth")->SetDoubleAttribute("value", _genParams._roadWidth);
 	addNewElement(gp, "buildingHeight")->SetDoubleAttribute("value",
 			_genParams._buildingHeight);
@@ -1068,10 +1097,16 @@ addNewElement(cycle, "node")->SetAttribute("id", (int)ni);
 			_genParams._buildingDeviance);
 	addNewElement(gp, "connectivity")->SetDoubleAttribute("value",
 			_genParams._connectivity);
+   addNewElement(gp, "pavementWidth")->SetDoubleAttribute("value",
+      _genParams._pavementWidth);
+   addNewElement(gp, "pavementHeight")->SetDoubleAttribute("value",
+      _genParams._pavementHeight);
 	addNewElement(gp, "lotWidth")->SetDoubleAttribute("value", _genParams._lotWidth);
 	addNewElement(gp, "lotDepth")->SetDoubleAttribute("value", _genParams._lotDepth);
 	addNewElement(gp, "lotDeviance")->SetDoubleAttribute("value",
 			_genParams._lotDeviance);
+   addNewElement(gp, "debug")->SetDoubleAttribute("value", _genParams._debug);
+   addNewElement(gp, "mcbdebug")->SetDoubleAttribute("value", _genParams._mcbDebug);
 
 	return root;
 }
@@ -1142,6 +1177,8 @@ void WorldCell::setDisplayMode(Display mode)
 	_displayMode = mode;
 }
 
+
+
 void WorldCell::constructSLAV(const vector<NodeInterface*> &cycle, SLAV &sv)
 {
 	size_t i,j,N = cycle.size();
@@ -1157,14 +1194,14 @@ void WorldCell::constructSLAV(const vector<NodeInterface*> &cycle, SLAV &sv)
 
 		// a special case is required for the end node of filaments
 		if(cycle[i]->getDegree()==1)
-		{	
+		{
 			// create two vertices in place of one point to create a cap for the segment end
 			Vector2 pos2D(cycle[i]->getPosition2D());
 			Vector3 pos3D(cycle[i]->getPosition3D());
 			Vector2 segmentVec = pos2D -  cycle[lastI]->getPosition2D();
 			segmentVec.normalise();
 			Vector2 segmentPerp = segmentVec.perpendicular();
-			
+
 			// Note: Two different approaches are possible to creating the inset vectors
 			// a: create both points with the target = position and do not test
 			// b: move pos slightly so that intersection is not detected
@@ -1175,8 +1212,10 @@ void WorldCell::constructSLAV(const vector<NodeInterface*> &cycle, SLAV &sv)
 			iv->_pos.x = pos3D.x + (0.001) * segmentPerp.x;
 			iv->_pos.y = pos3D.y;
 			iv->_pos.z = pos3D.z + (0.001) * segmentPerp.y;
+			//if(_isnan(iv->_insetTarget.x) || _isnan(iv->_insetTarget.y))
+			//	throw Exception(Exception::ERR_INVALIDPARAMS, "Nan", "WorldCell::constructSLAV");
 			sv.add(iv);
-			
+
 			InsetVertex *iv2 = new InsetVertex();
 			iv2->_intersectionTested = false;
 			iv2->_inset = iv->_inset;
@@ -1184,12 +1223,16 @@ void WorldCell::constructSLAV(const vector<NodeInterface*> &cycle, SLAV &sv)
 			iv2->_pos.x = pos3D.x - (0.001) * segmentPerp.x;
 			iv2->_pos.y = pos3D.y;
 			iv2->_pos.z = pos3D.z - (0.001) * segmentPerp.y;
+			//if(_isnan(iv2->_insetTarget.x) || _isnan(iv2->_insetTarget.y))
+			//	throw Exception(Exception::ERR_INVALIDPARAMS, "Nan", "WorldCell::constructSLAV");
 			sv.add(iv2);
 		}
 		else
 		{
-			iv->_insetTarget = Geometry::calcInsetTarget(cycle[lastI]->getPosition3D(), cycle[i]->getPosition3D(), 
+			iv->_insetTarget = Geometry::calcInsetTarget(cycle[lastI]->getPosition3D(), cycle[i]->getPosition3D(),
 				cycle[j]->getPosition3D(), lastInset, iv->_inset);
+			//if(_isnan(iv->_insetTarget.x) || _isnan(iv->_insetTarget.y))
+			//	throw Exception(Exception::ERR_INVALIDPARAMS, "Nan", "WorldCell::constructSLAV");
 			iv->_pos = cycle[i]->getPosition3D();
 			sv.add(iv);
 		}
@@ -1198,12 +1241,32 @@ void WorldCell::constructSLAV(const vector<NodeInterface*> &cycle, SLAV &sv)
 	}
 }
 
+bool cycleError(const vector<NodeInterface*> &cycle)
+{
+	size_t i,j,k,N = cycle.size();
+	for(i=0; i<N; i++)
+	{
+		j = (i + 1) % N;
+		k = (i + 2) % N;
+		if(cycle[i] == cycle[k] && cycle[j]->getDegree() != 1) return true;
+	}
+	return false;
+}
+
 bool WorldCell::extractPolygon(vector<NodeInterface*> &cycle,
 		vector<Vector3> &poly)
 {
-	SLAV sv;
-	constructSLAV(cycle, sv);
-	return Skeletor::processInset(sv, poly);
+	if(!cycleError(cycle))
+	{
+		SLAV sv;
+		constructSLAV(cycle, sv);
+		return Skeletor::processInset(sv, poly);
+	}
+	else
+	{
+		LogManager::getSingleton().logMessage("Road Error: a->b->a with degree != 1");
+		return false;
+	}
 }
 
 void WorldCell::buildDebugOverlay()
@@ -1214,7 +1277,7 @@ void WorldCell::buildDebugOverlay()
 
 	// extract cycles
 	vector< vector<NodeInterface*> > cycles;
-	_roadGraph.extractEnclosedRegions(cycles, 10000);
+	_roadGraph.extractEnclosedRegions(cycles, 0,10000);
 
 	BOOST_FOREACH(vector<NodeInterface*> &cycle, cycles)
 	{
@@ -1228,7 +1291,7 @@ void WorldCell::buildDebugOverlay()
 			///////////////////////////////////////////////////////////////////
 			// 1. Intersection test for all inset vectors
 			///////////////////////////////////////////////////////////////////
-			
+
 			// find the earliest intersection
 			Real intersectionLocation = 1;
 			Vector2 intersection(Vector2::ZERO);
@@ -1245,12 +1308,12 @@ void WorldCell::buildDebugOverlay()
 					// check if the pair intersect and store the lowest
 					Real r;
 					Vector2 tmpInscn;
-					if(Geometry::lineIntersect(ivPos2D, iv->_insetTarget, 
+					if(Geometry::lineIntersect(ivPos2D, iv->_insetTarget,
 							nextIvPos2D, iv->_right->_insetTarget, tmpInscn, r) &&
 							r >= 0 && r <= 1)
 					{
 						// TODO: tolerance value could be used here
-						if(r < intersectionLocation) 
+						if(r < intersectionLocation)
 						{
 							intersectionLocation = r;
 							firstOffender = iv;
@@ -1263,11 +1326,11 @@ void WorldCell::buildDebugOverlay()
 				iv = iv->_right;
 			}
 			while(iv != sv.getRoot());
-			
+
 			///////////////////////////////////////////////////////////////////
 			// 2. Process Bisector Intersection
 			///////////////////////////////////////////////////////////////////
-			
+
 			// find the closest intersection
 			if(intersectionLocation != 1.0)
 			{
@@ -1307,13 +1370,13 @@ void WorldCell::buildDebugOverlay()
 						iv = iv->_right;
 					}
 					while(iv != sv.getRoot());
-					
+
 					// update the second offender
-					
+
 					//LogManager::getSingleton().logMessage("Int:"+StringConverter::toString(intersection));
 					secondOffender->_pos.x = intersection.x;
 					secondOffender->_pos.z = intersection.y;
-					secondOffender->_insetTarget = Geometry::calcInsetTarget(secondOffender->_left->_pos, secondOffender->_pos, 
+					secondOffender->_insetTarget = Geometry::calcInsetTarget(secondOffender->_left->_pos, secondOffender->_pos,
 							secondOffender->_right->_pos, secondOffender->_left->_inset, secondOffender->_inset);
 
 					secondOffender->_intersectionTested = false;

@@ -26,14 +26,13 @@ private:
 	wxPGProperty*	_degreeDevianceProp;
 	wxPGProperty*	_aspectProp;
 	wxPGProperty*	_snapSizeProp;
-	wxPGProperty*	_snapDevianceProp;
 	wxPGProperty*	_buildingHeightProp;
 	wxPGProperty*	_buildingDevianceProp;
 	wxPGProperty*	_roadWidthProp;
 	wxPGProperty*	_roadLimitProp;
 	wxPGProperty*	_connectivityProp;
-	wxPGProperty*	_footpathWidthProp;
-	wxPGProperty*	_footpathHeightProp;
+	wxPGProperty*	_pavementWidthProp;
+	wxPGProperty*	_pavementHeightProp;
 	wxPGProperty*	_lotWidthProp;
 	wxPGProperty*	_lotDepthProp;
 	wxPGProperty*	_lotDevianceProp;

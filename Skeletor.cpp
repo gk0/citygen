@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Skeletor.h"
 #include "Geometry.h"
+#include <OgreException.h>
 
 using namespace Ogre;
 using namespace std;
@@ -63,6 +64,10 @@ SLAV::~SLAV()
 
 void SLAV::add(InsetVertex* v)
 {
+	//if(_isnan(v->_pos.x) || _isnan(v->_pos.y) || _isnan(v->_pos.z)
+	//	|| _isnan(v->_insetTarget.x) || _isnan(v->_insetTarget.y))
+	//	throw Ogre::Exception(Exception::ERR_INVALIDPARAMS, "Nan", "SLAV::add");
+
 	if(_root == 0)
 	{
 		_root = v;

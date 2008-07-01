@@ -24,7 +24,7 @@ void RoadPropertyPage::Init()
 	arrPlot.Add(wxT("Even Elevation Diff."), EvenElevationDiff);
 	arrPlot.Add(wxT("Minimum Elevation Diff."), MinimumElevationDiff);
 	arrPlot.Add(wxT("Minimum Elevation"), MinimumElevation);
-    _plotAlgorProp = Append( wxEnumProperty(wxT("Algorithm"), wxPG_LABEL, arrPlot) );
+    _plotAlgorProp = Append(wxEnumProperty(wxT("Algorithm"), wxPG_LABEL, arrPlot) );
 
 	// Add float property (value type is actually double)
 	_sampleSizeProp = Append(wxFloatProperty(wxT("Sample Size (m)"), wxPG_LABEL, 0));

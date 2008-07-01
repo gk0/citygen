@@ -82,7 +82,7 @@ void WorldRoad::addVertexData(const Vector3 &p1, const Vector3 &p2, const Vector
 	MeshBuilder::addVData2(_vertexData, uTex, 0.0f);
 	MeshBuilder::addVData3(_vertexData, p2);
 	MeshBuilder::addVData3(_vertexData, norm);
-	MeshBuilder::addVData2(_vertexData, uTex, Math::Floor(getWidth() / 3.5));
+	MeshBuilder::addVData2(_vertexData, uTex, Math::Floor(getWidth() / 3));
 }
 
 void WorldRoad::prebuild()

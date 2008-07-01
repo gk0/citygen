@@ -13,14 +13,13 @@ struct CellParams
 	Ogre::Real		_degreeDeviance;
 	Ogre::Real		_aspect;
 	Ogre::Real		_snapSize;
-	Ogre::Real		_snapDeviance;
 	Ogre::Real		_buildingHeight;
 	Ogre::Real		_buildingDeviance;
 	Ogre::Real		_roadWidth;
 	size_t			_roadLimit;
 	Ogre::Real		_connectivity;
-	Ogre::Real		_footpathWidth;
-	Ogre::Real		_footpathHeight;
+	Ogre::Real		_pavementWidth;
+	Ogre::Real		_pavementHeight;
 	Ogre::Real		_lotWidth;
 	Ogre::Real		_lotDepth;
 	Ogre::Real		_lotDeviance;
@@ -29,9 +28,9 @@ struct CellParams
 
 	CellParams(unsigned int type, int seed, Ogre::Real segmentSize, 
 		Ogre::Real segmentDeviance, unsigned int degree, Ogre::Real degreeDeviance, Ogre::Real aspect, 
-		Ogre::Real snapSize, Ogre::Real snapDeviance, Ogre::Real buildingHeight, 
+		Ogre::Real snapSize, Ogre::Real buildingHeight, 
 		Ogre::Real buildingDeviance, Ogre::Real roadWidth, size_t roadLimit, 
-		Ogre::Real connectivity, Ogre::Real	footpathWidth, Ogre::Real footpathHeight,
+		Ogre::Real connectivity, Ogre::Real	pavementWidth, Ogre::Real pavementHeight,
 		Ogre::Real lotWidth, Ogre::Real lotDepth, Ogre::Real lotDeviance, bool debug, bool mcbDebug = false)
 	{
 		_type = type;
@@ -42,14 +41,13 @@ struct CellParams
 		_degreeDeviance = degreeDeviance;
 		_aspect = aspect;
 		_snapSize = snapSize;
-		_snapDeviance = snapDeviance;
 		_buildingHeight = buildingHeight;
 		_buildingDeviance = buildingDeviance;
 		_roadWidth = roadWidth;
 		_roadLimit = roadLimit;
 		_connectivity = connectivity;
-		_footpathWidth = footpathWidth;
-		_footpathHeight = footpathHeight;
+		_pavementWidth = pavementWidth;
+		_pavementHeight = pavementHeight;
 		_lotWidth = lotWidth;
 		_lotDepth = lotDepth;
 		_lotDeviance = lotDeviance;

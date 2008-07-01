@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Geometry.h"
 #include "Triangulate.h"
+#include <OgreException.h>
 
 using namespace std;
 using namespace Ogre;
@@ -33,27 +34,28 @@ Real Geometry::polygonArea(const std::vector<Vector2> &polyPoints)
 	return area;
 }
 
-Vector2 Geometry::centerOfMass(const std::vector<Vector2> &polyPoints)
+int Geometry::calcCentroid2D(const vector<Vector3> poly, Vector2 &center, Real &area)
 {
-	Real cx = 0, cy = 0;
-	Real area = polygonArea(polyPoints);
-	// could change this to Point2D.Float if you want to use less memory
-	Vector2 res;
-	size_t i, j, N = polyPoints.size();
+   size_t i, j, N = poly.size();
+   if (N < 3) return 1;
+   Real ai, atmp = 0, xtmp = 0, ytmp = 0;
 
-	Real factor = 0;
-	for (i = 0; i < N; i++) {
-		j = (i + 1) % N;
-		factor = (polyPoints[i].x * polyPoints[j].y
-				- polyPoints[j].x * polyPoints[i].y);
-		cx += (polyPoints[i].x + polyPoints[j].x) * factor;
-		cy += (polyPoints[i].y + polyPoints[j].y) * factor;
-	}
-	area *= 6.0f;
-	factor = 1 / area;
-	cx *= factor;
-	cy *= factor;
-	return Vector2(cx, cy);
+   // look heres how to iterate without mod
+   for (i = N-1, j = 0; j < N; i = j, j++)
+   {
+      ai = poly[i].x * poly[j].z - poly[j].x * poly[i].z;
+      atmp += ai;
+      xtmp += (poly[j].x + poly[i].x) * ai;
+      ytmp += (poly[j].z + poly[i].z) * ai;
+   }
+   area = atmp / 2;
+   if (atmp != 0)
+   {
+      center.x = xtmp / (3 * atmp);
+      center.y = ytmp / (3 * atmp);
+      return 0;
+   }
+   return 2;
 }
 
 bool Geometry::isInside(const Ogre::Vector2 &loc, const std::vector<Ogre::Vector2> &polyPoints)
@@ -169,3 +171,36 @@ void Geometry::polyRepairCycle(std::vector<Ogre::Vector3> &poly, size_t lookAhea
 	}
 	else poly.swap(tmpPoly);
 }
+
+Vector2 Geometry::calcInsetTarget(const Vector3& a, const Vector3& b, const Vector3& c, const Real &inset)
+{
+   Vector2 normVecBA(calcNormVec2D(b, a));
+   Vector2 normVecBC(calcNormVec2D(b, c));
+   Vector2 normVecBCPerp(normVecBC.perpendicular());
+   Vector2 bisectorVector2(-normVecBA.perpendicular() + normVecBCPerp);
+   bisectorVector2.normalise();
+   return V2(b) + bisectorVector2 * (inset / bisectorVector2.dotProduct(normVecBCPerp));
+	//Vector2 tmp = V2(b) + bisectorVector2 * (inset / bisectorVector2.dotProduct(normVecBCPerp));
+   //if(_isnan(tmp.x) || _isnan(tmp.y))
+	//   throw Exception(Exception::ERR_INVALIDPARAMS, "Nan", "Geometry::calcInsetTarget");
+   //return tmp;
+}
+
+Vector2 Geometry::calcInsetTarget(const Vector3& a, const Vector3& b, const Vector3& c, const Real &insetAB, const Real &insetBC)
+{
+   if(insetAB == insetBC)
+      return calcInsetTarget(a,b,c,insetAB);
+
+   Vector2 normVecBA(calcNormVec2D(b, a));
+   Vector2 normVecBC(calcNormVec2D(b, c));
+   Real theta = std::atan2(normVecBC.y,normVecBC.x) - std::atan2(normVecBA.y,normVecBA.x);
+   if(theta < 0) theta = Math::TWO_PI + theta;
+   Real adj = insetAB / std::tan(theta) + insetBC / std::sin(theta);
+   return Vector2(b.x, b.z) + (normVecBA * -adj) + -insetAB * normVecBA.perpendicular();
+
+   //Vector2 tmp = Vector2(b.x, b.z) + (normVecBA * -adj) + -insetAB * normVecBA.perpendicular();
+  // if(_isnan(tmp.x) || _isnan(tmp.y))
+	//   throw Exception(Exception::ERR_INVALIDPARAMS, "Nan", "Geometry::calcInsetTarget");
+   //return tmp;
+}
+

@@ -284,3 +284,15 @@ void ToolNodeAdd::OnLeftPressed(wxMouseEvent &e)
 			"ToolNodeAdd::OnLeftPressed() unknown exception");
 	}
 }
+
+void ToolNodeAdd::OnMiddlePressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnMiddlePressed(e);
+}
+
+void ToolNodeAdd::OnRightPressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnRightPressed(e);
+}

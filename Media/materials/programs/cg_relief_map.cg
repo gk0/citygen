@@ -1,5 +1,6 @@
-//#define RM_DOUBLEPRECISION
-//#define RM_SHADOWS
+//#define RM_DOUBLEPRECISION // works
+//#define RM_SHADOWS	// works
+//#define RM_DEPTHCORRECT // doesn't work
 
 struct a2v 
 {
@@ -203,8 +204,8 @@ f2s main_relief(
 	uniform sampler2D colortex:TEXUNIT1,	// color texture map 
 	uniform float4 ambient,			// ambient color
 	uniform float4 diffuse,			// diffuse color
-	uniform float4 specular,		// specular color
-	uniform float2 planes)			// near and far plane information
+	uniform float4 specular)		// specular color
+	//uniform float2 planes) 			// near and far plane information
 
 {
 	f2s OUT;

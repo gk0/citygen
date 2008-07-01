@@ -15,6 +15,11 @@ public:
 	void OnMouseMove(wxMouseEvent &e);
 	void OnLeftPressed(wxMouseEvent &e);
 	//void OnMouseWheel(wxMouseEvent &e);
+
+   // No events on this
+   void OnMiddlePressed(wxMouseEvent &e);
+   void OnRightPressed(wxMouseEvent &e);
+
 };
 
 #endif

@@ -42,7 +42,7 @@ void PropertyPage::setPropertyValue(Property* p)
 	{
 		SetPropertyValue(GetPropertyByLabel(id), static_cast<PropertyUShort*>(p)->_data);
 	}
-	
+
 	// Refresh it if its not a category
 	if(typeid(*p) != typeid(PropertyEnum)) RefreshProperty(GetPropertyByLabel(id));
 }
@@ -58,9 +58,14 @@ void PropertyPage::addProperty(Property* p)
 	{
 		PropertyEnum* pe = static_cast<PropertyEnum*>(p);
 		wxArrayString enumOptions;
-		BOOST_FOREACH(std::string &enumStr, pe->_enumNames)
-			enumOptions.Add(_U(enumStr.c_str()));
-		Append(wxEnumProperty(id, wxPG_LABEL, enumOptions, static_cast<int>(pe->_data)));
+		wxArrayInt enumValues;
+
+		for(size_t i=0; i < pe->_enumNames.size(); i++)
+		{
+			enumOptions.Add(_U(pe->_enumNames[i].c_str()));
+			enumValues.Add((int)i);
+		}
+		Append(wxEnumProperty(id, wxPG_LABEL, enumOptions, enumValues, static_cast<int>(pe->_data)));
 	}
 	else if(typeid(*p) == typeid(PropertyImage))
 	{

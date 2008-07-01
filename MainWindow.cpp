@@ -120,7 +120,6 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_MENU(IDM_VIEW_BOX, MainWindow::onSelectViewBox)
 	//EVT_MENU(IDM_VIEW_BUILDING, MainWindow::onSelectViewBuilding)
 
-
 	EVT_MENU(IDM_TOOLSET_VIEW, MainWindow::onSelectToolsetView)
 	EVT_MENU(IDM_TOOLSET_TERR, MainWindow::onSelectToolsetTerrain)
 	EVT_MENU(IDM_TOOLSET_NODE, MainWindow::onSelectToolsetNode)
@@ -266,6 +265,7 @@ MainWindow::MainWindow(wxWindow* parent)
 	_propertyGridManager->AddPage(wxT("Node Properties"), wxNullBitmap, _nodePropertyPage);
 	_propertyGridManager->AddPage(wxT("Road Properties"), wxNullBitmap, _roadPropertyPage);
 	_propertyGridManager->AddPage(wxT("Cell Properties"), wxNullBitmap, _cellPropertyPage);
+	_propertyGridManager->SetPropertyAttributeAll(wxPG_BOOL_USE_CHECKBOX, true);
 
 	// log frame
 	_logFrame = new LogFrame(this, wxSize(1000, 100));
@@ -307,7 +307,7 @@ void MainWindow::onNew(wxCommandEvent &e)
 	_worldFrame->onNewDoc();
 	_viewModeToolBar->Enable(true);
 	_toolsetModeToolBar->Enable(true);
-	modify(true);
+	modify(false);
 }
 
 void MainWindow::onOpen(wxCommandEvent &e)

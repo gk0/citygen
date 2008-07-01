@@ -20,7 +20,7 @@
 				HttpUrl=""
 				PDBPath=""
 				SQLDebugging=""
-				Environment="path=S:\game\OgreSDK_VS90\bin\debug"
+				Environment="path=%PATH%;S:\game\OgreSDK_VS90\bin\debug"
 				EnvironmentMerge="true"
 				DebuggerFlavor="0"
 				MPIRunCommand=""

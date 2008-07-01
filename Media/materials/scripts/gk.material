@@ -23,6 +23,18 @@ material gk/Terrain
 	}
 }
 
+material default
+{
+  technique
+  {
+    pass
+    { 
+		ambient 0.4 0.4 0.4
+		diffuse 0.8 0.8 0.8
+    }
+  }
+}
+
 material gk/Default
 {
   technique
@@ -177,21 +189,6 @@ material gk/Hilite/Rainbow5
       }
     }
   }
-}
-
-material default
-{
-	technique
-	{
-		pass
-		{
-
-			texture_unit
-			{
-				texture gk_red.png
-			}
-		}
-	}
 }
 
 material gk/Terrain2
@@ -423,6 +420,22 @@ fragment_program relief_main_fp cg
 	source cg_relief_map.cg	
 	entry_point main_relief
 	profiles ps_2_x arbfp1 fp30
+	
+	default_params
+	{
+		// DO use surface ambient, diffuse, specular
+		param_named_auto ambient derived_ambient_light_colour 0 
+		param_named_auto diffuse derived_light_diffuse_colour 0
+		param_named_auto specular derived_light_specular_colour 128
+		
+		// DO NOT use surface ambient, diffuse, specular
+		//param_named_auto ambient ambient_light_colour 0
+		//param_named_auto diffuse light_diffuse_colour 0 
+		//param_named_auto specular light_specular_colour 255
+		
+		// enable for depth correct, see shader
+		//param_named_auto planes float2 1 3000
+	}
 }
 
 
@@ -432,9 +445,9 @@ material gk/Building1WRelief
 	{		
 		pass
 		{
-			ambient 1 1 1
-			diffuse 0.6 0.6 0.6 
-			specular 0 0 0 5
+			ambient 0.8 0.8 0.8
+			diffuse 0.8 0.8 0.8 
+			specular 0.7 0.7 1.0 1.0 12.5
 
 			// Vertex program reference
 			vertex_program_ref relief_view_space_vp
@@ -450,10 +463,6 @@ material gk/Building1WRelief
 			// Fragment program
 			fragment_program_ref relief_main_fp
 			{
-				param_named_auto ambient ambient_light_colour 0
-				param_named_auto diffuse light_diffuse_colour 0 
-				param_named_auto specular light_specular_colour 255
-				param_named planes float2 1 3000
 			}
 			texture_unit ReleifMap
 			{
@@ -476,9 +485,9 @@ material gk/Building2WRelief
 	{		
 		pass
 		{
-			ambient 1 1 1
-			diffuse 0.6 0.6 0.6 
-			specular 0 0 0 5
+			ambient 0.7 0.7 0.7
+			diffuse 0.8 0.8 0.8 
+			specular 0.7 0.7 1.0 1.0 25.5
 
 			// Vertex program reference
 			vertex_program_ref relief_view_space_vp
@@ -491,10 +500,6 @@ material gk/Building2WRelief
 			// Fragment program
 			fragment_program_ref relief_main_fp
 			{
-				param_named_auto ambient ambient_light_colour 0
-				param_named_auto diffuse light_diffuse_colour 0 
-				param_named_auto specular light_specular_colour 255
-				param_named planes float2 1 3000
 			}
 			texture_unit
 			{
@@ -517,9 +522,9 @@ material gk/Building3WRelief
 	{		
 		pass
 		{
-			ambient 1 1 1
-			diffuse 0.6 0.6 0.6 
-			specular 0 0 0 5
+			ambient 0.8 0.8 0.8
+			diffuse 0.8 0.8 0.8 
+			specular 0.7 0.7 1.0 1.0 12.5
 
 			// Vertex program reference
 			vertex_program_ref relief_view_space_vp
@@ -532,10 +537,6 @@ material gk/Building3WRelief
 			// Fragment program
 			fragment_program_ref relief_main_fp
 			{
-				param_named_auto ambient ambient_light_colour 0
-				param_named_auto diffuse light_diffuse_colour 0 
-				param_named_auto specular light_specular_colour 255
-				param_named planes float2 1 3000
 			}
 			texture_unit
 			{
@@ -558,9 +559,9 @@ material gk/Building4WRelief
 	{		
 		pass
 		{
-			ambient 1 1 1
-			diffuse 0.6 0.6 0.6 
-			specular 0 0 0 5
+			ambient 0.8 0.8 0.8
+			diffuse 0.8 0.8 0.8 
+			specular 0.7 0.7 1.0 1.0 12.5
 
 			// Vertex program reference
 			vertex_program_ref relief_view_space_vp
@@ -573,10 +574,6 @@ material gk/Building4WRelief
 			// Fragment program
 			fragment_program_ref relief_main_fp
 			{
-				param_named_auto ambient ambient_light_colour 0
-				param_named_auto diffuse light_diffuse_colour 0 
-				param_named_auto specular light_specular_colour 255
-				param_named planes float2 1 3000
 			}
 			texture_unit
 			{

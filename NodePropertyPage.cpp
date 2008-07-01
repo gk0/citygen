@@ -23,7 +23,7 @@ END_EVENT_TABLE()
 //END_EVENT_TABLE()
 
 
-NodePropertyPage::NodePropertyPage(WorldFrame* wf) 
+NodePropertyPage::NodePropertyPage(WorldFrame* wf)
  : wxPropertyGridPage()
 {
 	_worldFrame = wf;

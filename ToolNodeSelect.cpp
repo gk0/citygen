@@ -84,4 +84,14 @@ bool ToolNodeSelect::alternate(wxMouseEvent &e)
 	else return false;
 }
 
+void ToolNodeSelect::OnMiddlePressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnMiddlePressed(e);
+}
 
+void ToolNodeSelect::OnRightPressed(wxMouseEvent &e)
+{
+   if(alternate(e) == true)
+      return ToolView::OnRightPressed(e);
+}
