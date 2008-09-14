@@ -182,6 +182,9 @@ public:
 	int snapInfo(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
 		Ogre::Vector3& pos, NodeId &nd, RoadId& rd) const;
 
+	int slowSnapInfo(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
+		Ogre::Vector3& pos, NodeId &nd, RoadId& rd) const;
+
 	inline bool findClosestIntscn(const NodeId aNode, const Ogre::Vector2& b, const Ogre::Real snapSz, 
 		Ogre::Vector2& pos, RoadId& rd) const
 	{

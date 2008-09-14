@@ -449,6 +449,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Statistics.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
@@ -623,6 +627,10 @@
 		</File>
 		<File
 			RelativePath=".\bitmaps\print.bmp"
+			>
+		</File>
+		<File
+			RelativePath=".\Media\resources.cfg"
 			>
 		</File>
 		<File

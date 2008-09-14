@@ -5,6 +5,7 @@
 #include "Statistics.h"
 #include "MeshBuilder.h"
 #include "WorldMaterials.h"
+#include "Statistics.h"
 
 using namespace Ogre;
 using namespace std;
@@ -13,6 +14,7 @@ std::vector<WorldLot::MaterialInfo> WorldLot::_wallMaterialCache;
 
 WorldLot::WorldLot(vector<Vector3> &poly, vector<bool> &isExterior, const CellParams &gp, rando rg)
 {
+	Statistics::incBuildingCount();
    switch(gp._type)
    {
    case 0: //downtown

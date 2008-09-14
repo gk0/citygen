@@ -7,10 +7,22 @@
 #include <vector>
 #include <list>
 #include "Region.h"
+#include "WorldLot.h"
 
 //class Region;
 class WorldLot;
 class MeshBuilder;
+
+struct LotBoundaryPoint
+{
+	bool			_roadAccess;
+	Ogre::Vector3	_pos;
+
+	LotBoundaryPoint(const bool ra, const Ogre::Vector3 &p)
+		: _roadAccess(ra), _pos(p) {}
+};
+typedef std::vector<LotBoundaryPoint> LotBoundary;
+
 
 class WorldBlock
 {
@@ -33,6 +45,13 @@ public:
 private:
 	std::list<citygen::Region*> subdivide(citygen::Region* region, const CellParams &params, rando rg);
 	void addDebugLot(citygen::Region* r);
+
+	bool slowSplitBoundary(const size_t &index, const Ogre::Real &deviance, rando rg, const LotBoundary &input, std::vector<LotBoundary> &output);
+	
+	std::vector< LotBoundary > slowSubdivide(std::vector<Ogre::Vector3> innerBoundary, const CellParams &params, rando rg);
+
+	bool getLongestBoundarySideIndex(const LotBoundary &b, const Ogre::Real limitSq, size_t &index);
+	bool getLongestNonBoundarySideIndex(const LotBoundary &b, const Ogre::Real limitSq, size_t &index);
 };
 
 #endif

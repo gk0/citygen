@@ -10,6 +10,7 @@
 #include "Statistics.h"
 #include "ExportDoc.h"
 size_t Statistics::_buildingCount = 0;
+size_t Statistics::_roadCount = 0;
 
 //tools
 #include "ToolView.h"
@@ -810,10 +811,10 @@ void WorldFrame::OnChar(wxKeyEvent& e)
 				if(_selectedRoad)
 					WorldRoad::setDefaultGenParams(_selectedRoad->getGenParams());
 			}
-			
+
 		}
 		else if(e.GetKeyCode() == '.')
-		{			
+		{
 			if(_toolsetMode == MainWindow::cell)
 			{
 				if(_selectedCell)
@@ -1046,6 +1047,9 @@ void WorldFrame::update()
 			LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf1.toString()
 			+" - "+cpf2.toString()+" - "+cpfb.toString()+" - "+renpf.toString());
 #endif
+		LogManager::getSingleton().logMessage("Roads: "+
+			StringConverter::toString(Statistics::getRoadCount())+
+			" - Buildings: "+StringConverter::toString(Statistics::getBuildingCount()));
 	}
 	catch(Exception &e)
 	{
@@ -1069,6 +1073,9 @@ bool WorldFrame::loadXML(const TiXmlHandle& worldRoot, const std::string &filePa
 	//
 	onCloseDoc();
 	createScene();
+
+	Statistics::resetRoadCount();
+	Statistics::resetBuildingCount();
 
 	// load camera
 	string camId = worldRoot.FirstChild("camera").Element()->Attribute("id");
