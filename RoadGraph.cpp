@@ -5,7 +5,6 @@
 #include "Geometry.h"
 #include "WorldNode.h"
 #include "SimpleNode.h"
-#include "Statistics.h"
 
 #include <OgreVector2.h>
 #include <OgreVector3.h>
@@ -23,7 +22,6 @@ bool RoadGraph::addRoad(const NodeId nd1, const NodeId nd2, RoadId& rd)
 	assert(nd1 != nd2);
 	bool inserted = false;
 	tie(rd, inserted) = add_edge(nd1, nd2, (RoadInterface*)0, _graph);
-	Statistics::incRoadCount();
 	return inserted;
 }
 
@@ -37,7 +35,6 @@ bool RoadGraph::addRoad(const NodeId nd1, const NodeId nd2, RoadInterface* r,
 		getNode(nd1)->onAddRoad();
 		getNode(nd2)->onAddRoad();
 	}
-	Statistics::incRoadCount();
 	return inserted;
 }
 
@@ -865,136 +862,6 @@ int RoadGraph::snapInfo(const NodeId aNode, const Vector2& b,
 	possibleWorldRoads.reserve(256);
 	vector<NodeId> possibleNodesOnWr, possibleNodes;
 	calculateBoundingBoxFriends(a, b, snapSz, possibleRoads, possibleWorldRoads, possibleNodes, possibleNodesOnWr);
-
-	Real segLength = (a - b).length();
-	Real lowestR(1.0f);
-	NodeId snapNode;
-	bool nodeSnapped = false;
-	nodeSnapped = findClosestNodeSnap(aNode,b,snapSz,possibleNodes,lowestR,snapNode);
-	if(nodeSnapped) // crazy prioritisation of node snaps
-	{
-		nodeId = snapNode;
-		return 2;
-	}
-
-
-	// I did disable node snap on world roads but I have to enable it so
-	// that the road body between a-b must be processed correctly, esp on curvy wr
-	// but
-	// the downside of this is that snapping to the world roads node means that wr draw size
-	// has far too much influence, so not too many good choices
-	nodeSnapped |= findClosestNodeSnap(aNode,b,snapSz,possibleNodesOnWr,lowestR,snapNode);
-
-	// HACK: temporary solution
-	// the idea here is to weight node snaps to wr's so that intersections
-	// can win more easily. The problem is that node snaps of C or D to AB will
-	// always come before the intersections if one occurs between AB & CD
-	// the best case is that of a perpendicular road in which case both will occur at the
-	// same pos.
-	// so the hack is to tax the lowestR on node snaps to wr
-	// really i should be checking the angle and working out the correct tax to assign
-	// but that would have to be calculated per segment adding a significant cost
-	if(nodeSnapped)
-	{
-		lowestR += (snapSz / segLength) / 2;
-	}
-
-	RoadId iRoad;
-	Vector3 iPoint;
-	bool intersection = false;
-	intersection = findClosestRoadIntersection(aNode,b,possibleRoads,lowestR,iRoad,iPoint);
-	intersection |= findClosestRoadIntersection(aNode,b,possibleWorldRoads,lowestR,iRoad,iPoint);
-
-	if(intersection)
-	{
-		RoadInterface* ri = getRoad(iRoad);
-		if(typeid(*ri) == typeid(WorldRoad))
-			nodeSnapped = snapToRoadNode(iPoint,MIN_SNAP_SZ,iRoad,snapNode);
-		else
-			nodeSnapped = snapToRoadNode(iPoint,snapSz,iRoad,snapNode);
-
-		if(!nodeSnapped)
-		{
-			pos = iPoint;
-			roadId = iRoad;
-			return 1;
-		}
-	}
-
-	if(nodeSnapped)
-	{
-		nodeId = snapNode;
-		return 2;
-	}
-
-	Real closestDistance = snapSz;
-	bool roadSnapped = findClosestSnapRoad(b, possibleRoads, closestDistance, iRoad, iPoint);
-	roadSnapped |= findClosestSnapRoad(b, possibleWorldRoads, closestDistance, iRoad, iPoint);
-
-	if(closestDistance < snapSz)
-	{
-		RoadInterface* ri = getRoad(iRoad);
-		if(typeid(*ri) == typeid(WorldRoad))
-			nodeSnapped = snapToRoadNode(iPoint,MIN_SNAP_SZ,iRoad,snapNode);
-		else
-			nodeSnapped = snapToRoadNode(iPoint,snapSz,iRoad,snapNode);
-
-		if(!nodeSnapped)
-		{
-			roadId = iRoad;
-			pos = iPoint;
-			return 1;
-		}
-		else
-		{
-			nodeId = snapNode;
-			return 2;
-		}
-	}
-	else if(findClosestNodeSnap(aNode,b,snapSz,possibleNodesOnWr,lowestR,snapNode))
-	{
-		nodeId = snapNode;
-		return 2;
-	}
-	return 0;
-}
-
-
-
-int RoadGraph::slowSnapInfo(const NodeId aNode, const Vector2& b,
-						const Real snapSz, Vector3& pos, NodeId &nodeId, RoadId& roadId) const
-{
-
-	Vector2 a(_graph[aNode]->getPosition2D());
-
-	// calculate a list of bounding box matches to reduce testing
-	vector<RoadId> possibleRoads, possibleWorldRoads;
-	possibleRoads.reserve(256);
-	possibleWorldRoads.reserve(256);
-	vector<NodeId> possibleNodesOnWr, possibleNodes;
-
-	// maybe slow but i don't care
-	set<NodeId> possibleNodesOnWrSet, possibleNodesSet;
-
-	BOOST_FOREACH(RoadId rd, edges(_graph))
-	{
-		RoadInterface* ri = getRoad(rd);
-		if(typeid(*ri)==typeid(WorldRoad))
-		{
-			possibleWorldRoads.push_back(rd);
-			possibleNodesOnWrSet.insert(getSrc(rd));
-			possibleNodesOnWrSet.insert(getDst(rd));
-		}
-		else
-		{
-			possibleRoads.push_back(rd);
-			possibleNodesSet.insert(getSrc(rd));
-			possibleNodesSet.insert(getDst(rd));
-		}
-	}
-	possibleNodes.insert(possibleNodes.end(), possibleNodesSet.begin(), possibleNodesSet.end());
-	possibleNodesOnWr.insert(possibleNodesOnWr.end(), possibleNodesOnWrSet.begin(), possibleNodesOnWrSet.end());
-	
 
 	Real segLength = (a - b).length();
 	Real lowestR(1.0f);

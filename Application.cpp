@@ -57,8 +57,9 @@ bool Application::OnInit()
 		//_window->openFile(_("C:\\Documents and Settings\\George\\Desktop\\cgx\\test city.cgx"));
 		//_window->openFile(_("C:/Documents and Settings/George/Desktop/cgx2/testo2.cgx"));
 		//_window->openFile(_("C:/Documents and Settings/George/Desktop/shit.cgx"));
-		_window->openFile(_("C:/Documents and Settings/George/Desktop/single.cgx"));
-		//_window->donew();
+
+		//_window->openFile(_("C:/Documents and Settings/George/Desktop/milan.cgx"));
+		_window->donew();
 	}
 
 	//_window->onExport(wxCommandEvent());
@@ -90,8 +91,8 @@ bool Application::InitializeOgre()
 	// Make the root
 	_root = new Root("", "", "citygen.log");
 
-#if defined(_DEBUG) && defined(WIN32)
-	// load render system plug-ins first !
+#if _DEBUG && WIN32
+   // load render system plugins first !
     _root->loadPlugin(".\\RenderSystem_GL_d");
     _root->loadPlugin(".\\Plugin_CgProgramManager_d");
     _root->loadPlugin(".\\Plugin_OctreeSceneManager_d");

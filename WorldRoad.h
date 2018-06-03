@@ -5,7 +5,6 @@
 #include "WorldObject.h"
 #include "RoadInterface.h"
 #include "RoadGraph.h"
-#include "Region.h"
 #include "MovableText.h"
 #include "ExportDoc.h"
 
@@ -62,9 +61,6 @@ private:
 
 	std::vector<Ogre::Real> _vertexData;
 	std::vector<Ogre::uint16> _indexData;
-
-	std::vector<Ogre::Vector3> _leftVertices;
-	std::vector<Ogre::Vector3> _rightVertices;
 
 public:
 	WorldRoad(WorldNode* src, WorldNode* dst, RoadGraph& g, 
@@ -127,15 +123,6 @@ public:
 	void prebuild();
 	void build();
 
-	void addLeftBoundary(citygen::Region& region);
-	void addRightBoundary(citygen::Region& region);
-
-	Ogre::Real getBasicLength2D() const
-	{
-		Ogre::Vector2 tmpVec(getSrcNode()->getPosition2D() - getDstNode()->getPosition2D());
-		return tmpVec.length();
-	}
-
 private:
 
 	void destroyRoadObject();
@@ -162,7 +149,7 @@ private:
 		const Ogre::Vector3 &b1, const Ogre::Vector3 &b2, const Ogre::Vector3 &bNorm, Ogre::Real uMin, Ogre::Real uMax);
 
 	void addVertexData(const Ogre::Vector3 &p1, const Ogre::Vector3 &p2, const Ogre::Vector3 &norm, Ogre::Real uTex);
-	void buildMeshData(const std::vector<Ogre::Vector3> &pointList);
+
 };
 
 #endif

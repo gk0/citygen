@@ -14,7 +14,6 @@ using namespace Ogre;
 using namespace std;
 using namespace citygen;
 
-
 WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, rando rg,
 	MeshBuilder* mb, bool debug)
 {
@@ -200,11 +199,6 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 	LogManager::getSingleton().logMessage(" ");*/
 
 	//WorldFrame::getSingleton().cpf2.pause();
-
-
-
-
-
 	Region* innerRegion = new Region(innerBoundary);
 	//delete innerRegion;
 	innerBoundary.clear();
@@ -256,9 +250,6 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 		}
 	}
 
-
-
-
 /*
 	//_lots = lotBoundaries;
 	size_t fail = 0;
@@ -278,121 +269,12 @@ WorldBlock::WorldBlock(const vector<Vector3> &boundary, const CellParams &gp, ra
 		}
 	}
 */
-/*
-	vector<LotBoundary> boundaries = slowSubdivide(innerBoundary, gp, rg);
-	for(size_t i=0; i<boundaries.size(); i++)
-	{
-		vector<Vector3> boundary;
-		vector<bool> exterior;
-		for(size_t j=0; j<boundaries[i].size(); j++)
-		{
-			boundary.push_back(boundaries[i][j]._pos);
-			exterior.push_back(boundaries[i][j]._roadAccess);
-		}
-
-
-		WorldLot* lot = new WorldLot(boundary, exterior, gp, rg);
-		if(lot->hasError())
-		{
-			//fail++;
-			delete lot;
-		}
-		else
-		{
-			_lots.push_back(lot);
-			lot->registerData(*mb);
-		}
-	}
-	*/
 }
 
 WorldBlock::~WorldBlock()
 {
    BOOST_FOREACH(WorldLot* l, _lots) delete l;
 }
-
-
-
-
-vector< LotBoundary > WorldBlock::slowSubdivide(vector<Vector3> innerBoundary, const CellParams &params, rando rg)
-{
-	// Do something to extract lots
-	queue< LotBoundary > q;
-
-	// the bool stores is the side is adjacent a road
-	LotBoundary blockBoundary;
-	vector< LotBoundary > lotBoundaries;
-	BOOST_FOREACH(const Vector3 &b, innerBoundary) blockBoundary.push_back(LotBoundaryPoint(true, b));
-	q.push(blockBoundary);
-	Real lotSplitWidth2Sq = Math::Sqr(2*params._lotWidth);
-	Real lotSplitDepth2Sq = Math::Sqr(2*params._lotDepth);
-
-	size_t count=0;
-	while(!q.empty())
-	{
-		//DEBUG
-		if(count>10000) return lotBoundaries;
-		//if(gp._roadLimit && count > gp._roadLimit) return;
-		count++;
-
-		// get lot boundary from queue
-		LotBoundary b(q.front());
-		q.pop();
-
-		//	find the longest side
-		size_t lsIndex;
-
-		//if(!getLongestSideAboveLimit(b, lotSplitSz, lsIndex))
-		if(!getLongestBoundarySideIndex(b, lotSplitWidth2Sq, lsIndex)
-			&& !getLongestNonBoundarySideIndex(b, lotSplitDepth2Sq, lsIndex))
-		{
-			// add to lot boundaries
-			lotBoundaries.push_back(b);
-
-			//if(debug)
-			{
-				std::vector<Vector3> debugLot;
-				debugLot.reserve(b.size());
-				BOOST_FOREACH(LotBoundaryPoint& bp, b)	debugLot.push_back(bp._pos);
-				_debugLots.push_back(debugLot);
-			}
-			continue;
-		}
-
-		std::vector<LotBoundary> splitBoundaries;
-		if(slowSplitBoundary(lsIndex, params._lotDeviance, rg, b, splitBoundaries))
-		{
-			// check boundary borders road
-			for(size_t j, i=0; i<splitBoundaries.size(); i++)
-			{
-				for(j=0; j<splitBoundaries[i].size(); j++)
-				{
-					if(splitBoundaries[i][j]._roadAccess)
-					{
-						q.push(splitBoundaries[i]);
-						break;
-					}
-				}
-
-				// if no road access
-				if(j>=splitBoundaries[i].size())
-				{
-					//if(debug)
-					{
-						std::vector<Vector3> debugLot;
-						debugLot.reserve(splitBoundaries[i].size());
-						BOOST_FOREACH(LotBoundaryPoint& bp, splitBoundaries[i])	debugLot.push_back(bp._pos);
-						_debugLots.push_back(debugLot);
-					}
-				}
-			}
-			//LogManager::getSingleton().logMessage("Road border: "+StringConverter::toString(k));
-		}
-	}
-	return lotBoundaries;
-}
-
-
 
 
 list<Region*> WorldBlock::subdivide(Region* innerRegion, const CellParams &params, rando rg)
@@ -510,241 +392,6 @@ Vector3 WorldBlock::calcDevMidPoint(Vector3 &src, Vector3 &edgeVec, )
 
 }
 */
-
-bool WorldBlock::getLongestBoundarySideIndex(const LotBoundary &b, const Real limitSq, size_t &index)
-{
-	// get size and check it is a poly
-	size_t N = b.size();
-	assert(N >= 3);
-
-	// declare vars and set initial longest to first segment
-	Ogre::Real currLSq, lsLSq = 0;
-	size_t lsIndex = 0;
-
-	for(size_t j,i=0; i<N; i++)
-	{
-		// skip sides with 'no road access'
-		if(!b[i]._roadAccess) continue;
-
-		j = (i+1)%N;
-
-		// get current segment length squared in 2D
-		currLSq = Math::Sqr(b[i]._pos.x-b[j]._pos.x) + Math::Sqr(b[i]._pos.z-b[j]._pos.z);
-
-		// if current length is longest store
-		if(currLSq > lsLSq)
-		{
-			lsLSq = currLSq;
-			lsIndex = i;
-		}
-	}
-	// if longest segment is above limit return true
-	if(lsLSq > limitSq)
-	{
-		index = lsIndex;
-		return true;
-	}
-	return false;
-}
-
-bool WorldBlock::getLongestNonBoundarySideIndex(const LotBoundary &b, const Real limitSq, size_t &index)
-{
-	// get size and check it is a poly
-	size_t N = b.size();
-	assert(N >= 3);
-
-	// declare vars and set initial longest to first segment
-	Ogre::Real currLSq, lsLSq = 0;
-	size_t lsIndex = 0;
-
-	for(size_t j,i=0; i<N; i++)
-	{
-		// skip sides with 'road access'
-		if(b[i]._roadAccess) continue;
-
-		j = (i+1)%N;
-
-		// get current segment length squared in 2D
-		currLSq = Math::Sqr(b[i]._pos.x-b[j]._pos.x) + Math::Sqr(b[i]._pos.z-b[j]._pos.z);
-
-		// if current length is longest store
-		if(currLSq > lsLSq)
-		{
-			lsLSq = currLSq;
-			lsIndex = i;
-		}
-	}
-	if(lsLSq > limitSq)
-	{
-		index = lsIndex;
-		return true;
-	}
-	return false;
-}
-
-
-struct Intersection
-{
-	Real _s;
-	size_t _index;
-	size_t _boundaryIndex;
-	size_t _nextIndex;
-	Vector3 _pos;
-};
-struct compare_inscns{
-	bool operator()(const Intersection *l, const Intersection *r)
-	{
-		return l->_s > r->_s;
-	}
-};
-
-
-// TODO: doesn't work with concave blocks
-// as an alternative to this i could just make a road graph and extract cells
-// intersection testing would still be required so it definitely would be more expensive
-bool WorldBlock::slowSplitBoundary(const size_t &index, const Real &deviance, rando rg, const LotBoundary &input, std::vector<LotBoundary> &output)
-{
-	//
-	size_t i, j, N = input.size();
-	assert(N >= 3 && N < 10000);
-
-	// use normal of longest side to divide the
-	j = (index+1)%N;
-	Vector3 longestSide(input[j]._pos - input[index]._pos);
-	Vector3 longestSidePerp(-longestSide.z, 0, longestSide.x);
-
-	//TODO: simplify/optimise this line, is too long
-	Vector3 longestSideMid = input[index]._pos + (longestSide/2) - (longestSide*(deviance/2)) +
-		(longestSide*(deviance * rg()));
-
-
-	// fill a vector of intersections, ordered as they're encountered
-	vector<Intersection> inscns;
-	for(i=0,j=0; i<N; i++)
-	{
-		j = (i+1) % N;
-		Real r;
-		Intersection inscn;
-		if(Geometry::lineIntersect2D(input[i]._pos, input[j]._pos, longestSideMid,
-			longestSideMid+longestSidePerp, inscn._pos, r, inscn._s) && r>=0 && r<=1)
-		{
-			inscn._index = inscns.size();
-			inscn._boundaryIndex = i;
-			inscns.push_back(inscn);
-		}
-	}
-	if(inscns.size() <= 1)
-		return false;	// what only one intersection, how?
-
-	// need sort a copy of intersections by pos on line
-	vector<Intersection*> inscnsOrdered;
-	BOOST_FOREACH(Intersection& in, inscns) inscnsOrdered.push_back(&in);
-	sort(inscnsOrdered.begin(), inscnsOrdered.end(), compare_inscns());
-	//sort(inscnsOrdered.begin(), inscnsOrdered.end());
-
-
-	// create an array of bools that store whether an intersection
-	// segment is contained inside or outside of the polygon
-	vector<bool> intersectionSegInside(inscnsOrdered.size()-1);
-	for(i=0; i<(inscnsOrdered.size()-1); i++)
-	{
-		if(intersectionSegInside[i])
-			inscnsOrdered[i]->_nextIndex = inscnsOrdered[i+1]->_index;
-		else
-			inscnsOrdered[i]->_nextIndex = numeric_limits<size_t>::max();
-	}
-
-	for(size_t side=0; side<2; side++)
-	{
-		// Process side of intersection line
-		for(i=0; i<(inscnsOrdered.size()-1); i++)
-		{
-			Intersection* start = inscnsOrdered[i];
-
-			// declare lot boundary
-			LotBoundary lotBoundary;
-
-			// if intersection segment store
-			if(start->_nextIndex == numeric_limits<size_t>::max()) continue;
-			lotBoundary.push_back(LotBoundaryPoint(false, start->_pos));
-			lotBoundary.push_back(LotBoundaryPoint(
-				input[inscns[start->_nextIndex]._boundaryIndex]._roadAccess, inscns[start->_nextIndex]._pos));
-
-			size_t boundaryIndex = (inscns[start->_nextIndex]._boundaryIndex + 1) % N;
-			size_t inscnIndex = (inscns[start->_nextIndex]._index + 1) % inscns.size();
-
-			// break start segment
-			start->_nextIndex = numeric_limits<size_t>::max();
-
-			while(true)
-			{
-				if(boundaryIndex != inscns[inscnIndex]._boundaryIndex)
-				{
-					lotBoundary.push_back(input[boundaryIndex]);
-					boundaryIndex = (boundaryIndex + 1) % N;
-				}
-				else
-				{
-
-					lotBoundary.push_back(input[boundaryIndex]);
-
-					// if intersection segment
-					if(inscns[inscnIndex]._nextIndex < 10000)//!= numeric_limits<size_t>::max())
-					{
-						Intersection* first = &inscns[inscnIndex];
-
-						// add first to boundary
-						lotBoundary.push_back(LotBoundaryPoint(false, first->_pos));
-						inscnIndex = first->_nextIndex;
-
-						//break segment link
-						first->_nextIndex = numeric_limits<size_t>::max();
-
-						// add second to boundary
-						lotBoundary.push_back(LotBoundaryPoint(
-							input[inscns[inscnIndex]._boundaryIndex]._roadAccess, inscns[inscnIndex]._pos)); //error
-
-						// advance index vars
-						boundaryIndex = (inscns[inscnIndex]._boundaryIndex + 1) % N;
-						inscnIndex = (inscns[inscnIndex]._index + 1) % inscns.size();
-
-					}
-					// else intersection point
-					else
-					{
-						if(start == &inscns[inscnIndex])
-						{
-							output.push_back(lotBoundary);
-
-							//store
-							break;
-						}
-						else
-						{
-							// add intersection point
-							boundaryIndex = inscns[inscnIndex]._boundaryIndex;
-							inscnIndex = (inscnIndex + 1) % inscns.size();
-						}
-					}
-				}
-			}
-		}
-
-		// change vars for other side
-		for(i=0; i<(inscnsOrdered.size()-1); i++)
-		{
-			if(intersectionSegInside[i])
-				inscnsOrdered[i+1]->_nextIndex = inscnsOrdered[i]->_index;
-			else
-				inscnsOrdered[i+1]->_nextIndex = numeric_limits<size_t>::max();
-		}
-		inscnsOrdered = vector<Intersection*>(inscnsOrdered.rbegin(), inscnsOrdered.rend());
-
-	}
-	return true;
-}
-
-
 void WorldBlock::addDebugLot(Region* r)
 {
 	vector<Vector3> debugLot;
@@ -765,7 +412,7 @@ void WorldBlock::drawDebug(ManualObject* debugMO)
 	{
 		BOOST_FOREACH(vector<Vector3> &debugLot, _debugLots)
 		{
-			debugMO->begin("gk/default", RenderOperation::OT_LINE_STRIP);
+			debugMO->begin("gk/Hilite/Red", RenderOperation::OT_LINE_STRIP);
 
 			BOOST_FOREACH(Vector3& pos, debugLot)
 				debugMO->position(pos);
