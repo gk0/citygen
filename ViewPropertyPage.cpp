@@ -47,30 +47,30 @@ void ViewPropertyPage::Init()
 	arrPlot.Add(wxT("3D Author"), 2);
 
     //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
-	_cameraProp = Append(wxEnumProperty(wxT("Camera Model"), wxPG_LABEL, arrPlot) );
+	_cameraProp = Append(new wxEnumProperty(wxT("Camera Model"), wxPG_LABEL, arrPlot) );
 
-	Append(wxPropertyCategory(wxT("Camera Target")));
-
-	// Add float property (value type is actually double)
-	_xProp = Append(wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0));
-	_yProp = Append(wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0));
-	_zProp = Append(wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
-
-	Append(wxPropertyCategory(wxT("Camera Direction")));
+	Append(new wxPropertyCategory(wxT("Camera Target")));
 
 	// Add float property (value type is actually double)
-	_xDirProp = Append(wxFloatProperty(wxT("x_dir"), wxPG_LABEL, 0.0));
-	_yDirProp = Append(wxFloatProperty(wxT("y_dir"), wxPG_LABEL, 0.0));
-	_zDirProp = Append(wxFloatProperty(wxT("z_dir"), wxPG_LABEL, 0.0));
+	_xProp = Append(new wxFloatProperty(wxT("x"), wxPG_LABEL, 0.0));
+	_yProp = Append(new wxFloatProperty(wxT("y"), wxPG_LABEL, 0.0));
+	_zProp = Append(new wxFloatProperty(wxT("z"), wxPG_LABEL, 0.0));
 
-	Append(wxPropertyCategory(wxT("Zoom Distance")));
-	_zoomProp = Append(wxFloatProperty(wxT("zoom"), wxPG_LABEL, 0.0));
+	Append(new wxPropertyCategory(wxT("Camera Direction")));
+
+	// Add float property (value type is actually double)
+	_xDirProp = Append(new wxFloatProperty(wxT("x_dir"), wxPG_LABEL, 0.0));
+	_yDirProp = Append(new wxFloatProperty(wxT("y_dir"), wxPG_LABEL, 0.0));
+	_zDirProp = Append(new wxFloatProperty(wxT("z_dir"), wxPG_LABEL, 0.0));
+
+	Append(new wxPropertyCategory(wxT("Zoom Distance")));
+	_zoomProp = Append(new wxFloatProperty(wxT("zoom"), wxPG_LABEL, 0.0));
 
 	// Another way
-	Append(wxPropertyCategory(wxT("Advanced")));
+	Append(new wxPropertyCategory(wxT("Advanced")));
 
 	// Cursor property
-	Append(wxCursorProperty (wxT("My Cursor"),
+	Append(new wxCursorProperty (wxT("My Cursor"),
 								  wxPG_LABEL,
 								  wxCURSOR_ARROW));
 }

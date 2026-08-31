@@ -29,10 +29,10 @@ size_t Statistics::_buildingCount = 0;
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
-#include <wx/gtk/win_gtk.h>
 #include <GL/glx.h>
 #endif
 #include <wx/msgdlg.h>
+#include <wx/dcclient.h>
 
 #include <OgreMaterialManager.h>
 #include <OgreRenderSystem.h>
@@ -109,15 +109,70 @@ void WorldFrame::init()
 	handle = StringConverter::toString((size_t)((HWND)GetHandle()));
 #elif defined(__WXGTK__)
 
-	SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+			SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
 	GtkWidget* privHandle = m_wxwindow;
 	// prevents flickering
 	gtk_widget_set_double_buffered(privHandle, FALSE);
+
+	// Choose the GL visual BEFORE realization and force the widget's window to
+	// use it: GTK3 otherwise creates the window on a 32-bit RGBA visual whose
+	// framebuffer config has no depth buffer (GL_DEPTH_BITS == 0), which
+	// degrades the whole scene to painter's algorithm (roads over buildings).
+	Display* xdisplay = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+	int attrlist[] =
+	{	GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 24, GLX_STENCIL_SIZE, 8, None};
+	XVisualInfo* vi = glXChooseVisual(xdisplay, DefaultScreen(xdisplay), attrlist);
+	gtk_widget_set_visual(privHandle,
+		gdk_x11_screen_lookup_visual(gtk_widget_get_screen(privHandle), vi->visualid));
+
+		// Under wx3/GTK3, Show() only queues the widget for mapping; its GdkWindow
+	// isn't created until the widget is realized. Force realization now and pump
+	// pending GTK events, otherwise gtk_widget_get_window() returns NULL and the
+	// GDK_WINDOW_* macros dereference garbage -> segfault.
+	gtk_widget_realize(privHandle);
+	while (gtk_events_pending())
+		gtk_main_iteration();
+
 	// grab the window object
-	GdkWindow* gdkWin = GTK_PIZZA(privHandle)->bin_window;
+	GdkWindow* gdkWin = gtk_widget_get_window(privHandle);
+	if (!gdkWin)
+	{
+		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
+			"WorldFrame widget has no GdkWindow after realization.",
+			"WorldFrame::init");
+	}
+
+	// Under GTK3 child widgets are client-side (non-native) by default and share
+	// the toplevel's GdkWindow, so they have no usable X11 XID of their own.
+	// OGRE 1.6.5's GL render system needs a real X11 window: force the GdkWindow
+	// to become native so GDK_WINDOW_XID() returns a valid drawable.
+	if (!gdk_window_ensure_native(gdkWin))
+	{
+		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
+			"Could not create a native X11 window for the WorldFrame widget. "
+			"OGRE 1.6.5's GL render system needs an X11 window; run under "
+			"X11/XWayland with GDK_BACKEND=x11.", "WorldFrame::init");
+	}
+
+	// re-fetch: ensure_native() may have replaced the GdkWindow
+	gdkWin = gtk_widget_get_window(privHandle);
+	while (gtk_events_pending())
+		gtk_main_iteration();
+
+	if (!gdkWin || !GDK_IS_X11_WINDOW(gdkWin))
+	{
+		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
+			"WorldFrame widget has no X11 GdkWindow. OGRE 1.6.5's GL render "
+			"system needs an X11 window; run under X11/XWayland with "
+			"GDK_BACKEND=x11.", "WorldFrame::init");
+	}
 	Display* display = GDK_WINDOW_XDISPLAY(gdkWin);
-	Window wid = GDK_WINDOW_XWINDOW(gdkWin);
+	Window wid = GDK_WINDOW_XID(gdkWin);
+
+	// make sure the X server has actually created the window before OGRE
+	// starts poking at it
+	XSync(display, False);
 
 	std::stringstream str;
 
@@ -133,10 +188,18 @@ void WorldFrame::init()
 	// XID
 	str << wid << ':';
 
-	// retrieve XVisualInfo
-	int attrlist[] =
-	{	GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 16, GLX_STENCIL_SIZE, 8, None};
-	XVisualInfo* vi = glXChooseVisual(display, DefaultScreen(display), attrlist);
+		// vi was chosen before realization (see above) so the widget's window and
+	// the GLX context share the same visual - and its depth buffer
+
+	// A/B diagnostics: compare the visual GTK created the window with against
+	// the one we chose for GL (a mismatch means OGRE's context and drawable
+	// disagree, which can cost us the depth buffer)
+	XWindowAttributes wa;
+	XGetWindowAttributes(display, wid, &wa);
+	LogManager::getSingleton().logMessage(
+		"WorldFrame::init: window visualid=" + StringConverter::toString((unsigned long)wa.visual->visualid)
+		+ " chosen visualid=" + StringConverter::toString((unsigned long)vi->visualid)
+		+ " chosen depth=" + StringConverter::toString((int)vi->depth));
 	str << (unsigned long)vi;
 
 	handle = str.str();
@@ -685,12 +748,16 @@ void WorldFrame::createScene(void)
 	//_sceneManager->setFog(FOG_LINEAR, fadeColour, .001f, 500, 1000);
 	_viewport->setBackgroundColour(fadeColour);
 
-	// Infinite far plane?
-	if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
-	{
-		_camera->setFarClipDistance(0);
-	}
-	_camera->setNearClipDistance(0.1);
+			// Finite far plane: covers the data-driven terrain size (the old 1000 did
+	// not). The infinite-far path was exonerated during the depth-buffer
+	// investigation - re-enable it if cities ever exceed 10000 units:
+	// if (Root::getSingleton().getRenderSystem()->getCapabilities()->hasCapability(RSC_INFINITE_FAR_PLANE))
+	// 	_camera->setFarClipDistance(0);
+	_camera->setFarClipDistance(10000);
+	// NB: keep the near plane as large as possible - depth precision
+	// degrades with z^2/near, and adjacent buildings share coplanar
+	// walls which z-fight badly when near is too small
+	_camera->setNearClipDistance(1.0);
 
 	// Define the required sky plane
 	Plane plane;
@@ -1034,9 +1101,29 @@ void WorldFrame::update()
 		BOOST_FOREACH(WorldCell* c, _cellVec) c->validate();
 		cpfb.stop();
 
-		PerformanceTimer renpf("Render");
+				PerformanceTimer renpf("Render");
 		if (_camera)
+		{
 			Root::getSingleton().renderOneFrame();
+
+			// A/B diagnostics: log the live GL depth state once
+			static bool depthProbed = false;
+			if (!depthProbed)
+			{
+				depthProbed = true;
+				GLint depthBits = 0, depthFunc = 0;
+				GLboolean depthTest = GL_FALSE, depthMask = GL_FALSE;
+				glGetIntegerv(GL_DEPTH_BITS, &depthBits);
+				glGetIntegerv(GL_DEPTH_FUNC, &depthFunc);
+				glGetBooleanv(GL_DEPTH_TEST, &depthTest);
+				glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask);
+				LogManager::getSingleton().logMessage(
+					"GL depth state: bits=" + StringConverter::toString((int)depthBits)
+					+ " test=" + StringConverter::toString((bool)depthTest)
+					+ " func=" + StringConverter::toString((int)depthFunc)
+					+ " writemask=" + StringConverter::toString((bool)depthMask));
+			}
+		}
 		renpf.stop();
 #ifdef THREADME
 		LogManager::getSingleton().logMessage(npf.toString()+" - "+rpf.toString()+" - "+cpf1.toString()
@@ -1286,7 +1373,7 @@ TiXmlElement* WorldFrame::saveXML(const std::string &filePath)
 
 		TiXmlElement * node;
 		node = new TiXmlElement("node");
-		node->SetAttribute("id", (int) ni);
+		node->SetAttribute("id", pointerToString(ni));
 		node->SetDoubleAttribute("x", loc.x);
 		node->SetDoubleAttribute("y", loc.y);
 		node->SetAttribute("label", static_cast<WorldNode*>(ni)->getLabel().c_str());

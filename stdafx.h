@@ -62,3 +62,14 @@ typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
+
+// Lossless pointer-to-string for XML node ids: casting a pointer to int
+// truncates it on 64-bit builds (and clang rejects the cast outright).
+#include <sstream>
+#include <string>
+inline std::string pointerToString(const void* p)
+{
+	std::stringstream s;
+	s << p;
+	return s.str();
+}

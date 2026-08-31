@@ -5,7 +5,8 @@
 #include "CellParams.h"
 #include "Triangulate.h"
 
-class Ogre::Material;
+// a forward declaration cannot use a nested name specifier (class Ogre::Material;)
+namespace Ogre { class Material; }
 class MeshBuilder;
 
 class WorldLot

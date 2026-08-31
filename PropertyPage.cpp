@@ -52,7 +52,7 @@ void PropertyPage::addProperty(Property* p)
 	wxString id = _U(p->_name.c_str());
 	if(typeid(*p) == typeid(PropertyBool))
 	{
-		Append(wxBoolProperty(id, wxPG_LABEL, static_cast<PropertyBool*>(p)->_data));
+		Append(new wxBoolProperty(id, wxPG_LABEL, static_cast<PropertyBool*>(p)->_data));
 	}
 	else if(typeid(*p) == typeid(PropertyEnum))
 	{
@@ -65,32 +65,32 @@ void PropertyPage::addProperty(Property* p)
 			enumOptions.Add(_U(pe->_enumNames[i].c_str()));
 			enumValues.Add((int)i);
 		}
-		Append(wxEnumProperty(id, wxPG_LABEL, enumOptions, enumValues, static_cast<int>(pe->_data)));
+		Append(new wxEnumProperty(id, wxPG_LABEL, enumOptions, enumValues, static_cast<int>(pe->_data)));
 	}
 	else if(typeid(*p) == typeid(PropertyImage))
 	{
-		Append(wxImageFileProperty(id,wxPG_LABEL, _U(static_cast<PropertyImage*>(p)->toString().c_str())));
+		Append(new wxImageFileProperty(id,wxPG_LABEL, _U(static_cast<PropertyImage*>(p)->toString().c_str())));
 	}
 	else if(typeid(*p) == typeid(PropertyList))
 	{
-		Append(wxPropertyCategory(id));
+		Append(new wxPropertyCategory(id));
 		BOOST_FOREACH(Property* p2, static_cast<PropertyList*>(p)->getList()) addProperty(p2);
 	}
 	else if(typeid(*p) == typeid(PropertyReal))
 	{
-		Append(wxFloatProperty(id, wxPG_LABEL, static_cast<PropertyReal*>(p)->_data));
+		Append(new wxFloatProperty(id, wxPG_LABEL, static_cast<PropertyReal*>(p)->_data));
 	}
 	else if(typeid(*p) == typeid(PropertyString))
 	{
-		Append(wxStringProperty(id, wxPG_LABEL, _U(static_cast<PropertyString*>(p)->_data.c_str())));
+		Append(new wxStringProperty(id, wxPG_LABEL, _U(static_cast<PropertyString*>(p)->_data.c_str())));
 	}
 	else if(typeid(*p) == typeid(PropertyUInt))
 	{
-		Append(wxIntProperty(id, wxPG_LABEL, static_cast<PropertyUInt*>(p)->_data));
+		Append(new wxIntProperty(id, wxPG_LABEL, static_cast<PropertyUInt*>(p)->_data));
 	}
 	else if(typeid(*p) == typeid(PropertyUShort))
 	{
-		Append(wxIntProperty(id, wxPG_LABEL, static_cast<PropertyUShort*>(p)->_data));
+		Append(new wxIntProperty(id, wxPG_LABEL, static_cast<PropertyUShort*>(p)->_data));
 	}
 }
 

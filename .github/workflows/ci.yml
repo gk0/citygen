@@ -1,0 +1,55 @@
+name: CI
+
+# Reproducible build: everything happens inside the Dockerfile
+# (pinned debian:trixie + pinned OGRE 1.6.5 tarball), so CI results match
+# a local `docker build` exactly.
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # The OGRE 1.6.5 compile is the expensive layer (~10-15 min);
+      # GHA cache keeps it warm between runs.
+      - name: Build image (deps + OGRE 1.6.5 + citygen)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: build
+          tags: citygen-build:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Headless smoke test (Xvfb + llvmpipe)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: smoke
+          tags: citygen-smoke:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract runtime artifact from image
+        run: |
+          cid=$(docker create citygen-build)
+          docker cp "$cid":/out/runtime ./citygen-runtime
+          docker rm "$cid"
+          ls -la ./citygen-runtime
+
+      - name: Upload runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: citygen-runtime-linux
+          path: citygen-runtime/
+          retention-days: 14

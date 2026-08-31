@@ -332,7 +332,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 					static_cast<WorldNode*>(_boundaryCycle[i]),
 					static_cast<WorldNode*>(_boundaryCycle[j]));
 			lengths.push_back(wr->getLength());
-			boundaryRoads.push_back(make_pair<size_t, WorldRoad*>(i, wr));
+			boundaryRoads.push_back(make_pair(i, wr));
 		}
 
 		// sort roads by length
@@ -430,7 +430,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 					createRoad(_roadGraph.getNode(srcNodeId), cursorNode);
 					createRoad(cursorNode, _roadGraph.getNode(dstNodeId));
 				}
-				q.push(make_pair<NodeInterface*, Vector2>(currentNode, roadDir));
+				q.push(make_pair(currentNode, roadDir));
 			}
 				break;
 			case 2:
@@ -439,7 +439,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				if (currentNode != _roadGraph.getNode(nd))
 					createRoad(currentNode, _roadGraph.getNode(nd));
 
-				q.push(make_pair<NodeInterface*, Vector2>(currentNode, roadDir));
+				q.push(make_pair(currentNode, roadDir));
 				break;
 			}
 		}
@@ -514,7 +514,7 @@ void WorldCell::generateRoadNetwork(rando genRandom)
 				LogManager::getSingleton().logMessage("I got: "+StringConverter::toString(snapState));
 			}
 			NodeInterface* ni = placeSegment(genRandom, currentNode, cursor, roadCount);
-			if(ni) q.push(make_pair<NodeInterface*, Vector2>(ni, directions[0]));
+			if(ni) q.push(make_pair(ni, directions[0]));
 		}
 	}
 }
@@ -1065,15 +1065,15 @@ TiXmlElement* WorldCell::saveXML()
 	// Save Cycle
 	TiXmlElement *cycle = addNewElement(root, "cycle");
 	BOOST_FOREACH(NodeInterface* ni, _boundaryCycle)
-addNewElement(cycle, "node")->SetAttribute("id", (int)ni);
+	addNewElement(cycle, "node")->SetAttribute("id", pointerToString(ni));
 
 	// Save Filaments
-		TiXmlElement *filaments = addNewElement(root, "filaments");
+	TiXmlElement *filaments = addNewElement(root, "filaments");
 	BOOST_FOREACH(RoadInterface* ri, _filamentRoads)
-{
+	{
 		TiXmlElement *filament = addNewElement(filaments, "filament");
-		addNewElement(filament, "node")->SetAttribute("id", (int)ri->getSrcNode());
-		addNewElement(filament, "node")->SetAttribute("id", (int)ri->getDstNode());
+		addNewElement(filament, "node")->SetAttribute("id", pointerToString(ri->getSrcNode()));
+		addNewElement(filament, "node")->SetAttribute("id", pointerToString(ri->getDstNode()));
 	}
 
 	// Save Params

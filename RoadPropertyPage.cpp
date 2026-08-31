@@ -17,31 +17,31 @@ END_EVENT_TABLE()
 
 void RoadPropertyPage::Init()
 {
-    Append(wxPropertyCategory(wxT("Adaptive Road Parameters")));
+    Append(new wxPropertyCategory(wxT("Adaptive Road Parameters")));
 
 
     wxPGChoices arrPlot;
 	arrPlot.Add(wxT("Even Elevation Diff."), EvenElevationDiff);
 	arrPlot.Add(wxT("Minimum Elevation Diff."), MinimumElevationDiff);
 	arrPlot.Add(wxT("Minimum Elevation"), MinimumElevation);
-    _plotAlgorProp = Append(wxEnumProperty(wxT("Algorithm"), wxPG_LABEL, arrPlot) );
+    _plotAlgorProp = Append(new wxEnumProperty(wxT("Algorithm"), wxPG_LABEL, arrPlot) );
 
 	// Add float property (value type is actually double)
-	_sampleSizeProp = Append(wxFloatProperty(wxT("Sample Size (m)"), wxPG_LABEL, 0));
-    _roadWidthProp = Append(wxFloatProperty(wxT("Road Width (m)"), wxPG_LABEL, 0));
-	_sampleDevianceProp = Append(wxFloatProperty(wxT("Road Deviance Angle (degrees)"), wxPG_LABEL,0));
-	_samplesProp = Append(wxIntProperty(wxT("Number of Samples"), wxPG_LABEL,0));
+	_sampleSizeProp = Append(new wxFloatProperty(wxT("Sample Size (m)"), wxPG_LABEL, 0));
+    _roadWidthProp = Append(new wxFloatProperty(wxT("Road Width (m)"), wxPG_LABEL, 0));
+	_sampleDevianceProp = Append(new wxFloatProperty(wxT("Road Deviance Angle (degrees)"), wxPG_LABEL,0));
+	_samplesProp = Append(new wxIntProperty(wxT("Number of Samples"), wxPG_LABEL,0));
 
-	Append(wxPropertyCategory(wxT("Display Options")));
-	_segmentDrawSizeProp = Append(wxFloatProperty(wxT("Segment Draw Size"), wxPG_LABEL,0));
-	_plotDebugProp = Append(wxBoolProperty(wxT("View Plot Debug Info"), wxPG_LABEL,0));
+	Append(new wxPropertyCategory(wxT("Display Options")));
+	_segmentDrawSizeProp = Append(new wxFloatProperty(wxT("Segment Draw Size"), wxPG_LABEL,0));
+	_plotDebugProp = Append(new wxBoolProperty(wxT("View Plot Debug Info"), wxPG_LABEL,0));
 }
 
 
 void RoadPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 {
 	//const wxId& id = event.GetId();
-	//const wxPGProperty* eventProp = event.GetPropertyPtr();
+	//const wxPGProperty* eventProp = event.GetProperty();
 
 	WorldRoad* wr = _worldFrame->getSelectedRoad();
 	RoadGenParams g;

@@ -17,7 +17,7 @@ END_EVENT_TABLE()
 
 void CellPropertyPage::Init()
 {
-	Append(wxPropertyCategory(wxT("Presets")));
+	Append(new wxPropertyCategory(wxT("Presets")));
 
 	wxPGChoices arrPlot;
 	arrPlot.Add(wxT("Select Preset ..."), 0);
@@ -25,8 +25,8 @@ void CellPropertyPage::Init()
 	arrPlot.Add(wxT("Industrial"), 2);
 	arrPlot.Add(wxT("Suburbia"), 3);
 
-    //presetProp = Append( wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
-	_presetProp = Append(wxEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
+    //presetProp = Append(new wxEditEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
+	_presetProp = Append(new wxEnumProperty(wxT("Load Preset"), wxPG_LABEL, arrPlot) );
 
 	//presetProp
 	//wxButton* but = new wxButton();
@@ -61,58 +61,58 @@ void CellPropertyPage::Init()
                                     wxDEFAULT_FRAME_STYLE) );
 */
 
-    Append(wxPropertyCategory(wxT("Road Parameters")));
+    Append(new wxPropertyCategory(wxT("Road Parameters")));
 
-	_seedProp = Append(wxIntProperty(wxT("Seed"), wxPG_LABEL, 0));
+	_seedProp = Append(new wxIntProperty(wxT("Seed"), wxPG_LABEL, 0));
 
 	// Add float property (value type is actually double)
-    _segmentSizeProp = Append(wxFloatProperty(wxT("Segment Size (m)"), wxPG_LABEL, 0));
-	_segmentDevianceProp = Append(wxFloatProperty(wxT("Segment Deviance"), wxPG_LABEL, 0));
+    _segmentSizeProp = Append(new wxFloatProperty(wxT("Segment Size (m)"), wxPG_LABEL, 0));
+	_segmentDevianceProp = Append(new wxFloatProperty(wxT("Segment Deviance"), wxPG_LABEL, 0));
 
 	// Add int property
-    _degreeProp = Append(wxIntProperty(wxT("Degree"), wxPG_LABEL, 0));
-	_degreeDevianceProp = Append(wxFloatProperty(wxT("Degree Deviance"), wxPG_LABEL, 0));
-	_aspectProp = Append(wxFloatProperty(wxT("Aspect"), wxPG_LABEL, 0));
+    _degreeProp = Append(new wxIntProperty(wxT("Degree"), wxPG_LABEL, 0));
+	_degreeDevianceProp = Append(new wxFloatProperty(wxT("Degree Deviance"), wxPG_LABEL, 0));
+	_aspectProp = Append(new wxFloatProperty(wxT("Aspect"), wxPG_LABEL, 0));
 
 
 	// Add float property (value type is actually double)
-    _snapSizeProp = Append(wxFloatProperty(wxT("Snap Size (m)"), wxPG_LABEL, 0));
+    _snapSizeProp = Append(new wxFloatProperty(wxT("Snap Size (m)"), wxPG_LABEL, 0));
 
-	_roadWidthProp = Append(wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0));
-	_connectivityProp = Append(wxFloatProperty(wxT("Connectivity"), wxPG_LABEL, 0));
+	_roadWidthProp = Append(new wxFloatProperty(wxT("Road Width"), wxPG_LABEL, 0));
+	_connectivityProp = Append(new wxFloatProperty(wxT("Connectivity"), wxPG_LABEL, 0));
 
-	_roadLimitProp = Append(wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 0));
+	_roadLimitProp = Append(new wxIntProperty(wxT("Road Limit"), wxPG_LABEL, 0));
 	SetPropertyEditor(wxT("Road Limit"), wxPG_EDITOR(SpinCtrl));
 
-	Append(wxPropertyCategory(wxT("Block Parameters")));
-	_pavementWidthProp = Append(wxFloatProperty(wxT("Pavement width (m)"), wxPG_LABEL, 0));
-	_pavementHeightProp = Append(wxFloatProperty(wxT("Pavement height (m)"), wxPG_LABEL, 0));
+	Append(new wxPropertyCategory(wxT("Block Parameters")));
+	_pavementWidthProp = Append(new wxFloatProperty(wxT("Pavement width (m)"), wxPG_LABEL, 0));
+	_pavementHeightProp = Append(new wxFloatProperty(wxT("Pavement height (m)"), wxPG_LABEL, 0));
 
-	Append(wxPropertyCategory(wxT("Lot Parameters")));
-	_lotWidthProp = Append(wxFloatProperty(wxT("Lot width (m)"), wxPG_LABEL, 0));
-	_lotDepthProp = Append(wxFloatProperty(wxT("Lot depth (m)"), wxPG_LABEL, 0));
-	_lotDevianceProp = Append(wxFloatProperty(wxT("Lot Deviance"), wxPG_LABEL, 0));
+	Append(new wxPropertyCategory(wxT("Lot Parameters")));
+	_lotWidthProp = Append(new wxFloatProperty(wxT("Lot width (m)"), wxPG_LABEL, 0));
+	_lotDepthProp = Append(new wxFloatProperty(wxT("Lot depth (m)"), wxPG_LABEL, 0));
+	_lotDevianceProp = Append(new wxFloatProperty(wxT("Lot Deviance"), wxPG_LABEL, 0));
 
-	Append(wxPropertyCategory(wxT("Building Parameters")));
-	_buildingHeightProp = Append(wxFloatProperty(wxT("Building Height (m)"), wxPG_LABEL, 0));
-	_buildingDevianceProp = Append(wxFloatProperty(wxT("Building Deviance"), wxPG_LABEL, 0));
+	Append(new wxPropertyCategory(wxT("Building Parameters")));
+	_buildingHeightProp = Append(new wxFloatProperty(wxT("Building Height (m)"), wxPG_LABEL, 0));
+	_buildingDevianceProp = Append(new wxFloatProperty(wxT("Building Deviance"), wxPG_LABEL, 0));
 
 	wxPGChoices arrPlot2;
 	arrPlot2.Add(wxT("Downtown"), 0);
 	arrPlot2.Add(wxT("Industrial"), 1);
 	arrPlot2.Add(wxT("Suburbia"), 2);
-	_typeProp = Append(wxEnumProperty(wxT("Building Hint"), wxPG_LABEL, arrPlot2) );
+	_typeProp = Append(new wxEnumProperty(wxT("Building Hint"), wxPG_LABEL, arrPlot2) );
 
-	Append(wxPropertyCategory(wxT("Display Options")));
+	Append(new wxPropertyCategory(wxT("Display Options")));
 
-	_debugProp =  Append(wxBoolProperty(wxT("View Debug Info"), wxPG_LABEL,0));
-	_mcbDebugProp =  Append(wxBoolProperty(wxT("MCB Debug Info"), wxPG_LABEL,0));
+	_debugProp =  Append(new wxBoolProperty(wxT("View Debug Info"), wxPG_LABEL,0));
+	_mcbDebugProp =  Append(new wxBoolProperty(wxT("MCB Debug Info"), wxPG_LABEL,0));
 }
 
 void CellPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 {
 	//const wxId& id = event.GetId();
-	const wxPGProperty* eventProp = event.GetPropertyPtr();
+	const wxPGProperty* eventProp = event.GetProperty();
 
 
 	CellParams g;
