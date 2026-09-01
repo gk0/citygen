@@ -101,120 +101,22 @@ _timer(this, ID_RENDERTIMER)
 
 void WorldFrame::init()
 {
-	// --------------------
 	// Create a new parameters list according to compiled OS
 	NameValuePairList params;
-	String handle;
 #ifdef __WXMSW__
-	handle = StringConverter::toString((size_t)((HWND)GetHandle()));
+	params["externalWindowHandle"] = StringConverter::toString((size_t)((HWND)GetHandle()));
 #elif defined(__WXGTK__)
-
-			SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-
-	GtkWidget* privHandle = m_wxwindow;
-	// prevents flickering
-	gtk_widget_set_double_buffered(privHandle, FALSE);
-
-	// Choose the GL visual BEFORE realization and force the widget's window to
-	// use it: GTK3 otherwise creates the window on a 32-bit RGBA visual whose
-	// framebuffer config has no depth buffer (GL_DEPTH_BITS == 0), which
-	// degrades the whole scene to painter's algorithm (roads over buildings).
-	Display* xdisplay = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
-	int attrlist[] =
-	{	GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 24, GLX_STENCIL_SIZE, 8, None};
-	XVisualInfo* vi = glXChooseVisual(xdisplay, DefaultScreen(xdisplay), attrlist);
-	gtk_widget_set_visual(privHandle,
-		gdk_x11_screen_lookup_visual(gtk_widget_get_screen(privHandle), vi->visualid));
-
-		// Under wx3/GTK3, Show() only queues the widget for mapping; its GdkWindow
-	// isn't created until the widget is realized. Force realization now and pump
-	// pending GTK events, otherwise gtk_widget_get_window() returns NULL and the
-	// GDK_WINDOW_* macros dereference garbage -> segfault.
-	gtk_widget_realize(privHandle);
-	while (gtk_events_pending())
-		gtk_main_iteration();
-
-	// grab the window object
-	GdkWindow* gdkWin = gtk_widget_get_window(privHandle);
-	if (!gdkWin)
-	{
-		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
-			"WorldFrame widget has no GdkWindow after realization.",
-			"WorldFrame::init");
-	}
-
-	// Under GTK3 child widgets are client-side (non-native) by default and share
-	// the toplevel's GdkWindow, so they have no usable X11 XID of their own.
-	// OGRE 1.6.5's GL render system needs a real X11 window: force the GdkWindow
-	// to become native so GDK_WINDOW_XID() returns a valid drawable.
-	if (!gdk_window_ensure_native(gdkWin))
-	{
-		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
-			"Could not create a native X11 window for the WorldFrame widget. "
-			"OGRE 1.6.5's GL render system needs an X11 window; run under "
-			"X11/XWayland with GDK_BACKEND=x11.", "WorldFrame::init");
-	}
-
-	// re-fetch: ensure_native() may have replaced the GdkWindow
-	gdkWin = gtk_widget_get_window(privHandle);
-	while (gtk_events_pending())
-		gtk_main_iteration();
-
-	if (!gdkWin || !GDK_IS_X11_WINDOW(gdkWin))
-	{
-		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
-			"WorldFrame widget has no X11 GdkWindow. OGRE 1.6.5's GL render "
-			"system needs an X11 window; run under X11/XWayland with "
-			"GDK_BACKEND=x11.", "WorldFrame::init");
-	}
-	Display* display = GDK_WINDOW_XDISPLAY(gdkWin);
-	Window wid = GDK_WINDOW_XID(gdkWin);
-
-	// make sure the X server has actually created the window before OGRE
-	// starts poking at it
-	XSync(display, False);
-
-	std::stringstream str;
-
-	// display
-	str << (unsigned long)display << ':';
-
-	// screen (returns "display.screen")
-	std::string screenStr = DisplayString(display);
-	std::string::size_type dotPos = screenStr.find(".");
-	screenStr = screenStr.substr(dotPos+1, screenStr.size());
-	str << screenStr << ':';
-
-	// XID
-	str << wid << ':';
-
-		// vi was chosen before realization (see above) so the widget's window and
-	// the GLX context share the same visual - and its depth buffer
-
-	// A/B diagnostics: compare the visual GTK created the window with against
-	// the one we chose for GL (a mismatch means OGRE's context and drawable
-	// disagree, which can cost us the depth buffer)
-	XWindowAttributes wa;
-	XGetWindowAttributes(display, wid, &wa);
-	LogManager::getSingleton().logMessage(
-		"WorldFrame::init: window visualid=" + StringConverter::toString((unsigned long)wa.visual->visualid)
-		+ " chosen visualid=" + StringConverter::toString((unsigned long)vi->visualid)
-		+ " chosen depth=" + StringConverter::toString((int)vi->depth));
-	str << (unsigned long)vi;
-
-	handle = str.str();
+	params["externalWindowHandle"] = getGTKExternalWindowHandle();
 #else
 #error Not supported on this platform.
 #endif
-	params["externalWindowHandle"] = handle;
 
 	// Get wx control window size
 	int width, height;
 	GetSize(&width, &height);
 
 	// Create the render window
-	_renderWindow = Root::getSingleton().createRenderWindow("OgreRenderWindow", width, height, false,
-			&params);
+	_renderWindow = Root::getSingleton().createRenderWindow("OgreRenderWindow", width, height, false, &params);
 	_renderWindow->setActive(true);
 
 	// Create the SceneManager, in this case the terrainscenemanager
@@ -232,16 +134,15 @@ void WorldFrame::init()
 	// Make sure assets are loaded before we create the scene
 	ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
-   // set up world materials
-   _worldMaterials = new WorldMaterials();
+	// set up world materials
+	_worldMaterials = new WorldMaterials();
 
-	//createScene();
 	_isDocOpen = false;
-
 	_viewMode = WorldCell::view_box;
 	_toolsetMode = MainWindow::view;
-	_activeTool = MainWindow::addNode;
 
+	// NB: push order must match MainWindow::ActiveTool
+	// (viewTool and terrTool are both handled by ToolView)
 	_tools.push_back(new ToolView(this));
 	_tools.push_back(new ToolView(this));
 	_tools.push_back(new ToolNodeSelect(this));
@@ -253,6 +154,109 @@ void WorldFrame::init()
 	_tools.push_back(new ToolCellSelect(this));
 	_activeTool = MainWindow::viewTool;
 }
+
+#ifdef __WXGTK__
+Ogre::String WorldFrame::getGTKExternalWindowHandle()
+{
+	SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+
+	GtkWidget* privHandle = m_wxwindow;
+	// prevents flickering
+	gtk_widget_set_double_buffered(privHandle, FALSE);
+
+	// Choose the GL visual BEFORE realization and force the widget's window to
+	// use it: GTK3 otherwise creates the window on a 32-bit RGBA visual whose
+	// framebuffer config has no depth buffer (GL_DEPTH_BITS == 0), which
+	// degrades the whole scene to painter's algorithm (roads over buildings).
+	Display* xdisplay = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+	int attrlist[] = { GLX_RGBA, GLX_DOUBLEBUFFER, GLX_DEPTH_SIZE, 24, GLX_STENCIL_SIZE, 8, None };
+	XVisualInfo* vi = glXChooseVisual(xdisplay, DefaultScreen(xdisplay), attrlist);
+	gtk_widget_set_visual(privHandle,
+		gdk_x11_screen_lookup_visual(gtk_widget_get_screen(privHandle), vi->visualid));
+
+	// Under wx3/GTK3, Show() only queues the widget for mapping; its GdkWindow
+	// isn't created until the widget is realized. Force realization now and pump
+	// pending GTK events, otherwise gtk_widget_get_window() returns NULL and the
+	// GDK_WINDOW_* macros dereference garbage -> segfault.
+	gtk_widget_realize(privHandle);
+	while (gtk_events_pending())
+		gtk_main_iteration();
+
+	// grab the window object
+	GdkWindow* gdkWin = gtk_widget_get_window(privHandle);
+	if (!gdkWin)
+	{
+		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
+			"WorldFrame widget has no GdkWindow after realization.",
+			"WorldFrame::getGTKExternalWindowHandle");
+	}
+
+	// Under GTK3 child widgets are client-side (non-native) by default and share
+	// the toplevel's GdkWindow, so they have no usable X11 XID of their own.
+	// OGRE 1.6.5's GL render system needs a real X11 window: force the GdkWindow
+	// to become native so GDK_WINDOW_XID() returns a valid drawable.
+	if (!gdk_window_ensure_native(gdkWin))
+	{
+		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
+			"Could not create a native X11 window for the WorldFrame widget. "
+			"OGRE 1.6.5's GL render system needs an X11 window; run under "
+			"X11/XWayland with GDK_BACKEND=x11.", "WorldFrame::getGTKExternalWindowHandle");
+	}
+
+	// re-fetch: ensure_native() may have replaced the GdkWindow
+	gdkWin = gtk_widget_get_window(privHandle);
+	while (gtk_events_pending())
+		gtk_main_iteration();
+
+	if (!gdkWin || !GDK_IS_X11_WINDOW(gdkWin))
+	{
+		OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR,
+			"WorldFrame widget has no X11 GdkWindow. OGRE 1.6.5's GL render "
+			"system needs an X11 window; run under X11/XWayland with "
+			"GDK_BACKEND=x11.", "WorldFrame::getGTKExternalWindowHandle");
+	}
+	Display* display = GDK_WINDOW_XDISPLAY(gdkWin);
+	Window wid = GDK_WINDOW_XID(gdkWin);
+
+	// make sure the X server has actually created the window before OGRE
+	// starts poking at it
+	XSync(display, False);
+
+	// OGRE GLX externalWindowHandle format: display:screen:XID:visualinfo
+	std::stringstream str;
+	str << (unsigned long)display << ':';
+
+	// DisplayString returns "hostname:display.screen" for remote displays but
+	// just "hostname:display" (e.g. ":0") for local X servers. OGRE's
+	// GLXWindow::create only reads the display, XID and visualinfo tokens and
+	// ignores the screen token, so keep the screen suffix when present and the
+	// whole string otherwise (as the original code did).
+	std::string screenStr = DisplayString(display);
+	std::string::size_type dotPos = screenStr.find('.');
+	if (dotPos != std::string::npos)
+		screenStr = screenStr.substr(dotPos + 1);
+	str << screenStr << ':';
+
+	// XID
+	str << wid << ':';
+
+	// vi was chosen before realization (see above) so the widget's window and
+	// the GLX context share the same visual - and its depth buffer
+
+	// A/B diagnostics: compare the visual GTK created the window with against
+	// the one we chose for GL (a mismatch means OGRE's context and drawable
+	// disagree, which can cost us the depth buffer)
+	XWindowAttributes wa;
+	XGetWindowAttributes(display, wid, &wa);
+	LogManager::getSingleton().logMessage(
+		"WorldFrame::getGTKExternalWindowHandle: window visualid=" + StringConverter::toString((unsigned long)wa.visual->visualid)
+		+ " chosen visualid=" + StringConverter::toString((unsigned long)vi->visualid)
+		+ " chosen depth=" + StringConverter::toString((int)vi->depth));
+	str << (unsigned long)vi;
+
+	return str.str();
+}
+#endif
 
 // Destructor //
 WorldFrame::~WorldFrame()
@@ -330,7 +334,6 @@ void WorldFrame::createCamera(void)
 
 	// camera is positioned in createScene - not here
 }
-
 
 WorldNode* WorldFrame::createNode()
 {
