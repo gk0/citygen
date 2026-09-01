@@ -84,4 +84,10 @@ RUN mkdir -p /out && cp -a build/runtime /out/runtime
 # Ogre log shows the Cg plugin installed and resources parsed cleanly.
 ###############################################################################
 FROM build AS smoke
-RUN bash /src/ci/smoke-test.sh /out/runtime
+# xvfb-run needs xauth, which is only a Recommends of xvfb and thus absent
+# from the --no-install-recommends build stage; install it here so the
+# cached build layers are not invalidated
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends xauth \
+ && rm -rf /var/lib/apt/lists/* \
+ && bash /src/ci/smoke-test.sh /out/runtime
