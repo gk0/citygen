@@ -1,0 +1,42 @@
+Make StringConverter::toString(unsigned long) available on 64-bit non-MSVC.
+
+On Win64, MinGW's DWORD is unsigned long (32-bit) while size_t is 64-bit;
+with the MSVC-only guard, calls like toString(dmBitsPerPel) became ambiguous
+between the unsigned int / size_t / long overloads.
+--- a/OgreMain/include/OgreStringConverter.h
++++ b/OgreMain/include/OgreStringConverter.h
+@@ -89,13 +89,13 @@
+         static String toString(size_t val, 
+             unsigned short width = 0, char fill = ' ', 
+             std::ios::fmtflags flags = std::ios::fmtflags(0) );
+-        #if OGRE_COMPILER == OGRE_COMPILER_MSVC
+                 /** Converts an unsigned long to a String. */
++                // (unconditional: on Win64 GCC, unsigned long is a distinct
++                // 32-bit type, so DWORD etc. need this overload)
+                 static String toString(unsigned long val, 
+                     unsigned short width = 0, char fill = ' ', 
+                     std::ios::fmtflags flags = std::ios::fmtflags(0) );
+ 
+-        #endif
+ #else
+         /** Converts a size_t to a String. */
+         static String toString(size_t val, 
+--- a/OgreMain/src/OgreStringConverter.cpp
++++ b/OgreMain/src/OgreStringConverter.cpp
+@@ -88,7 +88,6 @@
+         stream << val;
+         return stream.str();
+     }
+-#if OGRE_COMPILER == OGRE_COMPILER_MSVC
+     //-----------------------------------------------------------------------
+     String StringConverter::toString(unsigned long val, 
+         unsigned short width, char fill, std::ios::fmtflags flags)
+@@ -101,8 +100,6 @@
+         stream << val;
+         return stream.str();
+     }
+-
+-#endif
+     //-----------------------------------------------------------------------
+ #else
+     String StringConverter::toString(size_t val, 

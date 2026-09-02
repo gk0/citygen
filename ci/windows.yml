@@ -1,0 +1,135 @@
+name: windows
+
+# Windows build: native MSYS2 MinGW-w64 toolchain on a windows-latest runner.
+# OGRE 1.6.5 has no Windows build system (autotools is Unix-only; the shipped
+# VS2008/Code::Blocks projects are unusable headless), so ci/ogre-win builds
+# the subset citygen needs with CMake, from the same pinned tarball as the
+# Linux Docker build. The OGRE compile is the expensive part and is cached
+# with actions/cache (the non-Docker equivalent of the warm docker layer).
+#
+# NVIDIA Cg is required (citygen's shaders are Cg): pinned Cg 3.1 installer,
+# extracted with innoextract.
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  OGRE_URL: https://downloads.sourceforge.net/project/ogre/ogre/1.6.5/ogre-v1-6-5.tar.bz2
+  OGRE_SHA256: 7fc0e948679c1c1f10751756d267a41d0e3395a6520a23f7853a0ae39a1281f5
+  CG_URL: https://developer.download.nvidia.com/cg/Cg_3.1/Cg-3.1_April2012_Setup.exe
+  CG_SHA256: 0039b4a3d6f2d4c57eebe11e425ddb73d0b74ac917848fd97821a3a5b776ba31
+  # Mesa3D software GL for the smoke test (runner GPUs are GDI Generic only)
+  MESA_URL: https://github.com/pal1000/mesa-dist-win/releases/download/26.2.0/mesa3d-26.2.0-release-msvc.7z
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-boost
+            mingw-w64-x86_64-wxwidgets3.2-msw
+            mingw-w64-x86_64-wxwidgets3.2-msw-libs
+            mingw-w64-x86_64-wxwidgets3.2-common
+            mingw-w64-x86_64-freeimage
+            mingw-w64-x86_64-zziplib
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-freetype
+            mingw-w64-x86_64-libjpeg-turbo
+            mingw-w64-x86_64-libpng
+            mingw-w64-x86_64-libtiff
+            mingw-w64-x86_64-expat
+            innoextract
+            patch
+            p7zip
+
+      # The expensive layer: patched OGRE source + built DLLs + extracted Cg.
+      # Cache key changes whenever anything under ci/ogre-win changes.
+      - name: Cache OGRE 1.6.5 Windows build
+        id: ogre-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ogre-src
+            ogre-build
+            cg
+          key: ogre165-win-${{ hashFiles('ci/ogre-win/**') }}
+
+      - name: Fetch OGRE 1.6.5 source
+        if: steps.ogre-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o ogre.tar.bz2 "$OGRE_URL"
+          echo "$OGRE_SHA256  ogre.tar.bz2" | sha256sum -c -
+          mkdir ogre-src
+          tar -xjf ogre.tar.bz2 -C ogre-src --strip-components=1
+          rm ogre.tar.bz2
+          for p in ci/ogre-win/patches/*.patch; do patch -s -p1 -d ogre-src < "$p"; done
+
+      - name: Extract NVIDIA Cg SDK
+        if: steps.ogre-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o cg.exe "$CG_URL"
+          echo "$CG_SHA256  cg.exe" | sha256sum -c -
+          innoextract -d cg cg.exe
+          rm cg.exe
+
+      # Always reconfigure (regenerates absolute paths after a cache restore);
+      # on a cache hit ninja finds nothing to do.
+      - name: Build OGRE 1.6.5 (Windows subset)
+        run: |
+          cmake -S ci/ogre-win -B ogre-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOGRE_SRC="$(cygpath -m "$PWD")/ogre-src" \
+            -DMSYS2_PREFIX=/mingw64 \
+            -DCG_PREFIX="$(cygpath -m "$PWD")/cg/app"
+          cmake --build ogre-build -j"$(nproc)"
+
+      - name: Build citygen
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOGRE_HOME="$(cygpath -m "$PWD")/ogre-src" \
+            -DOGRE_WIN_BUILD="$(cygpath -m "$PWD")/ogre-build" \
+            -DMSYS2_PREFIX=/mingw64 \
+            -DWX_PREFIX=/mingw64 \
+            -DCG_PREFIX="$(cygpath -m "$PWD")/cg/app"
+          cmake --build build -j"$(nproc)"
+
+      - name: Stage runtime DLLs
+        run: |
+          bash ci/ogre-win/stage-runtime.sh build/runtime \
+            build/runtime/citygen.exe \
+            build/runtime/RenderSystem_GL.dll \
+            build/runtime/Plugin_OctreeSceneManager.dll \
+            build/runtime/Plugin_CgProgramManager.dll \
+            -- ogre-build /mingw64/bin cg/app/bin.x64
+
+      - name: Stage Mesa software GL
+        run: |
+          curl -fsSL -o mesa.7z "$MESA_URL"
+          7z e -y -obuild/runtime mesa.7z x64/opengl32.dll
+          rm mesa.7z
+
+      - name: Headless smoke test
+        run: bash ci/smoke-test-windows.sh build/runtime
+
+      - name: Upload runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: citygen-runtime-windows
+          path: build/runtime/
+          retention-days: 14

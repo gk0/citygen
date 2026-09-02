@@ -34,6 +34,10 @@ size_t Statistics::_buildingCount = 0;
 #include <wx/msgdlg.h>
 #include <wx/dcclient.h>
 
+#ifdef __WXMSW__
+#include <GL/gl.h>   // GL depth-state diagnostics in update() (transitive on GTK)
+#endif
+
 #include <OgreMaterialManager.h>
 #include <OgreRenderSystem.h>
 #include <OgreStringConverter.h>

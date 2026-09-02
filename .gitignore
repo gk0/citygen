@@ -1,3 +1,11 @@
 build
 .cache
 compile_commands.json
+
+# windows CI / trial-build artifacts (see ci/ogre-win)
+ogre-src
+ogre-build
+cg
+ogre.tar.bz2
+cg.exe
+mesa.7z

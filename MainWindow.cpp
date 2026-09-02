@@ -477,9 +477,8 @@ bool MainWindow::onSaveModified()
         else
             msgTitle = wxString(_("Warning"));
 
-        wxString prompt;
-        prompt.Printf(_("Do you want to save changes to document %s?"),
-                (const wxChar *)title);
+                wxString prompt;
+        prompt.Printf(_("Do you want to save changes to document %s?"), title);
         int res = wxMessageBox(prompt, msgTitle,
                 wxYES_NO|wxCANCEL|wxICON_QUESTION, this);
         if (res == wxNO)
