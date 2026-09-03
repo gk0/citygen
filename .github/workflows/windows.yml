@@ -53,7 +53,6 @@ jobs:
             mingw-w64-x86_64-libpng
             mingw-w64-x86_64-libtiff
             mingw-w64-x86_64-expat
-            innoextract
             patch
             p7zip
 
@@ -82,10 +81,16 @@ jobs:
       - name: Extract NVIDIA Cg SDK
         if: steps.ogre-cache.outputs.cache-hit != 'true'
         run: |
+          # innoextract is not packaged for MSYS2; use the pinned upstream
+          # Windows binary
+          curl -fsSL -o innoextract.zip \
+            "https://github.com/dscharrer/innoextract/releases/download/1.9/innoextract-1.9-windows.zip"
+          echo "6989342c9b026a00a72a38f23b62a8e6a22cc5de69805cf47d68ac2fec993065  innoextract.zip" | sha256sum -c -
+          7z x -y -oinnoextract-bin innoextract.zip
           curl -fsSL -o cg.exe "$CG_URL"
           echo "$CG_SHA256  cg.exe" | sha256sum -c -
-          innoextract -d cg cg.exe
-          rm cg.exe
+          ./innoextract-bin/innoextract.exe -d cg cg.exe
+          rm -rf cg.exe innoextract.zip innoextract-bin
 
       # Always reconfigure (regenerates absolute paths after a cache restore);
       # on a cache hit ninja finds nothing to do.
