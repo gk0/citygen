@@ -126,8 +126,15 @@ jobs:
       - name: Stage Mesa software GL
         run: |
           curl -fsSL -o mesa.7z "$MESA_URL"
-          7z e -y -obuild/runtime mesa.7z x64/opengl32.dll
-          rm mesa.7z
+          # extract to a temp dir (7z e with a path filter is unreliable and
+          # would flatten the x86 DLLs on top of the x64 ones), then copy the
+          # x64 GL shim and let the import walk pull libgallium_wgl.dll
+          7z x -y -omesa mesa.7z >/dev/null
+          cp mesa/x64/opengl32.dll build/runtime/
+          bash .github/workflows/ogre-win/stage-runtime.sh build/runtime \
+            build/runtime/opengl32.dll \
+            -- mesa/x64
+          rm -rf mesa mesa.7z
 
       - name: Headless smoke test
         run: bash .github/workflows/smoke-test-windows.sh build/runtime

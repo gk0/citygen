@@ -22,6 +22,11 @@ echo "citygen exit code: $code (124 = terminated by timeout, expected)"
 
 if [ "$code" -ne 124 ] && [ "$code" -ne 0 ]; then
     echo "FAIL: citygen exited abnormally before the timeout"
+    # msys2 ldd resolves PE imports; missing DLLs show as "not found"
+    for f in ./citygen.exe ./OgreMain.dll ./RenderSystem_GL.dll \
+             ./Plugin_OctreeSceneManager.dll ./Plugin_CgProgramManager.dll; do
+        [ -f "$f" ] && ldd "$f" 2>/dev/null | grep -i "not found"
+    done
     tail -30 citygen.log || true
     exit 1
 fi
