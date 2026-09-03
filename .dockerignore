@@ -1,0 +1,7 @@
+# Keep the docker build context small; Media/ and bitmaps/ are required.
+build/
+.git/
+build.log
+citygen.log
+*.o
+*.tar.bz2

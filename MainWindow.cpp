@@ -378,7 +378,7 @@ void MainWindow::onExport(wxCommandEvent &e)
 {
 	//TODO: file save as
 	wxString filename = wxFileSelector(_("Choose a file to export"), _(""), _(""),  
-		_(""), _("COLLADA files (*.dae)|*.dae"), wxSAVE);
+		_(""), _("COLLADA files (*.dae)|*.dae"), wxFD_SAVE);
 	if(!filename.empty())
 	{
 		doExport(filename); //return
@@ -413,7 +413,7 @@ bool MainWindow::saveAs()
 {
 	//TODO: file save as !!!CAUSES a memory leak; is within wxFileSelector
 	wxString filename = wxFileSelector(_("Choose a file to save"), _(""), _(""),  
-		_(""), _("Citygen XML files (*.cgx)|*.cgx|GIF files (*.gif)|*.gif"), wxSAVE);
+		_(""), _("Citygen XML files (*.cgx)|*.cgx|GIF files (*.gif)|*.gif"), wxFD_SAVE);
 	if(!filename.empty())
 	{
 		return doSave(filename);
@@ -477,9 +477,8 @@ bool MainWindow::onSaveModified()
         else
             msgTitle = wxString(_("Warning"));
 
-        wxString prompt;
-        prompt.Printf(_("Do you want to save changes to document %s?"),
-                (const wxChar *)title);
+                wxString prompt;
+        prompt.Printf(_("Do you want to save changes to document %s?"), title);
         int res = wxMessageBox(prompt, msgTitle,
                 wxYES_NO|wxCANCEL|wxICON_QUESTION, this);
         if (res == wxNO)

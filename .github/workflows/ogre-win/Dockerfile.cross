@@ -1,0 +1,60 @@
+# Trial environment for cross-compiling OGRE 1.6.5 + citygen for Windows
+# from Linux (mirrors what the native MSYS2 CI job will do).
+FROM debian:trixie
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential cmake ninja-build pkg-config curl ca-certificates \
+        xz-utils zstd bzip2 python3 file \
+        gcc-mingw-w64-x86-64-posix g++-mingw-w64-x86-64-posix \
+        binutils-mingw-w64-x86-64 mingw-w64-tools \
+        innoextract \
+    && rm -rf /var/lib/apt/lists/*
+
+# MSYS2 dependency packages (same ones the native MSYS2 CI job installs)
+COPY setup-deps.sh /usr/local/bin/
+RUN bash /usr/local/bin/setup-deps.sh /opt/msys2 \
+        mingw-w64-x86_64-freeimage \
+        mingw-w64-x86_64-zziplib \
+        mingw-w64-x86_64-zlib \
+        mingw-w64-x86_64-freetype \
+        mingw-w64-x86_64-boost \
+        mingw-w64-x86_64-wxwidgets3.2-msw \
+        mingw-w64-x86_64-wxwidgets3.2-msw-libs \
+        mingw-w64-x86_64-wxwidgets3.2-common \
+        mingw-w64-x86_64-libjpeg-turbo \
+        mingw-w64-x86_64-libpng \
+        mingw-w64-x86_64-libtiff \
+        mingw-w64-x86_64-expat \
+        mingw-w64-x86_64-gcc-libs
+
+# NVIDIA Cg SDK (pinned installer, extracted with innoextract)
+ARG CG_URL=https://developer.download.nvidia.com/cg/Cg_3.1/Cg-3.1_April2012_Setup.exe
+ARG CG_SHA256=0039b4a3d6f2d4c57eebe11e425ddb73d0b74ac917848fd97821a3a5b776ba31
+RUN curl -fsSL -o /tmp/cg.exe "$CG_URL" \
+ && echo "$CG_SHA256  /tmp/cg.exe" | sha256sum -c - \
+ && innoextract -d /opt/cg /tmp/cg.exe >/dev/null \
+ && rm /tmp/cg.exe
+
+# wxWidgets 3.2 static, built with the cross toolchain (MSYS2's pacman static
+# libs are built against MSYS2's own CRT and don't link under Debian's
+# mingw-w64; native MSYS2 CI uses the pacman package instead - same lib names)
+ARG WX_URL=https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.8/wxWidgets-3.2.8.tar.bz2
+ARG WX_SHA256=c74784904109d7229e6894c85cfa068f1106a4a07c144afd78af41f373ee0fe6
+RUN curl -fsSL -o /tmp/wx.tar.bz2 "$WX_URL" \
+ && echo "$WX_SHA256  /tmp/wx.tar.bz2" | sha256sum -c - \
+ && mkdir /tmp/wx-src /tmp/wx-build \
+ && tar -xjf /tmp/wx.tar.bz2 -C /tmp/wx-src --strip-components=1 \
+ && cd /tmp/wx-build \
+ && ../wx-src/configure --host=x86_64-w64-mingw32 --prefix=/opt/wx \
+        --disable-shared --with-opengl \
+        --with-libjpeg=builtin --with-libpng=builtin --with-libtiff=builtin \
+        --with-zlib=builtin --with-expat=builtin --disable-precomp-headers \
+ && make -j"$(nproc)" >/dev/null \
+ && make install >/dev/null \
+ && rm -rf /tmp/wx-src /tmp/wx-build /tmp/wx.tar.bz2
+
+# cross builds embed the host triplet in lib names; symlink to the plain
+# names so the same CMake WIN32 branch works for MSYS2's pacman wx
+RUN for f in /opt/wx/lib/libwx*-x86_64-w64-mingw32.a; do \
+        ln -s "$f" "${f%-x86_64-w64-mingw32.a}.a"; done
+
+

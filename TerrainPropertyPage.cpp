@@ -26,7 +26,7 @@ void TerrainPropertyPage::Init()
 
 void TerrainPropertyPage::OnPropertyGridChange(wxPropertyGridEvent& event)
 {
-	const wxPGProperty* eventProp = event.GetPropertyPtr();
+	const wxPGProperty* eventProp = event.GetProperty();
 	if(eventProp != 0)
 	{
 		using namespace std;

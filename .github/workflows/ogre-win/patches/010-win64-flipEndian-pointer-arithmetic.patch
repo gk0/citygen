@@ -1,0 +1,60 @@
+Fix Win64 pointer truncation in endianness flipping.
+
+OGRE 1.6.5 does pointer arithmetic through `(long)pData`, which truncates
+64-bit pointers on Win64 (LLP64: long is 32-bit). flipEndian() runs on every
+mesh/texture load on little-endian machines, so any buffer above the 4GB
+boundary would be corrupted. Use char* arithmetic instead.
+--- a/OgreMain/src/OgreSerializer.cpp
++++ b/OgreMain/src/OgreSerializer.cpp
+@@ -385,20 +385,22 @@
+     
+     void Serializer::flipEndian(void * pData, size_t size, size_t count)
+     {
++        char* pBytes = static_cast<char*>(pData);
+         for(unsigned int index = 0; index < count; index++)
+         {
+-            flipEndian((void *)((long)pData + (index * size)), size);
++            flipEndian(pBytes + (index * size), size);
+         }
+     }
+     
+     void Serializer::flipEndian(void * pData, size_t size)
+     {
+         char swapByte;
++        char* pBytes = static_cast<char*>(pData);
+         for(unsigned int byteIndex = 0; byteIndex < size/2; byteIndex++)
+         {
+-            swapByte = *(char *)((long)pData + byteIndex);
+-            *(char *)((long)pData + byteIndex) = *(char *)((long)pData + size - byteIndex - 1);
+-            *(char *)((long)pData + size - byteIndex - 1) = swapByte;
++            swapByte = pBytes[byteIndex];
++            pBytes[byteIndex] = pBytes[size - byteIndex - 1];
++            pBytes[size - byteIndex - 1] = swapByte;
+         }
+     }
+     
+--- a/OgreMain/src/OgreDDSCodec.cpp
++++ b/OgreMain/src/OgreDDSCodec.cpp
+@@ -721,7 +721,7 @@
+ #if OGRE_ENDIAN == OGRE_ENDIAN_BIG
+ 		for(unsigned int index = 0; index < count; index++)
+         {
+-            flipEndian((void *)((long)pData + (index * size)), size);
++            flipEndian(static_cast<char*>(pData) + (index * size), size);
+         }
+ #endif
+     }
+@@ -732,9 +732,10 @@
+         char swapByte;
+         for(unsigned int byteIndex = 0; byteIndex < size/2; byteIndex++)
+         {
+-            swapByte = *(char *)((long)pData + byteIndex);
+-            *(char *)((long)pData + byteIndex) = *(char *)((long)pData + size - byteIndex - 1);
+-            *(char *)((long)pData + size - byteIndex - 1) = swapByte;
++            char* pBytes = static_cast<char*>(pData);
++            swapByte = pBytes[byteIndex];
++            pBytes[byteIndex] = pBytes[size - byteIndex - 1];
++            pBytes[size - byteIndex - 1] = swapByte;
+         }
+ #endif
+     }

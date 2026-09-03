@@ -8,7 +8,7 @@
 #include "WorldRoad.h"
 #include "ExportDoc.h"
 
-class Ogre::MovableText;
+namespace Ogre { class MovableText; }
 
 class TiXmlHandle;
 

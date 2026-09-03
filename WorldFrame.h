@@ -100,11 +100,15 @@ protected:
     void createScene(void);
     void createViewport(void);
     void destroyScene(void);
-	void destroyViewport();
-	void destroyCamera();
+    void destroyViewport();
+    void destroyCamera();
 
 	void endNodeMode();
 	void beginNodeMode();
+
+#ifdef __WXGTK__
+	Ogre::String getGTKExternalWindowHandle();
+#endif
 
 	void updateProperties();
 

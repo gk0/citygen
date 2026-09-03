@@ -40,10 +40,10 @@ public:
 
 static const wxCmdLineEntryDesc cmdLineDesc [] =
 {
-    { wxCMD_LINE_SWITCH, _T("h"), _T("help"), _T("Displays help on the command line parameters"),
+        { wxCMD_LINE_SWITCH, "h", "help", "Displays help on the command line parameters",
           wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
-	{ wxCMD_LINE_PARAM, _T(""), _T(""), _T("input file"), wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
-	{ wxCMD_LINE_PARAM, _T(""), _T(""), _T("output file"), wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
+	{ wxCMD_LINE_PARAM, "", "", "input file", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
+	{ wxCMD_LINE_PARAM, "", "", "output file", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
     { wxCMD_LINE_NONE }
 };
 

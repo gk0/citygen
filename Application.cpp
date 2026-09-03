@@ -93,13 +93,13 @@ bool Application::InitializeOgre()
 
 #if _DEBUG && WIN32
    // load render system plugins first !
-    _root->loadPlugin(".\\RenderSystem_GL_d");
-    _root->loadPlugin(".\\Plugin_CgProgramManager_d");
-    _root->loadPlugin(".\\Plugin_OctreeSceneManager_d");
+    _root->loadPlugin("./RenderSystem_GL_d");
+    _root->loadPlugin("./Plugin_CgProgramManager_d");
+    _root->loadPlugin("./Plugin_OctreeSceneManager_d");
 #else
-    _root->loadPlugin(".\\RenderSystem_GL");
-    _root->loadPlugin(".\\Plugin_CgProgramManager");
-    _root->loadPlugin(".\\Plugin_OctreeSceneManager");
+    _root->loadPlugin("./RenderSystem_GL");
+    _root->loadPlugin("./Plugin_CgProgramManager");
+    _root->loadPlugin("./Plugin_OctreeSceneManager");
 #endif
 
 	try

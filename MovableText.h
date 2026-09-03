@@ -94,8 +94,9 @@ protected:
 	const   String            &getName(void) const {return mName;};
 	const   String            &getMovableType(void) const {static Ogre::String movType = "MovableText"; return movType;};
 
-    void    _notifyCurrentCamera(Camera *cam);
+        void    _notifyCurrentCamera(Camera *cam);
 	void    _updateRenderQueue(RenderQueue* queue);
+	void    visitRenderables(Renderable::Visitor* visitor, bool debugRenderables = false);
 
 	// from renderable
 	void    getRenderOperation(RenderOperation &op);

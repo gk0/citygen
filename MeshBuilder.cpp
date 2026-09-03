@@ -26,10 +26,10 @@ void MeshBuilder::registerData(Material* material,
 	if(pdIt == _polyDataMap.end())
 	{
 		vector<PtrPolyData> vtmp;
-		pdIt = _polyDataMap.insert(pdIt, make_pair<Material*, vector<PtrPolyData> >(material, vtmp));
+		pdIt = _polyDataMap.insert(pdIt, make_pair(material, vtmp));
 	
 	}
-	pdIt->second.push_back(make_pair<const vector<Real>*, const vector<uint16>* >(&vdata, &idata));
+	pdIt->second.push_back(make_pair(&vdata, &idata));
 }
 
 void MeshBuilder::build()

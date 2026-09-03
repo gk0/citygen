@@ -1,0 +1,40 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug citygen",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/runtime/citygen",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/build/runtime",
+        "environment": [{"name": "GDK_BACKEND", "value": "x11"}],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ],
+        "preLaunchTask": "build"
+      },
+      {
+        "name": "Run citygen (no debugger)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/runtime/citygen",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/build/runtime",
+        "environment": [{"name": "GDK_BACKEND", "value": "x11"}],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb",
+        "preLaunchTask": "build"
+      }
+    ]
+}

@@ -875,8 +875,8 @@ TiXmlElement* WorldRoad::saveXML()
 {
 	// GraphML compliant, edge not road
 	TiXmlElement *root = new TiXmlElement("edge"); 
-	root->SetAttribute("source", (int) getSrcNode());
-	root->SetAttribute("target", (int) getDstNode());
+	root->SetAttribute("source", pointerToString(getSrcNode()));
+	root->SetAttribute("target", pointerToString(getDstNode()));
 
 	TiXmlElement *genParams = new TiXmlElement("genparams"); 
 	root->LinkEndChild(genParams);
