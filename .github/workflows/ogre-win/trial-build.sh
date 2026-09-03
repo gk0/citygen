@@ -1,6 +1,6 @@
 #!/bin/bash
 # Trial build of OGRE 1.6.5 (Windows MinGW) inside the citygen-cross container.
-# Mirrors what ci/windows.yml will do natively: pinned tarball -> patches ->
+# Mirrors what .github/workflows/windows.yml will do natively: pinned tarball -> patches ->
 # CMake port. Usage: trial-build.sh [cmake --build args...]
 set -euo pipefail
 
@@ -17,7 +17,7 @@ fi
 
 # 2. Windows fixes on top of the pinned source (--forward: skip if applied;
 #    patch exits 1 when hunks are skipped, which is fine on a reused tree)
-for p in /src/ci/ogre-win/patches/*.patch; do
+for p in /src/.github/workflows/ogre-win/patches/*.patch; do
     patch -s --forward -p1 -d /work/ogre-src < "$p" || true
 done
 
@@ -30,7 +30,7 @@ set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
 EOF
 
 # 4. Configure + build
-cmake -S /src/ci/ogre-win -B /work/build -G Ninja \
+cmake -S  /src/.github/workflows/ogre-win -B /work/build -G Ninja \
     -DCMAKE_TOOLCHAIN_FILE=/toolchain.cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DOGRE_SRC=/work/ogre-src

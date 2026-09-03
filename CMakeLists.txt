@@ -45,12 +45,12 @@ set(CITYGEN_OPTS
 )
 
 if(WIN32)
-    # --- Windows (MSYS2 mingw64 toolchain; OGRE built via ci/ogre-win) ---
+    # --- Windows (MSYS2 mingw64 toolchain; OGRE built via .github/workflows/ogre-win) ---
     set(MSYS2_PREFIX "" CACHE PATH "MSYS2 mingw64 prefix (boost; wx on native CI)")
     set(WX_PREFIX "${MSYS2_PREFIX}" CACHE PATH "wxWidgets static prefix")
-    set(OGRE_WIN_BUILD "" CACHE PATH "ci/ogre-win build dir (OgreMain.dll + import lib)")
+    set(OGRE_WIN_BUILD "" CACHE PATH ".github/workflows/ogre-win build dir (OgreMain.dll + import lib)")
 
-    # OGRE headers: source-tree layout (ci/ogre-win trial) vs installed SDK layout
+    # OGRE headers: source-tree layout (ogre-win trial) vs installed SDK layout
     if(EXISTS "${OGRE_HOME}/OgreMain/include/OgreRoot.h")
         set(OGRE_INCLUDE_DIR "${OGRE_HOME}/OgreMain/include")
     else()
@@ -135,7 +135,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/bitmaps DESTINATION ${RUNTIME_DIR})
 if(WIN32)
     # Plugins are loaded at runtime by name (Root::loadPlugin) and must sit
     # next to the exe; DLL dependencies (wx, boost, mingw runtime, cg.dll) are
-    # staged separately by ci/ogre-win/stage-runtime.sh.
+    # staged separately by .github/workflows/ogre-win/stage-runtime.sh.
     set(CG_PREFIX "" CACHE PATH "extracted NVIDIA Cg SDK (bin.x64 with cg.dll)")
     set(RUNTIME_OGRE_PLUGINS
         ${OGRE_WIN_BUILD}/RenderSystem_GL.dll

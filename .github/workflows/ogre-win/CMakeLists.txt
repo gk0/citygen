@@ -16,11 +16,24 @@
 cmake_minimum_required(VERSION 3.16)
 project(Ogre165Win LANGUAGES CXX C RC)
 
-include(${CMAKE_CURRENT_LIST_DIR}/ogre-sources.cmake)
-
 set(OGRE_SRC "" CACHE PATH "OGRE 1.6.5 source root")
 set(MSYS2_PREFIX "/opt/msys2/mingw64" CACHE PATH "MSYS2 mingw64 prefix")
 set(CG_PREFIX "/opt/cg/app" CACHE PATH "extracted NVIDIA Cg SDK prefix")
+
+# Source lists are generated from OGRE's shipped Code::Blocks projects (the
+# authoritative MinGW file lists); derived from the pinned OGRE_SRC tree, so
+# not committed.
+find_program(GEN_SH sh REQUIRED)
+set(OGRE_SOURCES_CMAKE "${CMAKE_CURRENT_BINARY_DIR}/ogre-sources.cmake")
+execute_process(
+    COMMAND "${GEN_SH}" "${CMAKE_CURRENT_LIST_DIR}/gen-sources.sh" "${OGRE_SRC}"
+    OUTPUT_FILE "${OGRE_SOURCES_CMAKE}"
+    RESULT_VARIABLE GEN_RES
+    ERROR_VARIABLE GEN_ERR)
+if(NOT GEN_RES EQUAL 0)
+    message(FATAL_ERROR "gen-sources.sh failed: ${GEN_ERR}")
+endif()
+include("${OGRE_SOURCES_CMAKE}")
 
 # Modern libstdc++ dropped transitive includes the 2009 code relies on
 # (same forced-include trick as the Linux build in the top-level CMakeLists).

@@ -3,10 +3,10 @@
 # No Xvfb needed: the runner has a desktop session. GL comes from a Mesa3D
 # llvmpipe opengl32.dll staged next to the exe (runner GPUs only offer
 # GDI Generic GL 1.1, which fails OGRE's vertex-program capability check).
-# Usage: ci/smoke-test-windows.sh <runtime-dir>
+# Usage: .github/workflows/smoke-test-windows.sh <runtime-dir>
 set -euo pipefail
 
-RUNTIME_DIR="${1:?usage: ci/smoke-test-windows.sh <runtime-dir>}"
+RUNTIME_DIR="${1:?usage: .github/workflows/smoke-test-windows.sh <runtime-dir>}"
 cd "$RUNTIME_DIR"
 
 rm -f citygen.log

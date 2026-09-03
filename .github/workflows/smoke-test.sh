@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Headless smoke test for citygen.
-# Usage: ci/smoke-test.sh <runtime-dir>
+# Usage: .github/workflows/smoke-test.sh <runtime-dir>
 # Runs the app under Xvfb (software GL), lets the render loop spin briefly,
 # then checks the Ogre log for: Cg plugin installed, resources parsed,
 # no escaped exceptions.
 set -euo pipefail
 
-RUNTIME_DIR="${1:?usage: ci/smoke-test.sh <runtime-dir>}"
+RUNTIME_DIR="${1:?usage: .github/workflows/smoke-test.sh <runtime-dir>}"
 cd "$RUNTIME_DIR"
 
 rm -f citygen.log

@@ -90,4 +90,4 @@ FROM build AS smoke
 RUN apt-get update \
  && apt-get install -y --no-install-recommends xauth \
  && rm -rf /var/lib/apt/lists/* \
- && bash /src/ci/smoke-test.sh /out/runtime
+ && bash /src/.github/workflows/smoke-test.sh /out/runtime

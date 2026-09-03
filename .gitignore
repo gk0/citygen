@@ -9,3 +9,4 @@ cg
 ogre.tar.bz2
 cg.exe
 mesa.7z
+.github/workflows/ogre-win/ogre-sources.cmake

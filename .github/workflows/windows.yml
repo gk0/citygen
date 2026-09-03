@@ -2,7 +2,7 @@ name: windows
 
 # Windows build: native MSYS2 MinGW-w64 toolchain on a windows-latest runner.
 # OGRE 1.6.5 has no Windows build system (autotools is Unix-only; the shipped
-# VS2008/Code::Blocks projects are unusable headless), so ci/ogre-win builds
+# VS2008/Code::Blocks projects are unusable headless), so .github/workflows/ogre-win builds
 # the subset citygen needs with CMake, from the same pinned tarball as the
 # Linux Docker build. The OGRE compile is the expensive part and is cached
 # with actions/cache (the non-Docker equivalent of the warm docker layer).
@@ -58,7 +58,7 @@ jobs:
             p7zip
 
       # The expensive layer: patched OGRE source + built DLLs + extracted Cg.
-      # Cache key changes whenever anything under ci/ogre-win changes.
+      # Cache key changes whenever anything under .github/workflows/ogre-win changes.
       - name: Cache OGRE 1.6.5 Windows build
         id: ogre-cache
         uses: actions/cache@v4
@@ -67,7 +67,7 @@ jobs:
             ogre-src
             ogre-build
             cg
-          key: ogre165-win-${{ hashFiles('ci/ogre-win/**') }}
+          key: ogre165-win-${{ hashFiles('.github/workflows/ogre-win/**') }}
 
       - name: Fetch OGRE 1.6.5 source
         if: steps.ogre-cache.outputs.cache-hit != 'true'
@@ -77,7 +77,7 @@ jobs:
           mkdir ogre-src
           tar -xjf ogre.tar.bz2 -C ogre-src --strip-components=1
           rm ogre.tar.bz2
-          for p in ci/ogre-win/patches/*.patch; do patch -s -p1 -d ogre-src < "$p"; done
+          for p in .github/workflows/ogre-win/patches/*.patch; do patch -s -p1 -d ogre-src < "$p"; done
 
       - name: Extract NVIDIA Cg SDK
         if: steps.ogre-cache.outputs.cache-hit != 'true'
@@ -91,7 +91,7 @@ jobs:
       # on a cache hit ninja finds nothing to do.
       - name: Build OGRE 1.6.5 (Windows subset)
         run: |
-          cmake -S ci/ogre-win -B ogre-build -G Ninja \
+          cmake -S .github/workflows/ogre-win -B ogre-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DOGRE_SRC="$(cygpath -m "$PWD")/ogre-src" \
             -DMSYS2_PREFIX=/mingw64 \
@@ -111,7 +111,7 @@ jobs:
 
       - name: Stage runtime DLLs
         run: |
-          bash ci/ogre-win/stage-runtime.sh build/runtime \
+          bash .github/workflows/ogre-win/stage-runtime.sh build/runtime \
             build/runtime/citygen.exe \
             build/runtime/RenderSystem_GL.dll \
             build/runtime/Plugin_OctreeSceneManager.dll \
@@ -125,7 +125,7 @@ jobs:
           rm mesa.7z
 
       - name: Headless smoke test
-        run: bash ci/smoke-test-windows.sh build/runtime
+        run: bash .github/workflows/smoke-test-windows.sh build/runtime
 
       - name: Upload runtime artifact
         uses: actions/upload-artifact@v4
